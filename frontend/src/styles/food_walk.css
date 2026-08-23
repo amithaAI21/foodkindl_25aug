@@ -1,0 +1,1152 @@
+/* ============================================================
+   FOODKINDL FOOD WALK
+   Matches FoodWalkPlanner.jsx exactly
+============================================================ */
+
+
+/* ============================================================
+   ROOT PLANNER
+============================================================ */
+
+.food-walk-planner {
+  width: 100%;
+  box-sizing: border-box;
+
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+
+  margin-top: 18px;
+  padding: 24px;
+
+  border: 1px solid rgba(255, 106, 42, 0.2);
+  border-radius: 22px;
+
+  background:
+    radial-gradient(
+      circle at top right,
+      rgba(255, 106, 42, 0.09),
+      transparent 34%
+    ),
+    #120d0b;
+
+  box-shadow:
+    0 24px 60px rgba(0, 0, 0, 0.28);
+}
+
+
+/* ============================================================
+   HEADER
+============================================================ */
+
+.food-walk-planner-heading {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+}
+
+
+.food-walk-planner-icon {
+  flex: 0 0 46px;
+
+  width: 46px;
+  height: 46px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border: 1px solid rgba(255, 106, 42, 0.32);
+  border-radius: 14px;
+
+  background: rgba(255, 106, 42, 0.08);
+
+  color: #ff6a2a;
+}
+
+
+.food-walk-planner-heading > div:last-child {
+  min-width: 0;
+}
+
+
+.food-walk-planner-heading span {
+  display: block;
+
+  margin-bottom: 6px;
+
+  color: #ff6a2a;
+
+  font-size: 10px;
+  font-weight: 800;
+
+  letter-spacing: 1.4px;
+}
+
+
+.food-walk-planner-heading h3 {
+  margin: 0;
+
+  color: #fff;
+
+  font-size: 21px;
+  font-weight: 800;
+
+  line-height: 1.2;
+}
+
+
+.food-walk-planner-heading p {
+  margin: 8px 0 0;
+
+  color: rgba(255, 255, 255, 0.56);
+
+  font-size: 13px;
+
+  line-height: 1.55;
+}
+
+
+/* ============================================================
+   FILTERS
+============================================================ */
+
+.food-walk-filter-grid {
+  display: grid;
+
+  grid-template-columns:
+    repeat(
+      2,
+      minmax(0, 1fr)
+    );
+
+  gap: 14px;
+}
+
+
+.food-walk-filter-grid label {
+  display: flex;
+  flex-direction: column;
+
+  gap: 8px;
+
+  min-width: 0;
+
+  color: rgba(255, 255, 255, 0.76);
+
+  font-size: 11px;
+  font-weight: 700;
+}
+
+
+.food-walk-input-icon {
+  width: 100%;
+
+  min-height: 46px;
+
+  display: flex;
+  align-items: center;
+
+  gap: 10px;
+
+  padding: 0 13px;
+
+  box-sizing: border-box;
+
+  border: 1px solid rgba(255, 106, 42, 0.18);
+
+  border-radius: 12px;
+
+  background: rgba(0, 0, 0, 0.28);
+
+  color: rgba(255, 255, 255, 0.4);
+}
+
+
+.food-walk-input-icon:focus-within {
+  border-color: rgba(255, 106, 42, 0.55);
+
+  background: rgba(255, 106, 42, 0.025);
+}
+
+
+.food-walk-input-icon input {
+  width: 100%;
+  min-width: 0;
+
+  padding: 0;
+
+  border: 0;
+  outline: none;
+
+  background: transparent;
+
+  color: #fff;
+
+  font-size: 12px;
+  font-weight: 600;
+}
+
+
+.food-walk-input-icon input::placeholder {
+  color: rgba(255, 255, 255, 0.28);
+}
+
+
+/* ============================================================
+   MAIN TWO COLUMN LAYOUT
+============================================================ */
+
+.food-walk-layout {
+  display: grid;
+
+  grid-template-columns:
+    minmax(0, 1fr)
+    minmax(0, 1.08fr);
+
+  gap: 18px;
+
+  align-items: start;
+
+  min-width: 0;
+}
+
+
+/* ============================================================
+   PANELS
+============================================================ */
+
+.food-walk-route-panel,
+.food-walk-recommendation-panel {
+  min-width: 0;
+
+  box-sizing: border-box;
+
+  padding: 17px;
+
+  border: 1px solid rgba(255, 255, 255, 0.08);
+
+  border-radius: 17px;
+
+  background: rgba(0, 0, 0, 0.22);
+}
+
+
+/* ============================================================
+   PANEL TITLE
+============================================================ */
+
+.food-walk-panel-title {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+
+  gap: 12px;
+
+  margin-bottom: 15px;
+}
+
+
+.food-walk-panel-title > div {
+  min-width: 0;
+}
+
+
+.food-walk-panel-title span {
+  display: block;
+
+  margin-bottom: 5px;
+
+  color: rgba(255, 255, 255, 0.38);
+
+  font-size: 9px;
+  font-weight: 800;
+
+  letter-spacing: 1.2px;
+}
+
+
+.food-walk-panel-title strong {
+  display: block;
+
+  color: #fff;
+
+  font-size: 15px;
+  font-weight: 800;
+
+  line-height: 1.2;
+}
+
+
+.food-walk-panel-title small {
+  flex: 0 0 auto;
+
+  padding: 6px 9px;
+
+  border-radius: 999px;
+
+  background: rgba(255, 255, 255, 0.05);
+
+  color: rgba(255, 255, 255, 0.55);
+
+  font-size: 9px;
+  font-weight: 700;
+
+  white-space: nowrap;
+}
+
+
+/* ============================================================
+   EMPTY ROUTE
+============================================================ */
+
+.food-walk-empty-route,
+.food-walk-recommendation-state {
+  min-height: 150px;
+
+  display: flex;
+  flex-direction: column;
+
+  align-items: center;
+  justify-content: center;
+
+  gap: 8px;
+
+  padding: 20px;
+
+  box-sizing: border-box;
+
+  border: 1px dashed rgba(255, 255, 255, 0.1);
+
+  border-radius: 13px;
+
+  text-align: center;
+
+  color: rgba(255, 255, 255, 0.4);
+}
+
+
+.food-walk-empty-route strong,
+.food-walk-recommendation-state strong {
+  color: rgba(255, 255, 255, 0.82);
+
+  font-size: 12px;
+}
+
+
+.food-walk-empty-route span,
+.food-walk-recommendation-state span {
+  max-width: 270px;
+
+  color: rgba(255, 255, 255, 0.43);
+
+  font-size: 10px;
+
+  line-height: 1.5;
+}
+
+
+/* ============================================================
+   ROUTE LIST
+============================================================ */
+
+.food-walk-route-list {
+  display: flex;
+  flex-direction: column;
+
+  gap: 12px;
+}
+
+
+/* ============================================================
+   ROUTE STOP
+============================================================ */
+
+.food-walk-route-stop {
+  position: relative;
+
+  width: 100%;
+
+  display: grid;
+
+  grid-template-columns:
+    34px
+    minmax(0, 1fr)
+    auto;
+
+  align-items: center;
+
+  gap: 10px;
+
+  padding: 12px;
+
+  box-sizing: border-box;
+
+  border: 1px solid rgba(255, 255, 255, 0.08);
+
+  border-radius: 13px;
+
+  background: rgba(255, 255, 255, 0.025);
+}
+
+
+/* ============================================================
+   STOP NUMBER
+============================================================ */
+
+.food-walk-stop-number {
+  width: 32px;
+  height: 32px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 50%;
+
+  background: rgba(255, 106, 42, 0.15);
+
+  color: #ff7a3d;
+
+  font-size: 11px;
+  font-weight: 800;
+}
+
+
+/* ============================================================
+   STOP CONTENT
+============================================================ */
+
+.food-walk-stop-main {
+  min-width: 0;
+}
+
+
+.food-walk-stop-main > strong {
+  display: block;
+
+  overflow: hidden;
+
+  color: #fff;
+
+  font-size: 12px;
+  font-weight: 800;
+
+  text-overflow: ellipsis;
+
+  white-space: nowrap;
+}
+
+
+.food-walk-stop-main > span {
+  display: block;
+
+  margin-top: 4px;
+
+  overflow: hidden;
+
+  color: rgba(255, 255, 255, 0.45);
+
+  font-size: 9px;
+
+  text-overflow: ellipsis;
+
+  white-space: nowrap;
+}
+
+
+/* ============================================================
+   PARTNER BADGE
+============================================================ */
+
+.food-walk-partner-badge {
+  display: inline-flex;
+
+  align-items: center;
+
+  gap: 4px;
+
+  width: fit-content;
+
+  margin-top: 7px;
+
+  padding: 4px 7px;
+
+  border-radius: 999px;
+
+  background: rgba(50, 190, 110, 0.11);
+
+  color: #75daa0;
+
+  font-size: 8px;
+  font-weight: 800;
+}
+
+
+/* ============================================================
+   STOP ACTIONS
+============================================================ */
+
+.food-walk-stop-actions {
+  display: flex;
+
+  align-items: center;
+
+  gap: 5px;
+
+  flex: 0 0 auto;
+}
+
+
+.food-walk-stop-actions button {
+  width: 29px;
+  height: 29px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 0;
+
+  border: 1px solid rgba(255, 255, 255, 0.1);
+
+  border-radius: 8px;
+
+  background: rgba(255, 255, 255, 0.025);
+
+  color: rgba(255, 255, 255, 0.62);
+
+  cursor: pointer;
+
+  transition:
+    background 0.18s ease,
+    border-color 0.18s ease,
+    color 0.18s ease;
+}
+
+
+.food-walk-stop-actions button:hover:not(:disabled) {
+  border-color: rgba(255, 106, 42, 0.38);
+
+  background: rgba(255, 106, 42, 0.08);
+
+  color: #ff7a3d;
+}
+
+
+.food-walk-stop-actions button:disabled {
+  opacity: 0.25;
+
+  cursor: not-allowed;
+}
+
+
+.food-walk-stop-actions button.danger:hover:not(:disabled) {
+  border-color: rgba(235, 80, 80, 0.4);
+
+  color: #ff8585;
+
+  background: rgba(235, 80, 80, 0.08);
+}
+
+
+/* ============================================================
+   ROUTE CONNECTOR
+============================================================ */
+
+.food-walk-route-connector {
+  position: absolute;
+
+  left: 24px;
+
+  bottom: -10px;
+
+  z-index: 2;
+
+  display: inline-flex;
+
+  align-items: center;
+
+  gap: 5px;
+
+  padding: 3px 7px;
+
+  border-radius: 999px;
+
+  background: #100d0c;
+
+  color: rgba(255, 255, 255, 0.34);
+
+  font-size: 7px;
+  font-weight: 700;
+}
+
+
+.food-walk-route-connector svg {
+  color: #ff6a2a;
+}
+
+
+/* ============================================================
+   MANUAL ADD
+============================================================ */
+
+.food-walk-manual-add {
+  display: grid;
+
+  grid-template-columns:
+    minmax(0, 1fr)
+    auto;
+
+  gap: 8px;
+
+  margin-top: 16px;
+}
+
+
+.food-walk-manual-add input {
+  width: 100%;
+  min-width: 0;
+
+  height: 42px;
+
+  padding: 0 12px;
+
+  box-sizing: border-box;
+
+  border: 1px solid rgba(255, 255, 255, 0.09);
+
+  border-radius: 11px;
+
+  outline: none;
+
+  background: rgba(0, 0, 0, 0.25);
+
+  color: #fff;
+
+  font-size: 10px;
+}
+
+
+.food-walk-manual-add input::placeholder {
+  color: rgba(255, 255, 255, 0.28);
+}
+
+
+.food-walk-manual-add button {
+  min-width: 92px;
+  height: 42px;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  gap: 5px;
+
+  padding: 0 12px;
+
+  border: 1px solid rgba(255, 106, 42, 0.28);
+
+  border-radius: 11px;
+
+  background: rgba(255, 106, 42, 0.08);
+
+  color: #ff8a52;
+
+  font-size: 9px;
+  font-weight: 800;
+
+  cursor: pointer;
+}
+
+
+.food-walk-manual-add button:hover:not(:disabled) {
+  background: rgba(255, 106, 42, 0.14);
+}
+
+
+.food-walk-manual-add button:disabled {
+  opacity: 0.35;
+
+  cursor: not-allowed;
+}
+
+
+/* ============================================================
+   ROUTE STATUS
+============================================================ */
+
+.food-walk-route-status {
+  display: flex;
+
+  align-items: center;
+  justify-content: center;
+
+  gap: 6px;
+
+  margin-top: 13px;
+
+  padding: 10px 12px;
+
+  border: 1px solid rgba(255, 255, 255, 0.08);
+
+  border-radius: 11px;
+
+  color: rgba(255, 255, 255, 0.45);
+
+  font-size: 9px;
+  font-weight: 700;
+}
+
+
+.food-walk-route-status.ready {
+  border-color: rgba(52, 190, 110, 0.24);
+
+  background: rgba(52, 190, 110, 0.07);
+
+  color: #75daa0;
+}
+
+
+/* ============================================================
+   ERROR
+============================================================ */
+
+.food-walk-error {
+  margin-bottom: 10px;
+
+  padding: 9px 10px;
+
+  border: 1px solid rgba(235, 90, 90, 0.22);
+
+  border-radius: 10px;
+
+  background: rgba(235, 90, 90, 0.06);
+
+  color: #ff9999;
+
+  font-size: 9px;
+}
+
+
+/* ============================================================
+   RECOMMENDATION LIST
+============================================================ */
+
+.food-walk-recommendation-list {
+  display: flex;
+  flex-direction: column;
+
+  gap: 9px;
+
+  max-height: 360px;
+
+  overflow-y: auto;
+  overflow-x: hidden;
+
+  padding-right: 4px;
+
+  scrollbar-width: thin;
+
+  scrollbar-color:
+    rgba(255, 255, 255, 0.22)
+    transparent;
+}
+
+
+/* ============================================================
+   RECOMMENDATION CARD
+============================================================ */
+
+.food-walk-recommendation-card {
+  width: 100%;
+
+  display: grid;
+
+  grid-template-columns:
+    58px
+    minmax(0, 1fr)
+    auto;
+
+  align-items: center;
+
+  gap: 10px;
+
+  padding: 10px;
+
+  box-sizing: border-box;
+
+  border: 1px solid rgba(255, 255, 255, 0.075);
+
+  border-radius: 13px;
+
+  background: rgba(255, 255, 255, 0.02);
+}
+
+
+.food-walk-recommendation-card.selected {
+  border-color: rgba(55, 190, 120, 0.3);
+
+  background: rgba(55, 190, 120, 0.045);
+}
+
+
+/* ============================================================
+   RECOMMENDATION IMAGE
+============================================================ */
+
+.food-walk-recommendation-image {
+  width: 58px;
+  height: 58px;
+
+  display: flex;
+
+  align-items: center;
+  justify-content: center;
+
+  overflow: hidden;
+
+  border-radius: 11px;
+
+  background: rgba(255, 255, 255, 0.045);
+
+  color: rgba(255, 255, 255, 0.3);
+}
+
+
+.food-walk-recommendation-image img {
+  width: 100%;
+  height: 100%;
+
+  display: block;
+
+  object-fit: cover;
+}
+
+
+/* ============================================================
+   RECOMMENDATION MAIN
+============================================================ */
+
+.food-walk-recommendation-main {
+  min-width: 0;
+}
+
+
+.food-walk-recommendation-main > strong {
+  display: block;
+
+  overflow: hidden;
+
+  color: #fff;
+
+  font-size: 11px;
+  font-weight: 800;
+
+  text-overflow: ellipsis;
+
+  white-space: nowrap;
+}
+
+
+.food-walk-recommendation-main > span {
+  display: block;
+
+  margin-top: 3px;
+
+  overflow: hidden;
+
+  color: rgba(255, 255, 255, 0.45);
+
+  font-size: 8px;
+
+  text-overflow: ellipsis;
+
+  white-space: nowrap;
+}
+
+
+/* ============================================================
+   RECOMMENDATION META
+============================================================ */
+
+.food-walk-recommendation-meta {
+  display: flex;
+
+  flex-wrap: wrap;
+
+  align-items: center;
+
+  gap: 6px;
+
+  margin-top: 6px;
+}
+
+
+.food-walk-recommendation-meta small {
+  display: inline-flex;
+
+  align-items: center;
+
+  gap: 3px;
+
+  color: rgba(255, 255, 255, 0.55);
+
+  font-size: 8px;
+}
+
+
+.food-walk-recommendation-meta small.partner {
+  color: #75daa0;
+}
+
+
+/* ============================================================
+   RECOMMENDATION ADD BUTTON
+============================================================ */
+
+.food-walk-recommendation-card > button {
+  min-width: 68px;
+  height: 34px;
+
+  display: inline-flex;
+
+  align-items: center;
+  justify-content: center;
+
+  gap: 5px;
+
+  padding: 0 10px;
+
+  border: 1px solid rgba(255, 106, 42, 0.27);
+
+  border-radius: 10px;
+
+  background: rgba(255, 106, 42, 0.08);
+
+  color: #ff8a52;
+
+  font-size: 9px;
+  font-weight: 800;
+
+  cursor: pointer;
+}
+
+
+.food-walk-recommendation-card > button:hover:not(:disabled) {
+  background: rgba(255, 106, 42, 0.14);
+}
+
+
+.food-walk-recommendation-card > button:disabled {
+  opacity: 0.48;
+
+  cursor: not-allowed;
+}
+
+
+/* ============================================================
+   CRITICAL MODAL FIX
+============================================================ */
+
+.food-invite-create-modal {
+  display: flex !important;
+
+  flex-direction: column;
+
+  max-height: calc(100vh - 60px);
+
+  overflow: hidden !important;
+}
+
+
+.food-invite-create-header {
+  flex: 0 0 auto;
+}
+
+
+.food-invite-form {
+  flex: 1 1 auto;
+
+  min-height: 0;
+
+  overflow-y: auto !important;
+
+  overflow-x: hidden !important;
+
+  padding-bottom: 130px !important;
+}
+
+
+/*
+   Footer remains visible,
+   but form content can scroll above it.
+*/
+
+.food-invite-create-footer {
+  position: sticky !important;
+
+  bottom: 0;
+
+  z-index: 100;
+
+  display: flex;
+
+  justify-content: flex-end;
+
+  gap: 10px;
+
+  margin-top: 24px;
+
+  padding:
+    16px 0
+    12px;
+
+  border-top:
+    1px solid
+    rgba(255, 255, 255, 0.07);
+
+  background:
+    #0d0a09 !important;
+
+  box-shadow:
+    0 -14px 30px
+    rgba(0, 0, 0, 0.55);
+}
+
+
+/* ============================================================
+   FOOD WALK MODAL WIDTH
+============================================================ */
+
+.food-invite-create-shell:not(.dine-out) {
+  width:
+    min(
+      960px,
+      calc(100vw - 40px)
+    ) !important;
+
+  max-height:
+    calc(100vh - 40px);
+
+  overflow: hidden;
+}
+
+
+.food-invite-create-shell:not(.dine-out)
+.food-invite-create-modal {
+  width: 100% !important;
+
+  max-width: none !important;
+}
+
+
+/* ============================================================
+   PREVENT OVERFLOW
+============================================================ */
+
+.food-walk-planner,
+.food-walk-layout,
+.food-walk-route-panel,
+.food-walk-recommendation-panel,
+.food-walk-route-stop,
+.food-walk-recommendation-card {
+  max-width: 100%;
+
+  min-width: 0;
+
+  box-sizing: border-box;
+}
+
+
+/* ============================================================
+   TABLET
+============================================================ */
+
+@media (max-width: 900px) {
+
+  .food-walk-filter-grid {
+    grid-template-columns: 1fr;
+  }
+
+
+  .food-walk-layout {
+    grid-template-columns: 1fr;
+  }
+
+
+  .food-walk-recommendation-list {
+    max-height: none;
+  }
+
+}
+
+
+/* ============================================================
+   MOBILE
+============================================================ */
+
+@media (max-width: 600px) {
+
+  .food-walk-planner {
+    padding: 16px;
+
+    border-radius: 16px;
+  }
+
+
+  .food-walk-planner-heading h3 {
+    font-size: 18px;
+  }
+
+
+  .food-walk-route-stop {
+    grid-template-columns:
+      30px
+      minmax(0, 1fr);
+  }
+
+
+  .food-walk-stop-actions {
+    grid-column: 2;
+
+    justify-content: flex-start;
+  }
+
+
+  .food-walk-manual-add {
+    grid-template-columns: 1fr;
+  }
+
+
+  .food-walk-manual-add button {
+    width: 100%;
+  }
+
+
+  .food-walk-recommendation-card {
+    grid-template-columns:
+      50px
+      minmax(0, 1fr);
+  }
+
+
+  .food-walk-recommendation-image {
+    width: 50px;
+    height: 50px;
+  }
+
+
+  .food-walk-recommendation-card > button {
+    grid-column: 1 / -1;
+
+    width: 100%;
+  }
+
+
+  .food-invite-create-shell:not(.dine-out) {
+    width:
+      calc(100vw - 20px) !important;
+  }
+
+}

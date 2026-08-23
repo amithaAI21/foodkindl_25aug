@@ -41,6 +41,13 @@ urlpatterns = [
             "safety.urls"
         ),
     ),
+    
+    path(
+        "api/",
+        include(
+            "invites.urls"
+        ),
+    ),
 ]
 
 

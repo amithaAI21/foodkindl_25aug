@@ -1,0 +1,1077 @@
+/* ============================================================
+   FOODKINDL - FOOD MATCHES
+============================================================ */
+
+.food-matches-page {
+  width: 100%;
+  max-width: 1280px;
+  min-height: 100vh;
+
+  margin: 0 auto;
+  padding: 32px 28px 70px;
+
+  box-sizing: border-box;
+}
+
+
+/* ============================================================
+   TOP BAR
+============================================================ */
+
+.food-matches-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  gap: 16px;
+
+  margin-bottom: 28px;
+}
+
+
+.food-matches-back-button,
+.food-matches-refresh-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  gap: 8px;
+
+  min-height: 42px;
+
+  padding: 10px 16px;
+
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 12px;
+
+  background: rgba(255, 255, 255, 0.04);
+
+  color: inherit;
+
+  font-size: 13px;
+  font-weight: 600;
+
+  text-decoration: none;
+
+  cursor: pointer;
+
+  transition:
+    transform 0.2s ease,
+    border-color 0.2s ease,
+    background 0.2s ease;
+}
+
+
+.food-matches-back-button:hover,
+.food-matches-refresh-button:hover {
+  transform: translateY(-1px);
+
+  border-color: rgba(255, 255, 255, 0.25);
+
+  background: rgba(255, 255, 255, 0.08);
+}
+
+
+.food-matches-refresh-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+
+/* ============================================================
+   HERO
+============================================================ */
+
+.food-matches-hero {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+
+  gap: 40px;
+
+  padding: 42px;
+
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 28px;
+
+  background:
+    radial-gradient(
+      circle at top right,
+      rgba(255, 139, 77, 0.12),
+      transparent 38%
+    ),
+    rgba(255, 255, 255, 0.035);
+
+  box-shadow:
+    0 24px 70px rgba(0, 0, 0, 0.18);
+
+  overflow: hidden;
+}
+
+
+.food-matches-hero-content {
+  max-width: 760px;
+}
+
+
+.food-matches-kicker {
+  display: inline-flex;
+  align-items: center;
+
+  gap: 7px;
+
+  margin-bottom: 14px;
+
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 1.5px;
+
+  opacity: 0.75;
+}
+
+
+.food-matches-hero h1 {
+  max-width: 750px;
+
+  margin: 0;
+
+  font-size: clamp(
+    36px,
+    5vw,
+    64px
+  );
+
+  line-height: 1.02;
+  letter-spacing: -2px;
+}
+
+
+.food-matches-hero h1 span {
+  opacity: 0.68;
+}
+
+
+.food-matches-hero p {
+  max-width: 680px;
+
+  margin:
+    20px
+    0
+    0;
+
+  font-size: 15px;
+  line-height: 1.75;
+
+  opacity: 0.7;
+}
+
+
+.food-matches-hero-stat {
+  display: flex;
+  align-items: center;
+
+  gap: 13px;
+
+  min-width: 170px;
+
+  padding: 17px 19px;
+
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 18px;
+
+  background: rgba(0, 0, 0, 0.18);
+}
+
+
+.food-matches-stat-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 46px;
+  height: 46px;
+
+  border-radius: 14px;
+
+  background: rgba(255, 255, 255, 0.08);
+}
+
+
+.food-matches-hero-stat strong {
+  display: block;
+
+  font-size: 24px;
+  line-height: 1;
+}
+
+
+.food-matches-hero-stat span {
+  display: block;
+
+  margin-top: 5px;
+
+  font-size: 12px;
+
+  opacity: 0.65;
+}
+
+
+/* ============================================================
+   RESULTS
+============================================================ */
+
+.food-matches-results {
+  margin-top: 45px;
+}
+
+
+.food-matches-section-heading {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+
+  gap: 20px;
+
+  margin-bottom: 22px;
+}
+
+
+.food-matches-section-heading span {
+  display: block;
+
+  margin-bottom: 6px;
+
+  font-size: 11px;
+  font-weight: 800;
+
+  letter-spacing: 1.4px;
+
+  opacity: 0.55;
+}
+
+
+.food-matches-section-heading h2 {
+  margin: 0;
+
+  font-size: 27px;
+  letter-spacing: -0.5px;
+}
+
+
+.food-matches-section-heading p {
+  margin: 0;
+
+  font-size: 13px;
+
+  opacity: 0.55;
+}
+
+
+/* ============================================================
+   GRID
+============================================================ */
+
+.food-matches-grid {
+  display: grid;
+
+  grid-template-columns:
+    repeat(
+      3,
+      minmax(0, 1fr)
+    );
+
+  gap: 22px;
+}
+
+
+/* ============================================================
+   CARD
+============================================================ */
+
+.food-match-card {
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 24px;
+
+  background: rgba(255, 255, 255, 0.035);
+
+  overflow: hidden;
+
+  box-shadow:
+    0 18px 45px rgba(0, 0, 0, 0.14);
+
+  transition:
+    transform 0.25s ease,
+    border-color 0.25s ease,
+    box-shadow 0.25s ease;
+}
+
+
+.food-match-card:hover {
+  transform: translateY(-4px);
+
+  border-color: rgba(255, 255, 255, 0.2);
+
+  box-shadow:
+    0 24px 60px rgba(0, 0, 0, 0.22);
+}
+
+
+/* ============================================================
+   CARD IMAGE
+============================================================ */
+
+.food-match-card-image {
+  position: relative;
+
+  width: 100%;
+  height: 270px;
+
+  background: rgba(255, 255, 255, 0.04);
+
+  overflow: hidden;
+}
+
+
+.food-match-card-image img {
+  display: block;
+
+  width: 100%;
+  height: 100%;
+
+  object-fit: cover;
+  object-position: center;
+}
+
+
+.food-match-image-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 100%;
+  height: 100%;
+
+  opacity: 0.4;
+}
+
+
+/* ============================================================
+   MATCH SCORE
+============================================================ */
+
+.food-match-score-badge {
+  position: absolute;
+
+  left: 16px;
+  bottom: 16px;
+
+  display: flex;
+  align-items: center;
+
+  gap: 8px;
+
+  padding: 9px 12px;
+
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 13px;
+
+  background: rgba(10, 10, 10, 0.78);
+
+  backdrop-filter: blur(14px);
+}
+
+
+.food-match-score-badge strong {
+  font-size: 18px;
+}
+
+
+.food-match-score-badge span {
+  font-size: 11px;
+  font-weight: 700;
+
+  opacity: 0.72;
+}
+
+
+.food-match-score-badge.excellent {
+  border-color: rgba(255, 255, 255, 0.32);
+}
+
+
+.food-match-score-badge.great {
+  border-color: rgba(255, 255, 255, 0.25);
+}
+
+
+/* ============================================================
+   VERIFIED BADGE
+============================================================ */
+
+.food-match-verified-badge {
+  position: absolute;
+
+  top: 15px;
+  right: 15px;
+
+  display: flex;
+  align-items: center;
+
+  gap: 5px;
+
+  padding: 7px 10px;
+
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 999px;
+
+  background: rgba(10, 10, 10, 0.72);
+
+  backdrop-filter: blur(12px);
+
+  font-size: 11px;
+  font-weight: 700;
+}
+
+
+/* ============================================================
+   CARD CONTENT
+============================================================ */
+
+.food-match-card-content {
+  padding: 21px;
+}
+
+
+.food-match-card-title {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+
+  gap: 12px;
+}
+
+
+.food-match-card-title h3 {
+  margin: 0;
+
+  font-size: 21px;
+  letter-spacing: -0.3px;
+}
+
+
+.food-match-check {
+  flex-shrink: 0;
+
+  opacity: 0.8;
+}
+
+
+.food-match-card-location {
+  display: flex;
+  align-items: center;
+
+  gap: 5px;
+
+  margin-top: 7px;
+
+  font-size: 12px;
+
+  opacity: 0.6;
+}
+
+
+/* ============================================================
+   MATCH LEVEL
+============================================================ */
+
+.food-match-level {
+  display: inline-flex;
+  align-items: center;
+
+  gap: 6px;
+
+  margin-top: 16px;
+
+  padding: 6px 10px;
+
+  border-radius: 999px;
+
+  background: rgba(255, 255, 255, 0.06);
+
+  font-size: 11px;
+  font-weight: 700;
+}
+
+
+.food-match-level.excellent {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+
+.food-match-level.great {
+  background: rgba(255, 255, 255, 0.09);
+}
+
+
+/* ============================================================
+   DIET
+============================================================ */
+
+.food-match-diet {
+  display: flex;
+  align-items: center;
+
+  gap: 7px;
+
+  margin-top: 16px;
+
+  font-size: 12px;
+
+  opacity: 0.7;
+}
+
+
+/* ============================================================
+   WHY YOU MATCH
+============================================================ */
+
+.food-match-reasons {
+  margin-top: 21px;
+}
+
+
+.food-match-small-title {
+  display: block;
+
+  margin-bottom: 10px;
+
+  font-size: 10px;
+  font-weight: 800;
+
+  letter-spacing: 1.1px;
+
+  opacity: 0.48;
+}
+
+
+.food-match-reason-list {
+  display: flex;
+  flex-direction: column;
+
+  gap: 8px;
+}
+
+
+.food-match-reason {
+  display: flex;
+  align-items: flex-start;
+
+  gap: 8px;
+
+  font-size: 12px;
+  line-height: 1.45;
+
+  opacity: 0.78;
+}
+
+
+.food-match-reason svg {
+  flex-shrink: 0;
+
+  margin-top: 1px;
+}
+
+
+/* ============================================================
+   COMMON ITEMS
+============================================================ */
+
+.food-match-common-section {
+  margin-top: 20px;
+}
+
+
+.food-match-tags {
+  display: flex;
+  flex-wrap: wrap;
+
+  gap: 7px;
+}
+
+
+.food-match-tag {
+  display: inline-flex;
+
+  padding: 6px 9px;
+
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 999px;
+
+  background: rgba(255, 255, 255, 0.06);
+
+  font-size: 10px;
+  font-weight: 600;
+}
+
+
+.food-match-tag.secondary {
+  background: transparent;
+}
+
+
+/* ============================================================
+   ACTIONS
+============================================================ */
+
+.food-match-card-actions {
+  margin-top: 24px;
+}
+
+
+.food-match-view-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 100%;
+  min-height: 43px;
+
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 12px;
+
+  background: rgba(255, 255, 255, 0.08);
+
+  color: inherit;
+
+  font-size: 12px;
+  font-weight: 700;
+
+  text-decoration: none;
+
+  transition:
+    transform 0.2s ease,
+    background 0.2s ease;
+}
+
+
+.food-match-view-button:hover {
+  transform: translateY(-1px);
+
+  background: rgba(255, 255, 255, 0.13);
+}
+
+
+/* ============================================================
+   EMPTY STATE
+============================================================ */
+
+.food-matches-empty {
+  max-width: 620px;
+
+  margin: 70px auto;
+
+  padding: 55px 35px;
+
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 25px;
+
+  background: rgba(255, 255, 255, 0.03);
+
+  text-align: center;
+}
+
+
+.food-matches-empty-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 65px;
+  height: 65px;
+
+  margin:
+    0
+    auto
+    18px;
+
+  border-radius: 20px;
+
+  background: rgba(255, 255, 255, 0.07);
+}
+
+
+.food-matches-empty h2 {
+  margin: 0;
+
+  font-size: 26px;
+}
+
+
+.food-matches-empty p {
+  max-width: 480px;
+
+  margin:
+    13px
+    auto
+    24px;
+
+  font-size: 14px;
+  line-height: 1.65;
+
+  opacity: 0.65;
+}
+
+
+.food-matches-profile-button {
+  display: inline-flex;
+
+  padding: 11px 18px;
+
+  border-radius: 11px;
+
+  background: rgba(255, 255, 255, 0.1);
+
+  color: inherit;
+
+  font-size: 12px;
+  font-weight: 700;
+
+  text-decoration: none;
+}
+
+
+/* ============================================================
+   ERROR
+============================================================ */
+
+.food-matches-error {
+  max-width: 650px;
+
+  margin: 40px auto;
+
+  padding: 25px;
+
+  border: 1px solid rgba(255, 120, 120, 0.25);
+  border-radius: 18px;
+
+  background: rgba(255, 80, 80, 0.06);
+}
+
+
+.food-matches-error p {
+  margin:
+    8px
+    0
+    15px;
+
+  font-size: 13px;
+
+  opacity: 0.7;
+}
+
+
+.food-matches-error button {
+  padding: 9px 14px;
+
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 9px;
+
+  background: rgba(255, 255, 255, 0.08);
+
+  color: inherit;
+
+  cursor: pointer;
+}
+
+
+/* ============================================================
+   LOADING
+============================================================ */
+
+.food-matches-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+
+  min-height: 70vh;
+
+  text-align: center;
+}
+
+
+.food-matches-loading-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 68px;
+  height: 68px;
+
+  margin-bottom: 20px;
+
+  border-radius: 20px;
+
+  background: rgba(255, 255, 255, 0.06);
+}
+
+
+.food-matches-loading h2 {
+  margin:
+    15px
+    0
+    7px;
+}
+
+
+.food-matches-loading p {
+  max-width: 460px;
+
+  margin: 0;
+
+  font-size: 13px;
+  line-height: 1.6;
+
+  opacity: 0.6;
+}
+
+
+.food-match-spin {
+  animation:
+    foodMatchSpin
+    0.8s
+    linear
+    infinite;
+}
+
+
+@keyframes foodMatchSpin {
+
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+
+}
+
+
+/* ============================================================
+   TABLET
+============================================================ */
+
+@media (
+  max-width: 1050px
+) {
+
+  .food-matches-grid {
+    grid-template-columns:
+      repeat(
+        2,
+        minmax(0, 1fr)
+      );
+  }
+
+
+  .food-matches-hero {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+}
+
+
+/* ============================================================
+   MOBILE
+============================================================ */
+
+@media (
+  max-width: 700px
+) {
+
+  .food-matches-page {
+    padding:
+      20px
+      15px
+      50px;
+  }
+
+
+  .food-matches-topbar {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+
+  .food-matches-back-button,
+  .food-matches-refresh-button {
+    width: 100%;
+  }
+
+
+  .food-matches-hero {
+    padding: 27px 22px;
+
+    border-radius: 21px;
+  }
+
+
+  .food-matches-hero h1 {
+    font-size: 38px;
+    letter-spacing: -1.5px;
+  }
+
+
+  .food-matches-hero-stat {
+    width: 100%;
+
+    box-sizing: border-box;
+  }
+
+
+  .food-matches-section-heading {
+    align-items: flex-start;
+    flex-direction: column;
+
+    gap: 7px;
+  }
+
+
+  .food-matches-grid {
+    grid-template-columns: 1fr;
+  }
+
+
+  .food-match-card-image {
+    height: 310px;
+  }
+
+}
+
+
+/* ============================================================
+   SMALL MOBILE
+============================================================ */
+
+@media (
+  max-width: 430px
+) {
+
+  .food-matches-hero h1 {
+    font-size: 33px;
+  }
+
+
+  .food-match-card-image {
+    height: 270px;
+  }
+
+
+  .food-match-card-content {
+    padding: 18px;
+  }
+
+}
+
+/* ============================================================
+   FOOD MATCH INSIDE CONNECT MEMBER CARD
+============================================================ */
+
+.connect-food-match {
+  margin-top: 18px;
+  padding-top: 16px;
+
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.connect-food-match-top {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+
+  gap: 9px;
+}
+
+.connect-food-match-score {
+  display: inline-flex;
+  align-items: center;
+
+  gap: 6px;
+
+  padding: 7px 10px;
+
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 999px;
+
+  background: rgba(255, 255, 255, 0.055);
+}
+
+.connect-food-match-score strong {
+  font-size: 15px;
+}
+
+.connect-food-match-score span {
+  font-size: 11px;
+  font-weight: 600;
+
+  opacity: 0.68;
+}
+
+.connect-food-match-level {
+  display: inline-flex;
+  align-items: center;
+
+  gap: 5px;
+
+  padding: 6px 9px;
+
+  border-radius: 999px;
+
+  background: rgba(255, 255, 255, 0.05);
+
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.connect-food-match-level.excellent {
+  background: rgba(255, 255, 255, 0.11);
+}
+
+.connect-food-match-reasons {
+  display: flex;
+  flex-direction: column;
+
+  gap: 7px;
+
+  margin-top: 12px;
+}
+
+.connect-food-match-title {
+  margin-bottom: 2px;
+
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 1px;
+
+  opacity: 0.5;
+}
+
+.connect-food-match-reason {
+  display: flex;
+  align-items: flex-start;
+
+  gap: 7px;
+
+  font-size: 11px;
+  line-height: 1.4;
+
+  opacity: 0.72;
+}
+
+.connect-food-match-reason svg {
+  flex-shrink: 0;
+
+  margin-top: 1px;
+}

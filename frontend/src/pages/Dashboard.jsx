@@ -1,4 +1,5 @@
 import {
+  ConciergeBell,
   LockKeyhole,
   MessageSquare,
   RefreshCw,
@@ -24,7 +25,7 @@ export default function Dashboard() {
 
   const {
     user,
-    refreshUser,
+    reloadUser,
   } = useAuth();
 
 
@@ -146,7 +147,7 @@ export default function Dashboard() {
   async function handleRefresh() {
 
     if (
-      typeof refreshUser !==
+      typeof reloadUser !==
       "function"
     ) {
 
@@ -165,9 +166,11 @@ export default function Dashboard() {
       setRefreshError("");
 
 
-      await refreshUser();
+      await reloadUser();
 
-    } catch (error) {
+    } catch (
+      error
+    ) {
 
       console.error(
         "Unable to refresh account:",
@@ -192,52 +195,61 @@ export default function Dashboard() {
   // SYNC VERIFICATION WHEN DASHBOARD OPENS
   // =========================================================
 
-  useEffect(() => {
+  useEffect(
+    () => {
 
-    let cancelled = false;
-
-
-    async function syncUser() {
-
-      if (
-        typeof refreshUser !==
-        "function"
-      ) {
-        return;
-      }
+      let cancelled =
+        false;
 
 
-      try {
+      async function syncUser() {
 
-        await refreshUser();
-
-      } catch (error) {
-
-        if (!cancelled) {
-
-          console.error(
-            "Unable to sync account:",
-            error.response?.data ||
-            error
-          );
-
+        if (
+          typeof reloadUser !==
+          "function"
+        ) {
+          return;
         }
 
+
+        try {
+
+          await reloadUser();
+
+        } catch (
+          error
+        ) {
+
+          if (
+            !cancelled
+          ) {
+
+            console.error(
+              "Unable to sync account:",
+              error.response?.data ||
+              error
+            );
+
+          }
+        }
       }
 
-    }
+
+      syncUser();
 
 
-    syncUser();
+      return () => {
 
+        cancelled =
+          true;
 
-    return () => {
-      cancelled = true;
-    };
+      };
 
-  }, [
-    refreshUser,
-  ]);
+    },
+    [
+      reloadUser,
+    ]
+  );
 
 
   // =========================================================
@@ -253,7 +265,7 @@ export default function Dashboard() {
 
       return (
         "Government ID approval is pending. " +
-        "Circles and private messaging will unlock after approval."
+        "Circles, Food Invites and private messaging will unlock after approval."
       );
 
     }
@@ -266,7 +278,22 @@ export default function Dashboard() {
 
       return (
         "Government ID was rejected. " +
-        "Please upload a new document to use Circles and private messaging."
+        "Please upload a new document to use Circles, Food Invites and private messaging."
+      );
+
+    }
+
+
+    if (
+      verificationStatus ===
+      "approved" &&
+      profile.is_verified !==
+        true
+    ) {
+
+      return (
+        "Your verification has been approved, " +
+        "but your verified status has not yet been activated."
       );
 
     }
@@ -274,7 +301,7 @@ export default function Dashboard() {
 
     return (
       "Government ID verification is required " +
-      "for Circles and private messaging."
+      "for Circles, Food Invites and private messaging."
     );
   }
 
@@ -287,9 +314,6 @@ export default function Dashboard() {
 
     // --------------------------------------------------------
     // COMMUNIQ
-    //
-    // Login only.
-    // ID verification NOT required.
     // --------------------------------------------------------
 
     {
@@ -310,13 +334,14 @@ export default function Dashboard() {
 
       locked:
         false,
+
+      special:
+        false,
     },
 
 
     // --------------------------------------------------------
     // CIRCLES
-    //
-    // Verification required.
     // --------------------------------------------------------
 
     {
@@ -329,8 +354,9 @@ export default function Dashboard() {
       text:
         isVerified
           ? (
-              "Discover members, send connection requests, " +
-              "manage connections, and view profiles."
+              "Discover members, explore Food Matches, " +
+              "send connection requests, manage connections, " +
+              "and view profiles."
             )
           : getVerificationMessage(),
 
@@ -341,8 +367,42 @@ export default function Dashboard() {
 
       locked:
         !isVerified,
+
+      special:
+        false,
     },
 
+
+    // --------------------------------------------------------
+    // FOOD INVITES
+    // --------------------------------------------------------
+
+    {
+      icon:
+        <ConciergeBell />,
+
+      title:
+        "Food Invites",
+
+      text:
+        isVerified
+          ? (
+              "Turn a connection into a food moment. " +
+              "Cook Together, Dine Out or explore a Food Walk."
+            )
+          : getVerificationMessage(),
+
+      path:
+        isVerified
+          ? "/food-invites"
+          : "/verification-required",
+
+      locked:
+        !isVerified,
+
+      special:
+        true,
+    },
   ];
 
 
@@ -351,7 +411,9 @@ export default function Dashboard() {
   // =========================================================
 
   return (
+
     <main className="app-page">
+
 
       {/* =====================================================
           HERO
@@ -375,23 +437,18 @@ export default function Dashboard() {
 
             <button
               type="button"
-
               className="dashboard-refresh-button"
-
               onClick={
                 handleRefresh
               }
-
               disabled={
                 refreshing
               }
-
               title="Check latest account status"
             >
 
               <RefreshCw
                 size={18}
-
                 className={
                   refreshing
                     ? "refresh-spin"
@@ -401,11 +458,13 @@ export default function Dashboard() {
 
 
               <span>
+
                 {
                   refreshing
                     ? "Checking..."
                     : "Refresh"
                 }
+
               </span>
 
             </button>
@@ -418,95 +477,112 @@ export default function Dashboard() {
           </p>
 
 
-          {refreshError && (
+          {
+            refreshError &&
+            (
 
-            <p className="error-message">
-              {refreshError}
-            </p>
+              <p className="error-message">
+                {refreshError}
+              </p>
 
-          )}
+            )
+          }
 
 
           {/* ===============================================
               VERIFIED
           =============================================== */}
 
-          {isVerified && (
+          {
+            isVerified &&
+            (
 
-            <div className="dashboard-verification-approved">
+              <div className="dashboard-verification-approved">
 
-              <span>
-                ✓
-              </span>
-
-
-              <div>
-
-                <strong>
-                  Identity verified
-                </strong>
+                <span>
+                  ✓
+                </span>
 
 
-                <small>
-                  Circles and verified-member features are available.
-                </small>
+                <div>
+
+                  <strong>
+                    Identity verified
+                  </strong>
+
+
+                  <small>
+                    Circles, Food Matches,
+                    Food Invites and
+                    verified-member features
+                    are available.
+                  </small>
+
+                </div>
 
               </div>
 
-            </div>
-
-          )}
+            )
+          }
 
 
           {/* ===============================================
               NOT VERIFIED
           =============================================== */}
 
-          {!isVerified && (
+          {
+            !isVerified &&
+            (
 
-            <Link
-              to="/verification-required"
+              <Link
+                to="/verification-required"
+                className={
+                  `dashboard-verification-banner ${
+                    verificationStatus
+                  }`
+                }
+              >
 
-              className={
-                `dashboard-verification-banner ${
-                  verificationStatus
-                }`
-              }
-            >
-
-              <LockKeyhole
-                size={20}
-              />
-
-
-              <div>
-
-                <strong>
-
-                  {
-                    verificationStatus ===
-                    "pending"
-                      ? "Verification pending"
-
-                      : verificationStatus ===
-                          "rejected"
-                        ? "Verification rejected"
-
-                        : "Identity verification required"
-                  }
-
-                </strong>
+                <LockKeyhole
+                  size={20}
+                />
 
 
-                <span>
-                  {getVerificationMessage()}
-                </span>
+                <div>
 
-              </div>
+                  <strong>
 
-            </Link>
+                    {
+                      verificationStatus ===
+                      "pending"
+                        ? "Verification pending"
 
-          )}
+                        : verificationStatus ===
+                            "rejected"
+                          ? "Verification rejected"
+
+                          : verificationStatus ===
+                              "approved"
+                            ? "Verification activation pending"
+
+                            : "Identity verification required"
+                    }
+
+                  </strong>
+
+
+                  <span>
+                    {
+                      getVerificationMessage()
+                    }
+                  </span>
+
+                </div>
+
+              </Link>
+
+            )
+          }
 
         </div>
 
@@ -517,51 +593,56 @@ export default function Dashboard() {
 
         <Link
           to="/profile"
-
           className="dashboard-profile-identity"
-
           aria-label="Open my FoodKindl profile"
         >
 
           <div className="dashboard-profile-photo-wrap">
 
-            {profileImage ? (
+            {
+              profileImage
+                ? (
 
-              <img
-                src={
-                  profileImage
-                }
+                    <img
+                      src={
+                        profileImage
+                      }
+                      alt={
+                        `${displayName}'s profile`
+                      }
+                      className="dashboard-profile-image"
+                      onError={
+                        (
+                          event
+                        ) => {
 
-                alt={
-                  `${displayName}'s profile`
-                }
-
-                className="dashboard-profile-image"
-
-                onError={(event) => {
-
-                  console.error(
-                    "Dashboard profile image failed:",
-                    profileImage
-                  );
-
-
-                  event.currentTarget
-                    .style
-                    .display =
-                    "none";
+                          console.error(
+                            "Dashboard profile image failed:",
+                            profileImage
+                          );
 
 
-                  event.currentTarget
-                    .nextElementSibling
-                    ?.classList.remove(
-                      "hidden"
-                    );
+                          event
+                            .currentTarget
+                            .style
+                            .display =
+                            "none";
 
-                }}
-              />
 
-            ) : null}
+                          event
+                            .currentTarget
+                            .nextElementSibling
+                            ?.classList
+                            .remove(
+                              "hidden"
+                            );
+                        }
+                      }
+                    />
+
+                  )
+                : null
+            }
 
 
             <div
@@ -582,16 +663,19 @@ export default function Dashboard() {
             </div>
 
 
-            {isVerified && (
+            {
+              isVerified &&
+              (
 
-              <span
-                className="dashboard-verified-dot"
-                title="Verified profile"
-              >
-                ✓
-              </span>
+                <span
+                  className="dashboard-verified-dot"
+                  title="Verified profile"
+                >
+                  ✓
+                </span>
 
-            )}
+              )
+            }
 
           </div>
 
@@ -614,19 +698,31 @@ export default function Dashboard() {
               {
                 isVerified
                   ? "✓ Verified member"
-                  : "Complete verification"
+                  : verificationStatus ===
+                      "pending"
+                    ? "Verification pending"
+                    : verificationStatus ===
+                        "rejected"
+                      ? "Verification rejected"
+                      : verificationStatus ===
+                          "approved"
+                        ? "Verification activation pending"
+                        : "Complete verification"
               }
 
             </span>
 
 
-            {profile.city && (
+            {
+              profile.city &&
+              (
 
-              <small>
-                {profile.city}
-              </small>
+                <small>
+                  {profile.city}
+                </small>
 
-            )}
+              )
+            }
 
 
             <span className="dashboard-view-profile">
@@ -646,103 +742,212 @@ export default function Dashboard() {
 
       <section className="dashboard-grid">
 
-        {cards.map(
-          (
-            card
-          ) => (
+        {
+          cards.map(
+            (
+              card
+            ) => (
 
-            <Link
-              key={
-                card.title
-              }
+              <Link
+                key={
+                  card.title
+                }
+                to={
+                  card.path
+                }
+                className={
+                  [
+                    "dashboard-card",
 
-              to={
-                card.path
-              }
+                    card.locked
+                      ? "locked"
+                      : "",
 
-              className={
-                card.locked
-                  ? "dashboard-card locked"
-                  : "dashboard-card"
-              }
-            >
+                    card.special
+                      ? "food-invite-dashboard-card"
+                      : "",
+                  ]
+                    .filter(Boolean)
+                    .join(" ")
+                }
+              >
 
-              <span className="icon-box">
+                {/* ===========================================
+                    SPECIAL FOOD INVITE BADGE
+                =========================================== */}
 
                 {
-                  card.locked
-                    ? (
-                        <LockKeyhole />
-                      )
-                    : card.icon
+                  card.special &&
+                  !card.locked &&
+                  (
+
+                    <span className="food-invite-dashboard-badge">
+                      NEW
+                    </span>
+
+                  )
                 }
 
-              </span>
 
+                {/* ===========================================
+                    ICON
+                =========================================== */}
 
-              <h2>
-                {card.title}
-              </h2>
+                <span
+                  className={
+                    card.special
+                      ? "icon-box food-invite-dashboard-icon"
+                      : "icon-box"
+                  }
+                >
 
-
-              <p>
-                {card.text}
-              </p>
-
-
-              <span className="dashboard-card-action">
-
-                {
-                  card.locked
-                    ? (
-                        verificationStatus ===
-                        "pending"
-                          ? "Awaiting approval"
-
-                          : verificationStatus ===
-                              "rejected"
-                            ? "Update verification"
-
-                            : "Complete verification"
-                      )
-
-                    : `Explore ${card.title}`
-                }
-
-                {" "}→
-
-              </span>
-
-
-              {card.locked && (
-
-                <span className="dashboard-lock-label">
-
-                  <LockKeyhole
-                    size={15}
-                  />
+                  {
+                    card.locked
+                      ? (
+                          <LockKeyhole />
+                        )
+                      : card.icon
+                  }
 
 
                   {
-                    verificationStatus ===
-                    "pending"
-                      ? "Awaiting admin approval"
+                    card.special &&
+                    !card.locked &&
+                    (
 
-                      : verificationStatus ===
-                          "rejected"
-                        ? "Upload another ID"
+                      <span className="food-invite-dashboard-heart">
+                        ♥
+                      </span>
 
-                        : "Verification required"
+                    )
                   }
 
                 </span>
 
-              )}
 
-            </Link>
+                {/* ===========================================
+                    TITLE
+                =========================================== */}
 
+                <h2>
+                  {card.title}
+                </h2>
+
+
+                {/* ===========================================
+                    DESCRIPTION
+                =========================================== */}
+
+                <p>
+                  {card.text}
+                </p>
+
+
+                {/* ===========================================
+                    FOOD INVITE TYPES
+                =========================================== */}
+
+                {
+                  card.special &&
+                  !card.locked &&
+                  (
+
+                    <div className="food-invite-dashboard-types">
+
+                      <span>
+                        Cook Together
+                      </span>
+
+                      <span>
+                        Dine Out
+                      </span>
+
+                      <span>
+                        Food Walk
+                      </span>
+
+                    </div>
+
+                  )
+                }
+
+
+                {/* ===========================================
+                    ACTION
+                =========================================== */}
+
+                <span className="dashboard-card-action">
+
+                  {
+                    card.locked
+                      ? (
+                          verificationStatus ===
+                          "pending"
+                            ? "Awaiting approval"
+
+                            : verificationStatus ===
+                                "rejected"
+                              ? "Update verification"
+
+                              : verificationStatus ===
+                                  "approved"
+                                ? "Activation pending"
+
+                                : "Complete verification"
+                        )
+
+                      : card.special
+                        ? "Create a Food Invite"
+
+                        : `Explore ${card.title}`
+                  }
+
+                  {" "}→
+
+                </span>
+
+
+                {/* ===========================================
+                    LOCK LABEL
+                =========================================== */}
+
+                {
+                  card.locked &&
+                  (
+
+                    <span className="dashboard-lock-label">
+
+                      <LockKeyhole
+                        size={15}
+                      />
+
+
+                      {
+                        verificationStatus ===
+                        "pending"
+                          ? "Awaiting admin approval"
+
+                          : verificationStatus ===
+                              "rejected"
+                            ? "Upload another ID"
+
+                            : verificationStatus ===
+                                "approved"
+                              ? "Verified status not active"
+
+                              : "Verification required"
+                      }
+
+                    </span>
+
+                  )
+                }
+
+              </Link>
+
+            )
           )
-        )}
+        }
 
       </section>
 

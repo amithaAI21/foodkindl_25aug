@@ -35,6 +35,8 @@ import Settings from "./pages/Settings";
 import SafetyVerification from "./pages/SafetyVerification";
 import SOSSafety from "./pages/SOSSafety";
 
+import FoodInvites from "./pages/FoodInvites";
+
 import {
   useAuth,
 } from "./context/AuthContext";
@@ -42,9 +44,6 @@ import {
 
 // ============================================================
 // PUBLIC DARK PAGES
-//
-// These pages ALWAYS stay in FoodKindl dark mode.
-// Settings do not affect them.
 // ============================================================
 
 const PUBLIC_DARK_PAGES = [
@@ -62,23 +61,30 @@ const PUBLIC_DARK_PAGES = [
 
 // ============================================================
 // SCROLL TO TOP
-//
-// Every time the route changes, the new page starts from
-// the top of the screen.
 // ============================================================
 
 function ScrollToTop() {
+
   const {
     pathname,
   } = useLocation();
 
-  useEffect(() => {
-    window.scrollTo({
-      top: 0,
-      left: 0,
-      behavior: "instant",
-    });
-  }, [pathname]);
+
+  useEffect(
+    () => {
+
+      window.scrollTo({
+        top: 0,
+        left: 0,
+        behavior: "instant",
+      });
+
+    },
+    [
+      pathname,
+    ]
+  );
+
 
   return null;
 }
@@ -89,8 +95,10 @@ function ScrollToTop() {
 // ============================================================
 
 function ThemeController() {
+
   const location =
     useLocation();
+
 
   const [
     systemDark,
@@ -102,109 +110,133 @@ function ThemeController() {
   );
 
 
-  // ----------------------------------------------------------
-  // WATCH OPERATING SYSTEM THEME
-  // ----------------------------------------------------------
+  // =========================================================
+  // WATCH SYSTEM THEME
+  // =========================================================
 
-  useEffect(() => {
-    const mediaQuery =
-      window.matchMedia(
-        "(prefers-color-scheme: dark)"
-      );
+  useEffect(
+    () => {
 
-    function handleChange(
-      event
-    ) {
-      setSystemDark(
-        event.matches
-      );
-    }
+      const mediaQuery =
+        window.matchMedia(
+          "(prefers-color-scheme: dark)"
+        );
 
-    mediaQuery.addEventListener(
-      "change",
-      handleChange
-    );
 
-    return () => {
-      mediaQuery.removeEventListener(
+      function handleChange(
+        event
+      ) {
+
+        setSystemDark(
+          event.matches
+        );
+      }
+
+
+      mediaQuery.addEventListener(
         "change",
         handleChange
       );
-    };
-  }, []);
 
 
-  // ----------------------------------------------------------
+      return () => {
+
+        mediaQuery.removeEventListener(
+          "change",
+          handleChange
+        );
+
+      };
+
+    },
+    []
+  );
+
+
+  // =========================================================
   // APPLY THEME
-  // ----------------------------------------------------------
+  // =========================================================
 
-  useEffect(() => {
-    const body =
-      document.body;
+  useEffect(
+    () => {
 
-    // Remove all old classes first.
-    body.classList.remove(
-      "foodkindl-app-light",
-      "foodkindl-app-dark",
-      "foodkindl-public-dark"
-    );
-
-    // Remove old global theme attribute.
-    // This prevents the landing page from turning white.
-    document.documentElement
-      .removeAttribute(
-        "data-theme"
-      );
+      const body =
+        document.body;
 
 
-    // --------------------------------------------------------
-    // PUBLIC WEBSITE
-    // ALWAYS DARK
-    // --------------------------------------------------------
-
-    if (
-      PUBLIC_DARK_PAGES.includes(
-        location.pathname
-      )
-    ) {
-      body.classList.add(
+      body.classList.remove(
+        "foodkindl-app-light",
+        "foodkindl-app-dark",
         "foodkindl-public-dark"
       );
 
-      return;
-    }
+
+      document.documentElement
+        .removeAttribute(
+          "data-theme"
+        );
 
 
-    // --------------------------------------------------------
-    // LOGGED-IN APP THEME
-    // --------------------------------------------------------
+      // ======================================================
+      // PUBLIC WEBSITE
+      // ======================================================
 
-    const savedTheme =
-      localStorage.getItem(
-        "foodkindl_theme"
-      ) || "dark";
+      if (
+        PUBLIC_DARK_PAGES.includes(
+          location.pathname
+        )
+      ) {
 
-    let resolvedTheme =
-      savedTheme;
+        body.classList.add(
+          "foodkindl-public-dark"
+        );
 
-    if (
-      savedTheme === "system"
-    ) {
-      resolvedTheme =
-        systemDark
-          ? "dark"
-          : "light";
-    }
+        return;
+      }
 
-    body.classList.add(
-      resolvedTheme === "light"
-        ? "foodkindl-app-light"
-        : "foodkindl-app-dark"
-    );
-  }, [
-    location.pathname,
-    systemDark,
-  ]);
+
+      // ======================================================
+      // LOGGED-IN APP
+      // ======================================================
+
+      const savedTheme =
+        localStorage.getItem(
+          "foodkindl_theme"
+        ) || "dark";
+
+
+      let resolvedTheme =
+        savedTheme;
+
+
+      if (
+        savedTheme ===
+        "system"
+      ) {
+
+        resolvedTheme =
+          systemDark
+            ? "dark"
+            : "light";
+      }
+
+
+      body.classList.add(
+
+        resolvedTheme ===
+        "light"
+          ? "foodkindl-app-light"
+          : "foodkindl-app-dark"
+
+      );
+
+    },
+    [
+      location.pathname,
+      systemDark,
+    ]
+  );
+
 
   return null;
 }
@@ -217,27 +249,39 @@ function ThemeController() {
 function Protected({
   children,
 }) {
+
   const {
     user,
     loading,
   } = useAuth();
 
-  if (loading) {
+
+  if (
+    loading
+  ) {
+
     return (
+
       <main className="app-page">
+
         Loading FoodKindl...
+
       </main>
+
     );
   }
+
 
   return user
     ? children
     : (
-      <Navigate
-        to="/login"
-        replace
-      />
-    );
+
+        <Navigate
+          to="/login"
+          replace
+        />
+
+      );
 }
 
 
@@ -248,41 +292,65 @@ function Protected({
 function VerifiedOnly({
   children,
 }) {
+
   const {
     user,
     loading,
   } = useAuth();
 
-  if (loading) {
+
+  if (
+    loading
+  ) {
+
     return (
+
       <main className="app-page">
+
         Checking verification...
+
       </main>
+
     );
   }
 
-  if (!user) {
+
+  if (
+    !user
+  ) {
+
     return (
+
       <Navigate
         to="/login"
         replace
       />
+
     );
   }
 
+
   const approved =
-    user?.profile?.is_verified === true &&
+
+    user?.profile?.is_verified ===
+      true
+
+    &&
+
     user?.profile?.verification_status ===
       "approved";
+
 
   return approved
     ? children
     : (
-      <Navigate
-        to="/verification-required"
-        replace
-      />
-    );
+
+        <Navigate
+          to="/verification-required"
+          replace
+        />
+
+      );
 }
 
 
@@ -291,22 +359,30 @@ function VerifiedOnly({
 // ============================================================
 
 export default function App() {
+
   const {
     user,
   } = useAuth();
 
+
   const location =
     useLocation();
 
+
   const verified =
-    user?.profile?.is_verified === true &&
+
+    user?.profile?.is_verified ===
+      true
+
+    &&
+
     user?.profile?.verification_status ===
       "approved";
 
 
-  // ==========================================================
+  // =========================================================
   // MESSAGING HIDDEN ON PUBLIC PAGES
-  // ==========================================================
+  // =========================================================
 
   const hideMessaging = [
     "/",
@@ -324,18 +400,14 @@ export default function App() {
 
 
   return (
+
     <>
 
       {/* =====================================================
-          SCROLL TO TOP ON ROUTE CHANGE
+          GLOBAL HELPERS
       ===================================================== */}
 
       <ScrollToTop />
-
-
-      {/* =====================================================
-          THEME CONTROLLER
-      ===================================================== */}
 
       <ThemeController />
 
@@ -355,7 +427,7 @@ export default function App() {
 
 
         {/* ===================================================
-            PUBLIC DARK WEBSITE
+            PUBLIC WEBSITE
         =================================================== */}
 
         <Route
@@ -438,8 +510,27 @@ export default function App() {
           path="/dashboard"
           element={
             <Protected>
+
               <Dashboard />
+
             </Protected>
+          }
+        />
+
+
+        {/* ===================================================
+            FOOD INVITES
+            VERIFIED USERS ONLY
+        =================================================== */}
+
+        <Route
+          path="/food-invites"
+          element={
+            <VerifiedOnly>
+
+              <FoodInvites />
+
+            </VerifiedOnly>
           }
         />
 
@@ -452,7 +543,9 @@ export default function App() {
           path="/settings"
           element={
             <Protected>
+
               <Settings />
+
             </Protected>
           }
         />
@@ -466,7 +559,9 @@ export default function App() {
           path="/safety-verification"
           element={
             <Protected>
+
               <SafetyVerification />
+
             </Protected>
           }
         />
@@ -480,7 +575,9 @@ export default function App() {
           path="/sos-safety"
           element={
             <Protected>
+
               <SOSSafety />
+
             </Protected>
           }
         />
@@ -494,7 +591,9 @@ export default function App() {
           path="/ai-kitchen"
           element={
             <Protected>
+
               <AIKitchen />
+
             </Protected>
           }
         />
@@ -508,7 +607,9 @@ export default function App() {
           path="/verification-required"
           element={
             <Protected>
+
               <VerificationRequired />
+
             </Protected>
           }
         />
@@ -522,7 +623,9 @@ export default function App() {
           path="/community"
           element={
             <Protected>
+
               <Community />
+
             </Protected>
           }
         />
@@ -532,7 +635,9 @@ export default function App() {
           path="/community/post/:postId"
           element={
             <Protected>
+
               <CommunityPostDetail />
+
             </Protected>
           }
         />
@@ -546,7 +651,9 @@ export default function App() {
           path="/connect"
           element={
             <VerifiedOnly>
+
               <Connect />
+
             </VerifiedOnly>
           }
         />
@@ -556,7 +663,9 @@ export default function App() {
           path="/connect/member/:memberId"
           element={
             <VerifiedOnly>
+
               <MemberProfile />
+
             </VerifiedOnly>
           }
         />
@@ -570,7 +679,9 @@ export default function App() {
           path="/food"
           element={
             <Protected>
+
               <FoodListings />
+
             </Protected>
           }
         />
@@ -584,7 +695,9 @@ export default function App() {
           path="/profile"
           element={
             <Protected>
+
               <Profile />
+
             </Protected>
           }
         />
@@ -615,10 +728,13 @@ export default function App() {
         verified &&
         !hideMessaging &&
         (
+
           <MessagingDock />
+
         )
       }
 
     </>
+
   );
 }

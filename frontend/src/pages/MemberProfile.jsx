@@ -7,10 +7,13 @@ import {
   ArrowLeft,
   Ban,
   Building2,
+  ChefHat,
+  Heart,
   MapPin,
   MessageCircle,
   ShieldCheck,
   UserRound,
+  UsersRound,
   Utensils,
 } from "lucide-react";
 
@@ -20,8 +23,69 @@ import {
 } from "react-router-dom";
 
 import api from "../api";
-import { useAuth } from "../context/AuthContext";
 
+import {
+  useAuth,
+} from "../context/AuthContext";
+
+
+// ============================================================
+// FOOD VALUE HELPERS
+// ============================================================
+
+function formatFoodValues(
+  value
+) {
+
+  if (!value) {
+    return [];
+  }
+
+  if (Array.isArray(value)) {
+
+    return value
+      .map(
+        (item) =>
+          String(item).trim()
+      )
+      .filter(Boolean);
+
+  }
+
+  return String(value)
+    .split(",")
+    .map(
+      (item) =>
+        item.trim()
+    )
+    .filter(Boolean);
+}
+
+
+function formatLabel(
+  value
+) {
+
+  if (!value) {
+    return "";
+  }
+
+  return String(value)
+    .replaceAll(
+      "_",
+      " "
+    )
+    .replace(
+      /\b\w/g,
+      (letter) =>
+        letter.toUpperCase()
+    );
+}
+
+
+// ============================================================
+// MEMBER PROFILE
+// ============================================================
 
 export default function MemberProfile() {
 
@@ -173,7 +237,11 @@ export default function MemberProfile() {
   ) {
 
     if (!data) {
-      return "The request could not be completed.";
+
+      return (
+        "The request could not be completed."
+      );
+
     }
 
 
@@ -199,153 +267,155 @@ export default function MemberProfile() {
   // LOAD MEMBER
   // =========================================================
 
-  useEffect(() => {
+  useEffect(
+    () => {
 
-    async function loadMember() {
+      async function loadMember() {
 
-      setLoading(true);
+        setLoading(true);
+        setError("");
 
-      setError("");
+
+        try {
+
+          const response =
+            await api.get(
+              `/members/${memberId}/`
+            );
 
 
-      try {
-
-        const response =
-          await api.get(
-            `/members/${memberId}/`
+          setMember(
+            response.data
           );
 
-
-        setMember(
-          response.data
-        );
-
-      } catch (
-        requestError
-      ) {
-
-        console.error(
-          "Unable to load member profile:",
-          requestError.response?.status,
-          requestError.response?.data ||
-            requestError
-        );
-
-
-        if (
+        } catch (
           requestError
-            .response
-            ?.status === 404
         ) {
 
-          setError(
-            "This member was not found."
+          console.error(
+            "Unable to load member profile:",
+            requestError.response?.status,
+            requestError.response?.data ||
+            requestError
           );
 
-        } else {
 
-          setError(
+          if (
             requestError
               .response
-              ?.data
-              ?.detail ||
-            "Member profile could not be loaded."
-          );
+              ?.status === 404
+          ) {
+
+            setError(
+              "This member was not found."
+            );
+
+          } else {
+
+            setError(
+              requestError
+                .response
+                ?.data
+                ?.detail ||
+              "Member profile could not be loaded."
+            );
+
+          }
+
+        } finally {
+
+          setLoading(false);
 
         }
-
-      } finally {
-
-        setLoading(false);
-
       }
 
-    }
 
+      if (memberId) {
+        loadMember();
+      }
 
-    if (memberId) {
-      loadMember();
-    }
-
-  }, [memberId]);
+    },
+    [
+      memberId,
+    ]
+  );
 
 
   // =========================================================
   // LOAD BLOCK STATUS
   // =========================================================
 
-  useEffect(() => {
+  useEffect(
+    () => {
 
-    async function loadBlockStatus() {
+      async function loadBlockStatus() {
 
-      if (!memberId) {
-        return;
-      }
-
-
-      if (
-        String(memberId) ===
-        String(user?.id)
-      ) {
-
-        setBlockedByMe(false);
-
-        setInteractionBlocked(false);
-
-        setBlockStatusLoading(false);
-
-        return;
-
-      }
+        if (!memberId) {
+          return;
+        }
 
 
-      try {
+        if (
+          String(memberId) ===
+          String(user?.id)
+        ) {
 
-        setBlockStatusLoading(true);
+          setBlockedByMe(false);
+          setInteractionBlocked(false);
+          setBlockStatusLoading(false);
+
+          return;
+        }
 
 
-        const response =
-          await api.get(
-            `/auth/block-status/${memberId}/`
+        try {
+
+          setBlockStatusLoading(true);
+
+
+          const response =
+            await api.get(
+              `/auth/block-status/${memberId}/`
+            );
+
+
+          setBlockedByMe(
+            response.data
+              ?.blocked_by_me === true
           );
 
 
-        setBlockedByMe(
-          response.data
-            ?.blocked_by_me === true
-        );
+          setInteractionBlocked(
+            response.data
+              ?.interaction_blocked === true
+          );
 
+        } catch (
+          requestError
+        ) {
 
-        setInteractionBlocked(
-          response.data
-            ?.interaction_blocked === true
-        );
-
-      } catch (
-        requestError
-      ) {
-
-        console.error(
-          "Unable to load block status:",
-          requestError.response?.data ||
+          console.error(
+            "Unable to load block status:",
+            requestError.response?.data ||
             requestError
-        );
+          );
 
-      } finally {
+        } finally {
 
-        setBlockStatusLoading(false);
+          setBlockStatusLoading(false);
 
+        }
       }
 
-    }
 
+      loadBlockStatus();
 
-    loadBlockStatus();
-
-  }, [
-    memberId,
-    user?.id,
-  ]);
+    },
+    [
+      memberId,
+      user?.id,
+    ]
+  );
 
 
   // =========================================================
@@ -363,7 +433,6 @@ export default function MemberProfile() {
       member.id ===
       user?.id
     ) {
-
       return;
     }
 
@@ -382,7 +451,6 @@ export default function MemberProfile() {
     try {
 
       setBlockLoading(true);
-
       setError("");
 
 
@@ -392,7 +460,6 @@ export default function MemberProfile() {
 
 
       setBlockedByMe(true);
-
       setInteractionBlocked(true);
 
     } catch (
@@ -402,7 +469,7 @@ export default function MemberProfile() {
       console.error(
         "Unable to block member:",
         requestError.response?.data ||
-          requestError
+        requestError
       );
 
 
@@ -434,7 +501,6 @@ export default function MemberProfile() {
     try {
 
       setBlockLoading(true);
-
       setError("");
 
 
@@ -464,7 +530,7 @@ export default function MemberProfile() {
       console.error(
         "Unable to unblock member:",
         requestError.response?.data ||
-          requestError
+        requestError
       );
 
 
@@ -519,7 +585,6 @@ export default function MemberProfile() {
 
 
     setMessaging(true);
-
     setError("");
 
 
@@ -559,7 +624,7 @@ export default function MemberProfile() {
         "Unable to start conversation:",
         requestError.response?.status,
         requestError.response?.data ||
-          requestError
+        requestError
       );
 
 
@@ -586,6 +651,7 @@ export default function MemberProfile() {
   if (loading) {
 
     return (
+
       <main className="app-page">
 
         <div className="app-panel">
@@ -593,8 +659,8 @@ export default function MemberProfile() {
         </div>
 
       </main>
-    );
 
+    );
   }
 
 
@@ -608,6 +674,7 @@ export default function MemberProfile() {
   ) {
 
     return (
+
       <main className="app-page">
 
         <p className="error-message">
@@ -620,15 +687,17 @@ export default function MemberProfile() {
           className="secondary-button"
         >
 
-          <ArrowLeft size={18} />
+          <ArrowLeft
+            size={18}
+          />
 
           Back to Connect
 
         </Link>
 
       </main>
-    );
 
+    );
   }
 
 
@@ -655,10 +724,10 @@ export default function MemberProfile() {
   const additionalImages = [
 
     profile.profile_image_2_url ||
-      profile.profile_image_2,
+    profile.profile_image_2,
 
     profile.profile_image_3_url ||
-      profile.profile_image_3,
+    profile.profile_image_3,
 
   ]
     .filter(Boolean)
@@ -668,15 +737,58 @@ export default function MemberProfile() {
 
 
   const location = [
+
     profile.locality,
     profile.city,
+
   ]
     .filter(Boolean)
     .join(", ");
 
 
   const isOwnProfile =
-    member.id === user?.id;
+    member.id ===
+    user?.id;
+
+
+  // =========================================================
+  // FOOD PROFILE DATA
+  // =========================================================
+
+  const favouriteCuisines =
+    formatFoodValues(
+      profile.favorite_cuisines
+    );
+
+
+  const foodInterests =
+    formatFoodValues(
+      profile.interests
+    );
+
+
+  const connectionPreferences =
+    formatFoodValues(
+      profile.food_connection_preferences
+    );
+
+
+  const dietaryPreference =
+    (
+      profile.dietary_preference &&
+      profile.dietary_preference !==
+        "none"
+    )
+      ? formatLabel(
+          profile.dietary_preference
+        )
+      : "No preference";
+
+
+  const isVerified =
+    profile.is_verified === true &&
+    profile.verification_status ===
+      "approved";
 
 
   // =========================================================
@@ -684,17 +796,27 @@ export default function MemberProfile() {
   // =========================================================
 
   return (
+
     <main className="member-profile-page">
 
       <div className="member-profile-container">
+
+
+        {/* ===================================================
+            BACK
+        =================================================== */}
 
         <Link
           to="/connect"
           className="community-back-link"
         >
-          <ArrowLeft size={18} />
+
+          <ArrowLeft
+            size={18}
+          />
 
           Back to Connect
+
         </Link>
 
 
@@ -706,37 +828,45 @@ export default function MemberProfile() {
 
           <div className="member-profile-photo-wrapper">
 
-            {profileImage ? (
+            {
+              profileImage
+                ? (
 
-              <a
-                href={profileImage}
-                target="_blank"
-                rel="noreferrer"
-              >
+                    <a
+                      href={
+                        profileImage
+                      }
+                      target="_blank"
+                      rel="noreferrer"
+                    >
 
-                <img
-                  src={profileImage}
-                  alt={
-                    getMemberName(
-                      member
-                    )
-                  }
-                  className="member-profile-main-photo"
-                />
+                      <img
+                        src={
+                          profileImage
+                        }
+                        alt={
+                          getMemberName(
+                            member
+                          )
+                        }
+                        className="member-profile-main-photo"
+                      />
 
-              </a>
+                    </a>
 
-            ) : (
+                  )
+                : (
 
-              <div className="member-profile-main-placeholder">
+                    <div className="member-profile-main-placeholder">
 
-                <UserRound
-                  size={70}
-                />
+                      <UserRound
+                        size={70}
+                      />
 
-              </div>
+                    </div>
 
-            )}
+                  )
+            }
 
           </div>
 
@@ -749,17 +879,42 @@ export default function MemberProfile() {
 
 
             <h1>
-              {getMemberName(member)}
+              {
+                getMemberName(
+                  member
+                )
+              }
             </h1>
 
 
-            {profile.role && (
+            {
+              isVerified &&
+              (
 
-              <p className="member-profile-role">
-                {profile.role}
-              </p>
+                <div className="member-profile-verified">
 
-            )}
+                  <ShieldCheck
+                    size={16}
+                  />
+
+                  Verified FoodKindl Member
+
+                </div>
+
+              )
+            }
+
+
+            {
+              profile.role &&
+              (
+
+                <p className="member-profile-role">
+                  {profile.role}
+                </p>
+
+              )
+            }
 
 
             <div className="member-profile-actions">
@@ -783,101 +938,101 @@ export default function MemberProfile() {
               }
 
 
-              {!isOwnProfile && (
+              {
+                !isOwnProfile &&
+                (
 
-                <>
-                  <button
-                    type="button"
-                    className="primary-button"
+                  <>
 
-                    onClick={
-                      messageMember
-                    }
+                    <button
+                      type="button"
+                      className="primary-button"
+                      onClick={
+                        messageMember
+                      }
+                      disabled={
+                        messaging ||
+                        interactionBlocked ||
+                        blockStatusLoading
+                      }
+                    >
 
-                    disabled={
-                      messaging ||
-                      interactionBlocked ||
-                      blockStatusLoading
-                    }
-                  >
+                      <MessageCircle
+                        size={19}
+                      />
 
-                    <MessageCircle
-                      size={19}
-                    />
+
+                      {
+                        messaging
+                          ? "Opening chat..."
+                          : interactionBlocked
+                            ? "Interaction unavailable"
+                            : "Message"
+                      }
+
+                    </button>
 
 
                     {
-                      messaging
-                        ? "Opening chat..."
+                      blockedByMe
+                        ? (
 
-                        : interactionBlocked
-                          ? "Interaction unavailable"
+                            <button
+                              type="button"
+                              className="member-unblock-button"
+                              onClick={
+                                unblockMember
+                              }
+                              disabled={
+                                blockLoading
+                              }
+                            >
 
-                          : "Message"
+                              <Ban
+                                size={18}
+                              />
+
+                              {
+                                blockLoading
+                                  ? "Unblocking..."
+                                  : "Unblock"
+                              }
+
+                            </button>
+
+                          )
+                        : (
+
+                            <button
+                              type="button"
+                              className="member-block-button"
+                              onClick={
+                                blockMember
+                              }
+                              disabled={
+                                blockLoading
+                              }
+                            >
+
+                              <Ban
+                                size={18}
+                              />
+
+                              {
+                                blockLoading
+                                  ? "Blocking..."
+                                  : "Block Member"
+                              }
+
+                            </button>
+
+                          )
                     }
 
-                  </button>
+                  </>
 
-
-                  {
-                    blockedByMe
-                      ? (
-
-                          <button
-                            type="button"
-                            className="member-unblock-button"
-
-                            onClick={
-                              unblockMember
-                            }
-
-                            disabled={
-                              blockLoading
-                            }
-                          >
-
-                            <Ban size={18} />
-
-                            {
-                              blockLoading
-                                ? "Unblocking..."
-                                : "Unblock"
-                            }
-
-                          </button>
-
-                        )
-                      : (
-
-                          <button
-                            type="button"
-                            className="member-block-button"
-
-                            onClick={
-                              blockMember
-                            }
-
-                            disabled={
-                              blockLoading
-                            }
-                          >
-
-                            <Ban size={18} />
-
-                            {
-                              blockLoading
-                                ? "Blocking..."
-                                : "Block Member"
-                            }
-
-                          </button>
-
-                        )
-                  }
-
-                </>
-
-              )}
+                )
+              }
 
             </div>
 
@@ -895,13 +1050,16 @@ export default function MemberProfile() {
             }
 
 
-            {error && (
+            {
+              error &&
+              (
 
-              <p className="error-message">
-                {error}
-              </p>
+                <p className="error-message">
+                  {error}
+                </p>
 
-            )}
+              )
+            }
 
           </div>
 
@@ -909,22 +1067,22 @@ export default function MemberProfile() {
 
 
         {/* ===================================================
-            DETAILS
+            BASIC DETAILS
         =================================================== */}
 
         <section className="member-profile-details-grid">
 
           <article className="member-profile-detail-card">
 
-            <MapPin size={22} />
-
+            <MapPin
+              size={22}
+            />
 
             <div>
 
               <small>
                 Location
               </small>
-
 
               <strong>
                 {
@@ -933,15 +1091,19 @@ export default function MemberProfile() {
                 }
               </strong>
 
+              {
+                profile.postcode &&
+                (
 
-              {profile.postcode && (
+                  <span>
+                    Postcode:{" "}
+                    {
+                      profile.postcode
+                    }
+                  </span>
 
-                <span>
-                  Postcode:{" "}
-                  {profile.postcode}
-                </span>
-
-              )}
+                )
+              }
 
             </div>
 
@@ -950,15 +1112,15 @@ export default function MemberProfile() {
 
           <article className="member-profile-detail-card">
 
-            <Building2 size={22} />
-
+            <Building2
+              size={22}
+            />
 
             <div>
 
               <small>
                 College or workplace
               </small>
-
 
               <strong>
                 {
@@ -974,33 +1136,18 @@ export default function MemberProfile() {
 
           <article className="member-profile-detail-card">
 
-            <Utensils size={22} />
-
+            <Utensils
+              size={22}
+            />
 
             <div>
 
               <small>
-                Food preference
+                Dietary Preference
               </small>
 
-
               <strong>
-
-                {
-                  profile.dietary_preference &&
-                  profile.dietary_preference !==
-                    "none"
-
-                    ? profile
-                        .dietary_preference
-                        .replaceAll(
-                          "_",
-                          " "
-                        )
-
-                    : "No preference"
-                }
-
+                {dietaryPreference}
               </strong>
 
             </div>
@@ -1011,7 +1158,285 @@ export default function MemberProfile() {
 
 
         {/* ===================================================
-            ABOUT
+            FOOD PROFILE
+        =================================================== */}
+
+        <section className="app-panel member-food-profile">
+
+          <div className="member-food-profile-heading">
+
+            <div className="eyebrow left">
+              Food Profile
+            </div>
+
+            <h2>
+              Food interests & preferences
+            </h2>
+
+            <p>
+              A quick look at this member's
+              food tastes and how they like
+              to connect through food.
+            </p>
+
+          </div>
+
+
+          <div className="member-food-profile-grid">
+
+
+            {/* ===============================================
+                FAVOURITE CUISINES
+            =============================================== */}
+
+            <article className="member-food-profile-card">
+
+              <div className="member-food-profile-card-icon">
+
+                <ChefHat
+                  size={20}
+                />
+
+              </div>
+
+
+              <div className="member-food-profile-card-content">
+
+                <span className="member-food-profile-label">
+                  Favourite Cuisines
+                </span>
+
+
+                <div className="member-food-tags">
+
+                  {
+                    favouriteCuisines.length >
+                    0
+                      ? (
+
+                          favouriteCuisines.map(
+                            (
+                              cuisine
+                            ) => (
+
+                              <span
+                                key={
+                                  cuisine
+                                }
+                                className="member-food-tag"
+                              >
+
+                                {
+                                  formatLabel(
+                                    cuisine
+                                  )
+                                }
+
+                              </span>
+
+                            )
+                          )
+
+                        )
+                      : (
+
+                          <span className="member-food-empty">
+                            Not added yet
+                          </span>
+
+                        )
+                  }
+
+                </div>
+
+              </div>
+
+            </article>
+
+
+            {/* ===============================================
+                FOOD INTERESTS
+            =============================================== */}
+
+            <article className="member-food-profile-card">
+
+              <div className="member-food-profile-card-icon">
+
+                <Heart
+                  size={20}
+                />
+
+              </div>
+
+
+              <div className="member-food-profile-card-content">
+
+                <span className="member-food-profile-label">
+                  Food Interests
+                </span>
+
+
+                <div className="member-food-tags">
+
+                  {
+                    foodInterests.length >
+                    0
+                      ? (
+
+                          foodInterests.map(
+                            (
+                              interest
+                            ) => (
+
+                              <span
+                                key={
+                                  interest
+                                }
+                                className="member-food-tag"
+                              >
+
+                                {
+                                  formatLabel(
+                                    interest
+                                  )
+                                }
+
+                              </span>
+
+                            )
+                          )
+
+                        )
+                      : (
+
+                          <span className="member-food-empty">
+                            Not added yet
+                          </span>
+
+                        )
+                  }
+
+                </div>
+
+              </div>
+
+            </article>
+
+
+            {/* ===============================================
+                CONNECT THROUGH FOOD
+            =============================================== */}
+
+            <article className="member-food-profile-card">
+
+              <div className="member-food-profile-card-icon">
+
+                <UsersRound
+                  size={20}
+                />
+
+              </div>
+
+
+              <div className="member-food-profile-card-content">
+
+                <span className="member-food-profile-label">
+                  Connect Through Food
+                </span>
+
+
+                <div className="member-food-tags">
+
+                  {
+                    connectionPreferences.length >
+                    0
+                      ? (
+
+                          connectionPreferences.map(
+                            (
+                              preference
+                            ) => (
+
+                              <span
+                                key={
+                                  preference
+                                }
+                                className="member-food-tag"
+                              >
+
+                                {
+                                  formatLabel(
+                                    preference
+                                  )
+                                }
+
+                              </span>
+
+                            )
+                          )
+
+                        )
+                      : (
+
+                          <span className="member-food-empty">
+                            Not added yet
+                          </span>
+
+                        )
+                  }
+
+                </div>
+
+              </div>
+
+            </article>
+
+
+            {/* ===============================================
+                DIETARY PREFERENCE
+            =============================================== */}
+
+            <article className="member-food-profile-card">
+
+              <div className="member-food-profile-card-icon">
+
+                <Utensils
+                  size={20}
+                />
+
+              </div>
+
+
+              <div className="member-food-profile-card-content">
+
+                <span className="member-food-profile-label">
+                  Dietary Preference
+                </span>
+
+
+                <div className="member-food-tags">
+
+                  <span className="member-food-tag member-food-tag-highlight">
+
+                    {
+                      dietaryPreference
+                    }
+
+                  </span>
+
+                </div>
+
+              </div>
+
+            </article>
+
+          </div>
+
+        </section>
+
+
+        {/* ===================================================
+            ABOUT + PHOTOS
         =================================================== */}
 
         <section className="member-profile-content-grid">
@@ -1040,31 +1465,59 @@ export default function MemberProfile() {
             </p>
 
 
-            {profile.interests && (
-              <>
+            {
+              profile.role &&
+              (
 
-                <h3>
-                  Food interests
-                </h3>
+                <>
 
-                <p>
-                  {profile.interests}
-                </p>
+                  <h3>
+                    Role
+                  </h3>
 
-              </>
-            )}
+                  <p>
+                    {profile.role}
+                  </p>
+
+                </>
+
+              )
+            }
+
+
+            {
+              profile.college_workplace &&
+              (
+
+                <>
+
+                  <h3>
+                    College or Workplace
+                  </h3>
+
+                  <p>
+                    {
+                      profile.college_workplace
+                    }
+                  </p>
+
+                </>
+
+              )
+            }
 
           </article>
 
 
           {
-            additionalImages.length > 0 &&
+            additionalImages.length >
+            0 &&
             (
 
               <article className="app-panel">
 
                 <div className="eyebrow left">
-                  More photos
+                  More Photos
                 </div>
 
 
@@ -1078,18 +1531,20 @@ export default function MemberProfile() {
                       ) => (
 
                         <a
-                          href={image}
+                          href={
+                            image
+                          }
                           target="_blank"
                           rel="noreferrer"
-
                           key={
                             `${image}-${index}`
                           }
                         >
 
                           <img
-                            src={image}
-
+                            src={
+                              image
+                            }
                             alt={
                               `${getMemberName(
                                 member
@@ -1097,7 +1552,6 @@ export default function MemberProfile() {
                                 index + 2
                               }`
                             }
-
                             loading="lazy"
                           />
 

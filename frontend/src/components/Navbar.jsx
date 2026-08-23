@@ -1,5 +1,7 @@
 import {
   ChevronDown,
+  ConciergeBell,
+  Heart,
   LogOut,
   Menu,
   Settings,
@@ -55,7 +57,10 @@ export default function Navbar() {
   const API_BASE = (
     import.meta.env.VITE_BACKEND_URL ||
     "http://127.0.0.1:8000"
-  ).replace(/\/+$/, "");
+  ).replace(
+    /\/+$/,
+    ""
+  );
 
 
   // =========================================================
@@ -72,17 +77,27 @@ export default function Navbar() {
 
 
     if (
-      imagePath.startsWith("http://") ||
-      imagePath.startsWith("https://") ||
-      imagePath.startsWith("blob:")
+      imagePath.startsWith(
+        "http://"
+      ) ||
+      imagePath.startsWith(
+        "https://"
+      ) ||
+      imagePath.startsWith(
+        "blob:"
+      )
     ) {
+
       return imagePath;
     }
 
 
     if (
-      imagePath.startsWith("/.netlify/")
+      imagePath.startsWith(
+        "/.netlify/"
+      )
     ) {
+
       return (
         `${window.location.origin}${imagePath}`
       );
@@ -120,7 +135,9 @@ export default function Navbar() {
   // =========================================================
 
   function close() {
+
     setOpen(false);
+
     setProfileMenuOpen(false);
   }
 
@@ -130,7 +147,9 @@ export default function Navbar() {
   // =========================================================
 
   function handleLogout() {
+
     logout();
+
     close();
   }
 
@@ -139,43 +158,50 @@ export default function Navbar() {
   // CLOSE PROFILE MENU WHEN CLICKING OUTSIDE
   // =========================================================
 
-  useEffect(() => {
+  useEffect(
+    () => {
 
-    function handleOutsideClick(
-      event
-    ) {
-
-      if (
-        profileMenuRef.current &&
-        !profileMenuRef.current.contains(
-          event.target
-        )
+      function handleOutsideClick(
+        event
       ) {
-        setProfileMenuOpen(false);
+
+        if (
+          profileMenuRef.current &&
+          !profileMenuRef.current.contains(
+            event.target
+          )
+        ) {
+
+          setProfileMenuOpen(
+            false
+          );
+        }
       }
-    }
 
 
-    document.addEventListener(
-      "mousedown",
-      handleOutsideClick
-    );
-
-
-    return () => {
-
-      document.removeEventListener(
+      document.addEventListener(
         "mousedown",
         handleOutsideClick
       );
 
-    };
 
-  }, []);
+      return () => {
+
+        document.removeEventListener(
+          "mousedown",
+          handleOutsideClick
+        );
+      };
+
+    },
+    []
+  );
 
 
   return (
+
     <header className="navbar">
+
 
       {/* =====================================================
           LOGO
@@ -184,14 +210,18 @@ export default function Navbar() {
       <Link
         to="/"
         className="brand brand-logo"
-        onClick={close}
+        onClick={
+          close
+        }
         aria-label="FoodKindl Home"
       >
+
         <img
           src="/images/icon.png"
           alt="FoodKindl"
           className="navbar-logo"
         />
+
       </Link>
 
 
@@ -202,30 +232,35 @@ export default function Navbar() {
       <button
         type="button"
         className="mobile-menu-button"
-
-        onClick={() =>
-          setOpen(
-            (
-              current
-            ) => !current
-          )
+        onClick={
+          () =>
+            setOpen(
+              (
+                current
+              ) =>
+                !current
+            )
         }
-
         aria-label="Toggle navigation"
-
         aria-expanded={
           open
         }
       >
+
         {
           open
             ? (
-                <X size={24} />
+                <X
+                  size={24}
+                />
               )
             : (
-                <Menu size={24} />
+                <Menu
+                  size={24}
+                />
               )
         }
+
       </button>
 
 
@@ -244,56 +279,126 @@ export default function Navbar() {
         {
           user
             ? (
+
                 <>
 
                   {/* =========================================
                       LOGGED-IN NAVIGATION
                   ========================================= */}
 
+
+                  {/* COMMUNIQ */}
+
                   <Link
                     to="/community"
-                    onClick={close}
+                    onClick={
+                      close
+                    }
                   >
                     CommuniQ
                   </Link>
 
 
+                  {/* CIRCLES */}
+
                   <Link
                     to="/connect"
-                    onClick={close}
+                    onClick={
+                      close
+                    }
                   >
                     Circles
                   </Link>
 
 
+                  {/* AI KITCHEN */}
+
                   <Link
                     to="/ai-kitchen"
-                    onClick={close}
+                    onClick={
+                      close
+                    }
                     className="ai-kitchen-nav-link"
                   >
+
                     <Sparkles
                       size={17}
                     />
 
                     AI Kitchen
+
                   </Link>
 
 
-                  {/* SHOP - FUTURE */}
+                  {/* =========================================
+                      FOOD INVITES
+                  ========================================= */}
 
-                  {/*
                   <Link
-                    to="/shop"
-                    onClick={close}
+                    to={
+                      isVerified
+                        ? "/food-invites"
+                        : "/verification-required"
+                    }
+                    onClick={
+                      close
+                    }
+                    className="food-invite-nav-link"
+                    title={
+                      isVerified
+                        ? "Create and manage Food Invites"
+                        : "Verification required"
+                    }
                   >
-                    Shop
-                  </Link>
-                  */}
 
+                    <span className="food-invite-nav-icon">
+
+                      <ConciergeBell
+                        size={18}
+                      />
+
+
+                      {
+                        isVerified &&
+                        (
+
+                          <Heart
+                            size={7}
+                            className="food-invite-nav-heart"
+                          />
+
+                        )
+                      }
+
+                    </span>
+
+
+                    <span>
+                      Food Invites
+                    </span>
+
+
+                    {
+                      isVerified &&
+                      (
+
+                        <span className="food-invite-nav-new">
+                          NEW
+                        </span>
+
+                      )
+                    }
+
+                  </Link>
+
+
+                  {/* DASHBOARD */}
 
                   <Link
                     to="/dashboard"
-                    onClick={close}
+                    onClick={
+                      close
+                    }
                   >
                     Dashboard
                   </Link>
@@ -305,23 +410,24 @@ export default function Navbar() {
 
                   <div
                     className="navbar-profile-menu"
-                    ref={profileMenuRef}
+                    ref={
+                      profileMenuRef
+                    }
                   >
 
                     <button
                       type="button"
                       className="navbar-avatar-button"
-
-                      onClick={() =>
-                        setProfileMenuOpen(
-                          (
-                            current
-                          ) => !current
-                        )
+                      onClick={
+                        () =>
+                          setProfileMenuOpen(
+                            (
+                              current
+                            ) =>
+                              !current
+                          )
                       }
-
                       aria-label="Open profile menu"
-
                       aria-expanded={
                         profileMenuOpen
                       }
@@ -332,15 +438,23 @@ export default function Navbar() {
                         {
                           profileImage
                             ? (
+
                                 <img
-                                  src={profileImage}
-                                  alt={displayName}
+                                  src={
+                                    profileImage
+                                  }
+                                  alt={
+                                    displayName
+                                  }
                                 />
+
                               )
                             : (
+
                                 <UserRound
                                   size={20}
                                 />
+
                               )
                         }
 
@@ -348,12 +462,14 @@ export default function Navbar() {
                         {
                           isVerified &&
                           (
+
                             <span
                               className="navbar-avatar-verified"
                               title="Verified"
                             >
                               ✓
                             </span>
+
                           )
                         }
 
@@ -362,7 +478,6 @@ export default function Navbar() {
 
                       <ChevronDown
                         size={16}
-
                         className={
                           profileMenuOpen
                             ? "navbar-chevron open"
@@ -389,15 +504,23 @@ export default function Navbar() {
                               {
                                 profileImage
                                   ? (
+
                                       <img
-                                        src={profileImage}
-                                        alt={displayName}
+                                        src={
+                                          profileImage
+                                        }
+                                        alt={
+                                          displayName
+                                        }
                                       />
+
                                     )
                                   : (
+
                                       <UserRound
                                         size={24}
                                       />
+
                                     )
                               }
 
@@ -407,7 +530,9 @@ export default function Navbar() {
                             <div>
 
                               <strong>
-                                {displayName}
+                                {
+                                  displayName
+                                }
                               </strong>
 
 
@@ -418,11 +543,13 @@ export default function Navbar() {
                                     : "navbar-profile-status"
                                 }
                               >
+
                                 {
                                   isVerified
                                     ? "✓ Verified member"
                                     : "Verification incomplete"
                                 }
+
                               </span>
 
                             </div>
@@ -438,8 +565,11 @@ export default function Navbar() {
                           <Link
                             to="/profile"
                             className="navbar-dropdown-item"
-                            onClick={close}
+                            onClick={
+                              close
+                            }
                           >
+
                             <UserRound
                               size={18}
                             />
@@ -447,6 +577,7 @@ export default function Navbar() {
                             <span>
                               My Profile
                             </span>
+
                           </Link>
 
 
@@ -455,8 +586,11 @@ export default function Navbar() {
                           <Link
                             to="/settings"
                             className="navbar-dropdown-item"
-                            onClick={close}
+                            onClick={
+                              close
+                            }
                           >
+
                             <Settings
                               size={18}
                             />
@@ -464,6 +598,7 @@ export default function Navbar() {
                             <span>
                               Settings
                             </span>
+
                           </Link>
 
 
@@ -472,11 +607,15 @@ export default function Navbar() {
                           <Link
                             to="/safety-verification"
                             className="navbar-dropdown-item"
-                            onClick={close}
+                            onClick={
+                              close
+                            }
                           >
+
                             <ShieldCheck
                               size={18}
                             />
+
 
                             <div>
 
@@ -486,14 +625,17 @@ export default function Navbar() {
 
 
                               <small>
+
                                 {
                                   isVerified
                                     ? "Identity verified"
                                     : "Complete verification"
                                 }
+
                               </small>
 
                             </div>
+
                           </Link>
 
 
@@ -505,8 +647,11 @@ export default function Navbar() {
                           <button
                             type="button"
                             className="navbar-dropdown-item logout"
-                            onClick={handleLogout}
+                            onClick={
+                              handleLogout
+                            }
                           >
+
                             <LogOut
                               size={18}
                             />
@@ -514,6 +659,7 @@ export default function Navbar() {
                             <span>
                               Logout
                             </span>
+
                           </button>
 
                         </div>
@@ -524,9 +670,10 @@ export default function Navbar() {
                   </div>
 
                 </>
-              )
 
+              )
             : (
+
                 <>
 
                   {/* =========================================
@@ -535,40 +682,33 @@ export default function Navbar() {
 
                   <Link
                     to="/login"
-                    onClick={close}
+                    onClick={
+                      close
+                    }
                     className="public-nav-link"
                   >
                     FoodKindl Connect
                   </Link>
 
 
-                  {/* SHOP - FUTURE */}
-
-                  {/*
-                  <Link
-                    to="/shop"
-                    onClick={close}
-                    className="public-nav-link"
-                  >
-                    Shop
-                  </Link>
-                  */}
-
-
                   <Link
                     className="launch-button"
                     to="/login"
-                    onClick={close}
+                    onClick={
+                      close
+                    }
                   >
                     Launch FoodKindl App
                   </Link>
 
                 </>
+
               )
         }
 
       </nav>
 
     </header>
+
   );
 }

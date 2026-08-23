@@ -34,20 +34,120 @@ const initialFiles = {
 
 
 // ============================================================
+// FOOD MATCH OPTIONS
+// ============================================================
+
+const FOOD_INTEREST_OPTIONS = [
+  "Home Cooking",
+  "Cooking Together",
+  "Dining Out",
+  "Food Exploring",
+  "Baking",
+  "Street Food",
+  "Healthy Cooking",
+  "Food Photography",
+  "Food Videos",
+  "Learning Recipes",
+  "Hosting Food Gatherings",
+  "Potluck",
+];
+
+
+const CUISINE_OPTIONS = [
+  "Kerala",
+  "South Indian",
+  "North Indian",
+  "Punjabi",
+  "Gujarati",
+  "Bengali",
+  "Goan",
+  "Maharashtrian",
+  "Andhra",
+  "Tamil",
+  "Hyderabadi",
+  "Chinese",
+  "Italian",
+  "Thai",
+  "Japanese",
+  "Korean",
+  "Mexican",
+  "Mediterranean",
+  "Continental",
+];
+
+
+const CONNECTION_OPTIONS = [
+  "Cook Together",
+  "Dine Out",
+  "Food Gatherings",
+  "Potluck",
+  "Food Walks",
+  "Learn Recipes",
+  "Meet New People",
+];
+
+
+// ============================================================
 // DIETARY PREFERENCE
 // ============================================================
 
 function normalizeDietaryPreference(
   value
 ) {
+
   if (
     !value ||
     value === "none"
   ) {
+
     return "non_vegetarian";
+
   }
 
   return value;
+}
+
+
+// ============================================================
+// COMMA-SEPARATED FIELD HELPERS
+// ============================================================
+
+function stringToArray(
+  value
+) {
+
+  if (!value) {
+    return [];
+  }
+
+
+  if (Array.isArray(value)) {
+
+    return value
+      .map(
+        (item) =>
+          String(item).trim()
+      )
+      .filter(Boolean);
+
+  }
+
+
+  return String(value)
+    .split(",")
+    .map(
+      (item) =>
+        item.trim()
+    )
+    .filter(Boolean);
+}
+
+
+function arrayToString(
+  values
+) {
+
+  return values.join(",");
 }
 
 
@@ -59,28 +159,37 @@ async function uploadMediaToNetlify(
   file,
   uploadType = "public"
 ) {
+
   if (!file) {
+
     throw new Error(
       "No file selected."
     );
+
   }
+
 
   const formData =
     new FormData();
+
 
   formData.append(
     "file",
     file
   );
 
+
   formData.append(
     "upload_type",
     uploadType
   );
 
+
   let response;
 
+
   try {
+
     response =
       await fetch(
         "/.netlify/functions/media-upload",
@@ -90,34 +199,47 @@ async function uploadMediaToNetlify(
         }
       );
 
-  } catch (networkError) {
+  } catch (
+    networkError
+  ) {
+
     console.error(
       "NETLIFY UPLOAD NETWORK ERROR:",
       networkError
     );
+
 
     throw new Error(
       "Could not connect to the media upload service."
     );
   }
 
+
   const responseText =
     await response.text();
 
+
   let data = null;
 
+
   if (responseText) {
+
     try {
+
       data =
         JSON.parse(
           responseText
         );
 
-    } catch (parseError) {
+    } catch (
+      parseError
+    ) {
+
       console.error(
         "NETLIFY INVALID RESPONSE:",
         responseText
       );
+
 
       throw new Error(
         "Media upload returned an invalid response."
@@ -125,7 +247,9 @@ async function uploadMediaToNetlify(
     }
   }
 
+
   if (!response.ok) {
+
     console.error(
       "NETLIFY UPLOAD FAILED:",
       {
@@ -138,6 +262,7 @@ async function uploadMediaToNetlify(
       }
     );
 
+
     throw new Error(
       data?.error ||
       data?.detail ||
@@ -145,24 +270,29 @@ async function uploadMediaToNetlify(
     );
   }
 
+
   if (
     !data ||
     !data.success ||
     !data.key
   ) {
+
     throw new Error(
       "Netlify upload did not return a Blob key."
     );
   }
 
+
   if (
     uploadType === "public" &&
     !data.url
   ) {
+
     throw new Error(
       "Profile photo uploaded but no media URL was returned."
     );
   }
+
 
   return data;
 }
@@ -200,9 +330,11 @@ export default function Profile() {
   function getMediaUrl(
     value
   ) {
+
     if (!value) {
       return "";
     }
+
 
     if (
       value.startsWith(
@@ -215,18 +347,24 @@ export default function Profile() {
         "blob:"
       )
     ) {
+
       return value;
+
     }
+
 
     if (
       value.startsWith(
         "/.netlify/"
       )
     ) {
+
       return (
         `${window.location.origin}${value}`
       );
+
     }
+
 
     return (
       `${API_BASE}${value}`
@@ -264,6 +402,14 @@ export default function Profile() {
 
     interests:
       profile.interests || "",
+
+    favorite_cuisines:
+      profile.favorite_cuisines ||
+      "",
+
+    food_connection_preferences:
+      profile.food_connection_preferences ||
+      "",
 
     gender:
       profile.gender || "",
@@ -371,72 +517,155 @@ export default function Profile() {
   // RELOAD FORM
   // ==========================================================
 
-  useEffect(() => {
+  useEffect(
+    () => {
 
-    setForm({
+      setForm({
 
-      bio:
-        profile.bio || "",
+        bio:
+          profile.bio || "",
 
-      city:
-        profile.city || "",
+        city:
+          profile.city || "",
 
-      locality:
-        profile.locality || "",
+        locality:
+          profile.locality || "",
 
-      postcode:
-        profile.postcode || "",
+        postcode:
+          profile.postcode || "",
 
-      college_workplace:
-        profile.college_workplace ||
-        "",
+        college_workplace:
+          profile.college_workplace ||
+          "",
 
-      role:
-        profile.role || "",
+        role:
+          profile.role || "",
 
-      interests:
-        profile.interests || "",
+        interests:
+          profile.interests || "",
 
-      gender:
-        profile.gender || "",
+        favorite_cuisines:
+          profile.favorite_cuisines ||
+          "",
 
-      dietary_preference:
-        normalizeDietaryPreference(
-          profile.dietary_preference
-        ),
+        food_connection_preferences:
+          profile.food_connection_preferences ||
+          "",
 
-      women_only_mode:
-        profile.women_only_mode ||
-        false,
+        gender:
+          profile.gender || "",
 
-      government_id_type:
-        profile.government_id_type ||
-        "",
-    });
+        dietary_preference:
+          normalizeDietaryPreference(
+            profile.dietary_preference
+          ),
+
+        women_only_mode:
+          profile.women_only_mode ||
+          false,
+
+        government_id_type:
+          profile.government_id_type ||
+          "",
+      });
 
 
-    setPreviews({
+      setPreviews({
 
-      profile_image_1:
-        getMediaUrl(
-          profile.profile_image_1_url ||
-          profile.profile_image_1
-        ),
+        profile_image_1:
+          getMediaUrl(
+            profile.profile_image_1_url ||
+            profile.profile_image_1
+          ),
 
-      profile_image_2:
-        getMediaUrl(
-          profile.profile_image_2_url ||
-          profile.profile_image_2
-        ),
+        profile_image_2:
+          getMediaUrl(
+            profile.profile_image_2_url ||
+            profile.profile_image_2
+          ),
 
-      profile_image_3:
-        getMediaUrl(
-          profile.profile_image_3_url ||
-          profile.profile_image_3
-        ),
-    });
+        profile_image_3:
+          getMediaUrl(
+            profile.profile_image_3_url ||
+            profile.profile_image_3
+          ),
+      });
 
-  }, [user]);
+    },
+    [user]
+  );
+
+
+  // ==========================================================
+  // FOOD MATCH SELECTION HELPERS
+  // ==========================================================
+
+  function toggleFoodOption(
+    field,
+    option
+  ) {
+
+    const currentValues =
+      stringToArray(
+        form[field]
+      );
+
+
+    const exists =
+      currentValues.includes(
+        option
+      );
+
+
+    let updatedValues;
+
+
+    if (exists) {
+
+      updatedValues =
+        currentValues.filter(
+          (item) =>
+            item !== option
+        );
+
+    } else {
+
+      updatedValues = [
+        ...currentValues,
+        option,
+      ];
+
+    }
+
+
+    setForm(
+      (
+        previousForm
+      ) => ({
+        ...previousForm,
+
+        [field]:
+          arrayToString(
+            updatedValues
+          ),
+      })
+    );
+  }
+
+
+  function isFoodOptionSelected(
+    field,
+    option
+  ) {
+
+    return (
+      stringToArray(
+        form[field]
+      ).includes(
+        option
+      )
+    );
+  }
 
 
   // ==========================================================
@@ -449,15 +678,18 @@ export default function Profile() {
       return;
     }
 
+
     setRefreshing(true);
 
     setError("");
 
     setMessage("");
 
+
     try {
 
       await reloadUser();
+
 
       setMessage(
         "Profile refreshed."
@@ -472,6 +704,7 @@ export default function Profile() {
         refreshError
       );
 
+
       setError(
         "Profile could not be refreshed."
       );
@@ -479,6 +712,7 @@ export default function Profile() {
     } finally {
 
       setRefreshing(false);
+
     }
   }
 
@@ -588,8 +822,10 @@ export default function Profile() {
           "Profile photos must be JPG, PNG or WebP."
         );
 
+
         event.target.value =
           "";
+
 
         return;
       }
@@ -604,8 +840,10 @@ export default function Profile() {
           "Each profile photo must be smaller than 10 MB."
         );
 
+
         event.target.value =
           "";
+
 
         return;
       }
@@ -658,8 +896,10 @@ export default function Profile() {
           "Government ID must be JPG, PNG, WebP or PDF."
         );
 
+
         event.target.value =
           "";
+
 
         return;
       }
@@ -674,8 +914,10 @@ export default function Profile() {
           "Government ID must be smaller than 5 MB."
         );
 
+
         event.target.value =
           "";
+
 
         return;
       }
@@ -729,9 +971,11 @@ export default function Profile() {
   ) {
 
     if (!data) {
+
       return (
         "Your profile could not be saved."
       );
+
     }
 
 
@@ -739,11 +983,22 @@ export default function Profile() {
       typeof data ===
       "string"
     ) {
+
       return data;
+
     }
 
 
     return (
+      data
+        ?.favorite_cuisines?.[0] ||
+
+      data
+        ?.food_connection_preferences?.[0] ||
+
+      data
+        ?.interests?.[0] ||
+
       data
         ?.profile_image_1_url?.[0] ||
 
@@ -803,6 +1058,7 @@ export default function Profile() {
 
     event.preventDefault();
 
+
     setMessage("");
 
     setError("");
@@ -824,6 +1080,7 @@ export default function Profile() {
       setError(
         "Please select the Government ID type."
       );
+
 
       return;
     }
@@ -847,45 +1104,70 @@ export default function Profile() {
         form.bio
       );
 
+
       formData.append(
         "city",
         form.city
       );
+
 
       formData.append(
         "locality",
         form.locality
       );
 
+
       formData.append(
         "postcode",
         form.postcode
       );
+
 
       formData.append(
         "college_workplace",
         form.college_workplace
       );
 
+
       formData.append(
         "role",
         form.role
       );
+
+
+      // ======================================================
+      // FOOD MATCH DATA
+      // ======================================================
 
       formData.append(
         "interests",
         form.interests
       );
 
+
+      formData.append(
+        "favorite_cuisines",
+        form.favorite_cuisines
+      );
+
+
+      formData.append(
+        "food_connection_preferences",
+        form.food_connection_preferences
+      );
+
+
       formData.append(
         "gender",
         form.gender
       );
 
+
       formData.append(
         "dietary_preference",
         dietaryPreference
       );
+
 
       formData.append(
         "women_only_mode",
@@ -903,6 +1185,7 @@ export default function Profile() {
           "government_id_type",
           form.government_id_type
         );
+
       }
 
 
@@ -987,14 +1270,12 @@ export default function Profile() {
         );
 
 
-        // Blob key
         formData.append(
           "government_id_blob_key",
           uploadedGovernmentId.key
         );
 
 
-        // HTTPS URL
         if (
           uploadedGovernmentId.url
         ) {
@@ -1007,7 +1288,6 @@ export default function Profile() {
         }
 
 
-        // Original filename
         formData.append(
           "government_id_original_name",
           uploadedGovernmentId.filename ||
@@ -1015,7 +1295,6 @@ export default function Profile() {
         );
 
 
-        // Content type
         formData.append(
           "government_id_content_type",
           uploadedGovernmentId.contentType ||
@@ -1104,9 +1383,10 @@ export default function Profile() {
 
 
       if (reloadUser) {
-        await reloadUser();
-      }
 
+        await reloadUser();
+
+      }
 
     } catch (
       requestError
@@ -1136,6 +1416,7 @@ export default function Profile() {
               ?.data
           )
         );
+
       }
 
     } finally {
@@ -1143,6 +1424,7 @@ export default function Profile() {
       setSubmitting(false);
 
       setUploadStatus("");
+
     }
   }
 
@@ -1380,10 +1662,6 @@ export default function Profile() {
       >
 
 
-        {/* ====================================================
-            ABOUT + FOOD IDENTITY
-        ==================================================== */}
-
         <div className="profile-settings-grid">
 
 
@@ -1560,8 +1838,9 @@ export default function Profile() {
                 </h2>
 
                 <p>
-                  Your tastes, preferences and
-                  comfort settings.
+                  Help FoodKindl find people
+                  who share your food tastes
+                  and interests.
                 </p>
 
               </div>
@@ -1655,23 +1934,240 @@ export default function Profile() {
             </label>
 
 
-            <label>
+            {/* ================================================
+                FAVOURITE CUISINES
+            ================================================ */}
 
-              Food Interests
+            <div className="food-match-field">
 
-              <input
-                type="text"
-                name="interests"
-                value={
-                  form.interests
+              <div className="food-match-field-heading">
+
+                <strong>
+                  Favourite Cuisines
+                </strong>
+
+                <span>
+                  Select the cuisines you enjoy.
+                </span>
+
+              </div>
+
+
+              <div className="food-option-grid">
+
+                {
+                  CUISINE_OPTIONS.map(
+                    (
+                      option
+                    ) => {
+
+                      const selected =
+                        isFoodOptionSelected(
+                          "favorite_cuisines",
+                          option
+                        );
+
+
+                      return (
+
+                        <button
+                          key={
+                            option
+                          }
+                          type="button"
+                          className={
+                            selected
+                              ? "food-option selected"
+                              : "food-option"
+                          }
+                          onClick={
+                            () =>
+                              toggleFoodOption(
+                                "favorite_cuisines",
+                                option
+                              )
+                          }
+                        >
+
+                          {
+                            selected &&
+                            (
+                              <CheckCircle2
+                                size={14}
+                              />
+                            )
+                          }
+
+                          {option}
+
+                        </button>
+
+                      );
+                    }
+                  )
                 }
-                onChange={
-                  handleInputChange
-                }
-                placeholder="Home cooking, Kerala cuisine, baking..."
-              />
 
-            </label>
+              </div>
+
+            </div>
+
+
+            {/* ================================================
+                FOOD INTERESTS
+            ================================================ */}
+
+            <div className="food-match-field">
+
+              <div className="food-match-field-heading">
+
+                <strong>
+                  Food Interests
+                </strong>
+
+                <span>
+                  What do you enjoy doing
+                  around food?
+                </span>
+
+              </div>
+
+
+              <div className="food-option-grid">
+
+                {
+                  FOOD_INTEREST_OPTIONS.map(
+                    (
+                      option
+                    ) => {
+
+                      const selected =
+                        isFoodOptionSelected(
+                          "interests",
+                          option
+                        );
+
+
+                      return (
+
+                        <button
+                          key={
+                            option
+                          }
+                          type="button"
+                          className={
+                            selected
+                              ? "food-option selected"
+                              : "food-option"
+                          }
+                          onClick={
+                            () =>
+                              toggleFoodOption(
+                                "interests",
+                                option
+                              )
+                          }
+                        >
+
+                          {
+                            selected &&
+                            (
+                              <CheckCircle2
+                                size={14}
+                              />
+                            )
+                          }
+
+                          {option}
+
+                        </button>
+
+                      );
+                    }
+                  )
+                }
+
+              </div>
+
+            </div>
+
+
+            {/* ================================================
+                CONNECTION PREFERENCES
+            ================================================ */}
+
+            <div className="food-match-field">
+
+              <div className="food-match-field-heading">
+
+                <strong>
+                  How would you like to connect?
+                </strong>
+
+                <span>
+                  Select the food experiences
+                  you're interested in.
+                </span>
+
+              </div>
+
+
+              <div className="food-option-grid">
+
+                {
+                  CONNECTION_OPTIONS.map(
+                    (
+                      option
+                    ) => {
+
+                      const selected =
+                        isFoodOptionSelected(
+                          "food_connection_preferences",
+                          option
+                        );
+
+
+                      return (
+
+                        <button
+                          key={
+                            option
+                          }
+                          type="button"
+                          className={
+                            selected
+                              ? "food-option selected"
+                              : "food-option"
+                          }
+                          onClick={
+                            () =>
+                              toggleFoodOption(
+                                "food_connection_preferences",
+                                option
+                              )
+                          }
+                        >
+
+                          {
+                            selected &&
+                            (
+                              <CheckCircle2
+                                size={14}
+                              />
+                            )
+                          }
+
+                          {option}
+
+                        </button>
+
+                      );
+                    }
+                  )
+                }
+
+              </div>
+
+            </div>
 
 
             {/* ================================================
@@ -2107,8 +2603,9 @@ export default function Profile() {
             </strong>
 
             <span>
-              Your latest information helps
-              build better connections.
+              Better food preferences help
+              FoodKindl find more relevant
+              connections for you.
             </span>
 
           </div>

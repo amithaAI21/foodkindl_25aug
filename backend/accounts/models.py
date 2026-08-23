@@ -160,9 +160,45 @@ class Profile(models.Model):
     )
 
 
+    # ========================================================
+    # FOOD INTERESTS
+    #
+    # Example:
+    # Home Cooking,Baking,Food Exploring
+    # ========================================================
+
     interests = models.CharField(
-        max_length=500,
+        max_length=1000,
         blank=True,
+        default="",
+    )
+
+
+    # ========================================================
+    # FOOD MATCH - FAVOURITE CUISINES
+    #
+    # Example:
+    # Kerala,South Indian,Chinese,Italian
+    # ========================================================
+
+    favorite_cuisines = models.CharField(
+        max_length=1000,
+        blank=True,
+        default="",
+    )
+
+
+    # ========================================================
+    # FOOD MATCH - CONNECTION PREFERENCES
+    #
+    # Example:
+    # Cook Together,Dine Out,Food Gatherings
+    # ========================================================
+
+    food_connection_preferences = models.CharField(
+        max_length=1000,
+        blank=True,
+        default="",
     )
 
 
@@ -301,9 +337,6 @@ class Profile(models.Model):
     # GOVERNMENT ID HTTPS URL
     #
     # Stores the HTTPS URL returned by Netlify.
-    #
-    # Example:
-    # https://foodkindlapp.netlify.app/.netlify/functions/...
     # ========================================================
 
     government_id_url = models.URLField(
@@ -398,7 +431,6 @@ class Profile(models.Model):
         if not user:
             return False
 
-
         return (
             self.blocked_users
             .filter(
@@ -406,6 +438,56 @@ class Profile(models.Model):
             )
             .exists()
         )
+
+
+    # ========================================================
+    # FOOD MATCH HELPERS
+    # ========================================================
+
+    def get_food_interests(self):
+        """
+        Return food interests as a clean Python list.
+        """
+
+        if not self.interests:
+            return []
+
+        return [
+            item.strip()
+            for item in self.interests.split(",")
+            if item.strip()
+        ]
+
+
+    def get_favorite_cuisines(self):
+        """
+        Return favourite cuisines as a clean Python list.
+        """
+
+        if not self.favorite_cuisines:
+            return []
+
+        return [
+            item.strip()
+            for item in self.favorite_cuisines.split(",")
+            if item.strip()
+        ]
+
+
+    def get_food_connection_preferences(self):
+        """
+        Return connection preferences as a clean Python list.
+        """
+
+        if not self.food_connection_preferences:
+            return []
+
+        return [
+            item.strip()
+            for item
+            in self.food_connection_preferences.split(",")
+            if item.strip()
+        ]
 
 
     def __str__(

@@ -5,6 +5,7 @@ from .views import (
     BlockMemberView,
     BlockStatusView,
     EmailLoginView,
+    FoodMatchView,
     MeView,
     ProfileUpdateView,
     RegisterView,
@@ -25,13 +26,11 @@ urlpatterns = [
         name="register",
     ),
 
-
     path(
         "login/",
         EmailLoginView.as_view(),
         name="login",
     ),
-
 
     path(
         "me/",
@@ -48,6 +47,17 @@ urlpatterns = [
         "profile/",
         ProfileUpdateView.as_view(),
         name="profile",
+    ),
+
+
+    # ========================================================
+    # FOOD MATCH
+    # ========================================================
+
+    path(
+        "food-matches/",
+        FoodMatchView.as_view(),
+        name="food-matches",
     ),
 
 
@@ -72,13 +82,11 @@ urlpatterns = [
         name="blocked-members",
     ),
 
-
     path(
         "block/<int:user_id>/",
         BlockMemberView.as_view(),
         name="block-member",
     ),
-
 
     path(
         "unblock/<int:user_id>/",
@@ -86,11 +94,9 @@ urlpatterns = [
         name="unblock-member",
     ),
 
-
     path(
         "block-status/<int:user_id>/",
         BlockStatusView.as_view(),
         name="block-status",
     ),
-
 ]

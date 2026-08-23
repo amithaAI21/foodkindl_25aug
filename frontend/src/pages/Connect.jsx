@@ -1,147 +1,528 @@
-import { useEffect, useState } from "react";
+import {
+  useEffect,
+  useState,
+} from "react";
+
 import {
   Check,
   Clock3,
   MapPin,
   Search,
+  Sparkles,
   UserCheck,
   UserMinus,
   UserPlus,
   UsersRound,
+  Utensils,
   X,
 } from "lucide-react";
-import { Link } from "react-router-dom";
+
+import {
+  Link,
+} from "react-router-dom";
 
 import api from "../api";
-import { useAuth } from "../context/AuthContext";
 
+import {
+  useAuth,
+} from "../context/AuthContext";
+
+
+// ============================================================
+// FOOD MATCH LEVEL
+// ============================================================
+
+function getMatchLevel(
+  score
+) {
+
+  const numericScore =
+    Number(score) || 0;
+
+
+  if (
+    numericScore >= 80
+  ) {
+
+    return {
+      label: "Excellent Match",
+      className: "excellent",
+    };
+
+  }
+
+
+  if (
+    numericScore >= 60
+  ) {
+
+    return {
+      label: "Great Match",
+      className: "great",
+    };
+
+  }
+
+
+  if (
+    numericScore >= 40
+  ) {
+
+    return {
+      label: "Good Match",
+      className: "good",
+    };
+
+  }
+
+
+  return {
+    label: "Potential Match",
+    className: "potential",
+  };
+}
+
+
+// ============================================================
+// CONNECT
+// ============================================================
 
 export default function Connect() {
-  const { user } = useAuth();
 
-  const [activeTab, setActiveTab] =
-    useState("discover");
+  const {
+    user,
+  } = useAuth();
 
-  const [members, setMembers] =
-    useState([]);
+
+  const [
+    activeTab,
+    setActiveTab,
+  ] = useState(
+    "discover"
+  );
+
+
+  const [
+    members,
+    setMembers,
+  ] = useState([]);
+
+
+  const [
+    foodMatches,
+    setFoodMatches,
+  ] = useState([]);
+
 
   const [
     incomingRequests,
     setIncomingRequests,
   ] = useState([]);
 
+
   const [
     sentRequests,
     setSentRequests,
   ] = useState([]);
+
 
   const [
     connections,
     setConnections,
   ] = useState([]);
 
+
   const [
     searchValue,
     setSearchValue,
   ] = useState("");
 
-  const [loading, setLoading] =
-    useState(true);
 
-  const [error, setError] =
-    useState("");
+  const [
+    loading,
+    setLoading,
+  ] = useState(true);
 
-  const [message, setMessage] =
-    useState("");
 
-  const API_BASE =
+  const [
+    error,
+    setError,
+  ] = useState("");
+
+
+  const [
+    message,
+    setMessage,
+  ] = useState("");
+
+
+  const API_BASE = (
     import.meta.env.VITE_BACKEND_URL ||
-    "http://127.0.0.1:8000";
+    "http://127.0.0.1:8000"
+  ).replace(
+    /\/+$/,
+    ""
+  );
 
 
-  // -----------------------------------------
-  // Media helpers
-  // -----------------------------------------
+  // =========================================================
+  // MEDIA URL
+  // =========================================================
 
-  function getMediaUrl(path) {
+  function getMediaUrl(
+    path
+  ) {
+
     if (!path) {
       return "";
     }
 
+
     if (
-      path.startsWith("http://") ||
-      path.startsWith("https://") ||
-      path.startsWith("blob:")
+      path.startsWith(
+        "http://"
+      ) ||
+      path.startsWith(
+        "https://"
+      ) ||
+      path.startsWith(
+        "blob:"
+      )
     ) {
+
       return path;
+
     }
 
-    if (path.startsWith("/.netlify/")) {
-      return `${window.location.origin}${path}`;
+
+    if (
+      path.startsWith(
+        "/.netlify/"
+      )
+    ) {
+
+      return (
+        `${window.location.origin}${path}`
+      );
+
     }
 
-    return `${API_BASE}${path}`;
+
+    return (
+      `${API_BASE}${path}`
+    );
   }
 
 
-  function getMemberName(member) {
+  // =========================================================
+  // MEMBER HELPERS
+  // =========================================================
+
+  function getMemberName(
+    member
+  ) {
+
     return (
       member?.full_name ||
+
       [
         member?.first_name,
         member?.last_name,
       ]
         .filter(Boolean)
         .join(" ") ||
+
       member?.email ||
+
       "FoodKindl Member"
     );
   }
 
 
-  function getMemberInitial(member) {
-    return getMemberName(member)
-      .charAt(0)
-      .toUpperCase();
-  }
+  function getMemberInitial(
+    member
+  ) {
 
-
-  function getMemberPhoto(member) {
-    return getMediaUrl(
-      member?.profile?.profile_image_1_url ||
-      member?.profile?.profile_image_1
+    return (
+      getMemberName(
+        member
+      )
+        .charAt(0)
+        .toUpperCase()
     );
   }
 
 
-  function getOtherMember(connection) {
+  function getMemberPhoto(
+    member
+  ) {
+
+    return getMediaUrl(
+
+      member
+        ?.profile
+        ?.profile_image_1_url
+      ||
+
+      member
+        ?.profile
+        ?.profile_image_1
+    );
+  }
+
+
+  function getOtherMember(
+    connection
+  ) {
+
     if (
       connection.sender?.id ===
       user?.id
     ) {
-      return connection.receiver;
+
+      return (
+        connection.receiver
+      );
+
     }
 
-    return connection.sender;
+
+    return (
+      connection.sender
+    );
   }
 
 
-  // -----------------------------------------
-  // Error helper
-  // -----------------------------------------
+  // =========================================================
+  // FOOD MATCH FOR MEMBER
+  // =========================================================
 
-  function getErrorMessage(data) {
+  function getFoodMatch(
+    memberId
+  ) {
+
+    return (
+      foodMatches.find(
+        (
+          match
+        ) =>
+          Number(
+            match.id
+          ) ===
+          Number(
+            memberId
+          )
+      ) ||
+      null
+    );
+  }
+
+
+  // =========================================================
+  // REAL CONNECTION STATE
+  // =========================================================
+
+  function getMemberConnectionState(
+    member
+  ) {
+
+    const memberId =
+      Number(
+        member?.id
+      );
+
+
+    // =======================================================
+    // ALREADY CONNECTED
+    // =======================================================
+
+    const acceptedConnection =
+      connections.find(
+        (
+          connection
+        ) => {
+
+          const senderId =
+            Number(
+              connection
+                ?.sender
+                ?.id
+            );
+
+
+          const receiverId =
+            Number(
+              connection
+                ?.receiver
+                ?.id
+            );
+
+
+          return (
+            senderId ===
+              memberId
+            ||
+            receiverId ===
+              memberId
+          );
+        }
+      );
+
+
+    if (
+      acceptedConnection
+    ) {
+
+      return {
+        status:
+          "connected",
+
+        connectionId:
+          acceptedConnection.id,
+      };
+
+    }
+
+
+    // =======================================================
+    // REQUEST SENT BY CURRENT USER
+    // =======================================================
+
+    const sentConnection =
+      sentRequests.find(
+        (
+          connection
+        ) =>
+          Number(
+            connection
+              ?.receiver
+              ?.id
+          ) ===
+          memberId
+      );
+
+
+    if (
+      sentConnection
+    ) {
+
+      return {
+        status:
+          "request_sent",
+
+        connectionId:
+          sentConnection.id,
+      };
+
+    }
+
+
+    // =======================================================
+    // REQUEST RECEIVED FROM MEMBER
+    // =======================================================
+
+    const incomingConnection =
+      incomingRequests.find(
+        (
+          connection
+        ) =>
+          Number(
+            connection
+              ?.sender
+              ?.id
+          ) ===
+          memberId
+      );
+
+
+    if (
+      incomingConnection
+    ) {
+
+      return {
+        status:
+          "request_received",
+
+        connectionId:
+          incomingConnection.id,
+      };
+
+    }
+
+
+    // =======================================================
+    // FALLBACK TO MEMBER API STATUS
+    // =======================================================
+
+    const apiStatus =
+      member
+        ?.connection_status;
+
+
+    if (
+      apiStatus ===
+        "connected"
+      ||
+      apiStatus ===
+        "request_sent"
+      ||
+      apiStatus ===
+        "request_received"
+    ) {
+
+      return {
+        status:
+          apiStatus,
+
+        connectionId:
+          member
+            ?.connection_id ||
+          null,
+      };
+
+    }
+
+
+    // =======================================================
+    // DEFAULT
+    // =======================================================
+
+    return {
+      status:
+        "none",
+
+      connectionId:
+        null,
+    };
+  }
+
+
+  // =========================================================
+  // ERROR
+  // =========================================================
+
+  function getErrorMessage(
+    data
+  ) {
+
     if (!data) {
+
       return (
         "The request could not be completed."
       );
+
     }
 
+
     if (
-      typeof data === "string"
+      typeof data ===
+      "string"
     ) {
+
       return data;
+
     }
+
 
     return (
       data?.receiver_id?.[0] ||
@@ -152,72 +533,129 @@ export default function Connect() {
   }
 
 
-  // -----------------------------------------
-  // Load members
-  // -----------------------------------------
+  // =========================================================
+  // LOAD MEMBERS
+  // =========================================================
 
   async function loadMembers(
     query = ""
   ) {
-    setError("");
 
     try {
+
       const response =
         await api.get(
           "/members/",
           {
             params: {
-              q: query.trim(),
+              q:
+                query.trim(),
             },
           }
         );
+
 
       const memberList =
         response.data?.results ||
         response.data;
 
+
       setMembers(
-        Array.isArray(memberList)
+        Array.isArray(
+          memberList
+        )
           ? memberList
           : []
       );
-    } catch (requestError) {
+
+    } catch (
+      requestError
+    ) {
+
       console.error(
         "Unable to load members:",
         requestError.response?.status,
         requestError.response?.data ||
-          requestError
+        requestError
       );
+
 
       const data =
         requestError.response?.data;
 
+
       setError(
         data?.detail ||
-          data?.message ||
-          (
-            typeof data ===
-            "string"
-              ? data
-              : ""
-          ) ||
-          "Registered members could not be loaded."
+        data?.message ||
+        (
+          typeof data ===
+          "string"
+            ? data
+            : ""
+        ) ||
+        "Registered members could not be loaded."
       );
     }
   }
 
 
-  // -----------------------------------------
-  // Load connection data
-  // -----------------------------------------
+  // =========================================================
+  // LOAD FOOD MATCHES
+  // =========================================================
+
+  async function loadFoodMatches() {
+
+    try {
+
+      const response =
+        await api.get(
+          "/auth/food-matches/"
+        );
+
+
+      const results =
+        response.data?.results ||
+        [];
+
+
+      setFoodMatches(
+        Array.isArray(
+          results
+        )
+          ? results
+          : []
+      );
+
+    } catch (
+      requestError
+    ) {
+
+      console.error(
+        "Unable to load Food Matches:",
+        requestError.response?.data ||
+        requestError
+      );
+
+
+      setFoodMatches([]);
+    }
+  }
+
+
+  // =========================================================
+  // LOAD CONNECTION DATA
+  // =========================================================
 
   async function loadConnections() {
+
     try {
+
       const [
         incomingResponse,
         sentResponse,
         acceptedResponse,
       ] = await Promise.all([
+
         api.get(
           "/connections/incoming/"
         ),
@@ -231,31 +669,39 @@ export default function Connect() {
         ),
       ]);
 
+
       setIncomingRequests(
         incomingResponse.data
           ?.results ||
-          incomingResponse.data ||
-          []
+        incomingResponse.data ||
+        []
       );
+
 
       setSentRequests(
         sentResponse.data
           ?.results ||
-          sentResponse.data ||
-          []
+        sentResponse.data ||
+        []
       );
+
 
       setConnections(
         acceptedResponse.data
           ?.results ||
-          acceptedResponse.data ||
-          []
+        acceptedResponse.data ||
+        []
       );
-    } catch (requestError) {
+
+    } catch (
+      requestError
+    ) {
+
       console.error(
         "Unable to load connections:",
         requestError
       );
+
 
       setError(
         "Connection details could not be loaded."
@@ -264,227 +710,380 @@ export default function Connect() {
   }
 
 
-  // -----------------------------------------
-  // Initial load
-  // -----------------------------------------
+  // =========================================================
+  // LOAD PAGE
+  // =========================================================
 
   async function loadPage() {
+
     setLoading(true);
+
     setError("");
+
 
     await Promise.all([
       loadMembers(),
+      loadFoodMatches(),
       loadConnections(),
     ]);
+
 
     setLoading(false);
   }
 
 
-  useEffect(() => {
-    loadPage();
-  }, []);
+  useEffect(
+    () => {
+
+      loadPage();
+
+    },
+    []
+  );
 
 
-  // -----------------------------------------
-  // Search members
-  // -----------------------------------------
+  // =========================================================
+  // SEARCH MEMBERS
+  // =========================================================
 
   async function searchMembers(
     event
   ) {
+
     event.preventDefault();
 
+
     setLoading(true);
+
     setError("");
+
     setMessage("");
 
-    await loadMembers(
-      searchValue
-    );
+
+    await Promise.all([
+
+      loadMembers(
+        searchValue
+      ),
+
+      loadFoodMatches(),
+
+      loadConnections(),
+
+    ]);
+
 
     setLoading(false);
   }
 
+
+  // =========================================================
+  // SHOW ALL
+  // =========================================================
 
   async function showAllMembers() {
+
     setSearchValue("");
 
+
     setLoading(true);
+
     setError("");
+
     setMessage("");
 
-    await loadMembers("");
+
+    await Promise.all([
+
+      loadMembers(""),
+
+      loadFoodMatches(),
+
+      loadConnections(),
+
+    ]);
+
 
     setLoading(false);
   }
 
 
-  // -----------------------------------------
-  // Connection actions
-  // -----------------------------------------
+  // =========================================================
+  // SEND CONNECTION REQUEST
+  // =========================================================
 
   async function sendRequest(
     memberId
   ) {
+
     setError("");
+
     setMessage("");
 
+
     try {
+
       await api.post(
         "/connections/",
         {
-          receiver_id: memberId,
+          receiver_id:
+            memberId,
         }
       );
+
 
       setMessage(
         "Connection request sent."
       );
 
+
       await Promise.all([
+
         loadMembers(
           searchValue
         ),
+
+        loadFoodMatches(),
+
         loadConnections(),
+
       ]);
-    } catch (requestError) {
+
+    } catch (
+      requestError
+    ) {
+
+      console.error(
+        "Unable to send request:",
+        requestError.response?.data ||
+        requestError
+      );
+
+
       setError(
         getErrorMessage(
-          requestError.response?.data
+          requestError
+            .response
+            ?.data
         )
       );
     }
   }
 
 
+  // =========================================================
+  // ACCEPT REQUEST
+  // =========================================================
+
   async function acceptRequest(
     connectionId
   ) {
+
     setError("");
+
     setMessage("");
 
+
     try {
+
       await api.post(
         `/connections/${connectionId}/accept/`
       );
+
 
       setMessage(
         "Connection request accepted."
       );
 
+
       await loadPage();
-    } catch (requestError) {
+
+    } catch (
+      requestError
+    ) {
+
       setError(
         getErrorMessage(
-          requestError.response?.data
+          requestError
+            .response
+            ?.data
         )
       );
     }
   }
 
 
+  // =========================================================
+  // DECLINE REQUEST
+  // =========================================================
+
   async function declineRequest(
     connectionId
   ) {
+
     setError("");
+
     setMessage("");
 
+
     try {
+
       await api.post(
         `/connections/${connectionId}/decline/`
       );
+
 
       setMessage(
         "Connection request declined."
       );
 
+
       await loadPage();
-    } catch (requestError) {
+
+    } catch (
+      requestError
+    ) {
+
       setError(
         getErrorMessage(
-          requestError.response?.data
+          requestError
+            .response
+            ?.data
         )
       );
     }
   }
 
 
+  // =========================================================
+  // CANCEL REQUEST
+  // =========================================================
+
   async function cancelRequest(
     connectionId
   ) {
+
     setError("");
+
     setMessage("");
 
+
+    if (
+      !connectionId
+    ) {
+
+      setError(
+        "Connection request ID is missing."
+      );
+
+      return;
+    }
+
+
     try {
+
       await api.post(
         `/connections/${connectionId}/cancel/`
       );
+
 
       setMessage(
         "Connection request cancelled."
       );
 
+
       await loadPage();
-    } catch (requestError) {
+
+    } catch (
+      requestError
+    ) {
+
       setError(
         getErrorMessage(
-          requestError.response?.data
+          requestError
+            .response
+            ?.data
         )
       );
     }
   }
 
 
+  // =========================================================
+  // REMOVE CONNECTION
+  // =========================================================
+
   async function removeConnection(
     connectionId
   ) {
+
     const confirmed =
       window.confirm(
         "Remove this member from your connections?"
       );
 
+
     if (!confirmed) {
       return;
     }
 
+
     setError("");
+
     setMessage("");
 
+
     try {
+
       await api.post(
         `/connections/${connectionId}/remove/`
       );
+
 
       setMessage(
         "Connection removed."
       );
 
+
       await loadPage();
-    } catch (requestError) {
+
+    } catch (
+      requestError
+    ) {
+
       setError(
         getErrorMessage(
-          requestError.response?.data
+          requestError
+            .response
+            ?.data
         )
       );
     }
   }
 
 
-  // -----------------------------------------
-  // Member UI
-  // -----------------------------------------
+  // =========================================================
+  // MEMBER AVATAR
+  // =========================================================
 
   function renderMemberAvatar(
     member
   ) {
+
     const photo =
-      getMemberPhoto(member);
+      getMemberPhoto(
+        member
+      );
+
 
     if (photo) {
+
       return (
+
         <img
-          src={photo}
+          src={
+            photo
+          }
           alt={
             getMemberName(
               member
@@ -492,24 +1091,57 @@ export default function Connect() {
           }
           className="connect-member-photo"
         />
+
       );
     }
 
+
     return (
+
       <div className="connect-member-placeholder">
-        {getMemberInitial(
-          member
-        )}
+
+        {
+          getMemberInitial(
+            member
+          )
+        }
+
       </div>
+
     );
   }
 
 
+  // =========================================================
+  // MEMBER DETAILS
+  // =========================================================
+
   function renderMemberDetails(
     member
   ) {
+
     const profile =
-      member?.profile || {};
+      member?.profile ||
+      {};
+
+
+    const foodMatch =
+      getFoodMatch(
+        member.id
+      );
+
+
+    const matchScore =
+      Number(
+        foodMatch?.food_match
+      ) || 0;
+
+
+    const matchLevel =
+      getMatchLevel(
+        matchScore
+      );
+
 
     const dietaryLabel =
       profile.dietary_preference
@@ -521,138 +1153,470 @@ export default function Connect() {
             )
         : "";
 
+
     return (
+
       <>
+
         <h3>
-          {getMemberName(member)}
+          {
+            getMemberName(
+              member
+            )
+          }
         </h3>
 
-        {profile.role && (
-          <p className="connect-member-role">
-            {profile.role}
-          </p>
-        )}
 
-        {(
-          profile.city ||
-          profile.locality
-        ) && (
-          <p className="connect-member-location">
-            <MapPin size={15} />
+        {
+          profile.role &&
+          (
 
-            {[
-              profile.locality,
-              profile.city,
-            ]
-              .filter(Boolean)
-              .join(", ")}
-          </p>
-        )}
+            <p className="connect-member-role">
 
-        {profile.college_workplace && (
-          <p>
-            {
-              profile
-                .college_workplace
-            }
-          </p>
-        )}
+              {
+                profile.role
+              }
 
-        {dietaryLabel && (
-          <span className="connect-preference">
-            {dietaryLabel}
-          </span>
-        )}
+            </p>
+
+          )
+        }
+
+
+        {
+          (
+            profile.city ||
+            profile.locality
+          ) &&
+          (
+
+            <p className="connect-member-location">
+
+              <MapPin
+                size={15}
+              />
+
+
+              {
+                [
+                  profile.locality,
+                  profile.city,
+                ]
+                  .filter(Boolean)
+                  .join(", ")
+              }
+
+            </p>
+
+          )
+        }
+
+
+        {
+          profile.college_workplace &&
+          (
+
+            <p>
+
+              {
+                profile
+                  .college_workplace
+              }
+
+            </p>
+
+          )
+        }
+
+
+        {
+          dietaryLabel &&
+          (
+
+            <span className="connect-preference">
+
+              {
+                dietaryLabel
+              }
+
+            </span>
+
+          )
+        }
+
+
+        {/* ===============================================
+            FOOD MATCH
+        =============================================== */}
+
+        {
+          foodMatch &&
+          (
+
+            <div className="connect-food-match">
+
+              <div className="connect-food-match-top">
+
+                <div
+                  className={
+                    `connect-food-match-score ${matchLevel.className}`
+                  }
+                >
+
+                  <Utensils
+                    size={16}
+                  />
+
+
+                  <strong>
+
+                    {
+                      matchScore
+                    }%
+
+                  </strong>
+
+
+                  <span>
+                    Food Match
+                  </span>
+
+                </div>
+
+
+                <div
+                  className={
+                    `connect-food-match-level ${matchLevel.className}`
+                  }
+                >
+
+                  <Sparkles
+                    size={13}
+                  />
+
+
+                  {
+                    matchLevel.label
+                  }
+
+                </div>
+
+              </div>
+
+            </div>
+
+          )
+        }
+
       </>
+
     );
   }
 
 
-  if (loading) {
+  // =========================================================
+  // MEMBER ACTIONS
+  // =========================================================
+
+  function renderMemberActions(
+    member
+  ) {
+
+    const {
+      status:
+        connectionStatus,
+
+      connectionId,
+
+    } =
+      getMemberConnectionState(
+        member
+      );
+
+
     return (
-      <main className="app-page">
-        <div className="app-panel">
-          Loading FoodKindl members...
-        </div>
-      </main>
+
+      <div className="connect-card-actions">
+
+
+        {/* VIEW PROFILE */}
+
+        <Link
+          to={
+            `/connect/member/${member.id}`
+          }
+          className="secondary-button"
+        >
+
+          View Profile
+
+        </Link>
+
+
+        {/* CONNECT */}
+
+        {
+          connectionStatus ===
+          "none" &&
+          (
+
+            <button
+              type="button"
+              className="primary-button"
+              onClick={
+                () =>
+                  sendRequest(
+                    member.id
+                  )
+              }
+            >
+
+              <UserPlus
+                size={17}
+              />
+
+              Connect
+
+            </button>
+
+          )
+        }
+
+
+        {/* REQUEST SENT */}
+
+        {
+          connectionStatus ===
+          "request_sent" &&
+          (
+
+            <button
+              type="button"
+              className="secondary-button"
+              onClick={
+                () =>
+                  cancelRequest(
+                    connectionId
+                  )
+              }
+            >
+
+              <Clock3
+                size={17}
+              />
+
+              Request Sent
+
+            </button>
+
+          )
+        }
+
+
+        {/* REQUEST RECEIVED */}
+
+        {
+          connectionStatus ===
+          "request_received" &&
+          (
+
+            <button
+              type="button"
+              className="primary-button"
+              onClick={
+                () =>
+                  setActiveTab(
+                    "requests"
+                  )
+              }
+            >
+
+              <UserPlus
+                size={17}
+              />
+
+              Review Request
+
+            </button>
+
+          )
+        }
+
+
+        {/* CONNECTED */}
+
+        {
+          connectionStatus ===
+          "connected" &&
+          (
+
+            <span className="connected-badge">
+
+              <UserCheck
+                size={17}
+              />
+
+              Connected
+
+            </span>
+
+          )
+        }
+
+      </div>
+
     );
   }
 
+
+  // =========================================================
+  // LOADING
+  // =========================================================
+
+  if (
+    loading
+  ) {
+
+    return (
+
+      <main className="app-page">
+
+        <div className="app-panel">
+
+          Loading FoodKindl members...
+
+        </div>
+
+      </main>
+
+    );
+  }
+
+
+  // =========================================================
+  // PAGE
+  // =========================================================
 
   return (
+
     <main className="app-page">
+
+
+      {/* =====================================================
+          HEADING
+      ===================================================== */}
+
       <div className="app-heading">
+
         <div>
+
           <div className="eyebrow left">
+
             FoodKindl Connect
+
           </div>
 
+
           <h1>
+
             Discover and connect
+
           </h1>
 
+
           <p>
-            Find FoodKindl members,
-            manage connection requests,
-            and build your food
-            community.
+
+            Discover people who share your
+            food tastes and interests,
+            connect with members and build
+            meaningful food connections.
+
           </p>
+
         </div>
+
       </div>
 
 
-      {/* =================================
-          TOP TABS
-      ================================= */}
+      {/* =====================================================
+          TABS
+      ===================================================== */}
 
       <div className="connect-tabs">
+
+
+        {/* DISCOVER */}
+
         <button
           type="button"
           className={
-            activeTab === "discover"
+            activeTab ===
+            "discover"
               ? "connect-tab active"
               : "connect-tab"
           }
-          onClick={() =>
-            setActiveTab(
-              "discover"
-            )
+          onClick={
+            () =>
+              setActiveTab(
+                "discover"
+              )
           }
         >
-          <Search size={18} />
+
+          <Search
+            size={18}
+          />
 
           Discover Members
+
         </button>
 
 
+        {/* REQUESTS */}
+
         <button
           type="button"
           className={
-            activeTab === "requests"
+            activeTab ===
+            "requests"
               ? "connect-tab active"
               : "connect-tab"
           }
-          onClick={() =>
-            setActiveTab(
-              "requests"
-            )
+          onClick={
+            () =>
+              setActiveTab(
+                "requests"
+              )
           }
         >
-          <UserPlus size={18} />
+
+          <UserPlus
+            size={18}
+          />
 
           Requests
 
-          {incomingRequests.length >
-            0 && (
-            <span className="connect-count">
-              {
-                incomingRequests
-                  .length
-              }
-            </span>
-          )}
+
+          {
+            incomingRequests.length >
+            0 &&
+            (
+
+              <span className="connect-count">
+
+                {
+                  incomingRequests.length
+                }
+
+              </span>
+
+            )
+          }
+
         </button>
 
+
+        {/* CONNECTIONS */}
 
         <button
           type="button"
@@ -662,496 +1626,650 @@ export default function Connect() {
               ? "connect-tab active"
               : "connect-tab"
           }
-          onClick={() =>
-            setActiveTab(
-              "connections"
-            )
+          onClick={
+            () =>
+              setActiveTab(
+                "connections"
+              )
           }
         >
-          <UsersRound size={18} />
+
+          <UsersRound
+            size={18}
+          />
 
           My Connections
+
         </button>
+
       </div>
 
 
-      {error && (
-        <p className="error-message">
-          {error}
-        </p>
-      )}
+      {/* =====================================================
+          STATUS
+      ===================================================== */}
 
+      {
+        error &&
+        (
 
-      {message && (
-        <p className="form-message">
-          {message}
-        </p>
-      )}
+          <p className="error-message">
 
-
-      {/* =================================
-          DISCOVER MEMBERS
-      ================================= */}
-
-      {activeTab === "discover" && (
-        <section>
-          <form
-            className="app-panel connect-search-form"
-            onSubmit={
-              searchMembers
+            {
+              error
             }
-          >
-            <div className="connect-global-search">
-              <Search
-                size={21}
-                className="connect-global-search-icon"
-              />
 
-              <input
-                type="search"
-                value={
-                  searchValue
-                }
-                onChange={(
-                  event
-                ) =>
-                  setSearchValue(
-                    event.target
-                      .value
-                  )
-                }
-                placeholder="Search by name, postcode, city, locality, workplace, role or food preference..."
-                autoComplete="off"
-              />
+          </p>
 
-              <button
-                type="submit"
-                className="primary-button connect-search-button"
-              >
-                <Search
-                  size={18}
-                />
-
-                Search
-              </button>
-            </div>
+        )
+      }
 
 
-            <div className="connect-search-help">
-              Try:
-              {" "}
-              <span>Alex</span>
-              {" · "}
-              <span>560001</span>
-              {" · "}
-              <span>Bengaluru</span>
-              {" · "}
-              <span>Scaler</span>
-              {" · "}
-              <span>Engineer</span>
-              {" · "}
-              <span>Vegetarian</span>
-            </div>
+      {
+        message &&
+        (
+
+          <p className="form-message">
+
+            {
+              message
+            }
+
+          </p>
+
+        )
+      }
 
 
-            <button
-              type="button"
-              className="connect-show-all"
-              onClick={
-                showAllMembers
+      {/* =====================================================
+          DISCOVER MEMBERS
+      ===================================================== */}
+
+      {
+        activeTab ===
+        "discover" &&
+        (
+
+          <section>
+
+
+            {/* SEARCH */}
+
+            <form
+              className="app-panel connect-search-form"
+              onSubmit={
+                searchMembers
               }
             >
-              Show All Members
-            </button>
-          </form>
+
+              <div className="connect-global-search">
+
+                <Search
+                  size={21}
+                  className="connect-global-search-icon"
+                />
 
 
-          {/* RESULTS */}
+                <input
+                  type="search"
+                  value={
+                    searchValue
+                  }
+                  onChange={
+                    (
+                      event
+                    ) =>
+                      setSearchValue(
+                        event
+                          .target
+                          .value
+                      )
+                  }
+                  placeholder="Search by name, postcode, city, locality, workplace, role or food preference..."
+                  autoComplete="off"
+                />
 
-          <div className="connect-member-grid">
-            {members.length ===
-            0 ? (
-              <div className="app-panel">
-                No members matched
-                your search.
+
+                <button
+                  type="submit"
+                  className="primary-button connect-search-button"
+                >
+
+                  <Search
+                    size={18}
+                  />
+
+                  Search
+
+                </button>
+
               </div>
-            ) : (
-              members.map(
-                (member) => (
-                  <article
-                    className="connect-member-card"
-                    key={
-                      member.id
-                    }
-                  >
-                    {renderMemberAvatar(
-                      member
-                    )}
-
-                    <div className="connect-member-info">
-                      {renderMemberDetails(
-                        member
-                      )}
-
-                      <div className="connect-card-actions">
-                        <Link
-                          to={`/connect/member/${member.id}`}
-                          className="secondary-button"
-                        >
-                          View Profile
-                        </Link>
 
 
-                        {member.connection_status ===
-                          "none" && (
-                          <button
-                            type="button"
-                            className="primary-button"
-                            onClick={() =>
-                              sendRequest(
-                                member.id
-                              )
-                            }
-                          >
-                            <UserPlus
-                              size={
-                                17
-                              }
-                            />
+              <div className="connect-search-help">
 
-                            Connect
-                          </button>
-                        )}
+                Try:{" "}
 
+                <span>
+                  Bengaluru
+                </span>
 
-                        {member.connection_status ===
-                          "request_sent" && (
-                          <button
-                            type="button"
-                            className="secondary-button"
-                            onClick={() =>
-                              cancelRequest(
-                                member.connection_id
-                              )
-                            }
-                          >
-                            <Clock3
-                              size={
-                                17
-                              }
-                            />
+                {" · "}
 
-                            Request Sent
-                          </button>
-                        )}
+                <span>
+                  Vegetarian
+                </span>
+
+                {" · "}
+
+                <span>
+                  Kerala
+                </span>
+
+                {" · "}
+
+                <span>
+                  Home Cooking
+                </span>
+
+              </div>
 
 
-                        {member.connection_status ===
-                          "request_received" && (
-                          <button
-                            type="button"
-                            className="primary-button"
-                            onClick={() =>
-                              setActiveTab(
-                                "requests"
-                              )
-                            }
-                          >
-                            Review Request
-                          </button>
-                        )}
+              <button
+                type="button"
+                className="connect-show-all"
+                onClick={
+                  showAllMembers
+                }
+              >
+
+                Show All Members
+
+              </button>
+
+            </form>
 
 
-                        {member.connection_status ===
-                          "connected" && (
-                          <span className="connected-badge">
-                            <UserCheck
-                              size={
-                                17
-                              }
-                            />
+            {/* MEMBER RESULTS */}
 
-                            Connected
-                          </span>
-                        )}
+            <div className="connect-member-grid">
+
+              {
+                members.length ===
+                0
+                  ? (
+
+                      <div className="app-panel">
+
+                        No members matched
+                        your search.
+
                       </div>
-                    </div>
-                  </article>
-                )
-              )
-            )}
-          </div>
-        </section>
-      )}
+
+                    )
+                  : (
+
+                      members.map(
+                        (
+                          member
+                        ) => (
+
+                          <article
+                            className="connect-member-card"
+                            key={
+                              member.id
+                            }
+                          >
+
+                            {
+                              renderMemberAvatar(
+                                member
+                              )
+                            }
 
 
-      {/* =================================
+                            <div className="connect-member-info">
+
+                              {
+                                renderMemberDetails(
+                                  member
+                                )
+                              }
+
+
+                              {
+                                renderMemberActions(
+                                  member
+                                )
+                              }
+
+                            </div>
+
+                          </article>
+
+                        )
+                      )
+
+                    )
+              }
+
+            </div>
+
+          </section>
+
+        )
+      }
+
+
+      {/* =====================================================
           REQUESTS
-      ================================= */}
+      ===================================================== */}
 
-      {activeTab === "requests" && (
-        <section className="connect-request-layout">
+      {
+        activeTab ===
+        "requests" &&
+        (
 
-          <div>
-            <div className="connect-section-heading">
-              <h2>
-                Incoming Requests
-              </h2>
-
-              <span>
-                {
-                  incomingRequests
-                    .length
-                }
-              </span>
-            </div>
+          <section className="connect-request-layout">
 
 
-            <div className="connect-list">
-              {incomingRequests.length ===
-              0 ? (
-                <div className="app-panel">
-                  No incoming
-                  requests.
-                </div>
-              ) : (
-                incomingRequests.map(
-                  (connection) => {
-                    const member =
-                      connection.sender;
+            {/* INCOMING */}
 
-                    return (
-                      <article
-                        className="connect-request-card"
-                        key={
-                          connection.id
-                        }
-                      >
-                        {renderMemberAvatar(
-                          member
-                        )}
+            <div>
 
-                        <div className="connect-request-info">
-                          {renderMemberDetails(
-                            member
-                          )}
+              <div className="connect-section-heading">
 
-                          <div className="connect-card-actions">
-                            <Link
-                              to={`/connect/member/${member.id}`}
-                              className="secondary-button"
-                            >
-                              View Profile
-                            </Link>
+                <h2>
+                  Incoming Requests
+                </h2>
 
-                            <button
-                              type="button"
-                              className="primary-button"
-                              onClick={() =>
-                                acceptRequest(
-                                  connection.id
-                                )
-                              }
-                            >
-                              <Check
-                                size={
-                                  17
-                                }
-                              />
-                              Accept
-                            </button>
-
-                            <button
-                              type="button"
-                              className="secondary-button"
-                              onClick={() =>
-                                declineRequest(
-                                  connection.id
-                                )
-                              }
-                            >
-                              <X
-                                size={
-                                  17
-                                }
-                              />
-                              Decline
-                            </button>
-                          </div>
-                        </div>
-                      </article>
-                    );
+                <span>
+                  {
+                    incomingRequests.length
                   }
-                )
-              )}
-            </div>
-          </div>
+                </span>
 
-
-          <div>
-            <div className="connect-section-heading">
-              <h2>
-                Sent Requests
-              </h2>
-
-              <span>
-                {
-                  sentRequests
-                    .length
-                }
-              </span>
-            </div>
-
-
-            <div className="connect-list">
-              {sentRequests.length ===
-              0 ? (
-                <div className="app-panel">
-                  No pending sent
-                  requests.
-                </div>
-              ) : (
-                sentRequests.map(
-                  (connection) => {
-                    const member =
-                      connection.receiver;
-
-                    return (
-                      <article
-                        className="connect-request-card"
-                        key={
-                          connection.id
-                        }
-                      >
-                        {renderMemberAvatar(
-                          member
-                        )}
-
-                        <div className="connect-request-info">
-                          {renderMemberDetails(
-                            member
-                          )}
-
-                          <div className="connect-card-actions">
-                            <Link
-                              to={`/connect/member/${member.id}`}
-                              className="secondary-button"
-                            >
-                              View Profile
-                            </Link>
-
-                            <button
-                              type="button"
-                              className="secondary-button"
-                              onClick={() =>
-                                cancelRequest(
-                                  connection.id
-                                )
-                              }
-                            >
-                              <X
-                                size={
-                                  17
-                                }
-                              />
-                              Cancel Request
-                            </button>
-                          </div>
-                        </div>
-                      </article>
-                    );
-                  }
-                )
-              )}
-            </div>
-          </div>
-        </section>
-      )}
-
-
-      {/* =================================
-          MY CONNECTIONS
-      ================================= */}
-
-      {activeTab ===
-        "connections" && (
-        <section>
-          <div className="connect-section-heading">
-            <h2>
-              My Connections
-            </h2>
-
-            <span>
-              {connections.length}
-            </span>
-          </div>
-
-
-          <div className="connect-member-grid">
-            {connections.length ===
-            0 ? (
-              <div className="app-panel">
-                You do not have any
-                connections yet.
               </div>
-            ) : (
-              connections.map(
-                (connection) => {
-                  const member =
-                    getOtherMember(
-                      connection
-                    );
 
-                  return (
-                    <article
-                      className="connect-member-card"
-                      key={
-                        connection.id
-                      }
-                    >
-                      {renderMemberAvatar(
-                        member
-                      )}
 
-                      <div className="connect-member-info">
-                        {renderMemberDetails(
-                          member
-                        )}
+              <div className="connect-list">
 
-                        <div className="connect-card-actions">
-                          <Link
-                            to={`/connect/member/${member.id}`}
-                            className="primary-button"
-                          >
-                            View Profile
-                          </Link>
+                {
+                  incomingRequests.length ===
+                  0
+                    ? (
 
-                          <button
-                            type="button"
-                            className="secondary-button"
-                            onClick={() =>
-                              removeConnection(
-                                connection.id
-                              )
-                            }
-                          >
-                            <UserMinus
-                              size={
-                                17
-                              }
-                            />
-                            Remove
-                          </button>
+                        <div className="app-panel">
+
+                          No incoming requests.
+
                         </div>
-                      </div>
-                    </article>
-                  );
+
+                      )
+                    : (
+
+                        incomingRequests.map(
+                          (
+                            connection
+                          ) => {
+
+                            const member =
+                              connection.sender;
+
+
+                            return (
+
+                              <article
+                                className="connect-request-card"
+                                key={
+                                  connection.id
+                                }
+                              >
+
+                                {
+                                  renderMemberAvatar(
+                                    member
+                                  )
+                                }
+
+
+                                <div className="connect-request-info">
+
+                                  {
+                                    renderMemberDetails(
+                                      member
+                                    )
+                                  }
+
+
+                                  <div className="connect-card-actions">
+
+                                    <Link
+                                      to={
+                                        `/connect/member/${member.id}`
+                                      }
+                                      className="secondary-button"
+                                    >
+
+                                      View Profile
+
+                                    </Link>
+
+
+                                    <button
+                                      type="button"
+                                      className="primary-button"
+                                      onClick={
+                                        () =>
+                                          acceptRequest(
+                                            connection.id
+                                          )
+                                      }
+                                    >
+
+                                      <Check
+                                        size={17}
+                                      />
+
+                                      Accept
+
+                                    </button>
+
+
+                                    <button
+                                      type="button"
+                                      className="secondary-button"
+                                      onClick={
+                                        () =>
+                                          declineRequest(
+                                            connection.id
+                                          )
+                                      }
+                                    >
+
+                                      <X
+                                        size={17}
+                                      />
+
+                                      Decline
+
+                                    </button>
+
+                                  </div>
+
+                                </div>
+
+                              </article>
+
+                            );
+                          }
+                        )
+
+                      )
                 }
-              )
-            )}
-          </div>
-        </section>
-      )}
+
+              </div>
+
+            </div>
+
+
+            {/* SENT */}
+
+            <div>
+
+              <div className="connect-section-heading">
+
+                <h2>
+                  Sent Requests
+                </h2>
+
+                <span>
+                  {
+                    sentRequests.length
+                  }
+                </span>
+
+              </div>
+
+
+              <div className="connect-list">
+
+                {
+                  sentRequests.length ===
+                  0
+                    ? (
+
+                        <div className="app-panel">
+
+                          No pending sent requests.
+
+                        </div>
+
+                      )
+                    : (
+
+                        sentRequests.map(
+                          (
+                            connection
+                          ) => {
+
+                            const member =
+                              connection.receiver;
+
+
+                            return (
+
+                              <article
+                                className="connect-request-card"
+                                key={
+                                  connection.id
+                                }
+                              >
+
+                                {
+                                  renderMemberAvatar(
+                                    member
+                                  )
+                                }
+
+
+                                <div className="connect-request-info">
+
+                                  {
+                                    renderMemberDetails(
+                                      member
+                                    )
+                                  }
+
+
+                                  <div className="connect-card-actions">
+
+                                    <Link
+                                      to={
+                                        `/connect/member/${member.id}`
+                                      }
+                                      className="secondary-button"
+                                    >
+
+                                      View Profile
+
+                                    </Link>
+
+
+                                    <button
+                                      type="button"
+                                      className="secondary-button"
+                                      onClick={
+                                        () =>
+                                          cancelRequest(
+                                            connection.id
+                                          )
+                                      }
+                                    >
+
+                                      <X
+                                        size={17}
+                                      />
+
+                                      Cancel Request
+
+                                    </button>
+
+                                  </div>
+
+                                </div>
+
+                              </article>
+
+                            );
+                          }
+                        )
+
+                      )
+                }
+
+              </div>
+
+            </div>
+
+          </section>
+
+        )
+      }
+
+
+      {/* =====================================================
+          MY CONNECTIONS
+      ===================================================== */}
+
+      {
+        activeTab ===
+        "connections" &&
+        (
+
+          <section>
+
+            <div className="connect-section-heading">
+
+              <h2>
+                My Connections
+              </h2>
+
+              <span>
+                {
+                  connections.length
+                }
+              </span>
+
+            </div>
+
+
+            <div className="connect-member-grid">
+
+              {
+                connections.length ===
+                0
+                  ? (
+
+                      <div className="app-panel">
+
+                        You do not have any
+                        connections yet.
+
+                      </div>
+
+                    )
+                  : (
+
+                      connections.map(
+                        (
+                          connection
+                        ) => {
+
+                          const member =
+                            getOtherMember(
+                              connection
+                            );
+
+
+                          return (
+
+                            <article
+                              className="connect-member-card"
+                              key={
+                                connection.id
+                              }
+                            >
+
+                              {
+                                renderMemberAvatar(
+                                  member
+                                )
+                              }
+
+
+                              <div className="connect-member-info">
+
+                                {
+                                  renderMemberDetails(
+                                    member
+                                  )
+                                }
+
+
+                                <div className="connect-card-actions">
+
+                                  <Link
+                                    to={
+                                      `/connect/member/${member.id}`
+                                    }
+                                    className="primary-button"
+                                  >
+
+                                    View Profile
+
+                                  </Link>
+
+
+                                  <button
+                                    type="button"
+                                    className="secondary-button"
+                                    onClick={
+                                      () =>
+                                        removeConnection(
+                                          connection.id
+                                        )
+                                    }
+                                  >
+
+                                    <UserMinus
+                                      size={17}
+                                    />
+
+                                    Remove
+
+                                  </button>
+
+                                </div>
+
+                              </div>
+
+                            </article>
+
+                          );
+                        }
+                      )
+
+                    )
+              }
+
+            </div>
+
+          </section>
+
+        )
+      }
+
     </main>
   );
 }
