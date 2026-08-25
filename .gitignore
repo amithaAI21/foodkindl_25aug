@@ -9,6 +9,7 @@ backend/staticfiles/
 backend/.env
 .env
 .env.*
+**/.env*
 
 # React
 frontend/node_modules/
