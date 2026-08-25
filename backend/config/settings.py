@@ -10,25 +10,11 @@ from dotenv import load_dotenv
 # BASE
 # ============================================================
 
-BASE_DIR = (
-    Path(__file__)
-    .resolve()
-    .parent
-    .parent
-)
+BASE_DIR = Path(__file__).resolve().parent.parent
 
 
 # ============================================================
 # LOAD ENVIRONMENT
-#
-# Local:
-#   backend/.env
-#
-# Production / Render:
-#   Render environment variables
-#
-# override=False ensures Render values are not replaced
-# by values from .env.
 # ============================================================
 
 load_dotenv(
@@ -41,50 +27,26 @@ load_dotenv(
 # ENV HELPERS
 # ============================================================
 
-def get_env_list(
-    name,
-    default="",
-):
+def get_env_list(name, default=""):
     """
     Read comma-separated environment values.
-
-    Example:
-
-    CORS_ALLOWED_ORIGINS=
-        http://localhost:5173,
-        https://foodkindl.org
     """
 
-    value = os.environ.get(
-        name
-    )
+    value = os.environ.get(name)
 
     if value is None:
         value = default
 
-    if isinstance(
-        value,
-        (
-            list,
-            tuple,
-        ),
-    ):
+    if isinstance(value, (list, tuple)):
         return [
-            str(item)
-            .strip()
-            .rstrip("/")
-
+            str(item).strip().rstrip("/")
             for item in value
-
             if str(item).strip()
         ]
 
     return [
         item.strip().rstrip("/")
-
-        for item
-        in str(value).split(",")
-
+        for item in str(value).split(",")
         if item.strip()
     ]
 
@@ -95,12 +57,8 @@ def get_env_list(
 
 SECRET_KEY = os.environ.get(
     "SECRET_KEY",
-    (
-        "django-insecure-"
-        "local-development-key"
-    ),
+    "django-insecure-local-development-key",
 )
-
 
 DEBUG = (
     os.environ.get(
@@ -109,8 +67,7 @@ DEBUG = (
     )
     .strip()
     .lower()
-    ==
-    "true"
+    == "true"
 )
 
 
@@ -123,7 +80,7 @@ ALLOWED_HOSTS = get_env_list(
     (
         "127.0.0.1,"
         "localhost,"
-        "foodkindlapp-nscw.onrender.com,"
+        "foodkindl-25aug.onrender.com,"
         ".onrender.com,"
         "foodkindl.org,"
         "www.foodkindl.org"
@@ -146,12 +103,6 @@ FAST2SMS_API_KEY = (
 
 # ============================================================
 # OPENROUTESERVICE
-#
-# Used for:
-# - Location autocomplete
-# - Geocoding
-# - Route calculation
-# - Car / bike / walk routes
 # ============================================================
 
 ORS_API_KEY = (
@@ -165,24 +116,14 @@ ORS_API_KEY = (
 
 # ============================================================
 # NETLIFY BLOB
-#
-# DEVELOPMENT:
-#   Netlify Dev runs locally on port 8888.
-#
-# PRODUCTION:
-#   Use deployed Netlify Function URL.
 # ============================================================
 
-NETLIFY_BLOB_UPLOAD_SECRET = (
-    os.environ.get(
-        "NETLIFY_BLOB_UPLOAD_SECRET",
-        "",
-    )
+NETLIFY_BLOB_UPLOAD_SECRET = os.environ.get(
+    "NETLIFY_BLOB_UPLOAD_SECRET",
+    "",
 )
 
-
 if DEBUG:
-
     NETLIFY_BLOB_UPLOAD_URL = (
         os.environ.get(
             "NETLIFY_BLOB_UPLOAD_URL",
@@ -194,9 +135,7 @@ if DEBUG:
         )
         .strip()
     )
-
 else:
-
     NETLIFY_BLOB_UPLOAD_URL = (
         os.environ.get(
             "NETLIFY_BLOB_UPLOAD_URL",
@@ -206,13 +145,8 @@ else:
     )
 
     if not NETLIFY_BLOB_UPLOAD_URL:
-
         raise RuntimeError(
-            (
-                "NETLIFY_BLOB_UPLOAD_URL "
-                "must be configured in "
-                "production."
-            )
+            "NETLIFY_BLOB_UPLOAD_URL must be configured in production."
         )
 
 
@@ -221,7 +155,6 @@ else:
 # ============================================================
 
 INSTALLED_APPS = [
-
     # Django
     "django.contrib.admin",
     "django.contrib.auth",
@@ -233,8 +166,8 @@ INSTALLED_APPS = [
     # Third party
     "corsheaders",
     "rest_framework",
-     "import_export",
-      
+    "import_export",
+
     # FoodKindl
     "accounts.apps.AccountsConfig",
     "community",
@@ -249,33 +182,23 @@ INSTALLED_APPS = [
 # ============================================================
 
 MIDDLEWARE = [
+    "django.middleware.security.SecurityMiddleware",
 
-    "django.middleware.security."
-    "SecurityMiddleware",
+    "whitenoise.middleware.WhiteNoiseMiddleware",
 
-    "whitenoise.middleware."
-    "WhiteNoiseMiddleware",
+    "corsheaders.middleware.CorsMiddleware",
 
-    "corsheaders.middleware."
-    "CorsMiddleware",
+    "django.contrib.sessions.middleware.SessionMiddleware",
 
-    "django.contrib.sessions.middleware."
-    "SessionMiddleware",
+    "django.middleware.common.CommonMiddleware",
 
-    "django.middleware.common."
-    "CommonMiddleware",
+    "django.middleware.csrf.CsrfViewMiddleware",
 
-    "django.middleware.csrf."
-    "CsrfViewMiddleware",
+    "django.contrib.auth.middleware.AuthenticationMiddleware",
 
-    "django.contrib.auth.middleware."
-    "AuthenticationMiddleware",
+    "django.contrib.messages.middleware.MessageMiddleware",
 
-    "django.contrib.messages.middleware."
-    "MessageMiddleware",
-
-    "django.middleware.clickjacking."
-    "XFrameOptionsMiddleware",
+    "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
 
 
@@ -283,14 +206,9 @@ MIDDLEWARE = [
 # URLS / WSGI
 # ============================================================
 
-ROOT_URLCONF = (
-    "config.urls"
-)
+ROOT_URLCONF = "config.urls"
 
-
-WSGI_APPLICATION = (
-    "config.wsgi.application"
-)
+WSGI_APPLICATION = "config.wsgi.application"
 
 
 # ============================================================
@@ -299,15 +217,13 @@ WSGI_APPLICATION = (
 
 TEMPLATES = [
     {
-        "BACKEND":
-            "django.template.backends.django.DjangoTemplates",
+        "BACKEND": "django.template.backends.django.DjangoTemplates",
 
         "DIRS": [
             BASE_DIR / "templates",
         ],
 
-        "APP_DIRS":
-            True,
+        "APP_DIRS": True,
 
         "OPTIONS": {
             "context_processors": [
@@ -319,16 +235,10 @@ TEMPLATES = [
         },
     },
 ]
+
+
 # ============================================================
 # DATABASE
-#
-# DEVELOPMENT:
-#   DEBUG=True
-#   SQLite
-#
-# PRODUCTION:
-#   DEBUG=False
-#   PostgreSQL through DATABASE_URL
 # ============================================================
 
 DATABASE_URL = (
@@ -341,60 +251,29 @@ DATABASE_URL = (
 
 
 if DEBUG:
-
-    # ========================================================
-    # DEVELOPMENT - SQLITE
-    # ========================================================
-
     DATABASES = {
-
         "default": {
-
-            "ENGINE":
-                "django.db.backends.sqlite3",
-
-            "NAME":
-                BASE_DIR / "db.sqlite3",
-
+            "ENGINE": "django.db.backends.sqlite3",
+            "NAME": BASE_DIR / "db.sqlite3",
             "OPTIONS": {
-
                 "timeout": 30,
-
             },
-
         },
-
     }
 
 else:
-
-    # ========================================================
-    # PRODUCTION - POSTGRESQL
-    # ========================================================
-
     if not DATABASE_URL:
-
         raise RuntimeError(
-            (
-                "DATABASE_URL is required "
-                "when DEBUG=False."
-            )
+            "DATABASE_URL is required when DEBUG=False."
         )
 
     DATABASES = {
-
-        "default":
-            dj_database_url.parse(
-
-                DATABASE_URL,
-
-                conn_max_age=600,
-
-                conn_health_checks=True,
-
-                ssl_require=True,
-            )
-
+        "default": dj_database_url.parse(
+            DATABASE_URL,
+            conn_max_age=600,
+            conn_health_checks=True,
+            ssl_require=True,
+        )
     }
 
 
@@ -403,7 +282,6 @@ else:
 # ============================================================
 
 AUTH_PASSWORD_VALIDATORS = [
-
     {
         "NAME": (
             "django.contrib.auth."
@@ -411,7 +289,6 @@ AUTH_PASSWORD_VALIDATORS = [
             "UserAttributeSimilarityValidator"
         ),
     },
-
     {
         "NAME": (
             "django.contrib.auth."
@@ -419,7 +296,6 @@ AUTH_PASSWORD_VALIDATORS = [
             "MinimumLengthValidator"
         ),
     },
-
     {
         "NAME": (
             "django.contrib.auth."
@@ -427,7 +303,6 @@ AUTH_PASSWORD_VALIDATORS = [
             "CommonPasswordValidator"
         ),
     },
-
     {
         "NAME": (
             "django.contrib.auth."
@@ -435,7 +310,6 @@ AUTH_PASSWORD_VALIDATORS = [
             "NumericPasswordValidator"
         ),
     },
-
 ]
 
 
@@ -443,17 +317,12 @@ AUTH_PASSWORD_VALIDATORS = [
 # LANGUAGE / TIME
 # ============================================================
 
-LANGUAGE_CODE = (
-    "en-us"
-)
+LANGUAGE_CODE = "en-us"
 
-
-TIME_ZONE = (
-    "Asia/Kolkata"
-)
-
+TIME_ZONE = "Asia/Kolkata"
 
 USE_I18N = True
+
 USE_TZ = True
 
 
@@ -461,37 +330,24 @@ USE_TZ = True
 # STATIC FILES
 # ============================================================
 
-STATIC_URL = (
-    "/static/"
-)
+STATIC_URL = "/static/"
 
-
-STATIC_ROOT = (
-    BASE_DIR /
-    "staticfiles"
-)
-
+STATIC_ROOT = BASE_DIR / "staticfiles"
 
 STORAGES = {
-
     "default": {
-
         "BACKEND": (
             "django.core.files.storage."
             "FileSystemStorage"
         ),
-
     },
 
     "staticfiles": {
-
         "BACKEND": (
             "whitenoise.storage."
             "CompressedManifestStaticFilesStorage"
         ),
-
     },
-
 }
 
 
@@ -499,64 +355,49 @@ STORAGES = {
 # MEDIA
 # ============================================================
 
-MEDIA_URL = (
-    "/media/"
-)
+MEDIA_URL = "/media/"
 
-
-MEDIA_ROOT = (
-    BASE_DIR /
-    "media"
-)
+MEDIA_ROOT = BASE_DIR / "media"
 
 
 # ============================================================
 # CORS
 # ============================================================
 
-CORS_ALLOWED_ORIGINS = (
-    get_env_list(
-
-        "CORS_ALLOWED_ORIGINS",
-
-        (
-            "http://localhost:5173,"
-            "http://127.0.0.1:5173,"
-            "http://localhost:8888,"
-            "http://127.0.0.1:8888,"
-            "https://foodkindlapp.netlify.app,"
-            "https://foodkindl.org,"
-            "https://www.foodkindl.org"
-        ),
-    )
+CORS_ALLOWED_ORIGINS = get_env_list(
+    "CORS_ALLOWED_ORIGINS",
+    (
+        "http://localhost:5173,"
+        "http://127.0.0.1:5173,"
+        "http://localhost:8888,"
+        "http://127.0.0.1:8888,"
+        "https://foodkindlapp.netlify.app,"
+        "https://myfoodkindlapps.netlify.app,"
+        "https://foodkindl.org,"
+        "https://www.foodkindl.org"
+    ),
 )
 
-
-CORS_ALLOW_CREDENTIALS = (
-    True
-)
+CORS_ALLOW_CREDENTIALS = True
 
 
 # ============================================================
 # CSRF
 # ============================================================
 
-CSRF_TRUSTED_ORIGINS = (
-    get_env_list(
-
-        "CSRF_TRUSTED_ORIGINS",
-
-        (
-            "http://localhost:5173,"
-            "http://127.0.0.1:5173,"
-            "http://localhost:8888,"
-            "http://127.0.0.1:8888,"
-            "https://foodkindlapp.netlify.app,"
-            "https://foodkindlapp-nscw.onrender.com,"
-            "https://foodkindl.org,"
-            "https://www.foodkindl.org"
-        ),
-    )
+CSRF_TRUSTED_ORIGINS = get_env_list(
+    "CSRF_TRUSTED_ORIGINS",
+    (
+        "http://localhost:5173,"
+        "http://127.0.0.1:5173,"
+        "http://localhost:8888,"
+        "http://127.0.0.1:8888,"
+        "https://foodkindlapp.netlify.app,"
+        "https://myfoodkindlapps.netlify.app,"
+        "https://foodkindl-25aug.onrender.com,"
+        "https://foodkindl.org,"
+        "https://www.foodkindl.org"
+    ),
 )
 
 
@@ -565,38 +406,27 @@ CSRF_TRUSTED_ORIGINS = (
 # ============================================================
 
 REST_FRAMEWORK = {
-
     "DEFAULT_AUTHENTICATION_CLASSES": (
-
         (
             "rest_framework_simplejwt."
             "authentication."
             "JWTAuthentication"
         ),
-
     ),
 
-
     "DEFAULT_PERMISSION_CLASSES": (
-
         (
             "rest_framework.permissions."
             "IsAuthenticatedOrReadOnly"
         ),
-
     ),
-
 
     "DEFAULT_PAGINATION_CLASS": (
-
         "rest_framework.pagination."
         "PageNumberPagination"
-
     ),
 
-
-    "PAGE_SIZE":
-        12,
+    "PAGE_SIZE": 12,
 }
 
 
@@ -605,22 +435,13 @@ REST_FRAMEWORK = {
 # ============================================================
 
 SIMPLE_JWT = {
+    "ACCESS_TOKEN_LIFETIME": timedelta(hours=4),
 
-    "ACCESS_TOKEN_LIFETIME":
-        timedelta(
-            hours=4
-        ),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=14),
 
-    "REFRESH_TOKEN_LIFETIME":
-        timedelta(
-            days=14
-        ),
+    "ROTATE_REFRESH_TOKENS": True,
 
-    "ROTATE_REFRESH_TOKENS":
-        True,
-
-    "BLACKLIST_AFTER_ROTATION":
-        False,
+    "BLACKLIST_AFTER_ROTATION": False,
 }
 
 
@@ -633,15 +454,9 @@ SECURE_PROXY_SSL_HEADER = (
     "https",
 )
 
+SECURE_CONTENT_TYPE_NOSNIFF = True
 
-SECURE_CONTENT_TYPE_NOSNIFF = (
-    True
-)
-
-
-X_FRAME_OPTIONS = (
-    "DENY"
-)
+X_FRAME_OPTIONS = "DENY"
 
 
 # ============================================================
@@ -649,30 +464,17 @@ X_FRAME_OPTIONS = (
 # ============================================================
 
 if DEBUG:
+    SECURE_SSL_REDIRECT = False
 
-    SECURE_SSL_REDIRECT = (
-        False
-    )
+    SESSION_COOKIE_SECURE = False
 
-    SESSION_COOKIE_SECURE = (
-        False
-    )
+    CSRF_COOKIE_SECURE = False
 
-    CSRF_COOKIE_SECURE = (
-        False
-    )
+    SECURE_HSTS_SECONDS = 0
 
-    SECURE_HSTS_SECONDS = (
-        0
-    )
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = False
 
-    SECURE_HSTS_INCLUDE_SUBDOMAINS = (
-        False
-    )
-
-    SECURE_HSTS_PRELOAD = (
-        False
-    )
+    SECURE_HSTS_PRELOAD = False
 
 
 # ============================================================
@@ -680,39 +482,24 @@ if DEBUG:
 # ============================================================
 
 else:
+    SECURE_SSL_REDIRECT = True
 
-    SECURE_SSL_REDIRECT = (
-        True
-    )
+    SESSION_COOKIE_SECURE = True
 
-    SESSION_COOKIE_SECURE = (
-        True
-    )
+    CSRF_COOKIE_SECURE = True
 
-    CSRF_COOKIE_SECURE = (
-        True
-    )
+    SECURE_HSTS_SECONDS = 31536000
 
-    SECURE_HSTS_SECONDS = (
-        31536000
-    )
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
 
-    SECURE_HSTS_INCLUDE_SUBDOMAINS = (
-        True
-    )
-
-    SECURE_HSTS_PRELOAD = (
-        True
-    )
+    SECURE_HSTS_PRELOAD = True
 
 
 # ============================================================
 # DEFAULT PRIMARY KEY
 # ============================================================
 
-DEFAULT_AUTO_FIELD = (
-    "django.db.models.BigAutoField"
-)
+DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 
 # ============================================================
@@ -720,18 +507,12 @@ DEFAULT_AUTO_FIELD = (
 # ============================================================
 
 LOGGING = {
+    "version": 1,
 
-    "version":
-        1,
-
-    "disable_existing_loggers":
-        False,
-
+    "disable_existing_loggers": False,
 
     "formatters": {
-
         "verbose": {
-
             "format": (
                 "{levelname} "
                 "{asctime} "
@@ -739,75 +520,41 @@ LOGGING = {
                 "{module} "
                 "{message}"
             ),
-
-            "style":
-                "{",
-
+            "style": "{",
         },
-
     },
-
 
     "handlers": {
-
         "console": {
-
-            "class":
-                "logging.StreamHandler",
-
-            "formatter":
-                "verbose",
-
+            "class": "logging.StreamHandler",
+            "formatter": "verbose",
         },
-
     },
-
 
     "loggers": {
-
         "django": {
-
             "handlers": [
-                "console"
+                "console",
             ],
-
-            "level":
-                "INFO",
-
-            "propagate":
-                False,
-
+            "level": "INFO",
+            "propagate": False,
         },
-
 
         "django.request": {
-
             "handlers": [
-                "console"
+                "console",
             ],
-
-            "level":
-                "ERROR",
-
-            "propagate":
-                False,
-
+            "level": "ERROR",
+            "propagate": False,
         },
-
     },
-
 
     "root": {
-
         "handlers": [
-            "console"
+            "console",
         ],
-
-        "level":
-            "INFO",
-
+        "level": "INFO",
     },
-
 }
 
 
@@ -816,75 +563,40 @@ LOGGING = {
 # ============================================================
 
 if DEBUG:
-
-    print(
-        "======================================"
-    )
-
-    print(
-        "FOODKINDL LOCAL DEVELOPMENT"
-    )
-
-    print(
-        "DEBUG:",
-        DEBUG,
-    )
-
-    print(
-        "DATABASE:",
-        "SQLite",
-    )
-
-    print(
-        "DATABASE FILE:",
-        BASE_DIR / "db.sqlite3",
-    )
-
+    print("======================================")
+    print("FOODKINDL LOCAL DEVELOPMENT")
+    print("DEBUG:", DEBUG)
+    print("DATABASE:", "SQLite")
+    print("DATABASE FILE:", BASE_DIR / "db.sqlite3")
     print(
         "NETLIFY BLOB UPLOAD URL:",
         NETLIFY_BLOB_UPLOAD_URL,
     )
-
     print(
         "NETLIFY BLOB SECRET LOADED:",
-        bool(
-            NETLIFY_BLOB_UPLOAD_SECRET
-        ),
+        bool(NETLIFY_BLOB_UPLOAD_SECRET),
     )
-
-    # Do not print the actual API key.
     print(
         "ORS API KEY LOADED:",
-        bool(
-            ORS_API_KEY
-        ),
+        bool(ORS_API_KEY),
     )
-
     print(
         "SECURE_SSL_REDIRECT:",
         SECURE_SSL_REDIRECT,
     )
-
     print(
         "ALLOWED_HOSTS:",
         ALLOWED_HOSTS,
     )
-
     print(
         "CORS_ALLOWED_ORIGINS:",
         CORS_ALLOWED_ORIGINS,
     )
-
     print(
         "CSRF_TRUSTED_ORIGINS:",
         CSRF_TRUSTED_ORIGINS,
     )
-
-    print(
-        "======================================"
-    )
-    
-import os
+    print("======================================")
 
 
 # ============================================================
@@ -905,26 +617,21 @@ EMAIL_BACKEND = (
     "django.core.mail.backends.smtp.EmailBackend"
 )
 
-EMAIL_HOST = (
-    "smtp.gmail.com"
-)
+EMAIL_HOST = "smtp.gmail.com"
 
 EMAIL_PORT = 587
 
 EMAIL_USE_TLS = True
-
 
 EMAIL_HOST_USER = os.getenv(
     "EMAIL_HOST_USER",
     "",
 )
 
-
 EMAIL_HOST_PASSWORD = os.getenv(
     "EMAIL_HOST_PASSWORD",
     "",
 )
-
 
 DEFAULT_FROM_EMAIL = os.getenv(
     "DEFAULT_FROM_EMAIL",
@@ -934,12 +641,6 @@ DEFAULT_FROM_EMAIL = os.getenv(
 
 # ============================================================
 # PASSWORD RESET
-#
-# Django's default password-reset token generator handles
-# expiration and invalidation after password changes.
-# Value is in seconds.
-#
-# 3600 = 1 hour.
 # ============================================================
 
 PASSWORD_RESET_TIMEOUT = 3600
