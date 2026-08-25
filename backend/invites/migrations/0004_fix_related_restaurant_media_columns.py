@@ -12,7 +12,6 @@ class Migration(migrations.Migration):
         # =====================================================
         # RESTAURANT IMAGE
         # =====================================================
-
         migrations.RunSQL(
             sql="""
                 ALTER TABLE invites_restaurantimage
@@ -31,7 +30,6 @@ class Migration(migrations.Migration):
                 ADD COLUMN IF NOT EXISTS image_content_type
                 VARCHAR(120) NOT NULL DEFAULT '';
             """,
-
             reverse_sql="""
                 ALTER TABLE invites_restaurantimage
                 DROP COLUMN IF EXISTS image_content_type;
@@ -46,12 +44,10 @@ class Migration(migrations.Migration):
                 DROP COLUMN IF EXISTS image_blob_key;
             """,
         ),
-
 
         # =====================================================
         # RESTAURANT MENU ITEM
         # =====================================================
-
         migrations.RunSQL(
             sql="""
                 ALTER TABLE invites_restaurantmenuitem
@@ -70,7 +66,6 @@ class Migration(migrations.Migration):
                 ADD COLUMN IF NOT EXISTS image_content_type
                 VARCHAR(120) NOT NULL DEFAULT '';
             """,
-
             reverse_sql="""
                 ALTER TABLE invites_restaurantmenuitem
                 DROP COLUMN IF EXISTS image_content_type;
@@ -86,11 +81,9 @@ class Migration(migrations.Migration):
             """,
         ),
 
-
         # =====================================================
         # RESTAURANT SUBMISSION
         # =====================================================
-
         migrations.RunSQL(
             sql="""
                 ALTER TABLE invites_restaurantsubmission
@@ -109,7 +102,6 @@ class Migration(migrations.Migration):
                 ADD COLUMN IF NOT EXISTS image_content_type
                 VARCHAR(120) NOT NULL DEFAULT '';
             """,
-
             reverse_sql="""
                 ALTER TABLE invites_restaurantsubmission
                 DROP COLUMN IF EXISTS image_content_type;
