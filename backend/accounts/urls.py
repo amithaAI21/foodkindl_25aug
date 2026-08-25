@@ -11,6 +11,8 @@ from .views import (
     RegisterView,
     UnblockMemberView,
     VerificationStatusView,
+    ForgotPasswordView,
+    ResetPasswordView,
 )
 
 
@@ -36,6 +38,30 @@ urlpatterns = [
         "me/",
         MeView.as_view(),
         name="me",
+    ),
+
+
+    # ========================================================
+    # PASSWORD RESET
+    #
+    # Keep these consistent with the rest of the auth routes.
+    # If accounts.urls is included under /api/, the final URLs
+    # become:
+    #
+    # /api/forgot-password/
+    # /api/reset-password/
+    # ========================================================
+
+    path(
+        "forgot-password/",
+        ForgotPasswordView.as_view(),
+        name="forgot-password",
+    ),
+
+    path(
+        "reset-password/",
+        ResetPasswordView.as_view(),
+        name="reset-password",
     ),
 
 

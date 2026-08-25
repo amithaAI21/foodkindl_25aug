@@ -1,0 +1,157 @@
+% extends "admin/base_site.html" %}
+
+{% block content %}
+
+<div
+    style="
+        max-width: 760px;
+        margin: 30px auto;
+        padding: 28px;
+        border: 1px solid #ba2121;
+        border-radius: 12px;
+        background: var(--body-bg, #ffffff);
+    "
+>
+
+    <h1
+        style="
+            margin-top: 0;
+            color: #ba2121;
+        "
+    >
+        ⚠ Delete ALL Restaurant Data?
+    </h1>
+
+
+    <p
+        style="
+            font-size: 16px;
+            line-height: 1.6;
+        "
+    >
+        This action will permanently delete the following:
+    </p>
+
+
+    <ul
+        style="
+            font-size: 16px;
+            line-height: 1.9;
+        "
+    >
+        <li>
+            <strong>
+                {{ restaurant_count }}
+            </strong>
+            Restaurant record{{ restaurant_count|pluralize }}
+        </li>
+
+        <li>
+            <strong>
+                {{ booking_count }}
+            </strong>
+            Restaurant booking{{ booking_count|pluralize }}
+        </li>
+
+        <li>
+            <strong>
+                {{ image_count }}
+            </strong>
+            Restaurant image{{ image_count|pluralize }}
+        </li>
+
+        <li>
+            <strong>
+                {{ menu_count }}
+            </strong>
+            Restaurant menu item{{ menu_count|pluralize }}
+        </li>
+    </ul>
+
+
+    <div
+        style="
+            margin: 20px 0 24px;
+            padding: 16px;
+            border-left: 4px solid #ba2121;
+            background: rgba(186, 33, 33, 0.08);
+        "
+    >
+        <strong>
+            This cannot be undone.
+        </strong>
+
+        <p
+            style="
+                margin-bottom: 0;
+                line-height: 1.6;
+            "
+        >
+            RestaurantSubmission records are not intentionally
+            deleted by this action.
+        </p>
+    </div>
+
+
+    <form method="post">
+
+        {% csrf_token %}
+
+
+        <input
+            type="hidden"
+            name="action"
+            value="{{ action_name }}"
+        >
+
+
+        <input
+            type="hidden"
+            name="confirm_delete_all"
+            value="yes"
+        >
+
+
+        {% for obj in queryset %}
+
+            <input
+                type="hidden"
+                name="_selected_action"
+                value="{{ obj.pk }}"
+            >
+
+        {% endfor %}
+
+
+        <button
+            type="submit"
+            class="deletelink"
+            style="
+                display: inline-block;
+                padding: 12px 20px;
+                border: 0;
+                border-radius: 6px;
+                cursor: pointer;
+                font-weight: 700;
+            "
+        >
+            Yes, permanently delete all restaurant data
+        </button>
+
+
+        <a
+            href=".."
+            class="button"
+            style="
+                margin-left: 10px;
+                padding: 12px 20px;
+            "
+        >
+            Cancel
+        </a>
+
+    </form>
+
+</div>
+
+{% endblock %}

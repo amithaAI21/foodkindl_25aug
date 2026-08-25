@@ -45,10 +45,12 @@ function getMatchLevel(
   ) {
 
     return {
-      label: "Excellent Match",
-      className: "excellent",
-    };
+      label:
+        "Excellent Match",
 
+      className:
+        "excellent",
+    };
   }
 
 
@@ -57,10 +59,12 @@ function getMatchLevel(
   ) {
 
     return {
-      label: "Great Match",
-      className: "great",
-    };
+      label:
+        "Great Match",
 
+      className:
+        "great",
+    };
   }
 
 
@@ -69,16 +73,21 @@ function getMatchLevel(
   ) {
 
     return {
-      label: "Good Match",
-      className: "good",
-    };
+      label:
+        "Good Match",
 
+      className:
+        "good",
+    };
   }
 
 
   return {
-    label: "Potential Match",
-    className: "potential",
+    label:
+      "Potential Match",
+
+    className:
+      "potential",
   };
 }
 
@@ -191,7 +200,6 @@ export default function Connect() {
     ) {
 
       return path;
-
     }
 
 
@@ -204,7 +212,6 @@ export default function Connect() {
       return (
         `${window.location.origin}${path}`
       );
-
     }
 
 
@@ -276,20 +283,69 @@ export default function Connect() {
   ) {
 
     if (
-      connection.sender?.id ===
-      user?.id
+      Number(
+        connection
+          ?.sender
+          ?.id
+      ) ===
+      Number(
+        user?.id
+      )
     ) {
 
       return (
         connection.receiver
       );
-
     }
 
 
     return (
       connection.sender
     );
+  }
+
+
+  // =========================================================
+  // FOOD MATCH ID
+  // =========================================================
+
+  function getFoodMatchMemberIds(
+    match
+  ) {
+
+    return [
+
+      match?.id,
+
+      match?.user_id,
+
+      match?.member_id,
+
+      match?.user?.id,
+
+      match?.member?.id,
+
+      match?.profile?.user_id,
+
+      match?.profile?.user?.id,
+
+    ]
+      .filter(
+        value =>
+          value !== undefined &&
+          value !== null &&
+          value !== ""
+      )
+      .map(
+        value =>
+          Number(value)
+      )
+      .filter(
+        value =>
+          !Number.isNaN(
+            value
+          )
+      );
   }
 
 
@@ -301,25 +357,109 @@ export default function Connect() {
     memberId
   ) {
 
-    return (
+    const normalizedMemberId =
+      Number(
+        memberId
+      );
+
+
+    if (
+      Number.isNaN(
+        normalizedMemberId
+      )
+    ) {
+
+      return null;
+    }
+
+
+    const match =
       foodMatches.find(
-        (
-          match
-        ) =>
-          Number(
-            match.id
-          ) ===
-          Number(
-            memberId
-          )
-      ) ||
-      null
+        item => {
+
+          const possibleIds =
+            getFoodMatchMemberIds(
+              item
+            );
+
+
+          return (
+            possibleIds.includes(
+              normalizedMemberId
+            )
+          );
+        }
+      );
+
+
+    return (
+      match || null
     );
   }
 
 
   // =========================================================
-  // REAL CONNECTION STATE
+  // FOOD MATCH SCORE
+  // =========================================================
+
+  function getFoodMatchScore(
+    foodMatch
+  ) {
+
+    if (!foodMatch) {
+      return null;
+    }
+
+
+    const rawScore =
+      foodMatch?.food_match ??
+      foodMatch?.match_score ??
+      foodMatch?.score ??
+      foodMatch?.percentage ??
+      foodMatch?.match_percentage ??
+      null;
+
+
+    if (
+      rawScore === null ||
+      rawScore === undefined ||
+      rawScore === ""
+    ) {
+
+      return null;
+    }
+
+
+    const numericScore =
+      Number(
+        rawScore
+      );
+
+
+    if (
+      Number.isNaN(
+        numericScore
+      )
+    ) {
+
+      return null;
+    }
+
+
+    return Math.max(
+      0,
+      Math.min(
+        Math.round(
+          numericScore
+        ),
+        100
+      )
+    );
+  }
+
+
+  // =========================================================
+  // CONNECTION STATE
   // =========================================================
 
   function getMemberConnectionState(
@@ -332,15 +472,9 @@ export default function Connect() {
       );
 
 
-    // =======================================================
-    // ALREADY CONNECTED
-    // =======================================================
-
     const acceptedConnection =
       connections.find(
-        (
-          connection
-        ) => {
+        connection => {
 
           const senderId =
             Number(
@@ -380,19 +514,12 @@ export default function Connect() {
         connectionId:
           acceptedConnection.id,
       };
-
     }
 
 
-    // =======================================================
-    // REQUEST SENT BY CURRENT USER
-    // =======================================================
-
     const sentConnection =
       sentRequests.find(
-        (
-          connection
-        ) =>
+        connection =>
           Number(
             connection
               ?.receiver
@@ -413,19 +540,12 @@ export default function Connect() {
         connectionId:
           sentConnection.id,
       };
-
     }
 
 
-    // =======================================================
-    // REQUEST RECEIVED FROM MEMBER
-    // =======================================================
-
     const incomingConnection =
       incomingRequests.find(
-        (
-          connection
-        ) =>
+        connection =>
           Number(
             connection
               ?.sender
@@ -446,13 +566,8 @@ export default function Connect() {
         connectionId:
           incomingConnection.id,
       };
-
     }
 
-
-    // =======================================================
-    // FALLBACK TO MEMBER API STATUS
-    // =======================================================
 
     const apiStatus =
       member
@@ -479,13 +594,8 @@ export default function Connect() {
             ?.connection_id ||
           null,
       };
-
     }
 
-
-    // =======================================================
-    // DEFAULT
-    // =======================================================
 
     return {
       status:
@@ -498,7 +608,7 @@ export default function Connect() {
 
 
   // =========================================================
-  // ERROR
+  // ERROR MESSAGE
   // =========================================================
 
   function getErrorMessage(
@@ -510,7 +620,6 @@ export default function Connect() {
       return (
         "The request could not be completed."
       );
-
     }
 
 
@@ -520,7 +629,6 @@ export default function Connect() {
     ) {
 
       return data;
-
     }
 
 
@@ -568,6 +676,7 @@ export default function Connect() {
           : []
       );
 
+
     } catch (
       requestError
     ) {
@@ -581,7 +690,9 @@ export default function Connect() {
 
 
       const data =
-        requestError.response?.data;
+        requestError
+          .response
+          ?.data;
 
 
       setError(
@@ -613,18 +724,36 @@ export default function Connect() {
         );
 
 
+      console.log(
+        "FOOD MATCH API RESPONSE:",
+        response.data
+      );
+
+
       const results =
         response.data?.results ||
+        response.data ||
         [];
 
 
-      setFoodMatches(
+      const normalizedResults =
         Array.isArray(
           results
         )
           ? results
-          : []
+          : [];
+
+
+      console.log(
+        "FOOD MATCH RESULTS:",
+        normalizedResults
       );
+
+
+      setFoodMatches(
+        normalizedResults
+      );
+
 
     } catch (
       requestError
@@ -643,7 +772,7 @@ export default function Connect() {
 
 
   // =========================================================
-  // LOAD CONNECTION DATA
+  // LOAD CONNECTIONS
   // =========================================================
 
   async function loadConnections() {
@@ -692,6 +821,7 @@ export default function Connect() {
         acceptedResponse.data ||
         []
       );
+
 
     } catch (
       requestError
@@ -743,7 +873,7 @@ export default function Connect() {
 
 
   // =========================================================
-  // SEARCH MEMBERS
+  // SEARCH
   // =========================================================
 
   async function searchMembers(
@@ -809,7 +939,7 @@ export default function Connect() {
 
 
   // =========================================================
-  // SEND CONNECTION REQUEST
+  // SEND REQUEST
   // =========================================================
 
   async function sendRequest(
@@ -848,6 +978,7 @@ export default function Connect() {
         loadConnections(),
 
       ]);
+
 
     } catch (
       requestError
@@ -898,6 +1029,7 @@ export default function Connect() {
 
       await loadPage();
 
+
     } catch (
       requestError
     ) {
@@ -939,6 +1071,7 @@ export default function Connect() {
 
 
       await loadPage();
+
 
     } catch (
       requestError
@@ -994,6 +1127,7 @@ export default function Connect() {
 
       await loadPage();
 
+
     } catch (
       requestError
     ) {
@@ -1047,6 +1181,7 @@ export default function Connect() {
 
       await loadPage();
 
+
     } catch (
       requestError
     ) {
@@ -1063,7 +1198,7 @@ export default function Connect() {
 
 
   // =========================================================
-  // MEMBER AVATAR
+  // AVATAR
   // =========================================================
 
   function renderMemberAvatar(
@@ -1081,9 +1216,7 @@ export default function Connect() {
       return (
 
         <img
-          src={
-            photo
-          }
+          src={photo}
           alt={
             getMemberName(
               member
@@ -1132,14 +1265,14 @@ export default function Connect() {
 
 
     const matchScore =
-      Number(
-        foodMatch?.food_match
-      ) || 0;
+      getFoodMatchScore(
+        foodMatch
+      );
 
 
     const matchLevel =
       getMatchLevel(
-        matchScore
+        matchScore || 0
       );
 
 
@@ -1152,6 +1285,24 @@ export default function Connect() {
               " "
             )
         : "";
+
+
+    console.log(
+      "MEMBER MATCH:",
+      {
+        memberId:
+          member.id,
+
+        memberName:
+          getMemberName(
+            member
+          ),
+
+        foodMatch,
+
+        matchScore,
+      }
+    );
 
 
     return (
@@ -1172,11 +1323,9 @@ export default function Connect() {
           (
 
             <p className="connect-member-role">
-
               {
                 profile.role
               }
-
             </p>
 
           )
@@ -1217,12 +1366,10 @@ export default function Connect() {
           (
 
             <p>
-
               {
                 profile
                   .college_workplace
               }
-
             </p>
 
           )
@@ -1234,79 +1381,122 @@ export default function Connect() {
           (
 
             <span className="connect-preference">
-
               {
                 dietaryLabel
               }
-
             </span>
 
           )
         }
 
 
-        {/* ===============================================
+        {/* =================================================
             FOOD MATCH
-        =============================================== */}
+        ================================================= */}
 
-        {
-          foodMatch &&
-          (
+        <div className="connect-food-match">
 
-            <div className="connect-food-match">
+          {
+            matchScore !== null
+              ? (
 
-              <div className="connect-food-match-top">
+                <>
 
-                <div
-                  className={
-                    `connect-food-match-score ${matchLevel.className}`
+                  <div className="connect-food-match-top">
+
+                    <div
+                      className={
+                        `connect-food-match-score ${matchLevel.className}`
+                      }
+                    >
+
+                      <Utensils
+                        size={16}
+                      />
+
+
+                      <strong>
+                        {matchScore}%
+                      </strong>
+
+
+                      <span>
+                        Food Match
+                      </span>
+
+                    </div>
+
+
+                    <div
+                      className={
+                        `connect-food-match-level ${matchLevel.className}`
+                      }
+                    >
+
+                      <Sparkles
+                        size={13}
+                      />
+
+
+                      {
+                        matchLevel.label
+                      }
+
+                    </div>
+
+                  </div>
+
+
+                  <div className="connect-food-match-bar">
+
+                    <span
+                      style={{
+                        width:
+                          `${matchScore}%`,
+                      }}
+                    />
+
+                  </div>
+
+
+                  {
+                    Array.isArray(
+                      foodMatch?.match_reasons
+                    ) &&
+                    foodMatch.match_reasons.length >
+                      0 &&
+                    (
+
+                      <p className="connect-food-match-reason">
+                        {
+                          foodMatch.match_reasons[0]
+                        }
+                      </p>
+
+                    )
                   }
-                >
+
+                </>
+
+              )
+              : (
+
+                <div className="connect-food-match-unavailable">
 
                   <Utensils
-                    size={16}
+                    size={15}
                   />
 
-
-                  <strong>
-
-                    {
-                      matchScore
-                    }%
-
-                  </strong>
-
-
                   <span>
-                    Food Match
+                    Food Match not calculated yet
                   </span>
 
                 </div>
 
+              )
+          }
 
-                <div
-                  className={
-                    `connect-food-match-level ${matchLevel.className}`
-                  }
-                >
-
-                  <Sparkles
-                    size={13}
-                  />
-
-
-                  {
-                    matchLevel.label
-                  }
-
-                </div>
-
-              </div>
-
-            </div>
-
-          )
-        }
+        </div>
 
       </>
 
@@ -1315,7 +1505,7 @@ export default function Connect() {
 
 
   // =========================================================
-  // MEMBER ACTIONS
+  // ACTIONS
   // =========================================================
 
   function renderMemberActions(
@@ -1339,8 +1529,6 @@ export default function Connect() {
       <div className="connect-card-actions">
 
 
-        {/* VIEW PROFILE */}
-
         <Link
           to={
             `/connect/member/${member.id}`
@@ -1353,8 +1541,6 @@ export default function Connect() {
         </Link>
 
 
-        {/* CONNECT */}
-
         {
           connectionStatus ===
           "none" &&
@@ -1363,11 +1549,10 @@ export default function Connect() {
             <button
               type="button"
               className="primary-button"
-              onClick={
-                () =>
-                  sendRequest(
-                    member.id
-                  )
+              onClick={() =>
+                sendRequest(
+                  member.id
+                )
               }
             >
 
@@ -1383,8 +1568,6 @@ export default function Connect() {
         }
 
 
-        {/* REQUEST SENT */}
-
         {
           connectionStatus ===
           "request_sent" &&
@@ -1393,11 +1576,10 @@ export default function Connect() {
             <button
               type="button"
               className="secondary-button"
-              onClick={
-                () =>
-                  cancelRequest(
-                    connectionId
-                  )
+              onClick={() =>
+                cancelRequest(
+                  connectionId
+                )
               }
             >
 
@@ -1413,8 +1595,6 @@ export default function Connect() {
         }
 
 
-        {/* REQUEST RECEIVED */}
-
         {
           connectionStatus ===
           "request_received" &&
@@ -1423,11 +1603,10 @@ export default function Connect() {
             <button
               type="button"
               className="primary-button"
-              onClick={
-                () =>
-                  setActiveTab(
-                    "requests"
-                  )
+              onClick={() =>
+                setActiveTab(
+                  "requests"
+                )
               }
             >
 
@@ -1442,8 +1621,6 @@ export default function Connect() {
           )
         }
 
-
-        {/* CONNECTED */}
 
         {
           connectionStatus ===
@@ -1482,9 +1659,7 @@ export default function Connect() {
       <main className="app-page">
 
         <div className="app-panel">
-
           Loading FoodKindl members...
-
         </div>
 
       </main>
@@ -1511,26 +1686,20 @@ export default function Connect() {
         <div>
 
           <div className="eyebrow left">
-
             FoodKindl Connect
-
           </div>
 
 
           <h1>
-
             Discover and connect
-
           </h1>
 
 
           <p>
-
             Discover people who share your
             food tastes and interests,
             connect with members and build
             meaningful food connections.
-
           </p>
 
         </div>
@@ -1545,8 +1714,6 @@ export default function Connect() {
       <div className="connect-tabs">
 
 
-        {/* DISCOVER */}
-
         <button
           type="button"
           className={
@@ -1555,11 +1722,10 @@ export default function Connect() {
               ? "connect-tab active"
               : "connect-tab"
           }
-          onClick={
-            () =>
-              setActiveTab(
-                "discover"
-              )
+          onClick={() =>
+            setActiveTab(
+              "discover"
+            )
           }
         >
 
@@ -1572,8 +1738,6 @@ export default function Connect() {
         </button>
 
 
-        {/* REQUESTS */}
-
         <button
           type="button"
           className={
@@ -1582,11 +1746,10 @@ export default function Connect() {
               ? "connect-tab active"
               : "connect-tab"
           }
-          onClick={
-            () =>
-              setActiveTab(
-                "requests"
-              )
+          onClick={() =>
+            setActiveTab(
+              "requests"
+            )
           }
         >
 
@@ -1603,11 +1766,9 @@ export default function Connect() {
             (
 
               <span className="connect-count">
-
                 {
                   incomingRequests.length
                 }
-
               </span>
 
             )
@@ -1615,8 +1776,6 @@ export default function Connect() {
 
         </button>
 
-
-        {/* CONNECTIONS */}
 
         <button
           type="button"
@@ -1626,11 +1785,10 @@ export default function Connect() {
               ? "connect-tab active"
               : "connect-tab"
           }
-          onClick={
-            () =>
-              setActiveTab(
-                "connections"
-              )
+          onClick={() =>
+            setActiveTab(
+              "connections"
+            )
           }
         >
 
@@ -1654,11 +1812,7 @@ export default function Connect() {
         (
 
           <p className="error-message">
-
-            {
-              error
-            }
-
+            {error}
           </p>
 
         )
@@ -1670,11 +1824,7 @@ export default function Connect() {
         (
 
           <p className="form-message">
-
-            {
-              message
-            }
-
+            {message}
           </p>
 
         )
@@ -1682,7 +1832,7 @@ export default function Connect() {
 
 
       {/* =====================================================
-          DISCOVER MEMBERS
+          DISCOVER
       ===================================================== */}
 
       {
@@ -1692,8 +1842,6 @@ export default function Connect() {
 
           <section>
 
-
-            {/* SEARCH */}
 
             <form
               className="app-panel connect-search-form"
@@ -1716,9 +1864,7 @@ export default function Connect() {
                     searchValue
                   }
                   onChange={
-                    (
-                      event
-                    ) =>
+                    event =>
                       setSearchValue(
                         event
                           .target
@@ -1766,12 +1912,6 @@ export default function Connect() {
                   Kerala
                 </span>
 
-                {" · "}
-
-                <span>
-                  Home Cooking
-                </span>
-
               </div>
 
 
@@ -1790,8 +1930,6 @@ export default function Connect() {
             </form>
 
 
-            {/* MEMBER RESULTS */}
-
             <div className="connect-member-grid">
 
               {
@@ -1799,58 +1937,53 @@ export default function Connect() {
                 0
                   ? (
 
-                      <div className="app-panel">
+                    <div className="app-panel">
+                      No members matched your search.
+                    </div>
 
-                        No members matched
-                        your search.
-
-                      </div>
-
-                    )
+                  )
                   : (
 
-                      members.map(
-                        (
-                          member
-                        ) => (
+                    members.map(
+                      member => (
 
-                          <article
-                            className="connect-member-card"
-                            key={
-                              member.id
-                            }
-                          >
+                        <article
+                          className="connect-member-card"
+                          key={
+                            member.id
+                          }
+                        >
+
+                          {
+                            renderMemberAvatar(
+                              member
+                            )
+                          }
+
+
+                          <div className="connect-member-info">
 
                             {
-                              renderMemberAvatar(
+                              renderMemberDetails(
                                 member
                               )
                             }
 
 
-                            <div className="connect-member-info">
+                            {
+                              renderMemberActions(
+                                member
+                              )
+                            }
 
-                              {
-                                renderMemberDetails(
-                                  member
-                                )
-                              }
+                          </div>
 
+                        </article>
 
-                              {
-                                renderMemberActions(
-                                  member
-                                )
-                              }
-
-                            </div>
-
-                          </article>
-
-                        )
                       )
-
                     )
+
+                  )
               }
 
             </div>
@@ -1872,8 +2005,6 @@ export default function Connect() {
 
           <section className="connect-request-layout">
 
-
-            {/* INCOMING */}
 
             <div>
 
@@ -1899,121 +2030,111 @@ export default function Connect() {
                   0
                     ? (
 
-                        <div className="app-panel">
+                      <div className="app-panel">
+                        No incoming requests.
+                      </div>
 
-                          No incoming requests.
-
-                        </div>
-
-                      )
+                    )
                     : (
 
-                        incomingRequests.map(
-                          (
-                            connection
-                          ) => {
+                      incomingRequests.map(
+                        connection => {
 
-                            const member =
-                              connection.sender;
+                          const member =
+                            connection.sender;
 
 
-                            return (
+                          return (
 
-                              <article
-                                className="connect-request-card"
-                                key={
-                                  connection.id
-                                }
-                              >
+                            <article
+                              className="connect-request-card"
+                              key={
+                                connection.id
+                              }
+                            >
+
+                              {
+                                renderMemberAvatar(
+                                  member
+                                )
+                              }
+
+
+                              <div className="connect-request-info">
 
                                 {
-                                  renderMemberAvatar(
+                                  renderMemberDetails(
                                     member
                                   )
                                 }
 
 
-                                <div className="connect-request-info">
+                                <div className="connect-card-actions">
 
-                                  {
-                                    renderMemberDetails(
-                                      member
-                                    )
-                                  }
-
-
-                                  <div className="connect-card-actions">
-
-                                    <Link
-                                      to={
-                                        `/connect/member/${member.id}`
-                                      }
-                                      className="secondary-button"
-                                    >
-
-                                      View Profile
-
-                                    </Link>
+                                  <Link
+                                    to={
+                                      `/connect/member/${member.id}`
+                                    }
+                                    className="secondary-button"
+                                  >
+                                    View Profile
+                                  </Link>
 
 
-                                    <button
-                                      type="button"
-                                      className="primary-button"
-                                      onClick={
-                                        () =>
-                                          acceptRequest(
-                                            connection.id
-                                          )
-                                      }
-                                    >
+                                  <button
+                                    type="button"
+                                    className="primary-button"
+                                    onClick={() =>
+                                      acceptRequest(
+                                        connection.id
+                                      )
+                                    }
+                                  >
 
-                                      <Check
-                                        size={17}
-                                      />
+                                    <Check
+                                      size={17}
+                                    />
 
-                                      Accept
+                                    Accept
 
-                                    </button>
+                                  </button>
 
 
-                                    <button
-                                      type="button"
-                                      className="secondary-button"
-                                      onClick={
-                                        () =>
-                                          declineRequest(
-                                            connection.id
-                                          )
-                                      }
-                                    >
+                                  <button
+                                    type="button"
+                                    className="secondary-button"
+                                    onClick={() =>
+                                      declineRequest(
+                                        connection.id
+                                      )
+                                    }
+                                  >
 
-                                      <X
-                                        size={17}
-                                      />
+                                    <X
+                                      size={17}
+                                    />
 
-                                      Decline
+                                    Decline
 
-                                    </button>
-
-                                  </div>
+                                  </button>
 
                                 </div>
 
-                              </article>
+                              </div>
 
-                            );
-                          }
-                        )
+                            </article>
 
+                          );
+                        }
                       )
+
+                    )
                 }
 
               </div>
 
             </div>
 
-
-            {/* SENT */}
 
             <div>
 
@@ -2039,93 +2160,86 @@ export default function Connect() {
                   0
                     ? (
 
-                        <div className="app-panel">
+                      <div className="app-panel">
+                        No pending sent requests.
+                      </div>
 
-                          No pending sent requests.
-
-                        </div>
-
-                      )
+                    )
                     : (
 
-                        sentRequests.map(
-                          (
-                            connection
-                          ) => {
+                      sentRequests.map(
+                        connection => {
 
-                            const member =
-                              connection.receiver;
+                          const member =
+                            connection.receiver;
 
 
-                            return (
+                          return (
 
-                              <article
-                                className="connect-request-card"
-                                key={
-                                  connection.id
-                                }
-                              >
+                            <article
+                              className="connect-request-card"
+                              key={
+                                connection.id
+                              }
+                            >
+
+                              {
+                                renderMemberAvatar(
+                                  member
+                                )
+                              }
+
+
+                              <div className="connect-request-info">
 
                                 {
-                                  renderMemberAvatar(
+                                  renderMemberDetails(
                                     member
                                   )
                                 }
 
 
-                                <div className="connect-request-info">
+                                <div className="connect-card-actions">
 
-                                  {
-                                    renderMemberDetails(
-                                      member
-                                    )
-                                  }
-
-
-                                  <div className="connect-card-actions">
-
-                                    <Link
-                                      to={
-                                        `/connect/member/${member.id}`
-                                      }
-                                      className="secondary-button"
-                                    >
-
-                                      View Profile
-
-                                    </Link>
+                                  <Link
+                                    to={
+                                      `/connect/member/${member.id}`
+                                    }
+                                    className="secondary-button"
+                                  >
+                                    View Profile
+                                  </Link>
 
 
-                                    <button
-                                      type="button"
-                                      className="secondary-button"
-                                      onClick={
-                                        () =>
-                                          cancelRequest(
-                                            connection.id
-                                          )
-                                      }
-                                    >
+                                  <button
+                                    type="button"
+                                    className="secondary-button"
+                                    onClick={() =>
+                                      cancelRequest(
+                                        connection.id
+                                      )
+                                    }
+                                  >
 
-                                      <X
-                                        size={17}
-                                      />
+                                    <X
+                                      size={17}
+                                    />
 
-                                      Cancel Request
+                                    Cancel Request
 
-                                    </button>
-
-                                  </div>
+                                  </button>
 
                                 </div>
 
-                              </article>
+                              </div>
 
-                            );
-                          }
-                        )
+                            </article>
 
+                          );
+                        }
                       )
+
+                    )
                 }
 
               </div>
@@ -2139,7 +2253,7 @@ export default function Connect() {
 
 
       {/* =====================================================
-          MY CONNECTIONS
+          CONNECTIONS
       ===================================================== */}
 
       {
@@ -2171,96 +2285,93 @@ export default function Connect() {
                 0
                   ? (
 
-                      <div className="app-panel">
+                    <div className="app-panel">
+                      You do not have any connections yet.
+                    </div>
 
-                        You do not have any
-                        connections yet.
-
-                      </div>
-
-                    )
+                  )
                   : (
 
-                      connections.map(
-                        (
-                          connection
-                        ) => {
+                    connections.map(
+                      connection => {
 
-                          const member =
-                            getOtherMember(
-                              connection
-                            );
+                        const member =
+                          getOtherMember(
+                            connection
+                          );
 
 
-                          return (
+                        if (!member) {
+                          return null;
+                        }
 
-                            <article
-                              className="connect-member-card"
-                              key={
-                                connection.id
-                              }
-                            >
+
+                        return (
+
+                          <article
+                            className="connect-member-card"
+                            key={
+                              connection.id
+                            }
+                          >
+
+                            {
+                              renderMemberAvatar(
+                                member
+                              )
+                            }
+
+
+                            <div className="connect-member-info">
 
                               {
-                                renderMemberAvatar(
+                                renderMemberDetails(
                                   member
                                 )
                               }
 
 
-                              <div className="connect-member-info">
+                              <div className="connect-card-actions">
 
-                                {
-                                  renderMemberDetails(
-                                    member
-                                  )
-                                }
-
-
-                                <div className="connect-card-actions">
-
-                                  <Link
-                                    to={
-                                      `/connect/member/${member.id}`
-                                    }
-                                    className="primary-button"
-                                  >
-
-                                    View Profile
-
-                                  </Link>
+                                <Link
+                                  to={
+                                    `/connect/member/${member.id}`
+                                  }
+                                  className="primary-button"
+                                >
+                                  View Profile
+                                </Link>
 
 
-                                  <button
-                                    type="button"
-                                    className="secondary-button"
-                                    onClick={
-                                      () =>
-                                        removeConnection(
-                                          connection.id
-                                        )
-                                    }
-                                  >
+                                <button
+                                  type="button"
+                                  className="secondary-button"
+                                  onClick={() =>
+                                    removeConnection(
+                                      connection.id
+                                    )
+                                  }
+                                >
 
-                                    <UserMinus
-                                      size={17}
-                                    />
+                                  <UserMinus
+                                    size={17}
+                                  />
 
-                                    Remove
+                                  Remove
 
-                                  </button>
-
-                                </div>
+                                </button>
 
                               </div>
 
-                            </article>
+                            </div>
 
-                          );
-                        }
-                      )
+                          </article>
 
+                        );
+                      }
                     )
+
+                  )
               }
 
             </div>

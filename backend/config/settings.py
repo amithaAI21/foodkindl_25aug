@@ -62,7 +62,6 @@ def get_env_list(
     if value is None:
         value = default
 
-
     if isinstance(
         value,
         (
@@ -70,7 +69,6 @@ def get_env_list(
             tuple,
         ),
     ):
-
         return [
             str(item)
             .strip()
@@ -80,7 +78,6 @@ def get_env_list(
 
             if str(item).strip()
         ]
-
 
     return [
         item.strip().rstrip("/")
@@ -143,6 +140,26 @@ FAST2SMS_API_KEY = (
         "FAST2SMS_API_KEY",
         "",
     )
+    .strip()
+)
+
+
+# ============================================================
+# OPENROUTESERVICE
+#
+# Used for:
+# - Location autocomplete
+# - Geocoding
+# - Route calculation
+# - Car / bike / walk routes
+# ============================================================
+
+ORS_API_KEY = (
+    os.environ.get(
+        "ORS_API_KEY",
+        "",
+    )
+    .strip()
 )
 
 
@@ -188,7 +205,6 @@ else:
         .strip()
     )
 
-
     if not NETLIFY_BLOB_UPLOAD_URL:
 
         raise RuntimeError(
@@ -217,9 +233,10 @@ INSTALLED_APPS = [
     # Third party
     "corsheaders",
     "rest_framework",
-
+     "import_export",
+      
     # FoodKindl
-    "accounts",
+    "accounts.apps.AccountsConfig",
     "community",
     "website",
     "safety",
@@ -281,46 +298,27 @@ WSGI_APPLICATION = (
 # ============================================================
 
 TEMPLATES = [
-
     {
+        "BACKEND":
+            "django.template.backends.django.DjangoTemplates",
 
-        "BACKEND": (
-            "django.template.backends.django."
-            "DjangoTemplates"
-        ),
+        "DIRS": [
+            BASE_DIR / "templates",
+        ],
 
-        "DIRS": [],
-
-        "APP_DIRS": True,
+        "APP_DIRS":
+            True,
 
         "OPTIONS": {
-
             "context_processors": [
-
-                (
-                    "django.template."
-                    "context_processors.request"
-                ),
-
-                (
-                    "django.contrib.auth."
-                    "context_processors.auth"
-                ),
-
-                (
-                    "django.contrib.messages."
-                    "context_processors.messages"
-                ),
-
+                "django.template.context_processors.request",
+                "django.contrib.auth.context_processors.auth",
+                "django.contrib.messages.context_processors.messages",
+                "accounts.context_processors.admin_notifications",
             ],
-
         },
-
     },
-
 ]
-
-
 # ============================================================
 # DATABASE
 #
@@ -360,9 +358,6 @@ if DEBUG:
 
             "OPTIONS": {
 
-                # Helps reduce temporary
-                # "database is locked"
-                # errors during development.
                 "timeout": 30,
 
             },
@@ -385,7 +380,6 @@ else:
                 "when DEBUG=False."
             )
         )
-
 
     DATABASES = {
 
@@ -460,7 +454,6 @@ TIME_ZONE = (
 
 
 USE_I18N = True
-
 USE_TZ = True
 
 
@@ -504,11 +497,6 @@ STORAGES = {
 
 # ============================================================
 # MEDIA
-#
-# Existing local Django media.
-#
-# Restaurant photos are stored separately through
-# Netlify Blob.
 # ============================================================
 
 MEDIA_URL = (
@@ -864,6 +852,14 @@ if DEBUG:
         ),
     )
 
+    # Do not print the actual API key.
+    print(
+        "ORS API KEY LOADED:",
+        bool(
+            ORS_API_KEY
+        ),
+    )
+
     print(
         "SECURE_SSL_REDIRECT:",
         SECURE_SSL_REDIRECT,
@@ -887,3 +883,63 @@ if DEBUG:
     print(
         "======================================"
     )
+    
+import os
+
+
+# ============================================================
+# FOODKINDL FRONTEND
+# ============================================================
+
+FRONTEND_URL = os.getenv(
+    "FRONTEND_URL",
+    "http://localhost:5173",
+)
+
+
+# ============================================================
+# EMAIL
+# ============================================================
+
+EMAIL_BACKEND = (
+    "django.core.mail.backends.smtp.EmailBackend"
+)
+
+EMAIL_HOST = (
+    "smtp.gmail.com"
+)
+
+EMAIL_PORT = 587
+
+EMAIL_USE_TLS = True
+
+
+EMAIL_HOST_USER = os.getenv(
+    "EMAIL_HOST_USER",
+    "",
+)
+
+
+EMAIL_HOST_PASSWORD = os.getenv(
+    "EMAIL_HOST_PASSWORD",
+    "",
+)
+
+
+DEFAULT_FROM_EMAIL = os.getenv(
+    "DEFAULT_FROM_EMAIL",
+    EMAIL_HOST_USER,
+)
+
+
+# ============================================================
+# PASSWORD RESET
+#
+# Django's default password-reset token generator handles
+# expiration and invalidation after password changes.
+# Value is in seconds.
+#
+# 3600 = 1 hour.
+# ============================================================
+
+PASSWORD_RESET_TIMEOUT = 3600

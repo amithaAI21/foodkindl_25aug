@@ -1984,11 +1984,11 @@ export default function Community() {
       <div className="community-desktop-intro">
         <div>
           <div className="eyebrow left">
-            Community
+            FoodKindl Community
           </div>
 
           <h1>
-            Food stories and moments
+            See what people are sharing
           </h1>
         </div>
       </div>
@@ -2070,7 +2070,7 @@ export default function Community() {
                     : activeTab ===
                         "my-posts"
                       ? "My Posts"
-                      : "Community Feed"}
+                      : "Community"}
                 </div>
 
                 <h2>
@@ -2078,8 +2078,8 @@ export default function Community() {
                     ? "Posts you saved"
                     : activeTab ===
                         "my-posts"
-                      ? "Posts you published"
-                      : "Discover food stories, recipes and experiences from your community"}
+                      ? "Things you shared"
+                      : "What's happening in your community"}
                 </h2>
               </div>
 
@@ -2094,11 +2094,11 @@ export default function Community() {
               0 ? (
               <div className="app-panel community-empty-state">
                 {activeTab === "saved"
-                  ? "You have not saved any posts yet."
+                  ? "No saved posts yet."
                   : activeTab ===
                       "my-posts"
-                    ? "You have not published any posts yet."
-                    : "No community posts yet."}
+                    ? "You haven't shared anything yet."
+                    : "Nothing has been shared yet."}
               </div>
             ) : (
               <div className="feed-list">
@@ -2140,7 +2140,7 @@ export default function Community() {
                   )
                 }
               >
-                Start a post
+                Share something...
               </button>
             </div>
 
@@ -2194,14 +2194,14 @@ export default function Community() {
                   <strong>
                     {form.post_type ===
                     "article"
-                      ? "Write article"
+                      ? "Write an article"
                       : form.post_type ===
                           "image"
-                        ? "Share photo"
+                        ? "Share a photo"
                         : form.post_type ===
                             "video"
                           ? "Share video"
-                          : "Create post"}
+                          : "Share with the community"}
                   </strong>
 
                   <small>
@@ -2255,11 +2255,11 @@ export default function Community() {
                     ? "Write your article..."
                     : form.post_type ===
                         "image"
-                      ? "Add a caption..."
+                      ? "Say something about this photo..."
                       : form.post_type ===
                           "video"
-                        ? "Describe your video..."
-                        : "What's on your mind?"
+                        ? "Say something about this video..."
+                        : "What would you like to share?"
                 }
                 value={form.text}
                 maxLength={5000}

@@ -517,3 +517,89 @@ def ensure_user_profile(
     Profile.objects.get_or_create(
         user=instance
     )
+    
+# ============================================================
+# ADMIN NOTIFICATIONS
+# ============================================================
+
+class AdminNotification(models.Model):
+
+    NOTIFICATION_TYPE_CHOICES = [
+        (
+            "government_id_uploaded",
+            "Government ID Uploaded",
+        ),
+        (
+            "general",
+            "General",
+        ),
+    ]
+
+
+    notification_type = models.CharField(
+        max_length=50,
+        choices=NOTIFICATION_TYPE_CHOICES,
+        default="general",
+        db_index=True,
+    )
+
+
+    title = models.CharField(
+        max_length=255,
+    )
+
+
+    message = models.TextField(
+        blank=True,
+        default="",
+    )
+
+
+    # User whose action created the notification
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name="foodkindl_admin_notifications",
+        null=True,
+        blank=True,
+    )
+
+
+    # Profile that needs admin review
+    profile = models.ForeignKey(
+        Profile,
+        on_delete=models.CASCADE,
+        related_name="admin_notifications",
+        null=True,
+        blank=True,
+    )
+
+
+    is_read = models.BooleanField(
+        default=False,
+        db_index=True,
+    )
+
+
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+        db_index=True,
+    )
+
+
+    read_at = models.DateTimeField(
+        null=True,
+        blank=True,
+    )
+
+
+    class Meta:
+
+        ordering = [
+            "-created_at",
+        ]
+
+
+    def __str__(self):
+
+        return self.title

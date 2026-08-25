@@ -1,778 +1,1761 @@
 import {
   ArrowRight,
+  CalendarDays,
+  Check,
   ChefHat,
+  Facebook,
+  Footprints,
   Heart,
+  Instagram,
+  Linkedin,
   MapPin,
   MessageCircle,
-  PackageCheck,
   Play,
   Send,
   ShieldCheck,
   Sparkles,
-  Truck,
+  Star,
   UserCheck,
   Users,
   Utensils,
 } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
-import { Link } from "react-router-dom";
-import api from "../api";
-import SectionHeading from "../components/SectionHeading";
-import StatCard from "../components/StatCard";
-import { useAuth } from "../context/AuthContext";
 
-const steps = [
+import {
+  useEffect,
+  useRef,
+  useState,
+} from "react";
+
+import {
+  Link,
+} from "react-router-dom";
+
+import {
+  useAuth,
+} from "../context/AuthContext";
+
+import "../styles/landing_page_unique.css";
+
+
+/* ============================================================
+   HERO EXPERIENCES
+============================================================ */
+
+const HERO_EXPERIENCES = [
   {
-    icon: <Users />,
-    number: "01",
-    title: "Discover People Nearby",
-    text: "Create your profile, add your dietary preferences and food interests, and discover like-minded people in your local community.",
+    id: "cook",
+    label: "Cook Together",
+    icon: ChefHat,
+
+    member: {
+      name: "Lakshmi Nair",
+      initials: "LN",
+      locality: "Indiranagar",
+      distance: "2.3 km away",
+      image: "/images/homepage1.jpg",
+    },
+
+    title: "Kerala Sunday Lunch",
+
+    description:
+      "Looking for a few food lovers to cook a Kerala lunch together this Sunday.",
+
+    tags: [
+      "Kerala",
+      "Home Cooking",
+      "Weekend",
+    ],
+
+    meta:
+      "Sunday · 12:30 PM",
   },
+
   {
-    icon: <Send />,
-    number: "02",
-    title: "Connect and Send a Food Invite",
-    text: "Message individuals or groups, choose a date, cuisine, menu, and venue, and send them a Food Invite. You can cook together at home, meet in a shared space, or plan a meal at a local eatery. For your first gathering, we recommend meeting as a group in a comfortable public or shared space.",
+    id: "dine",
+    label: "Dine Out",
+    icon: Utensils,
+
+    member: {
+      name: "Arjun Menon",
+      initials: "AM",
+      locality: "Rajajinagar",
+      distance: "3.1 km away",
+      image: "/images/food22.png",
+    },
+
+    title: "South Indian Dinner",
+
+    description:
+      "Meet nearby FoodKindl members for dinner at a FoodKindl partner restaurant.",
+
+    tags: [
+      "South Indian",
+      "Restaurant",
+      "FoodKindl Partner",
+    ],
+
+    meta:
+      "Friday · 8:00 PM",
   },
+
   {
-    icon: <Utensils />,
-    number: "03",
-    title: "Cook, Meet, and Eat Together",
-    text: "Meet at the planned venue, prepare a meal together, or explore a local restaurant. Share good food, conversations, laughter, and memorable moments.",
-  },
-  {
-    icon: <Heart />,
-    number: "04",
-    title: "Share the Experience",
-    text: "Post photos and videos, share stories from your gathering, tag the people you met, and inspire others in the community. Food enthusiasts can also share their favourite recipes, cooking tips, and food discoveries for others to try.",
+    id: "walk",
+    label: "Food Walk",
+    icon: Footprints,
+
+    member: {
+      name: "Meera Joseph",
+      initials: "MJ",
+      locality: "Yeshwanthpur",
+      distance: "4.0 km away",
+      image: "/images/food11.png",
+    },
+
+    title: "Bengaluru Food Walk",
+
+    description:
+      "Discover partner restaurants along a route and build a multi-stop food experience.",
+
+    tags: [
+      "Street Food",
+      "3 Stops",
+      "Food Walk",
+    ],
+
+    meta:
+      "Yeshwanthpur → Rajajinagar",
   },
 ];
 
 
-export default function LandingPage() {
-  // const [stats, setStats] = useState({
-  //   members: 0,
-  //   meals_shared: 0,
-  //   waste_reduced_kg: 0,
-  // });
-  const [statsLoading, setStatsLoading] = useState(true);
-  const { user } = useAuth();
+/* ============================================================
+   HOW IT WORKS
+============================================================ */
 
-  const videoRef = useRef(null);
-  const [videoStarted, setVideoStarted] = useState(false);
+const HOW_STEPS = [
+  {
+    number: "01",
+    icon: Users,
+    title: "Discover People Nearby",
+    text:
+      "Create your profile, add food interests and discover people in your local community.",
+    visual: {
+      type: "person",
+      name: "Asha",
+      detail: "1.8 km away",
+      tag: "South Indian",
+    },
+  },
+
+  {
+    number: "02",
+    icon: Send,
+    title: "Connect & Send a Food Invite",
+    text:
+      "Message a person or group and invite them to Cook Together, Dine Out or join a Food Walk.",
+    visual: {
+      type: "invite",
+      name: "Kerala Dinner",
+      detail: "Saturday · 7:30 PM",
+      tag: "Invite sent",
+    },
+  },
+
+  {
+    number: "03",
+    icon: Utensils,
+    title: "Cook, Meet & Eat Together",
+    text:
+      "Meet at the planned venue, prepare a meal together or explore a partner restaurant.",
+    visual: {
+      type: "meal",
+      name: "FoodKindl Partner",
+      detail: "Rajajinagar",
+      tag: "Table for 4",
+    },
+  },
+
+  {
+    number: "04",
+    icon: Heart,
+    title: "Share the Experience",
+    text:
+      "Post photos, videos, recipes and food stories to inspire the wider FoodKindl community.",
+    visual: {
+      type: "share",
+      name: "Sunday Lunch",
+      detail: "6 photos · 3 tags",
+      tag: "Shared",
+    },
+  },
+];
+
+
+/* ============================================================
+   FOOD WALK
+============================================================ */
+
+const FOOD_WALK_STOPS = [
+  {
+    name: "Nagasandra",
+    type: "Start",
+    detail: "Meet your group",
+    partner: false,
+  },
+
+  {
+    name: "Yeshwanthpur",
+    type: "Stop 1",
+    detail: "Hotel Rajathithya",
+    partner: true,
+  },
+
+  {
+    name: "Rajajinagar",
+    type: "Stop 2",
+    detail: "Chulha Chauki da Dhaba",
+    partner: true,
+  },
+
+  {
+    name: "Indiranagar",
+    type: "Destination",
+    detail: "Finish your food trail",
+    partner: false,
+  },
+];
+
+
+/* ============================================================
+   COMMUNITY ACTIVITY
+============================================================ */
+
+const COMMUNITY_ACTIVITY = [
+  {
+    type: "Dine Out",
+    icon: Utensils,
+    title: "Kerala dinner this Saturday",
+    location: "Indiranagar",
+    meta: "4 people joining",
+    badge: "2 seats left",
+  },
+
+  {
+    type: "Food Walk",
+    icon: Footprints,
+    title: "Rajajinagar → Malleshwaram",
+    location: "3 partner stops",
+    meta: "5 people interested",
+    badge: "Food Walk",
+  },
+
+  {
+    type: "Cook Together",
+    icon: ChefHat,
+    title: "South Indian breakfast",
+    location: "Yeshwanthpur",
+    meta: "Sunday · 9:00 AM",
+    badge: "2 seats left",
+  },
+];
+
+
+/* ============================================================
+   LANDING PAGE
+============================================================ */
+
+export default function LandingPage() {
+
+  const {
+    user,
+  } = useAuth();
+
+
+  /* =========================================================
+     HERO ROTATION
+  ========================================================= */
+
+  const [
+    activeHeroExperience,
+    setActiveHeroExperience,
+  ] = useState(0);
+
+
+  useEffect(
+    () => {
+
+      const interval =
+        window.setInterval(
+          () => {
+
+            setActiveHeroExperience(
+              current =>
+                (
+                  current + 1
+                ) %
+                HERO_EXPERIENCES.length
+            );
+
+          },
+          4500
+        );
+
+
+      return () =>
+        window.clearInterval(
+          interval
+        );
+
+    },
+    []
+  );
+
+
+  const heroExperience =
+    HERO_EXPERIENCES[
+      activeHeroExperience
+    ];
+
+
+  const HeroExperienceIcon =
+    heroExperience.icon;
+
+
+  /* =========================================================
+     STORY VIDEO
+  ========================================================= */
+
+  const videoRef =
+    useRef(null);
+
+
+  const [
+    videoStarted,
+    setVideoStarted,
+  ] = useState(false);
+
 
   function playStoryVideo() {
-    setVideoStarted(true);
 
-    requestAnimationFrame(() => {
-      if (videoRef.current) {
-        videoRef.current.play();
+    setVideoStarted(
+      true
+    );
+
+
+    requestAnimationFrame(
+      () => {
+
+        if (
+          videoRef.current
+        ) {
+          videoRef.current.play();
+        }
+
       }
-    });
+    );
   }
 
-//   useEffect(() => {
-//   async function loadStats() {
-//     try {
-//       const response = await api.get("/stats/");
-//       setStats(response.data);
-//     } catch (error) {
-//       console.error(
-//         "Unable to load statistics:",
-//         error.response?.data || error
-//       );
-//     } finally {
-//       setStatsLoading(false);
-//     }
-//   }
 
-//   loadStats();
-
-//   const intervalId = setInterval(loadStats, 30000);
-
-//   return () => clearInterval(intervalId);
-// }, []);
-
-  const [waitlist, setWaitlist] = useState({ full_name: "", email: "", city: "" });
-  const [waitlistMessage, setWaitlistMessage] = useState("");
-  const [contact, setContact] = useState({ name: "", email: "", subject: "", message: "" });
-  const [contactMessage, setContactMessage] = useState("");
-
-  async function submitWaitlist(event) {
-    event.preventDefault();
-    try {
-      await api.post("/website/waitlist/", waitlist);
-      setWaitlistMessage("You are on the FoodKindl early-access list.");
-      setWaitlist({ full_name: "", email: "", city: "" });
-    } catch (error) {
-      setWaitlistMessage(
-        error.response?.data?.email?.[0] || "We could not add you right now."
-      );
-    }
-  }
-
-  async function submitContact(event) {
-    event.preventDefault();
-    try {
-      await api.post("/website/contact/", contact);
-      setContactMessage("Thank you. Your message has been received.");
-      setContact({ name: "", email: "", subject: "", message: "" });
-    } catch {
-      setContactMessage("We could not send your message. Please try again.");
-    }
-  }
+  /* =========================================================
+     PAGE
+  ========================================================= */
 
   return (
-    <main>
-      <section className="hero-section" id="connect">
-        <div className="hero-glow hero-glow-one" />
-        <div className="hero-glow hero-glow-two" />
 
-        <div className="hero-copy">
-          <div className="status-pill">
-            <span />
-              Platform Now Live
+    <main className="fk-landing">
+
+      {/* =====================================================
+          HERO
+      ====================================================== */}
+
+      <section
+        className="fk-hero"
+        id="connect"
+      >
+
+        <div className="fk-hero-glow fk-hero-glow-one" />
+
+        <div className="fk-hero-glow fk-hero-glow-two" />
+
+
+        <div className="fk-hero-inner">
+
+
+          {/* LEFT */}
+
+          <div className="fk-hero-copy">
+
+            <div className="fk-status-pill">
+
+              <span />
+
+              Platform now live
+
+            </div>
+
+
+            <h1>
+              Meet people
+              <br />
+              through{" "}
+              <span>
+                food.
+              </span>
+            </h1>
+
+
+            <p className="fk-hero-description">
+              Discover people nearby. Cook together,
+              dine out, build Food Walks and turn
+              shared meals into real connections.
+            </p>
+
+
+            <div className="fk-hero-actions">
+
+                                <Link
+                    className="fk-primary-button"
+                    to={
+                      user
+                        ? "/connect-dashboard"
+                        : "/login"
+                    }
+                  >
+                    Explore FoodKindl Connect
+
+                    <ArrowRight size={18} />
+                  </Link>
+
+
+              <a
+                className="fk-secondary-button"
+                href="#how-it-works"
+              >
+                See how it works
+              </a>
+
+            </div>
+
+
+            <div className="fk-hero-proof">
+
+              <div className="fk-avatar-stack">
+                <span>AK</span>
+                <span>MN</span>
+                <span>RJ</span>
+              </div>
+
+
+              <div>
+                <strong>
+                  Food-first social discovery
+                </strong>
+
+                <small>
+                  Nearby people · verified profiles · real food moments
+                </small>
+              </div>
+
+            </div>
+
           </div>
 
-          <h1>
-            Connect with people
-            <br />
-            Through <span>Food</span>
-          </h1>
+
+          {/* RIGHT — INTERACTIVE MINI PRODUCT */}
+
+          <div className="fk-hero-demo">
+
+            <div className="fk-demo-top">
+
+              <div className="fk-live-label">
+
+                <span className="fk-live-dot" />
+
+                Live FoodKindl experience
+
+              </div>
+
+
+              <span className="fk-distance-chip">
+
+                <MapPin
+                  size={13}
+                />
+
+                {
+                  heroExperience
+                    .member
+                    .distance
+                }
+
+              </span>
+
+            </div>
+
+
+            <div className="fk-demo-tabs">
+
+              {
+                HERO_EXPERIENCES.map(
+                  (
+                    experience,
+                    index
+                  ) => {
+
+                    const Icon =
+                      experience.icon;
+
+
+                    return (
+
+                      <button
+                        key={
+                          experience.id
+                        }
+                        type="button"
+                        className={
+                          index ===
+                          activeHeroExperience
+                            ? "active"
+                            : ""
+                        }
+                        onClick={() =>
+                          setActiveHeroExperience(
+                            index
+                          )
+                        }
+                      >
+
+                        <Icon
+                          size={15}
+                        />
+
+                        {
+                          experience.label
+                        }
+
+                      </button>
+
+                    );
+                  }
+                )
+              }
+
+            </div>
+
+
+            <div className="fk-profile-preview">
+
+              <div className="fk-profile-avatar">
+
+                {
+                  heroExperience
+                    .member
+                    .image
+                    ? (
+
+                      <img
+                        src={
+                          heroExperience
+                            .member
+                            .image
+                        }
+                        alt={
+                          heroExperience
+                            .member
+                            .name
+                        }
+                      />
+
+                    )
+                    : (
+
+                      <span>
+                        {
+                          heroExperience
+                            .member
+                            .initials
+                        }
+                      </span>
+                    )
+                }
+
+              </div>
+
+
+              <div className="fk-profile-copy">
+
+                <strong>
+                  {
+                    heroExperience
+                      .member
+                      .name
+                  }
+                </strong>
+
+
+                <span>
+
+                  <MapPin
+                    size={12}
+                  />
+
+                  {
+                    heroExperience
+                      .member
+                      .locality
+                  }
+
+                  <em>•</em>
+
+                  {
+                    heroExperience
+                      .member
+                      .distance
+                  }
+
+                </span>
+
+              </div>
+
+
+              <span className="fk-verified-pill">
+
+                <Check
+                  size={11}
+                />
+
+                Verified
+
+              </span>
+
+            </div>
+
+
+            <div className="fk-experience-preview">
+
+              <div className="fk-experience-icon">
+
+                <HeroExperienceIcon
+                  size={22}
+                />
+
+              </div>
+
+
+              <div>
+
+                <span className="fk-demo-eyebrow">
+                  {
+                    heroExperience.label
+                  }
+                </span>
+
+
+                <h3>
+                  {
+                    heroExperience.title
+                  }
+                </h3>
+
+
+                <p>
+                  {
+                    heroExperience
+                      .description
+                  }
+                </p>
+
+              </div>
+
+            </div>
+
+
+            <div className="fk-cuisine-chips">
+
+              {
+                heroExperience.tags.map(
+                  tag => (
+
+                    <span key={tag}>
+                      {tag}
+                    </span>
+
+                  )
+                )
+              }
+
+            </div>
+
+
+            <div className="fk-demo-meta">
+
+              <span>
+
+                {
+                  heroExperience.id ===
+                    "walk"
+                    ? (
+                      <Footprints
+                        size={14}
+                      />
+                    )
+                    : (
+                      <CalendarDays
+                        size={14}
+                      />
+                    )
+                }
+
+                {
+                  heroExperience.meta
+                }
+
+              </span>
+
+
+              <span className="fk-rating">
+
+                <Star
+                  size={13}
+                  fill="currentColor"
+                />
+
+                4.8
+
+              </span>
+
+            </div>
+
+
+            <Link
+              className="fk-send-invite"
+              to={
+                user
+                  ? "/food-invites"
+                  : "/register"
+              }
+            >
+
+              <Send
+                size={16}
+              />
+
+              Send Food Invite
+
+              <ArrowRight
+                size={15}
+              />
+
+            </Link>
+
+          </div>
+
+        </div>
+
+      </section>
+
+
+      {/* =====================================================
+          FOOD WALK SHOWCASE
+      ====================================================== */}
+
+      <section
+        className="fk-section fk-food-walk-section"
+        id="food-walk"
+      >
+
+        <div className="fk-section-heading fk-section-heading-left">
+
+          <span className="fk-section-kicker">
+            A FOODKINDL ORIGINAL EXPERIENCE
+          </span>
+
+
+          <h2>
+            Build a{" "}
+            <span>
+              Food Walk
+            </span>
+          </h2>
+
 
           <p>
-            Discover people through food. Cook together, eat together, and create lasting connections.
-            Share recipes, photos, and videos—all in one human-centred food community.
+            Choose a starting point and destination.
+            Discover FoodKindl partner restaurants
+            along the way and create a multi-stop
+            food experience with friends.
           </p>
 
-          <div className="hero-actions">
-            <Link className="primary-button" to="/register">
-              Explore FoodKindl Connect <ArrowRight size={18} />
-            </Link>
-            <a className="secondary-button" href="#how-it-works">
-              How It Works
-            </a>
-          </div>
-        </div>
-
-        <div className="hero-visual">
-  <div className="hero-floating-wrapper">
-    <div className="hero-main-card">
-      <img
-        src="/images/homepage1.jpg"
-        alt="Healthy FoodKindl meal"
-        className="hero-main-image"
-      />
-    </div>
-
-    {/* <div className="hero-floating-image hero-floating-one">
-      <img
-        src="/images/food2.png"
-        alt="Healthy meal"
-      />
-    </div> */}
-{/* 
-    <div className="hero-floating-image hero-floating-two">
-      <img
-        src="/images/food3.png"
-        alt="Fresh food bowl"
-      />
-    </div> */}
-  </div>
-</div>
-
-        {/* <div className="stats-row">
-          <StatCard
-            value={statsLoading ? "..." : stats.members}
-            label="Active members"
-          />
-          <StatCard
-            value={statsLoading ? "..." : stats.meals_shared}
-            label="Meals shared"
-          />
-          <StatCard
-            value={
-              statsLoading
-                ? "..."
-                : `${Number(stats.waste_reduced_kg || 0).toFixed(2)} kg`
-            }
-            label="Waste reduced"
-          />
-        </div> */}
-      </section>
-      
-
-      <section className="content-section" id="how-it-works">
-        <SectionHeading
-          // eyebrow="Simple flow"
-          title="How FoodKindl"
-          accent="Connect Works"
-          description="In four simple steps, turn a shared love of food into meaningful connections, memorable meals, and new friendships."
-        />
-
-        <div className="feature-grid four">
-          {steps.map((step) => (
-            <article className="feature-card" key={step.number}>
-              <div className="feature-top">
-                <span className="icon-box">{step.icon}</span>
-                <span className="step-number">{step.number}</span>
-              </div>
-              <h3>{step.title}</h3>
-              <p>{step.text}</p>
-            </article>
-          ))}
-        </div>
-      </section>
-
-      {/* =========================================================
-          LEARN, CREATE AND SHARE
-      ========================================================= */}
-
-     <section
-  className="content-section learn-create-section"
-  id="learn-create-share"
->
-  {/* =====================================================
-      HEADER
-  ===================================================== */}
-
-  <div className="learn-create-header">
-
-    <div className="learn-create-pill">
-      <Heart size={15} fill="currentColor" />
-      FOR FOOD LOVERS, BY FOOD LOVERS
-    </div>
-
-    <h2>
-      Learn, Create and <span>Share</span>
-    </h2>
-
-    <div className="learn-create-divider">
-      <span />
-      <Utensils size={25} />
-      <span />
-    </div>
-
-    <p>
-      Get personalised recipes with FoodKindl AI and
-      discover food content shared by your community-all
-      on one platform dedicated entirely to food.
-    </p>
-
-  </div>
-
-
-  {/* =====================================================
-      FEATURE CARDS
-  ===================================================== */}
-
-  <div className="learn-create-grid">
-
-
-    {/* ===================================================
-        FOODKINDL AI
-    =================================================== */}
-
-    <article className="learn-image-card">
-
-      <img
-        src="/images/food11.png"
-        alt="FoodKindl AI personalised recipes"
-        className="learn-image-card-bg"
-      />
-
-      <div className="learn-image-card-overlay" />
-
-
-      <div className="learn-image-card-content">
-
-        <div className="learn-circle-icon">
-          <Sparkles size={33} />
         </div>
 
 
-        <h3>
-          FoodKindl AI
-        </h3>
+        <div className="fk-food-walk-shell">
 
+          <div className="fk-food-walk-route">
 
-        <div className="learn-small-line" />
+            <div className="fk-food-walk-route-head">
 
-
-        <p>
-          Get personalised recipes based on
-          your dietary preferences and
-          available ingredients.
-        </p>
-
-
-        {/* Logged in → AI Kitchen
-            Logged out → Login */}
-
-        <Link
-          to={
-            user
-              ? "/ai-kitchen"
-              : "/login"
-          }
-          className="learn-image-button"
-        >
-          Smart recipes for you
-
-          <ArrowRight size={19} />
-        </Link>
-
-      </div>
-
-    </article>
-
-
-    {/* ===================================================
-        FOOD VIDEOS
-    =================================================== */}
-
-    <article className="learn-image-card">
-
-      <img
-        src="/images/food22.png"
-        alt="Food preparation videos"
-        className="learn-image-card-bg video-image-position"
-      />
-
-      <div className="learn-image-card-overlay" />
-
-
-      <div className="learn-image-card-content">
-
-        <div className="learn-circle-icon">
-          <Play size={34} />
-        </div>
-
-
-        <h3>
-          Food Videos
-        </h3>
-
-
-        <div className="learn-small-line" />
-
-
-        <p>
-          View photos, recipes and food-preparation
-          videos shared by your connections,
-          influencers, chefs and food creators.
-          Discover cooking tips, food reviews and
-          regional dishes.
-        </p>
-
-
-        {/* Logged in → Community
-            Logged out → Login */}
-
-        <Link
-          to={
-            user
-              ? "/community"
-              : "/login"
-          }
-          className="learn-image-button"
-        >
-          Watch &amp; share
-
-          <ArrowRight size={19} />
-        </Link>
-
-      </div>
-
-    </article>
-
-  </div>
-
-</section>
-
-      <section className="showcase-section">
-        <SectionHeading
-          eyebrow="Product showcase"
-          title="The"
-          accent="FoodKindl App"
-          description="FoodKindl is a food-focused social community where people can connect online and come together in real life through cooking and shared meals."
-        />
-
-        <div className="phone-showcase">
-          <div className="phone-tabs">
-            <span className="active">Host Profile</span>
-            <span>Food Invite</span>
-            <span>Group Chat</span>
-          </div>
-
-          <div className="phone-shell">
-            <div className="phone-notch" />
-            <div className="profile-mini">
-              <div className="avatar-mini">LN</div>
               <div>
-                <strong>Lakshmi Nair</strong>
-                <small>UI Designer · 2.4 km away</small>
+
+                <span>
+                  LIVE ROUTE PREVIEW
+                </span>
+
+                <strong>
+                  Nagasandra → Indiranagar
+                </strong>
+
               </div>
+
+
+              <div className="fk-route-distance">
+
+                <Footprints
+                  size={16}
+                />
+
+                17.3 km Food Trail
+
+              </div>
+
             </div>
-            <div className="tag-row">
-              <span>Vegan</span><span>Italian Food</span><span>Weekend Host</span>
+
+
+            <div className="fk-route-line">
+
+              {
+                FOOD_WALK_STOPS.map(
+                  (
+                    stop,
+                    index
+                  ) => (
+
+                    <div
+                      className="fk-route-stop"
+                      key={
+                        stop.name
+                      }
+                    >
+
+                      <div
+                        className={
+                          stop.partner
+                            ? "fk-route-dot partner"
+                            : "fk-route-dot"
+                        }
+                      >
+                        {
+                          index + 1
+                        }
+                      </div>
+
+
+                      <div className="fk-route-stop-copy">
+
+                        <span>
+                          {
+                            stop.type
+                          }
+                        </span>
+
+                        <strong>
+                          {
+                            stop.name
+                          }
+                        </strong>
+
+                        <small>
+                          {
+                            stop.detail
+                          }
+                        </small>
+
+
+                        {
+                          stop.partner &&
+                          (
+
+                            <em>
+
+                              <Check
+                                size={10}
+                              />
+
+                              FoodKindl Partner
+
+                            </em>
+
+                          )
+                        }
+
+                      </div>
+
+
+                      {
+                        index <
+                        FOOD_WALK_STOPS.length -
+                        1 &&
+                        (
+                          <div className="fk-route-connector" />
+                        )
+                      }
+
+                    </div>
+
+                  )
+                )
+              }
+
             </div>
-            <div className="meal-photo">
-              <Utensils size={42} />
-              <strong>Mexican Taco Night</strong>
+
+          </div>
+
+
+          <div className="fk-food-walk-side">
+
+            <div className="fk-food-walk-side-icon">
+
+              <MapPin
+                size={24}
+              />
+
             </div>
+
+
+            <span>
+              ROUTE-BASED DISCOVERY
+            </span>
+
+
+            <h3>
+              Find food along the way.
+            </h3>
+
+
             <p>
-                Love cooking spices from scratch. Looking for clean eaters to
-                co-cook and share ingredients this Sunday.
+              FoodKindl uses restaurant location data
+              to surface partner places close to your route,
+              so the journey itself becomes part of the meal.
+            </p>
+
+
+            <div className="fk-food-walk-benefits">
+
+              <span>
+                <Check size={13} />
+                Partner restaurants first
+              </span>
+
+              <span>
+                <Check size={13} />
+                Choose 2–5 stops
+              </span>
+
+              <span>
+                <Check size={13} />
+                Invite your connections
+              </span>
+
+            </div>
+
+
+            <Link
+              to={
+                user
+                  ? "/food-invites"
+                  : "/register"
+              }
+              className="fk-text-link"
+            >
+              Build your Food Walk
+
+              <ArrowRight
+                size={16}
+              />
+            </Link>
+
+          </div>
+
+        </div>
+
+      </section>
+
+
+      {/* =====================================================
+          HOW IT WORKS — VISUAL
+      ====================================================== */}
+
+      <section
+        className="fk-section"
+        id="how-it-works"
+      >
+
+        <div className="fk-section-heading">
+
+          <span className="fk-section-kicker">
+            FROM DISCOVERY TO THE TABLE
+          </span>
+
+
+          <h2>
+            How FoodKindl{" "}
+            <span>
+              Connect Works
+            </span>
+          </h2>
+
+
+          <p>
+            Four simple steps turn a shared love
+            of food into meaningful real-world connections.
+          </p>
+
+        </div>
+
+
+        <div className="fk-how-track">
+
+          {
+            HOW_STEPS.map(
+              (
+                step,
+                index
+              ) => {
+
+                const Icon =
+                  step.icon;
+
+
+                return (
+
+                  <article
+                    className="fk-how-card"
+                    key={
+                      step.number
+                    }
+                  >
+
+                    <div className="fk-how-number">
+                      {step.number}
+                    </div>
+
+
+                    <div className="fk-how-icon">
+                      <Icon size={20} />
+                    </div>
+
+
+                    <div className="fk-how-mini-visual">
+
+                      <div className="fk-mini-avatar">
+                        {
+                          step.visual.name
+                            .slice(
+                              0,
+                              1
+                            )
+                        }
+                      </div>
+
+
+                      <div>
+
+                        <strong>
+                          {
+                            step.visual.name
+                          }
+                        </strong>
+
+                        <small>
+                          {
+                            step.visual.detail
+                          }
+                        </small>
+
+                      </div>
+
+
+                      <span>
+                        {
+                          step.visual.tag
+                        }
+                      </span>
+
+                    </div>
+
+
+                    <h3>
+                      {
+                        step.title
+                      }
+                    </h3>
+
+
+                    <p>
+                      {
+                        step.text
+                      }
+                    </p>
+
+
+                    {
+                      index <
+                      HOW_STEPS.length -
+                      1 &&
+                      (
+                        <div className="fk-how-connector">
+                          <ArrowRight size={16} />
+                        </div>
+                      )
+                    }
+
+                  </article>
+
+                );
+              }
+            )
+          }
+
+        </div>
+
+      </section>
+
+
+      {/* =====================================================
+          HAPPENING ON FOODKINDL
+      ====================================================== */}
+
+      <section className="fk-section fk-activity-section">
+
+        <div className="fk-section-heading fk-section-heading-left">
+
+          <span className="fk-section-kicker">
+            COMMUNITY RIGHT NOW
+          </span>
+
+
+          <h2>
+            Happening on{" "}
+            <span>
+              FoodKindl
+            </span>
+          </h2>
+
+
+          <p>
+            A glimpse of the food moments people can create
+            and discover across the community.
+          </p>
+
+        </div>
+
+
+        <div className="fk-activity-grid">
+
+          {
+            COMMUNITY_ACTIVITY.map(
+              activity => {
+
+                const Icon =
+                  activity.icon;
+
+
+                return (
+
+                  <article
+                    className="fk-activity-card"
+                    key={
+                      activity.title
+                    }
+                  >
+
+                    <div className="fk-activity-top">
+
+                      <span className="fk-activity-type">
+
+                        <Icon
+                          size={14}
+                        />
+
+                        {
+                          activity.type
+                        }
+
+                      </span>
+
+
+                      <span className="fk-activity-live">
+                        LIVE
+                      </span>
+
+                    </div>
+
+
+                    <h3>
+                      {
+                        activity.title
+                      }
+                    </h3>
+
+
+                    <div className="fk-activity-location">
+
+                      <MapPin
+                        size={13}
+                      />
+
+                      {
+                        activity.location
+                      }
+
+                    </div>
+
+
+                    <p>
+                      {
+                        activity.meta
+                      }
+                    </p>
+
+
+                    <div className="fk-activity-footer">
+
+                      <div className="fk-avatar-stack small">
+                        <span>A</span>
+                        <span>M</span>
+                        <span>R</span>
+                      </div>
+
+
+                      <strong>
+                        {
+                          activity.badge
+                        }
+                      </strong>
+
+                    </div>
+
+                  </article>
+
+                );
+              }
+            )
+          }
+
+        </div>
+
+      </section>
+
+
+      {/* =====================================================
+          LEARN, CREATE AND SHARE
+      ====================================================== */}
+
+      <section
+        className="fk-section fk-ecosystem-section"
+        id="learn-create-share"
+      >
+
+        <div className="fk-section-heading">
+
+          <span className="fk-section-kicker">
+            FOR FOOD LOVERS, BY FOOD LOVERS
+          </span>
+
+
+          <h2>
+            Learn, Create and{" "}
+            <span>
+              Share
+            </span>
+          </h2>
+
+
+          <p>
+            FoodKindl connects inspiration back to real
+            food moments — discover a recipe, cook it,
+            meet people and share what happened.
+          </p>
+
+        </div>
+
+
+        <div className="fk-ecosystem-grid">
+
+
+          {/* AI */}
+
+          <article className="fk-ecosystem-card">
+
+            <img
+              src="/images/food11.png"
+              alt="FoodKindl AI recipes"
+            />
+
+            <div className="fk-ecosystem-overlay" />
+
+
+            <div className="fk-ecosystem-content">
+
+              <span className="fk-ecosystem-icon">
+                <Sparkles size={22} />
+              </span>
+
+
+              <small>
+                FOODKINDL AI
+              </small>
+
+
+              <h3>
+                Tell us what you have.
+                Get a recipe.
+                Cook it together.
+              </h3>
+
+
+              <p>
+                Get personalised recipe ideas from your
+                available ingredients and food preferences,
+                then turn the recipe into a shared meal.
               </p>
 
-              <div className="coming-soon-tag">
-                🚀 Coming Soon
-                <small>Mobile App Coming Soon</small>
-              </div>
 
-              <button disabled className="coming-soon-button">
-                View Active Invites
-              </button>
-          </div>
-        </div>
+              <Link
+                to={
+                  user
+                    ? "/ai-kitchen"
+                    : "/login"
+                }
+              >
+                Open AI Kitchen
+
+                <ArrowRight size={16} />
+              </Link>
 
-        <div className="story-block">
-  <div>
-    <div className="eyebrow left">
-      Human-centric food platform
-    </div>
-
-    <h3>Social Dining, Simplified.</h3>
-
-    <p>
-      
-We believe meaningful connections often begin around food- cooking together, sharing a meal, and enjoying warm conversations that can grow into lasting friendships.
-
-FoodKindl makes it easy for individuals and groups to discover like-minded people, plan food gatherings, and build genuine relationships. Members can also share recipes, articles, photos, and cooking videos to inspire the wider food community.
-    </p>
-  </div>
-
-  <div className="video-card">
-
-  <video
-    ref={videoRef}
-    className="story-video"
-    preload="metadata"
-    poster="/images/video-thumbnail.jpg"
-    controls={videoStarted}
-  >
-    <source
-      src="/videos/video1.mp4"
-      type="video/mp4"
-    />
-
-    Your browser does not support the video tag.
-  </video>
-
-
-  {!videoStarted && (
-
-    <div className="story-video-overlay">
-
-      <button
-        type="button"
-        className="story-video-play"
-        onClick={playStoryVideo}
-        aria-label="Play FoodKindl video"
-      >
-        <Play
-          size={27}
-          fill="currentColor"
-        />
-      </button>
-
-
-      <div className="story-video-title">
-        See How FoodKindl Brings People Together
-      </div>
-
-    </div>
-
-  )}
-
-</div>
-</div>
-      </section>
-
-      {/* <section className="content-section redistribution" id="food-service"> */}
-        {/* <SectionHeading
-          eyebrow="Zero waste protocol"
-          title="Redistribution"
-          accent="Engine"
-          description="A high-efficiency pipeline connecting restaurants, caterers, and individuals with verified volunteers."
-        /> */}
-
-        {/* <div className="node-grid">
-          <article className="node-card">
-            <PackageCheck />
-            <h3>Node 01: Producers</h3>
-            <p>Restaurants, caterers, households, and event venues list safe surplus meals.</p>
-          </article>
-          <article className="node-card highlighted">
-            <Truck />
-            <h3>Node 02: Transit</h3>
-            <p>Verified local volunteers coordinate timely pickup and responsible transport.</p>
-          </article>
-          <article className="node-card">
-            <MapPin />
-            <h3>Node 03: Delivery</h3>
-            <p>Meals reach intended communities while freshness and dignity are protected.</p>
-          </article>
-        </div>
-      </section> */}
-
-      <section className="content-section safety safety-premium">
-
-  <div className="safety-intro">
-
-    <div>
-      <div className="eyebrow left">
-        SAFETY FIRST PROTOCOL
-      </div>
-
-      <h2>
-        Trust &amp; <span>Safety</span>
-      </h2>
-
-      <p className="safety-subtitle">
-        Built to help every FoodKindl connection feel
-        safer, more respectful, and more comfortable.
-      </p>
-    </div>
-
-
-    <p className="safety-description">
-      Connecting with new people should never compromise
-      peace of mind. FoodKindl uses layered safeguards,
-      verified profiles, and safety-first controls to
-      support a respectful food community.
-    </p>
-
-  </div>
-
-
-  <div className="safety-card-grid">
-
-
-    {/* VERIFIED PROFILES */}
-
-    <article className="safety-feature-card">
-
-      <div className="safety-card-number">
-        01
-      </div>
-
-      <div className="safety-icon verified">
-        <UserCheck size={28} />
-      </div>
-
-      <h3>
-        Verified Profiles
-      </h3>
-
-      <p>
-        Government-issued photo ID can be required before
-        members join selected private gatherings.
-      </p>
-
-      <div className="safety-card-footer">
-        Identity-backed trust
-      </div>
-
-    </article>
-
-
-    {/* WOMEN ONLY */}
-
-    <article className="safety-feature-card">
-
-      <div className="safety-card-number">
-        02
-      </div>
-
-      <div className="safety-icon women">
-        <ShieldCheck size={28} />
-      </div>
-
-      <h3>
-        Women-Only Preference
-      </h3>
-
-      <p>
-        Hosts can limit applicable gatherings to verified
-        female community members for added comfort and safety.
-      </p>
-
-      <div className="safety-card-footer">
-        Comfort-led participation
-      </div>
-
-    </article>
-
-
-    {/* SOS - COMING SOON */}
-
-    <article className="safety-feature-card safety-coming-soon">
-
-      <div className="safety-card-number">
-        03
-      </div>
-
-      <div className="safety-coming-badge">
-        Coming Soon
-      </div>
-
-      <div className="safety-icon sos">
-        <MessageCircle size={28} />
-      </div>
-
-      <h3>
-        One-Tap SOS
-      </h3>
-
-      <p>
-        A future emergency safety control designed to quickly
-        alert trusted contacts during an active gathering.
-      </p>
-
-      <div className="safety-card-footer">
-        Emergency support layer
-      </div>
-
-    </article>
-
-  </div>
-
-</section>
-
-      {/* <section className="content-section products" id="products">
-        <SectionHeading
-          eyebrow="Product vertical expansion"
-          title="Future"
-          accent="Vision"
-          description="Cooking together is the starting point. FoodKindl can grow into a sustainable food and serveware ecosystem."
-        />
-
-        <div className="product-grid">
-
-  <article className="product-card">
-    <div className="product-image">
-      <img
-        src="/images/species.png"
-        alt="FoodKindl Spices"
-      />
-
-      <div className="coming-overlay">
-        Coming Soon
-      </div>
-    </div>
-
-    <div>
-      <h3>FoodKindl Spices</h3>
-
-      <p>
-        Curated spice bundles designed with local chefs to bring aroma,
-        colour, and culinary stories into homes.
-      </p>
-
-      <small>Status: Planned Launch</small>
-    </div>
-  </article> */}
-
-  {/* <article className="product-card">
-    <div className="product-image">
-      <img
-        src="/images/frontend\public\images\ceramic.png"
-        alt="Sustainable Serveware"
-      />
-
-      <div className="coming-overlay">
-        Coming Soon
-      </div>
-    </div>
-
-    <div>
-      <h3>Sustainable Serveware</h3>
-
-      <p>
-        Eco-conscious serving pieces made using clay, bamboo, and responsibly
-        sourced materials.
-      </p>
-
-      <small>Status: Planned Launch</small>
-    </div>
-  </article>
-
-</div>
-      </section> */}
-
-      {/* <section className="form-section" id="waitlist">
-        <div className="form-card">
-          <SectionHeading
-            eyebrow="Exclusive reservation"
-            title="Join the FoodKindl"
-            accent="Community"
-            description="Register for early access and secure your place in the local FoodKindl community."
-          />
-
-          <form onSubmit={submitWaitlist}>
-            <div className="form-row">
-              <label>
-                Full name
-                <input
-                  value={waitlist.full_name}
-                  onChange={(e) => setWaitlist({ ...waitlist, full_name: e.target.value })}
-                  required
-                  placeholder="John Doe"
-                />
-              </label>
-              <label>
-                Email address
-                <input
-                  type="email"
-                  value={waitlist.email}
-                  onChange={(e) => setWaitlist({ ...waitlist, email: e.target.value })}
-                  required
-                  placeholder="johndoe@example.com"
-                />
-              </label>
             </div>
 
-            <label>
-              Select your city
-              <input
-                value={waitlist.city}
-                onChange={(e) => setWaitlist({ ...waitlist, city: e.target.value })}
-                required
-                placeholder="Bengaluru"
-              />
-            </label>
+          </article>
 
-            <button className="primary-button full">Get Early Access</button>
-            {waitlistMessage && <p className="form-message">{waitlistMessage}</p>}
-          </form>
+
+          {/* VIDEOS */}
+
+          <article className="fk-ecosystem-card">
+
+            <img
+              src="/images/food22.png"
+              alt="FoodKindl community food videos"
+            />
+
+            <div className="fk-ecosystem-overlay" />
+
+
+            <div className="fk-ecosystem-content">
+
+              <span className="fk-ecosystem-icon">
+                <Play size={22} />
+              </span>
+
+
+              <small>
+                FOOD VIDEOS
+              </small>
+
+
+              <h3>
+                See what your connections cooked.
+                Discover regional dishes.
+              </h3>
+
+
+              <p>
+                Watch community food videos, discover cooking
+                ideas, save inspiration and share your own
+                food experiences.
+              </p>
+
+
+              <Link
+                to={
+                  user
+                    ? "/community"
+                    : "/login"
+                }
+              >
+                Explore community
+
+                <ArrowRight size={16} />
+              </Link>
+
+            </div>
+
+          </article>
+
         </div>
-      </section> */}
 
-      
+      </section>
 
-      <footer className="site-footer">
 
-  {/* ================================
-      FOOTER LINKS
-  ================================= */}
+      {/* =====================================================
+          SOCIAL DINING + STORY VIDEO
+      ====================================================== */}
 
-  <div className="footer-links-grid">
+      <section className="fk-section fk-story-section">
+
+        <div className="fk-story-copy">
+
+          <span className="fk-section-kicker">
+            HUMAN-CENTRIC FOOD PLATFORM
+          </span>
+
+
+          <h2>
+            Social Dining,{" "}
+            <span>
+              Simplified.
+            </span>
+          </h2>
+
+
+          <p>
+            Meaningful connections often begin around food:
+            cooking together, sharing a meal and enjoying
+            conversations that can grow into lasting friendships.
+          </p>
+
+
+          <p>
+            FoodKindl helps people discover like-minded members,
+            plan gatherings and build genuine relationships
+            around a shared love of food.
+          </p>
+
+
+          <div className="fk-story-points">
+
+            <span>
+              <Users size={15} />
+              Discover people nearby
+            </span>
+
+            <span>
+              <Send size={15} />
+              Create Food Invites
+            </span>
+
+            <span>
+              <Heart size={15} />
+              Turn meals into connections
+            </span>
+
+          </div>
+
+        </div>
+
+
+        <div className="fk-story-video-card">
+
+          <video
+            ref={videoRef}
+            className="fk-story-video"
+            preload="metadata"
+            poster="/images/video-thumbnail.jpg"
+            controls={
+              videoStarted
+            }
+          >
+
+            <source
+              src="/videos/video1.mp4"
+              type="video/mp4"
+            />
+
+            Your browser does not support the video tag.
+
+          </video>
+
+
+          {
+            !videoStarted &&
+            (
+
+              <button
+                type="button"
+                className="fk-story-video-overlay"
+                onClick={
+                  playStoryVideo
+                }
+                aria-label="Play FoodKindl story"
+              >
+
+                <span className="fk-story-play">
+
+                  <Play
+                    size={26}
+                    fill="currentColor"
+                  />
+
+                </span>
+
+
+                <span>
+                  SEE THE FOODKINDL STORY
+                </span>
+
+
+                <strong>
+                  See How FoodKindl Brings
+                  People Together
+                </strong>
+
+
+                <small>
+                  A short story about food,
+                  connection and belonging.
+                </small>
+
+              </button>
+
+            )
+          }
+
+        </div>
+
+      </section>
+
+
+      {/* =====================================================
+          TRUST & SAFETY
+      ====================================================== */}
+
+      <section className="fk-section fk-safety-section">
+
+        <div className="fk-safety-intro">
+
+          <div>
+
+            <span className="fk-section-kicker">
+              SAFETY FIRST PROTOCOL
+            </span>
+
+
+            <h2>
+              Trust &{" "}
+              <span>
+                Safety
+              </span>
+            </h2>
+
+
+            <p>
+              Built to help every FoodKindl connection
+              feel safer, more respectful and more comfortable.
+            </p>
+
+          </div>
+
+
+          <p className="fk-safety-description">
+            FoodKindl combines verified profiles,
+            participation controls and safety-first
+            product choices to support a respectful
+            food community.
+          </p>
+
+        </div>
+
+
+        <div className="fk-safety-grid">
+
+          <article>
+
+            <div className="fk-safety-number">
+              01
+            </div>
+
+
+            <span className="fk-safety-icon verified">
+
+              <UserCheck
+                size={24}
+              />
+
+            </span>
+
+
+            <h3>
+              Verified Profiles
+            </h3>
+
+
+            <p>
+              Government-issued photo ID can be required
+              before members join selected private gatherings.
+            </p>
+
+
+            <small>
+              IDENTITY-BACKED TRUST
+            </small>
+
+          </article>
+
+
+          <article>
+
+            <div className="fk-safety-number">
+              02
+            </div>
+
+
+            <span className="fk-safety-icon women">
+
+              <ShieldCheck
+                size={24}
+              />
+
+            </span>
+
+
+            <h3>
+              Women-Only Preference
+            </h3>
+
+
+            <p>
+              Hosts can limit applicable gatherings
+              to verified female community members.
+            </p>
+
+
+            <small>
+              COMFORT-LED PARTICIPATION
+            </small>
+
+          </article>
+
+
+          <article className="coming-soon">
+
+            <div className="fk-safety-number">
+              03
+            </div>
+
+
+            <span className="fk-coming-badge">
+              Coming Soon
+            </span>
+
+
+            <span className="fk-safety-icon sos">
+
+              <MessageCircle
+                size={24}
+              />
+
+            </span>
+
+
+            <h3>
+              One-Tap SOS
+            </h3>
+
+
+            <p>
+              A future emergency safety control
+              designed to alert trusted contacts
+              during an active gathering.
+            </p>
+
+
+            <small>
+              EMERGENCY SUPPORT LAYER
+            </small>
+
+          </article>
+
+        </div>
+
+      </section>
+
+
+      {/* =====================================================
+          FINAL CTA
+      ====================================================== */}
+
+      <section className="fk-final-cta">
+
+        <div>
+
+          <span>
+            YOUR NEXT FOOD STORY CAN START NEARBY
+          </span>
+
+
+          <h2>
+            Find people.
+            Share food.
+            Build real connections.
+          </h2>
+
+
+          <p>
+            Join FoodKindl Connect and discover
+            a new way to meet people through food.
+          </p>
+
+        </div>
+
+
+        <Link
+  to={
+    user
+      ? "/connect-dashboard"
+      : "/login"
+  }
+  className="fk-primary-button"
+>
+  Enter FoodKindl Connect
+
+  <ArrowRight size={18} />
+</Link>
+
+      </section>
+
+
+      {/* =====================================================
+          FOOTER
+      ====================================================== */}
+
+      <footer className="fk-footer">
+
+  <div className="fk-footer-grid">
+
+    {/* BRAND */}
+
+    <div className="fk-footer-brand">
+
+      <img
+        src="/images/icon.png"
+        alt="FoodKindl"
+      />
+
+      <p>
+        Where Food Connects
+        People &amp; Planet
+      </p>
+
+    </div>
+
 
     {/* COMPANY */}
-    <div className="footer-column">
-      <h4>Company</h4>
+
+    <div>
+
+      <h4>
+        Company
+      </h4>
 
       <Link to="/about">
         About FoodKindl
@@ -785,12 +1768,17 @@ FoodKindl makes it easy for individuals and groups to discover like-minded peopl
       <Link to="/contact">
         Contact Us
       </Link>
+
     </div>
 
 
-    {/* COMMUNITY & SAFETY */}
-    <div className="footer-column">
-      <h4>Community &amp; Safety</h4>
+    {/* COMMUNITY */}
+
+    <div>
+
+      <h4>
+        Community &amp; Safety
+      </h4>
 
       <Link to="/community-guidelines">
         Community Guidelines
@@ -799,12 +1787,17 @@ FoodKindl makes it easy for individuals and groups to discover like-minded peopl
       <Link to="/safety">
         Safety Centre
       </Link>
+
     </div>
 
 
     {/* LEGAL */}
-    <div className="footer-column">
-      <h4>Legal</h4>
+
+    <div>
+
+      <h4>
+        Legal
+      </h4>
 
       <Link to="/privacy">
         Privacy Policy
@@ -813,133 +1806,81 @@ FoodKindl makes it easy for individuals and groups to discover like-minded peopl
       <Link to="/terms">
         Terms of Use
       </Link>
+
     </div>
 
 
-    {/* SOCIAL MEDIA
-        Keep this section hidden until you have
-        official FoodKindl social accounts.
+    {/* SOCIAL */}
 
-        When ready, uncomment and replace URLs.
-    */}
+    <div className="fk-footer-social-column">
 
-    {/*
-    <div className="footer-column">
-      <h4>Follow FoodKindl</h4>
+      <h4>
+        Follow FoodKindl
+      </h4>
+
 
       <a
-        href="YOUR_INSTAGRAM_URL"
+        href="https://www.instagram.com/foodkindl"
         target="_blank"
         rel="noopener noreferrer"
-        aria-label="FoodKindl on Instagram"
       >
+
+        <Instagram size={15} />
+
         Instagram
+
       </a>
 
-      <a
-        href="YOUR_YOUTUBE_URL"
-        target="_blank"
-        rel="noopener noreferrer"
-        aria-label="FoodKindl on YouTube"
-      >
-        YouTube
-      </a>
 
       <a
-        href="YOUR_LINKEDIN_URL"
+        href="https://www.facebook.com/foodkindl"
         target="_blank"
         rel="noopener noreferrer"
-        aria-label="FoodKindl on LinkedIn"
       >
-        LinkedIn
-      </a>
 
-      <a
-        href="YOUR_FACEBOOK_URL"
-        target="_blank"
-        rel="noopener noreferrer"
-        aria-label="FoodKindl on Facebook"
-      >
+        <Facebook size={15} />
+
         Facebook
+
       </a>
+
+
+      <a
+        href="https://www.linkedin.com/company/foodkindl"
+        target="_blank"
+        rel="noopener noreferrer"
+      >
+
+        <Linkedin size={15} />
+
+        LinkedIn
+
+      </a>
+
     </div>
-    */}
 
   </div>
 
 
-  {/* ================================
-      DIVIDER
-  ================================= */}
-
-  <div className="footer-divider" />
-
-
-  {/* ================================
-      LOGO
-  ================================= */}
-
-  <div className="footer-brand">
-
-    <img
-      src="/images/icon.png"
-      alt="FoodKindl"
-      className="footer-logo-image"
-    />
-
-    <p className="footer-tagline">
-      Where Food Connects People &amp; Planet
-    </p>
-
-  </div>
-
-
-  {/* ================================
-      COPYRIGHT
-  ================================= */}
-
-  <div className="footer-bottom">
+  <div className="fk-footer-bottom">
 
     <p>
       © 2026 KnightnKindle Pvt Ltd.
       All rights reserved.
     </p>
 
-    <p className="footer-ownership">
-      FoodKindl and its associated name, logo and
-      visual identity are owned by KnightnKindle Pvt Ltd.
+
+    <p>
+      FoodKindl and its associated name,
+      logo and visual identity are owned by
+      KnightnKindle Pvt Ltd.
     </p>
 
-
-    {/* <div className="footer-bottom-links">
-
-      <Link to="/privacy">
-        Privacy Policy
-      </Link> */}
-
-      {/* <span>•</span>
-
-      <Link to="/terms">
-        Terms of Use
-      </Link>
-
-      <span>•</span> */}
-{/* 
-      <Link to="/community-guidelines">
-        Community Guidelines
-      </Link> */}
-
-      {/* <span>•</span> */}
-
-      {/* <Link to="/safety">
-        Safety Centre
-      </Link> */}
-
-    </div>
-
-  {/* </div> */}
+  </div>
 
 </footer>
+
     </main>
+
   );
 }

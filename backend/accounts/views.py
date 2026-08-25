@@ -37,22 +37,17 @@ from .utils import (
 
 def normalize_food_values(value):
     """
-    Convert comma-separated food values into
-    a clean lowercase set.
+    Convert food-related values into a normalized set.
 
-    Example:
-    "Kerala, South Indian, Chinese"
-
-    becomes:
-
-    {
-        "kerala",
-        "south indian",
-        "chinese",
-    }
+    Supports:
+    - comma-separated strings
+    - semicolon-separated strings
+    - lists
+    - tuples
+    - sets
     """
 
-    if not value:
+    if value is None:
         return set()
 
     if isinstance(
@@ -64,22 +59,39 @@ def normalize_food_values(value):
         ),
     ):
 
-        values = value
+        raw_values = value
 
     else:
 
-        values = str(value).split(",")
+        raw_values = (
+            str(value)
+            .replace(";", ",")
+            .split(",")
+        )
 
-    return {
-        str(item)
-        .strip()
-        .lower()
+    normalized_values = set()
 
-        for item in values
+    for item in raw_values:
 
-        if str(item).strip()
-    }
+        clean_item = (
+            str(item)
+            .strip()
+            .lower()
+            .replace("_", " ")
+        )
 
+        if clean_item:
+
+            normalized_values.add(
+                clean_item
+            )
+
+    return normalized_values
+
+
+# ============================================================
+# COMMON SCORE
+# ============================================================
 
 def calculate_common_score(
     first_value,
@@ -87,48 +99,68 @@ def calculate_common_score(
     maximum_points,
 ):
     """
-    Compare two comma-separated fields
-    and calculate similarity points.
+    Calculate similarity using Jaccard similarity.
 
-    Uses Jaccard similarity:
+    Formula:
 
-    common items / total unique items
+        common items
+        ----------------
+        all unique items
+
+    multiplied by maximum_points.
     """
 
-    first = normalize_food_values(
+    first_values = normalize_food_values(
         first_value
     )
 
-    second = normalize_food_values(
+    second_values = normalize_food_values(
         second_value
     )
 
-    if not first or not second:
+    if (
+        not first_values
+        or
+        not second_values
+    ):
 
         return (
             0,
             [],
         )
 
-    common = first.intersection(
-        second
+    common_values = (
+        first_values
+        .intersection(
+            second_values
+        )
     )
 
-    if not common:
+    if not common_values:
 
         return (
             0,
             [],
         )
 
-    combined = first.union(
-        second
+    combined_values = (
+        first_values
+        .union(
+            second_values
+        )
     )
+
+    if not combined_values:
+
+        return (
+            0,
+            [],
+        )
 
     similarity = (
-        len(common)
+        len(common_values)
         /
-        len(combined)
+        len(combined_values)
     )
 
     points = round(
@@ -139,46 +171,115 @@ def calculate_common_score(
 
     return (
         points,
-        sorted(common),
+        sorted(
+            common_values
+        ),
     )
 
 
+# ============================================================
+# SAFE PROFILE VALUE
+# ============================================================
+
+def get_profile_value(
+    profile,
+    field_name,
+):
+
+    if not profile:
+        return ""
+
+    value = getattr(
+        profile,
+        field_name,
+        "",
+    )
+
+    if value is None:
+        return ""
+
+    return value
+
+
+# ============================================================
+# SAFE PROFILE TEXT
+# ============================================================
+
+def get_profile_text(
+    profile,
+    field_name,
+):
+
+    return (
+        str(
+            get_profile_value(
+                profile,
+                field_name,
+            )
+        )
+        .strip()
+        .lower()
+        .replace(
+            "_",
+            " ",
+        )
+    )
+
+
+# ============================================================
+# FORMAT VALUE
+# ============================================================
+
 def format_food_value(value):
-    """
-    Display saved lowercase comparison values
-    nicely in match reasons.
-    """
 
-    return str(value).title()
+    if not value:
+        return ""
 
+    return (
+        str(value)
+        .replace(
+            "_",
+            " ",
+        )
+        .strip()
+        .title()
+    )
+
+
+# ============================================================
+# CALCULATE FOOD MATCH
+# ============================================================
 
 def calculate_food_match(
     current_profile,
     other_profile,
 ):
     """
-    FoodKindl Food Match calculation.
+    FOODKINDL FOOD MATCH
 
-    Favourite cuisines:       30
-    Food interests:           25
-    Connection preferences:   20
-    Dietary preference:       15
-    Location:                 10
+    Favourite cuisines             30
+    Food interests                 25
+    Connection preferences         20
+    Dietary preference             15
+    Location                       10
 
-    Total:                   100
+    TOTAL                         100
     """
 
     score = 0
+
     reasons = []
 
     common_cuisines = []
+
     common_interests = []
-    common_connections = []
+
+    common_connection_preferences = []
 
 
     # ========================================================
     # 1. FAVOURITE CUISINES
-    # MAXIMUM 30 POINTS
+    # MAXIMUM 30
     # ========================================================
 
     (
@@ -186,11 +287,15 @@ def calculate_food_match(
         common_cuisines,
     ) = calculate_common_score(
 
-        current_profile
-        .favorite_cuisines,
+        get_profile_value(
+            current_profile,
+            "favorite_cuisines",
+        ),
 
-        other_profile
-        .favorite_cuisines,
+        get_profile_value(
+            other_profile,
+            "favorite_cuisines",
+        ),
 
         30,
     )
@@ -199,11 +304,13 @@ def calculate_food_match(
 
     if common_cuisines:
 
-        display_cuisines = [
+        display_values = [
+
             format_food_value(
-                cuisine
+                value
             )
-            for cuisine
+
+            for value
             in common_cuisines[:3]
         ]
 
@@ -211,14 +318,14 @@ def calculate_food_match(
             "Both enjoy "
             +
             ", ".join(
-                display_cuisines
+                display_values
             )
         )
 
 
     # ========================================================
     # 2. FOOD INTERESTS
-    # MAXIMUM 25 POINTS
+    # MAXIMUM 25
     # ========================================================
 
     (
@@ -226,11 +333,15 @@ def calculate_food_match(
         common_interests,
     ) = calculate_common_score(
 
-        current_profile
-        .interests,
+        get_profile_value(
+            current_profile,
+            "interests",
+        ),
 
-        other_profile
-        .interests,
+        get_profile_value(
+            other_profile,
+            "interests",
+        ),
 
         25,
     )
@@ -239,11 +350,13 @@ def calculate_food_match(
 
     if common_interests:
 
-        display_interests = [
+        display_values = [
+
             format_food_value(
-                interest
+                value
             )
-            for interest
+
+            for value
             in common_interests[:3]
         ]
 
@@ -251,67 +364,75 @@ def calculate_food_match(
             "Shared interest in "
             +
             ", ".join(
-                display_interests
+                display_values
             )
         )
 
 
     # ========================================================
     # 3. FOOD CONNECTION PREFERENCES
-    # MAXIMUM 20 POINTS
+    # MAXIMUM 20
     # ========================================================
 
     (
         connection_score,
-        common_connections,
+        common_connection_preferences,
     ) = calculate_common_score(
 
-        current_profile
-        .food_connection_preferences,
+        get_profile_value(
+            current_profile,
+            "food_connection_preferences",
+        ),
 
-        other_profile
-        .food_connection_preferences,
+        get_profile_value(
+            other_profile,
+            "food_connection_preferences",
+        ),
 
         20,
     )
 
     score += connection_score
 
-    if common_connections:
+    if common_connection_preferences:
 
-        display_connections = [
+        display_values = [
+
             format_food_value(
-                connection
+                value
             )
-            for connection
-            in common_connections[:2]
+
+            for value
+            in common_connection_preferences[:3]
         ]
 
         reasons.append(
             "Both interested in "
             +
             ", ".join(
-                display_connections
+                display_values
             )
         )
 
 
     # ========================================================
     # 4. DIETARY PREFERENCE
-    # MAXIMUM 15 POINTS
+    # MAXIMUM 15
     # ========================================================
 
     current_diet = (
-        current_profile
-        .dietary_preference
-        or ""
-    ).strip().lower()
+        get_profile_text(
+            current_profile,
+            "dietary_preference",
+        )
+    )
 
     other_diet = (
-        other_profile
-        .dietary_preference
-        or ""
-    ).strip().lower()
+        get_profile_text(
+            other_profile,
+            "dietary_preference",
+        )
+    )
 
     if (
         current_diet
@@ -331,31 +452,39 @@ def calculate_food_match(
 
     # ========================================================
     # 5. LOCATION
-    # MAXIMUM 10 POINTS
-    #
-    # Currently using locality / city because
-    # Profile does not contain latitude/longitude.
+    # MAXIMUM 10
     # ========================================================
 
     current_city = (
-        current_profile.city
-        or ""
-    ).strip().lower()
+        get_profile_text(
+            current_profile,
+            "city",
+        )
+    )
 
     other_city = (
-        other_profile.city
-        or ""
-    ).strip().lower()
+        get_profile_text(
+            other_profile,
+            "city",
+        )
+    )
 
     current_locality = (
-        current_profile.locality
-        or ""
-    ).strip().lower()
+        get_profile_text(
+            current_profile,
+            "locality",
+        )
+    )
 
     other_locality = (
-        other_profile.locality
-        or ""
-    ).strip().lower()
+        get_profile_text(
+            other_profile,
+            "locality",
+        )
+    )
+
+
+    # Same locality = 10 points
 
     if (
         current_locality
@@ -371,6 +500,9 @@ def calculate_food_match(
         reasons.append(
             "Same locality"
         )
+
+
+    # Same city = 6 points
 
     elif (
         current_city
@@ -389,16 +521,21 @@ def calculate_food_match(
 
 
     # ========================================================
-    # FINAL RESULT
+    # FINAL SCORE
     # ========================================================
+
+    final_score = max(
+        0,
+        min(
+            round(score),
+            100,
+        ),
+    )
 
     return {
 
         "score":
-            min(
-                round(score),
-                100,
-            ),
+            final_score,
 
         "reasons":
             reasons[:4],
@@ -410,7 +547,7 @@ def calculate_food_match(
             common_interests,
 
         "common_connection_preferences":
-            common_connections,
+            common_connection_preferences,
     }
 
 
@@ -448,22 +585,19 @@ class RegisterView(
             raise_exception=True
         )
 
-        user = (
-            serializer.save()
-        )
+        user = serializer.save()
 
         return Response(
-
             UserSerializer(
                 user,
                 context={
-                    "request": request,
+                    "request":
+                        request,
                 },
             ).data,
 
-            status=(
-                status.HTTP_201_CREATED
-            ),
+            status=
+                status.HTTP_201_CREATED,
         )
 
 
@@ -487,11 +621,11 @@ class EmailLoginView(
 
         serializer = (
             EmailLoginSerializer(
-
                 data=request.data,
 
                 context={
-                    "request": request,
+                    "request":
+                        request,
                 },
             )
         )
@@ -501,12 +635,10 @@ class EmailLoginView(
         )
 
         return Response(
-
             serializer.validated_data,
 
-            status=(
-                status.HTTP_200_OK
-            ),
+            status=
+                status.HTTP_200_OK,
         )
 
 
@@ -534,18 +666,20 @@ class MeView(
 
         serializer = (
             UserSerializer(
-
                 request.user,
 
                 context={
-                    "request": request,
+                    "request":
+                        request,
                 },
             )
         )
 
         return Response(
             serializer.data,
-            status=status.HTTP_200_OK,
+
+            status=
+                status.HTTP_200_OK,
         )
 
 
@@ -604,7 +738,9 @@ class ProfileUpdateView(
 
         return Response(
             serializer.data,
-            status=status.HTTP_200_OK,
+
+            status=
+                status.HTTP_200_OK,
         )
 
 
@@ -626,7 +762,6 @@ class ProfileUpdateView(
 
         serializer = (
             self.get_serializer(
-
                 profile,
 
                 data=request.data,
@@ -648,17 +783,17 @@ class ProfileUpdateView(
         request.user.refresh_from_db()
 
         return Response(
-
             UserSerializer(
-
                 request.user,
 
                 context={
-                    "request": request,
+                    "request":
+                        request,
                 },
             ).data,
 
-            status=status.HTTP_200_OK,
+            status=
+                status.HTTP_200_OK,
         )
 
 
@@ -714,7 +849,8 @@ class FoodMatchView(
 
             Profile.objects
             .filter(
-                blocked_users=request.user
+                blocked_users=
+                    request.user
             )
             .values_list(
                 "user_id",
@@ -724,10 +860,11 @@ class FoodMatchView(
 
 
         # ====================================================
-        # USERS TO EXCLUDE
+        # EXCLUDED USERS
         # ====================================================
 
         excluded_ids = (
+
             blocked_by_me_ids
             |
             blocked_me_ids
@@ -739,35 +876,38 @@ class FoodMatchView(
 
 
         # ====================================================
-        # FIND ACTIVE MEMBERS
+        # ACTIVE MEMBERS
         # ====================================================
 
         members = (
 
-    User.objects
+            User.objects
 
-    .filter(
-        is_active=True,
-        is_staff=False,
-        is_superuser=False,
-        profile__isnull=False,
-    )
+            .filter(
+                is_active=True,
+                is_staff=False,
+                is_superuser=False,
+                profile__isnull=False,
+            )
 
-    .exclude(
-        id__in=excluded_ids,
-    )
+            .exclude(
+                id__in=
+                    excluded_ids,
+            )
 
-    .select_related(
-        "profile"
-    )
-)
+            .select_related(
+                "profile"
+            )
+
+            .distinct()
+        )
 
 
         results = []
 
 
         # ====================================================
-        # CALCULATE MATCH FOR EACH MEMBER
+        # CALCULATE FOOD MATCH
         # ====================================================
 
         for member in members:
@@ -783,26 +923,58 @@ class FoodMatchView(
 
 
             # =================================================
-            # WOMEN-ONLY PREFERENCE
-            #
-            # If current user enables this preference,
-            # only verified female members are returned.
+            # WOMEN ONLY MODE
             # =================================================
 
-            if (
-                current_profile
-                .women_only_mode
-            ):
+            women_only_mode = bool(
+
+                getattr(
+                    current_profile,
+                    "women_only_mode",
+                    False,
+                )
+            )
+
+            if women_only_mode:
+
+                member_gender = (
+
+                    str(
+                        getattr(
+                            other_profile,
+                            "gender",
+                            "",
+                        )
+                        or ""
+                    )
+                    .strip()
+                    .lower()
+                )
+
+                member_verified = bool(
+
+                    getattr(
+                        other_profile,
+                        "is_verified",
+                        False,
+                    )
+                )
 
                 if not (
-                    other_profile.gender ==
+                    member_gender ==
                     "female"
+
                     and
-                    other_profile.is_verified
+
+                    member_verified
                 ):
 
                     continue
 
+
+            # =================================================
+            # CALCULATE SCORE
+            # =================================================
 
             match = (
                 calculate_food_match(
@@ -812,28 +984,70 @@ class FoodMatchView(
             )
 
 
-            member_data = (
-                FoodMatchMemberSerializer(
+            # =================================================
+            # SERIALIZE MEMBER
+            # =================================================
 
+            member_data = (
+
+                FoodMatchMemberSerializer(
                     member,
 
                     context={
-                        "request": request,
+                        "request":
+                            request,
                     },
-                ).data
+                )
+
+                .data
             )
 
+
+            # =================================================
+            # ADD FOOD MATCH DATA
+            # =================================================
 
             results.append(
                 {
 
                     **member_data,
 
+                    # Explicit IDs are important for Connect.jsx
+
+                    "id":
+                        member.id,
+
+                    "user_id":
+                        member.id,
+
+                    "member_id":
+                        member.id,
+
+                    # Main Food Match value
+
                     "food_match":
-                        match["score"],
+                        match[
+                            "score"
+                        ],
+
+                    # Fallback aliases
+
+                    "match_score":
+                        match[
+                            "score"
+                        ],
+
+                    "match_percentage":
+                        match[
+                            "score"
+                        ],
+
+                    # Explanation
 
                     "match_reasons":
-                        match["reasons"],
+                        match[
+                            "reasons"
+                        ],
 
                     "common_cuisines":
                         match[
@@ -854,27 +1068,39 @@ class FoodMatchView(
 
 
         # ====================================================
-        # BEST FOOD MATCH FIRST
+        # BEST MATCH FIRST
         # ====================================================
 
         results.sort(
+
             key=lambda item:
-                item["food_match"],
+                item.get(
+                    "food_match",
+                    0,
+                ),
+
             reverse=True,
         )
 
+
+        # ====================================================
+        # RESPONSE
+        # ====================================================
 
         return Response(
             {
 
                 "count":
-                    len(results),
+                    len(
+                        results
+                    ),
 
                 "results":
                     results,
             },
 
-            status=status.HTTP_200_OK,
+            status=
+                status.HTTP_200_OK,
         )
 
 
@@ -904,8 +1130,10 @@ class VerificationStatusView(
 
         government_id_uploaded = bool(
             profile.government_id_blob_key
-            or profile.government_id_url
-            or profile.government_id
+            or
+            profile.government_id_url
+            or
+            profile.government_id
         )
 
         return Response(
@@ -930,12 +1158,13 @@ class VerificationStatusView(
                     profile.verified_at,
             },
 
-            status=status.HTTP_200_OK,
+            status=
+                status.HTTP_200_OK,
         )
 
 
 # ============================================================
-# BLOCKED MEMBERS LIST
+# BLOCKED MEMBERS
 # ============================================================
 
 class BlockedMembersView(
@@ -962,9 +1191,11 @@ class BlockedMembersView(
 
             profile
             .blocked_users
+
             .select_related(
                 "profile"
             )
+
             .order_by(
                 "first_name",
                 "last_name",
@@ -980,16 +1211,17 @@ class BlockedMembersView(
                 many=True,
 
                 context={
-                    "request": request,
+                    "request":
+                        request,
                 },
             )
         )
 
         return Response(
-
             serializer.data,
 
-            status=status.HTTP_200_OK,
+            status=
+                status.HTTP_200_OK,
         )
 
 
@@ -1012,10 +1244,6 @@ class BlockMemberView(
         user_id,
     ):
 
-        # ====================================================
-        # CANNOT BLOCK YOURSELF
-        # ====================================================
-
         if (
             request.user.id ==
             user_id
@@ -1027,15 +1255,9 @@ class BlockMemberView(
                         "You cannot block yourself."
                 },
 
-                status=(
-                    status.HTTP_400_BAD_REQUEST
-                ),
+                status=
+                    status.HTTP_400_BAD_REQUEST,
             )
-
-
-        # ====================================================
-        # FIND MEMBER
-        # ====================================================
 
         try:
 
@@ -1054,22 +1276,15 @@ class BlockMemberView(
                         "Member not found."
                 },
 
-                status=(
-                    status.HTTP_404_NOT_FOUND
-                ),
+                status=
+                    status.HTTP_404_NOT_FOUND,
             )
-
 
         profile, _ = (
             Profile.objects.get_or_create(
                 user=request.user
             )
         )
-
-
-        # ====================================================
-        # ALREADY BLOCKED
-        # ====================================================
 
         if (
             profile
@@ -1082,7 +1297,6 @@ class BlockMemberView(
 
             return Response(
                 {
-
                     "detail":
                         "Member is already blocked.",
 
@@ -1090,13 +1304,9 @@ class BlockMemberView(
                         member.id,
                 },
 
-                status=status.HTTP_200_OK,
+                status=
+                    status.HTTP_200_OK,
             )
-
-
-        # ====================================================
-        # BLOCK
-        # ====================================================
 
         profile.blocked_users.add(
             member
@@ -1104,7 +1314,6 @@ class BlockMemberView(
 
         return Response(
             {
-
                 "detail":
                     "Member blocked successfully.",
 
@@ -1112,7 +1321,8 @@ class BlockMemberView(
                     member.id,
             },
 
-            status=status.HTTP_200_OK,
+            status=
+                status.HTTP_200_OK,
         )
 
 
@@ -1151,11 +1361,9 @@ class UnblockMemberView(
                         "Member not found."
                 },
 
-                status=(
-                    status.HTTP_404_NOT_FOUND
-                ),
+                status=
+                    status.HTTP_404_NOT_FOUND,
             )
-
 
         profile, _ = (
             Profile.objects.get_or_create(
@@ -1163,15 +1371,12 @@ class UnblockMemberView(
             )
         )
 
-
         profile.blocked_users.remove(
             member
         )
 
-
         return Response(
             {
-
                 "detail":
                     "Member unblocked successfully.",
 
@@ -1179,7 +1384,8 @@ class UnblockMemberView(
                     member.id,
             },
 
-            status=status.HTTP_200_OK,
+            status=
+                status.HTTP_200_OK,
         )
 
 
@@ -1202,10 +1408,6 @@ class BlockStatusView(
         user_id,
     ):
 
-        # ====================================================
-        # OWN PROFILE
-        # ====================================================
-
         if (
             request.user.id ==
             user_id
@@ -1221,13 +1423,9 @@ class BlockStatusView(
                         False,
                 },
 
-                status=status.HTTP_200_OK,
+                status=
+                    status.HTTP_200_OK,
             )
-
-
-        # ====================================================
-        # FIND MEMBER
-        # ====================================================
 
         try:
 
@@ -1245,11 +1443,9 @@ class BlockStatusView(
                         "Member not found."
                 },
 
-                status=(
-                    status.HTTP_404_NOT_FOUND
-                ),
+                status=
+                    status.HTTP_404_NOT_FOUND,
             )
-
 
         profile, _ = (
             Profile.objects.get_or_create(
@@ -1257,9 +1453,7 @@ class BlockStatusView(
             )
         )
 
-
         blocked_by_me = (
-
             profile
             .blocked_users
             .filter(
@@ -1268,14 +1462,12 @@ class BlockStatusView(
             .exists()
         )
 
-
         interaction_blocked = (
             users_are_blocked(
                 request.user,
                 member,
             )
         )
-
 
         return Response(
             {
@@ -1287,5 +1479,331 @@ class BlockStatusView(
                     interaction_blocked,
             },
 
-            status=status.HTTP_200_OK,
+            status=
+                status.HTTP_200_OK,
+        )
+        
+#################################################################################
+from django.conf import settings
+
+from django.contrib.auth import (
+    get_user_model,
+)
+
+from django.contrib.auth.tokens import (
+    default_token_generator,
+)
+
+from django.core.mail import (
+    send_mail,
+)
+
+from django.utils.encoding import (
+    force_bytes,
+)
+
+from django.utils.http import (
+    urlsafe_base64_encode,
+)
+
+from rest_framework import (
+    status,
+)
+
+from rest_framework.permissions import (
+    AllowAny,
+)
+
+from rest_framework.response import (
+    Response,
+)
+
+from rest_framework.views import (
+    APIView,
+)
+
+
+from .serializers import (
+    ForgotPasswordSerializer,
+    ResetPasswordSerializer,
+)
+
+
+User = get_user_model()
+
+
+# ============================================================
+# FORGOT PASSWORD
+# ============================================================
+
+class ForgotPasswordView(
+    APIView
+):
+
+    permission_classes = [
+        AllowAny,
+    ]
+
+
+    def post(
+        self,
+        request,
+    ):
+
+        email = (
+            str(
+                request.data.get(
+                    "email",
+                    "",
+                )
+            )
+            .strip()
+            .lower()
+        )
+
+
+        if not email:
+
+            return Response(
+                {
+                    "detail":
+                        "Email address is required."
+                },
+                status=
+                    status.HTTP_400_BAD_REQUEST,
+            )
+
+
+        user = (
+            User.objects
+            .filter(
+                email__iexact=email,
+                is_active=True,
+            )
+            .first()
+        )
+
+
+        # ====================================================
+        # SECURITY
+        #
+        # Do not tell the frontend whether the email exists.
+        # ====================================================
+
+        if not user:
+
+            return Response(
+                {
+                    "detail":
+                        (
+                            "If an account exists with that "
+                            "email address, a password reset "
+                            "link has been sent."
+                        )
+                },
+                status=
+                    status.HTTP_200_OK,
+            )
+
+
+        try:
+
+            # =================================================
+            # CREATE RESET TOKEN
+            # =================================================
+
+            uid = (
+                urlsafe_base64_encode(
+                    force_bytes(
+                        user.pk
+                    )
+                )
+            )
+
+
+            token = (
+                default_token_generator
+                .make_token(
+                    user
+                )
+            )
+
+
+            frontend_url = (
+                getattr(
+                    settings,
+                    "FRONTEND_URL",
+                    "http://localhost:8888",
+                )
+                .rstrip("/")
+            )
+
+
+            reset_url = (
+                f"{frontend_url}"
+                f"/reset-password/"
+                f"{uid}/"
+                f"{token}"
+            )
+
+
+            # =================================================
+            # EMAIL
+            # =================================================
+
+            first_name = (
+                user.first_name
+                or
+                "FoodKindl Member"
+            )
+
+
+            subject = (
+                "Reset your FoodKindl password"
+            )
+
+
+            message = f"""
+Hi {first_name},
+
+We received a request to reset your FoodKindl password.
+
+Click the link below to create a new password:
+
+{reset_url}
+
+This link will expire after a limited period.
+
+If you did not request a password reset, you can ignore this email.
+
+Regards,
+FoodKindl
+"""
+
+
+            send_mail(
+                subject,
+                message,
+                settings.DEFAULT_FROM_EMAIL,
+                [
+                    user.email
+                ],
+                fail_silently=False,
+            )
+
+
+            print(
+                "Password reset email sent to:",
+                user.email
+            )
+
+
+        except Exception as error:
+
+            # =================================================
+            # DEVELOPMENT LOG
+            #
+            # This shows the real problem in runserver terminal.
+            # =================================================
+
+            print(
+                "PASSWORD RESET EMAIL ERROR:",
+                repr(error)
+            )
+
+
+            return Response(
+                {
+                    "detail":
+                        (
+                            "Unable to send password "
+                            "reset email."
+                        )
+                },
+                status=
+                    status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
+
+        return Response(
+            {
+                "detail":
+                    (
+                        "If an account exists with that "
+                        "email address, a password reset "
+                        "link has been sent."
+                    )
+            },
+            status=
+                status.HTTP_200_OK,
+        )
+        
+        
+# ============================================================
+# RESET PASSWORD
+# ============================================================
+
+class ResetPasswordView(
+    APIView
+):
+
+    permission_classes = [
+        AllowAny,
+    ]
+
+
+    def post(
+        self,
+        request,
+    ):
+
+        serializer = (
+            ResetPasswordSerializer(
+                data=request.data
+            )
+        )
+
+
+        serializer.is_valid(
+            raise_exception=True
+        )
+
+
+        user = (
+            serializer
+            .validated_data[
+                "user"
+            ]
+        )
+
+
+        new_password = (
+            serializer
+            .validated_data[
+                "password"
+            ]
+        )
+
+
+        user.set_password(
+            new_password
+        )
+
+        user.save(
+            update_fields=[
+                "password",
+            ]
+        )
+
+
+        return Response(
+            {
+                "detail":
+                    (
+                        "Your password has been "
+                        "reset successfully."
+                    )
+            },
+            status=
+                status.HTTP_200_OK,
         )

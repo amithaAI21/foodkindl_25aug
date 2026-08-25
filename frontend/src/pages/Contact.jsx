@@ -1,13 +1,9 @@
 import {
   ArrowLeft,
-  BriefcaseBusiness,
-  Building2,
   CircleHelp,
-  Handshake,
   HeartHandshake,
   Mail,
   MapPin,
-  Megaphone,
   Phone,
   Send,
   ShieldAlert,
@@ -26,6 +22,7 @@ import api from "../api";
 
 
 export default function Contact() {
+
   const [
     form,
     setForm,
@@ -57,44 +54,58 @@ export default function Contact() {
 
 
   const enquiryTypes = [
+
     {
       value: "general",
       label: "General enquiry",
     },
+
     {
       value: "account_support",
       label: "Account support",
     },
+
     {
       value: "safety",
       label: "Safety concern",
     },
+
     {
       value: "report",
       label: "Report a user or content",
     },
+
     {
       value: "partnership",
       label: "Partnership",
     },
+
     {
       value: "creator",
       label: "Creator collaboration",
     },
+
     {
       value: "careers",
       label: "Careers",
     },
+
     {
       value: "media",
       label: "Media enquiry",
     },
+
   ];
 
+
+  /* =========================================================
+     HANDLE FORM CHANGE
+  ========================================================= */
 
   function handleChange(
     event
   ) {
+
     const {
       name,
       value,
@@ -102,50 +113,80 @@ export default function Contact() {
 
 
     setForm(
-      (
-        previous
-      ) => ({
+      previous => ({
         ...previous,
-        [name]: value,
+        [name]:
+          value,
       })
     );
+
+
+    if (error) {
+      setError("");
+    }
+
+
+    if (statusMessage) {
+      setStatusMessage("");
+    }
   }
 
+
+  /* =========================================================
+     SUBMIT
+  ========================================================= */
 
   async function handleSubmit(
     event
   ) {
+
     event.preventDefault();
 
-    setSubmitting(true);
+
+    if (submitting) {
+      return;
+    }
+
+
+    setSubmitting(
+      true
+    );
+
     setStatusMessage("");
+
     setError("");
 
 
     try {
+
       await api.post(
         "/website/contact/",
         {
           name:
-            form.full_name,
+            form.full_name
+              .trim(),
 
           email:
-            form.email,
+            form.email
+              .trim()
+              .toLowerCase(),
 
           phone:
-            form.phone,
+            form.phone
+              .trim(),
 
           subject:
             form.reason,
 
           message:
-            form.message,
+            form.message
+              .trim(),
         }
       );
 
 
       setStatusMessage(
-        "Thank you. Your message has been received. Our team will get back to you as soon as possible."
+        "Thanks! We received your message and will get back to you soon."
       );
 
 
@@ -157,32 +198,49 @@ export default function Contact() {
         message: "",
       });
 
+
     } catch (
       requestError
     ) {
+
       console.error(
         "CONTACT FORM ERROR:",
+        requestError.response?.data ||
         requestError
       );
 
 
       setError(
-        requestError?.response?.data?.detail ||
-        "We could not send your message right now. Please try again."
+        requestError
+          ?.response
+          ?.data
+          ?.detail
+        ||
+        "We could not send your message. Please try again."
       );
 
+
     } finally {
-      setSubmitting(false);
+
+      setSubmitting(
+        false
+      );
     }
   }
 
 
+  /* =========================================================
+     PAGE
+  ========================================================= */
+
   return (
+
     <main className="contact-page">
+
 
       {/* =====================================================
           TOP
-      ===================================================== */}
+      ====================================================== */}
 
       <div className="contact-topbar">
 
@@ -190,8 +248,13 @@ export default function Contact() {
           to="/"
           className="contact-back-link"
         >
-          <ArrowLeft size={18} />
+
+          <ArrowLeft
+            size={18}
+          />
+
           Back to FoodKindl
+
         </Link>
 
       </div>
@@ -199,26 +262,32 @@ export default function Contact() {
 
       {/* =====================================================
           HERO
-      ===================================================== */}
+      ====================================================== */}
 
       <section className="contact-hero">
 
         <div className="contact-pill">
-          <HeartHandshake size={16} />
-          WE'D LOVE TO HEAR FROM YOU
+
+          <HeartHandshake
+            size={16}
+          />
+
+          CONTACT US
+
         </div>
 
 
         <h1>
-          Contact <span>FoodKindl</span>
+          Contact{" "}
+          <span>
+            FoodKindl
+          </span>
         </h1>
 
 
         <p>
-          Have a question, need support, want to report a
-          concern, or have an idea for collaboration?
-          Send us a message and choose the category that
-          best matches your enquiry.
+          Have a question or need help?
+          Send us a message.
         </p>
 
       </section>
@@ -226,13 +295,14 @@ export default function Contact() {
 
       {/* =====================================================
           CONTACT AREA
-      ===================================================== */}
+      ====================================================== */}
 
       <section className="contact-layout">
 
+
         {/* ===================================================
-            LEFT SIDE
-        =================================================== */}
+            CONTACT INFORMATION
+        ==================================================== */}
 
         <div className="contact-information">
 
@@ -242,110 +312,99 @@ export default function Contact() {
 
 
           <h2>
-            Tell us how we can help.
+            We're here to help.
           </h2>
-
-
-          <p className="contact-information-intro">
-            We route enquiries to the appropriate FoodKindl
-            team so that account, community, partnership and
-            safety concerns can be handled appropriately.
-          </p>
 
 
           <div className="contact-info-grid">
 
+
+            {/* EMAIL */}
+
             <article className="contact-info-card">
 
               <div className="contact-info-icon">
-                <Mail size={23} />
+
+                <Mail
+                  size={23}
+                />
+
               </div>
 
+
               <div>
+
                 <span>
-                  Support Email
+                  Email
                 </span>
 
-                <strong>
-                  support@foodkindl.org
-                </strong>
 
-                <p>
-                  For general questions and
-                  account-related support.
-                </p>
+                <a
+                  href="mailto:support@foodkindl.org"
+                >
+                  <strong>
+                    support@foodkindl.org
+                  </strong>
+                </a>
+
               </div>
 
             </article>
 
-{/* 
-            <article className="contact-info-card">
 
-              <div className="contact-info-icon">
-                <Building2 size={23} />
-              </div> */}
-
-              {/* <div>
-                <span>
-                  Company
-                </span>
-
-                <strong>
-                  KnightnKindle Pvt Ltd
-                </strong>
-
-                <p>
-                  FoodKindl is operated by
-                  KnightnKindle Pvt Ltd.
-                </p>
-              </div> */}
-
-            {/* </article> */}
-
+            {/* LOCATION */}
 
             <article className="contact-info-card">
 
               <div className="contact-info-icon">
-                <MapPin size={23} />
+
+                <MapPin
+                  size={23}
+                />
+
               </div>
 
+
               <div>
+
                 <span>
-                  Business Location
+                  Location
                 </span>
+
 
                 <strong>
                   Bengaluru, India
                 </strong>
 
-                {/* <p>
-                  Replace this with your registered
-                  office address before publishing.
-                </p> */}
               </div>
 
             </article>
 
 
+            {/* SUPPORT */}
+
             <article className="contact-info-card">
 
               <div className="contact-info-icon">
-                <CircleHelp size={23} />
+
+                <CircleHelp
+                  size={23}
+                />
+
               </div>
 
+
               <div>
+
                 <span>
-                  Response Time
+                  Support
                 </span>
+
 
                 <strong>
                   Usually within 2 business days
                 </strong>
 
-                <p>
-                  Safety-related reports may be
-                  prioritised separately.
-                </p>
               </div>
 
             </article>
@@ -354,23 +413,29 @@ export default function Contact() {
 
 
           {/* ===============================================
-              EMERGENCY NOTICE
-          =============================================== */}
+              EMERGENCY
+          ================================================ */}
 
           <div className="contact-emergency-card">
 
-            <ShieldAlert size={26} />
+            <ShieldAlert
+              size={22}
+            />
+
 
             <div>
 
               <strong>
-                Emergency situations
+                Emergency?
               </strong>
 
+
               <p>
-                FoodKindl does not provide emergency
-                services. If you are in immediate danger,
-                contact your local emergency services.
+                FoodKindl does not provide
+                emergency services.
+                Please contact your local
+                emergency services if you
+                need immediate help.
               </p>
 
             </div>
@@ -381,8 +446,8 @@ export default function Contact() {
 
 
         {/* ===================================================
-            FORM
-        =================================================== */}
+            CONTACT FORM
+        ==================================================== */}
 
         <div className="contact-form-card">
 
@@ -391,6 +456,7 @@ export default function Contact() {
             <span>
               SEND A MESSAGE
             </span>
+
 
             <h2>
               How can we help?
@@ -405,13 +471,26 @@ export default function Contact() {
             }
           >
 
+
+            {/* =============================================
+                NAME + EMAIL
+            ============================================== */}
+
             <div className="contact-form-row">
 
+
+              {/* NAME */}
+
               <label>
+
                 Full name
 
                 <div className="contact-input-wrap">
-                  <UserRound size={18} />
+
+                  <UserRound
+                    size={18}
+                  />
+
 
                   <input
                     type="text"
@@ -425,16 +504,24 @@ export default function Contact() {
                     placeholder="Your full name"
                     required
                   />
+
                 </div>
 
               </label>
 
 
+              {/* EMAIL */}
+
               <label>
+
                 Email address
 
                 <div className="contact-input-wrap">
-                  <Mail size={18} />
+
+                  <Mail
+                    size={18}
+                  />
+
 
                   <input
                     type="email"
@@ -446,8 +533,10 @@ export default function Contact() {
                       handleChange
                     }
                     placeholder="you@example.com"
+                    autoComplete="email"
                     required
                   />
+
                 </div>
 
               </label>
@@ -455,14 +544,25 @@ export default function Contact() {
             </div>
 
 
+            {/* =============================================
+                PHONE
+            ============================================== */}
+
             <label>
+
               Phone number
+
               <small>
                 Optional
               </small>
 
+
               <div className="contact-input-wrap">
-                <Phone size={18} />
+
+                <Phone
+                  size={18}
+                />
+
 
                 <input
                   type="tel"
@@ -474,13 +574,21 @@ export default function Contact() {
                     handleChange
                   }
                   placeholder="+91 ..."
+                  autoComplete="tel"
                 />
+
               </div>
+
             </label>
 
 
+            {/* =============================================
+                REASON
+            ============================================== */}
+
             <label>
-              Reason for contacting
+
+              What can we help with?
 
               <select
                 name="reason"
@@ -497,11 +605,11 @@ export default function Contact() {
                   Select a category
                 </option>
 
+
                 {
                   enquiryTypes.map(
-                    (
-                      item
-                    ) => (
+                    item => (
+
                       <option
                         key={
                           item.value
@@ -512,15 +620,22 @@ export default function Contact() {
                       >
                         {item.label}
                       </option>
+
                     )
                   )
                 }
 
               </select>
+
             </label>
 
 
+            {/* =============================================
+                MESSAGE
+            ============================================== */}
+
             <label>
+
               Message
 
               <textarea
@@ -532,31 +647,48 @@ export default function Contact() {
                   handleChange
                 }
                 placeholder="Tell us how we can help..."
-                rows={7}
+                rows={6}
                 required
               />
+
             </label>
 
+
+            {/* =============================================
+                ERROR
+            ============================================== */}
 
             {
               error &&
               (
+
                 <p className="contact-error">
                   {error}
                 </p>
+
               )
             }
 
+
+            {/* =============================================
+                SUCCESS
+            ============================================== */}
 
             {
               statusMessage &&
               (
+
                 <p className="contact-success">
                   {statusMessage}
                 </p>
+
               )
             }
 
+
+            {/* =============================================
+                SUBMIT
+            ============================================== */}
 
             <button
               type="submit"
@@ -565,16 +697,23 @@ export default function Contact() {
                 submitting
               }
             >
+
               {
                 submitting
-                  ? "Sending..."
+                  ? (
+                    "Sending..."
+                  )
                   : (
-                      <>
-                        Send Message
-                        <Send size={18} />
-                      </>
-                    )
+                    <>
+                      Send Message
+
+                      <Send
+                        size={18}
+                      />
+                    </>
+                  )
               }
+
             </button>
 
           </form>
@@ -585,73 +724,8 @@ export default function Contact() {
 
 
       {/* =====================================================
-          ENQUIRY CATEGORIES
-      ===================================================== */}
-
-      <section className="contact-categories-section">
-
-        <div className="contact-categories-heading">
-
-          <span>
-            THE RIGHT TEAM
-          </span>
-
-          <h2>
-            What can you contact us about?
-          </h2>
-
-        </div>
-
-
-        <div className="contact-category-grid">
-
-          <div className="contact-category">
-            <CircleHelp />
-            <span>
-              General &amp; Account Support
-            </span>
-          </div>
-
-
-          <div className="contact-category">
-            <ShieldAlert />
-            <span>
-              Safety &amp; Reporting
-            </span>
-          </div>
-
-
-          <div className="contact-category">
-            <Handshake />
-            <span>
-              Partnerships
-            </span>
-          </div>
-
-
-          <div className="contact-category">
-            <Megaphone />
-            <span>
-              Creator &amp; Media
-            </span>
-          </div>
-
-
-          <div className="contact-category">
-            <BriefcaseBusiness />
-            <span>
-              Careers
-            </span>
-          </div>
-
-        </div>
-
-      </section>
-
-
-      {/* =====================================================
-          COMPANY FOOTNOTE
-      ===================================================== */}
+          COMPANY NOTE
+      ====================================================== */}
 
       <div className="contact-company-note">
 
@@ -666,5 +740,6 @@ export default function Contact() {
       </div>
 
     </main>
+
   );
 }

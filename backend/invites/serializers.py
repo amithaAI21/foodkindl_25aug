@@ -13,6 +13,7 @@ from .models import (
     RestaurantBooking,
     RestaurantImage,
     RestaurantMenuItem,
+    RestaurantSubmission,
 )
 
 
@@ -1850,3 +1851,190 @@ class RestaurantBookingSerializer(
 
 
         return booking
+    
+    
+# ============================================================
+# RESTAURANT SUBMISSION SERIALIZER
+# ============================================================
+
+class RestaurantSubmissionSerializer(
+    serializers.ModelSerializer
+):
+
+    submitted_by_name = (
+        serializers.SerializerMethodField()
+    )
+
+    approved_restaurant_id = (
+        serializers.IntegerField(
+            source="approved_restaurant.id",
+            read_only=True,
+        )
+    )
+
+
+    class Meta:
+
+        model = RestaurantSubmission
+
+        fields = (
+            "id",
+
+            "name",
+            "restaurant_type",
+            "description",
+            "cuisine",
+
+            "phone_number",
+            "email",
+            "website",
+
+            "address",
+            "locality",
+            "city",
+            "pincode",
+
+            "latitude",
+            "longitude",
+
+            "price_range",
+            "average_cost_for_two",
+
+            "opening_time",
+            "closing_time",
+
+            "has_parking",
+            "has_wifi",
+            "accepts_cards",
+            "family_friendly",
+            "outdoor_seating",
+            "wheelchair_accessible",
+
+            "serves_vegetarian",
+            "serves_non_vegetarian",
+
+            "image_url",
+            "image_blob_key",
+            "image_original_name",
+            "image_content_type",
+
+            "status",
+            "admin_note",
+
+            "submitted_by_name",
+
+            "approved_restaurant_id",
+
+            "created_at",
+            "updated_at",
+        )
+
+        read_only_fields = (
+            "id",
+
+            "status",
+            "admin_note",
+
+            "submitted_by_name",
+
+            "approved_restaurant_id",
+
+            "created_at",
+            "updated_at",
+        )
+
+
+    def get_submitted_by_name(
+        self,
+        obj,
+    ):
+
+        user = obj.submitted_by
+
+        if not user:
+            return ""
+
+        full_name = (
+            user.get_full_name()
+            .strip()
+        )
+
+        return (
+            full_name
+            or user.email
+            or user.username
+            or "FoodKindl Member"
+        )
+
+
+    def validate_name(
+        self,
+        value,
+    ):
+
+        value = (
+            value.strip()
+        )
+
+        if len(value) < 2:
+
+            raise serializers.ValidationError(
+                "Enter a valid place name."
+            )
+
+        return value
+
+
+    def validate(
+        self,
+        attrs,
+    ):
+
+        latitude = (
+            attrs.get(
+                "latitude"
+            )
+        )
+
+        longitude = (
+            attrs.get(
+                "longitude"
+            )
+        )
+
+
+        if (
+            latitude is None
+            and
+            longitude is not None
+        ):
+
+            raise serializers.ValidationError(
+                {
+                    "latitude":
+                        (
+                            "Latitude is required "
+                            "when longitude is provided."
+                        )
+                }
+            )
+
+
+        if (
+            longitude is None
+            and
+            latitude is not None
+        ):
+
+            raise serializers.ValidationError(
+                {
+                    "longitude":
+                        (
+                            "Longitude is required "
+                            "when latitude is provided."
+                        )
+                }
+            )
+
+
+        return attrs

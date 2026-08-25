@@ -1,0 +1,801 @@
+/* ==========================================================
+   FOODKINDL DASHBOARD
+========================================================== */
+
+.foodkindl-hub {
+  --hub-orange: #ff5b22;
+  --hub-green: #6fd99c;
+
+  width: min(
+    1120px,
+    calc(100% - 48px)
+  );
+
+  margin: 0 auto;
+
+  padding:
+    38px 0 76px;
+}
+
+
+/* ==========================================================
+   HEADER
+========================================================== */
+
+.foodkindl-hub-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  gap: 30px;
+
+  padding-bottom: 24px;
+
+  border-bottom:
+    1px solid
+    rgba(
+      255,
+      255,
+      255,
+      0.06
+    );
+}
+
+
+.foodkindl-hub-header h1 {
+  margin:
+    7px 0 0;
+
+  font-size:
+    clamp(
+      34px,
+      4vw,
+      50px
+    );
+
+  line-height: 1;
+
+  letter-spacing:
+    -0.045em;
+}
+
+
+.foodkindl-hub-header h1 span {
+  color: var(--hub-orange);
+}
+
+
+.foodkindl-hub-header
+> div:first-child
+> p {
+  margin:
+    9px 0 0;
+
+  color: #817a76;
+
+  font-size: 11px;
+}
+
+
+/* ==========================================================
+   PROFILE
+========================================================== */
+
+.foodkindl-hub-profile {
+  display: flex;
+  align-items: center;
+
+  gap: 10px;
+}
+
+
+.foodkindl-hub-profile-link {
+  display: flex;
+  align-items: center;
+
+  gap: 9px;
+
+  color: inherit;
+
+  text-decoration: none;
+}
+
+
+.foodkindl-hub-avatar {
+  position: relative;
+
+  display: grid;
+  place-items: center;
+
+  width: 46px;
+  height: 46px;
+
+  border:
+    1px solid
+    rgba(
+      255,
+      96,
+      31,
+      0.22
+    );
+
+  border-radius: 14px;
+
+  background: #140a07;
+
+  color: #ff7545;
+}
+
+
+.foodkindl-hub-avatar img {
+  width: 100%;
+  height: 100%;
+
+  border-radius: 13px;
+
+  object-fit: cover;
+}
+
+
+.foodkindl-hub-check {
+  position: absolute;
+
+  right: -4px;
+  bottom: -4px;
+
+  display: grid;
+  place-items: center;
+
+  width: 18px;
+  height: 18px;
+
+  border:
+    2px solid #080808;
+
+  border-radius: 50%;
+
+  background:
+    var(--hub-green);
+
+  color: #06170d;
+}
+
+
+.foodkindl-hub-profile-link strong,
+.foodkindl-hub-profile-link span {
+  display: block;
+}
+
+
+.foodkindl-hub-profile-link strong {
+  font-size: 10px;
+}
+
+
+.foodkindl-hub-profile-link span {
+  margin-top: 3px;
+
+  color: #706966;
+
+  font-size: 7px;
+}
+
+
+.foodkindl-hub-refresh {
+  display: grid;
+  place-items: center;
+
+  width: 35px;
+  height: 35px;
+
+  padding: 0;
+
+  border:
+    1px solid
+    rgba(
+      255,
+      255,
+      255,
+      0.07
+    );
+
+  border-radius: 10px;
+
+  background:
+    rgba(
+      255,
+      255,
+      255,
+      0.02
+    );
+
+  color: #837c78;
+
+  cursor: pointer;
+}
+
+
+/* ==========================================================
+   VERIFICATION
+========================================================== */
+
+.foodkindl-hub-verification {
+  display: grid;
+
+  grid-template-columns:
+    auto 1fr auto;
+
+  align-items: center;
+
+  gap: 11px;
+
+  margin-top: 18px;
+
+  padding:
+    12px 14px;
+
+  border:
+    1px solid
+    rgba(
+      255,
+      95,
+      31,
+      0.16
+    );
+
+  border-radius: 12px;
+
+  background:
+    rgba(
+      255,
+      95,
+      31,
+      0.03
+    );
+
+  color: inherit;
+
+  text-decoration: none;
+}
+
+
+.foodkindl-hub-verification
+> svg:first-child {
+  color: #ff7545;
+}
+
+
+.foodkindl-hub-verification strong,
+.foodkindl-hub-verification span {
+  display: block;
+}
+
+
+.foodkindl-hub-verification strong {
+  font-size: 9px;
+}
+
+
+.foodkindl-hub-verification span {
+  margin-top: 2px;
+
+  color: #746d69;
+
+  font-size: 8px;
+}
+
+
+/* ==========================================================
+   MAIN SECTIONS
+========================================================== */
+
+.foodkindl-worlds {
+  margin-top: 38px;
+}
+
+
+.foodkindl-worlds-heading {
+  margin-bottom: 13px;
+
+  color: #ff7545;
+
+  font-size: 8px;
+  font-weight: 900;
+
+  letter-spacing: 0.11em;
+
+  text-transform: uppercase;
+}
+
+
+/* ==========================================================
+   SECTION
+========================================================== */
+
+.foodkindl-world {
+  position: relative;
+
+  display: grid;
+
+  grid-template-columns:
+    68px
+    60px
+    minmax(0, 1fr)
+    auto;
+
+  align-items: center;
+
+  gap: 21px;
+
+  min-height: 145px;
+
+  margin-top: 11px;
+
+  padding:
+    22px 24px;
+
+  overflow: hidden;
+
+  border:
+    1px solid
+    rgba(
+      255,
+      255,
+      255,
+      0.06
+    );
+
+  border-radius: 18px;
+
+  color: inherit;
+
+  text-decoration: none;
+}
+
+
+/* NUMBER */
+
+.foodkindl-world-number {
+  color:
+    rgba(
+      255,
+      255,
+      255,
+      0.09
+    );
+
+  font-size: 36px;
+  font-weight: 900;
+}
+
+
+/* ICON */
+
+.foodkindl-world-icon {
+  display: grid;
+  place-items: center;
+
+  width: 58px;
+  height: 58px;
+
+  border-radius: 16px;
+}
+
+
+/* COPY */
+
+.foodkindl-world-status {
+  display: inline-flex;
+
+  padding:
+    4px 7px;
+
+  border-radius: 999px;
+
+  background:
+    rgba(
+      255,
+      255,
+      255,
+      0.04
+    );
+
+  color: #77706c;
+
+  font-size: 6px;
+  font-weight: 900;
+
+  letter-spacing: 0.1em;
+}
+
+
+.foodkindl-world-status.live {
+  background:
+    rgba(
+      81,
+      210,
+      143,
+      0.07
+    );
+
+  color:
+    var(--hub-green);
+}
+
+
+.foodkindl-world-copy h2 {
+  margin:
+    7px 0 0;
+
+  font-size:
+    clamp(
+      26px,
+      3vw,
+      36px
+    );
+
+  letter-spacing:
+    -0.035em;
+}
+
+
+.foodkindl-world-copy p {
+  margin:
+    6px 0 0;
+
+  color: #7d7672;
+
+  font-size: 10px;
+}
+
+
+/* ==========================================================
+   CONNECT
+========================================================== */
+
+.foodkindl-world-connect {
+  border-color:
+    rgba(
+      255,
+      97,
+      32,
+      0.23
+    );
+
+  background:
+    radial-gradient(
+      circle at 88% 20%,
+      rgba(
+        255,
+        84,
+        21,
+        0.09
+      ),
+      transparent 28%
+    ),
+    linear-gradient(
+      145deg,
+      rgba(
+        24,
+        11,
+        8,
+        0.95
+      ),
+      rgba(
+        8,
+        8,
+        8,
+        0.98
+      )
+    );
+
+  transition:
+    transform 0.2s ease,
+    border-color 0.2s ease;
+}
+
+
+.foodkindl-world-connect:hover {
+  transform:
+    translateY(-2px);
+
+  border-color:
+    rgba(
+      255,
+      97,
+      32,
+      0.42
+    );
+}
+
+
+.foodkindl-world-connect
+.foodkindl-world-icon {
+  border:
+    1px solid
+    rgba(
+      255,
+      95,
+      31,
+      0.24
+    );
+
+  background:
+    rgba(
+      255,
+      95,
+      31,
+      0.07
+    );
+
+  color: #ff7545;
+}
+
+
+.foodkindl-world-action {
+  display: inline-flex;
+  align-items: center;
+
+  gap: 8px;
+
+  padding:
+    10px 13px;
+
+  border-radius: 10px;
+
+  background:
+    linear-gradient(
+      135deg,
+      #ff5b22,
+      #dd3815
+    );
+
+  color: #fff;
+
+  font-size: 8px;
+  font-weight: 900;
+
+  white-space: nowrap;
+}
+
+
+/* ==========================================================
+   FUTURE
+========================================================== */
+
+.foodkindl-world-future {
+  background:
+    rgba(
+      255,
+      255,
+      255,
+      0.012
+    );
+}
+
+
+.foodkindl-world-future
+.foodkindl-world-icon {
+  border:
+    1px solid
+    rgba(
+      255,
+      255,
+      255,
+      0.06
+    );
+
+  background:
+    rgba(
+      255,
+      255,
+      255,
+      0.018
+    );
+
+  color: #69625f;
+}
+
+
+.foodkindl-world-future
+.foodkindl-world-copy h2 {
+  color: #aaa29e;
+}
+
+
+.foodkindl-world-future
+.foodkindl-world-copy p {
+  color: #625c59;
+}
+
+
+/* ==========================================================
+   SPINNER
+========================================================== */
+
+.refresh-spin {
+  animation:
+    foodkindl-spin
+    0.8s
+    linear
+    infinite;
+}
+
+
+@keyframes foodkindl-spin {
+
+  to {
+    transform:
+      rotate(360deg);
+  }
+
+}
+
+
+/* ==========================================================
+   TABLET
+========================================================== */
+
+@media (
+  max-width: 850px
+) {
+
+  .foodkindl-world {
+    grid-template-columns:
+      45px
+      55px
+      1fr;
+
+    gap: 14px;
+  }
+
+
+  .foodkindl-world-action {
+    grid-column: 3;
+
+    justify-self:
+      start;
+  }
+
+}
+
+
+/* ==========================================================
+   MOBILE
+========================================================== */
+
+@media (
+  max-width: 700px
+) {
+
+  .foodkindl-hub {
+    width:
+      calc(
+        100% - 28px
+      );
+
+    padding:
+      24px 0 54px;
+  }
+
+
+  .foodkindl-hub-header {
+    align-items:
+      flex-start;
+
+    flex-direction:
+      column;
+
+    gap: 18px;
+  }
+
+
+  .foodkindl-hub-profile {
+    width: 100%;
+
+    justify-content:
+      space-between;
+  }
+
+
+  .foodkindl-hub-header h1 {
+    font-size:
+      clamp(
+        34px,
+        11vw,
+        46px
+      );
+  }
+
+
+  .foodkindl-world {
+    grid-template-columns:
+      auto 1fr;
+
+    gap: 13px;
+
+    min-height: auto;
+
+    padding: 18px;
+  }
+
+
+  .foodkindl-world-number {
+    position: absolute;
+
+    top: 14px;
+    right: 15px;
+
+    font-size: 27px;
+  }
+
+
+  .foodkindl-world-icon {
+    width: 49px;
+    height: 49px;
+  }
+
+
+  .foodkindl-world-copy {
+    padding-right: 30px;
+  }
+
+
+  .foodkindl-world-copy h2 {
+    font-size: 25px;
+  }
+
+
+  .foodkindl-world-action {
+    grid-column: 2;
+
+    width: fit-content;
+  }
+
+}
+
+
+/* ==========================================================
+   SMALL PHONE
+========================================================== */
+
+@media (
+  max-width: 480px
+) {
+
+  .foodkindl-hub {
+    width:
+      calc(
+        100% - 20px
+      );
+  }
+
+
+  .foodkindl-hub-verification {
+    grid-template-columns:
+      auto 1fr;
+  }
+
+
+  .foodkindl-hub-verification
+  > svg:last-child {
+    display: none;
+  }
+
+
+  .foodkindl-world {
+    padding: 15px;
+  }
+
+
+  .foodkindl-world-icon {
+    width: 44px;
+    height: 44px;
+  }
+
+
+  .foodkindl-world-copy h2 {
+    font-size: 22px;
+  }
+
+}

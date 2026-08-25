@@ -1,23 +1,23 @@
 from django import forms
-from django.contrib import admin
-from django.contrib import messages
+from django.contrib import admin, messages
 from django.core.exceptions import ValidationError
+from django.db import transaction
+from django.utils import timezone
 from django.utils.html import format_html
+from django.template.response import TemplateResponse
 
-from .geocoding import (
-    geocode_restaurant,
-)
+from import_export.admin import ImportExportModelAdmin
 
+from .geocoding import geocode_restaurant
 from .models import (
     Restaurant,
     RestaurantBooking,
     RestaurantImage,
     RestaurantMenuItem,
+    RestaurantSubmission,
 )
-
-from .netlify_blob import (
-    upload_image_to_netlify,
-)
+from .netlify_blob import upload_image_to_netlify
+from .resources import RestaurantResource
 
 
 # ============================================================
@@ -363,8 +363,12 @@ class RestaurantMenuItemInline(
 
 @admin.register(Restaurant)
 class RestaurantAdmin(
-    admin.ModelAdmin
+    ImportExportModelAdmin
 ):
+
+    resource_classes = [
+        RestaurantResource,
+    ]
 
     form = RestaurantAdminForm
 
@@ -375,6 +379,7 @@ class RestaurantAdmin(
 
     actions = (
         "refresh_coordinates",
+        "delete_all_restaurants",
     )
 
 
@@ -930,6 +935,167 @@ class RestaurantAdmin(
             )
 
 
+
+    # ========================================================
+    # DELETE ALL RESTAURANTS
+    #
+    # Deletes:
+    # 1. Restaurant bookings
+    # 2. Restaurant gallery images
+    # 3. Restaurant menu items
+    # 4. Restaurant records
+    #
+    # RestaurantBooking uses on_delete=PROTECT, therefore
+    # bookings MUST be removed before Restaurants.
+    #
+    # RestaurantSubmission history is intentionally retained.
+    # If approved_restaurant uses SET_NULL, Django will clear
+    # the link automatically when the Restaurant is deleted.
+    # ========================================================
+
+    @admin.action(
+        description=
+            "⚠ Delete ALL restaurant records"
+    )
+    def delete_all_restaurants(
+        self,
+        request,
+        queryset,
+    ):
+
+        # ====================================================
+        # STEP 2 — CONFIRMED DELETE
+        # ====================================================
+
+        if (
+            request.POST.get(
+                "confirm_delete_all"
+            )
+            ==
+            "yes"
+        ):
+
+            try:
+
+                with transaction.atomic():
+
+                    restaurant_count = (
+                        Restaurant.objects.count()
+                    )
+
+                    booking_count = (
+                        RestaurantBooking.objects.count()
+                    )
+
+                    image_count = (
+                        RestaurantImage.objects.count()
+                    )
+
+                    menu_count = (
+                        RestaurantMenuItem.objects.count()
+                    )
+
+
+                    # =========================================
+                    # IMPORTANT:
+                    # RestaurantBooking has PROTECT.
+                    # Delete bookings first.
+                    # =========================================
+
+                    RestaurantBooking.objects.all().delete()
+
+
+                    # =========================================
+                    # Delete child records explicitly.
+                    # These may already be CASCADE, but doing
+                    # this first makes the wipe predictable.
+                    # =========================================
+
+                    RestaurantImage.objects.all().delete()
+
+                    RestaurantMenuItem.objects.all().delete()
+
+
+                    # =========================================
+                    # Finally delete all Restaurants.
+                    # =========================================
+
+                    Restaurant.objects.all().delete()
+
+
+                self.message_user(
+                    request,
+                    (
+                        f"Deleted {restaurant_count} restaurant(s), "
+                        f"{booking_count} booking(s), "
+                        f"{image_count} image(s), and "
+                        f"{menu_count} menu item(s)."
+                    ),
+                    level=
+                        messages.SUCCESS,
+                )
+
+            except Exception as exc:
+
+                self.message_user(
+                    request,
+                    (
+                        "Delete failed: "
+                        f"{exc}"
+                    ),
+                    level=
+                        messages.ERROR,
+                )
+
+            return None
+
+
+        # ====================================================
+        # STEP 1 — CONFIRMATION PAGE
+        # ====================================================
+
+        context = {
+
+            **self.admin_site.each_context(
+                request
+            ),
+
+            "title":
+                "Delete ALL Restaurant Data?",
+
+            "restaurant_count":
+                Restaurant.objects.count(),
+
+            "booking_count":
+                RestaurantBooking.objects.count(),
+
+            "image_count":
+                RestaurantImage.objects.count(),
+
+            "menu_count":
+                RestaurantMenuItem.objects.count(),
+
+            "opts":
+                self.model._meta,
+
+            "action_name":
+                "delete_all_restaurants",
+
+            "queryset":
+                queryset,
+        }
+
+
+        return TemplateResponse(
+            request,
+            (
+                "admin/"
+                "restaurants_delete_all_confirmation.html"
+            ),
+            context,
+        )
+
+
     # ========================================================
     # FIELDSETS
     # ========================================================
@@ -1294,3 +1460,658 @@ class RestaurantBookingAdmin(
             },
         ),
     )
+
+# ============================================================
+# RESTAURANT SUBMISSION ADMIN
+# ============================================================
+
+@admin.register(RestaurantSubmission)
+class RestaurantSubmissionAdmin(
+    admin.ModelAdmin
+):
+
+    list_display = (
+        "id",
+        "name",
+        "restaurant_type",
+        "city",
+        "locality",
+        "status",
+        "submitted_by",
+        "approved_restaurant",
+        "created_at",
+    )
+
+    list_filter = (
+        "status",
+        "restaurant_type",
+        "city",
+        "created_at",
+    )
+
+    search_fields = (
+        "name",
+        "city",
+        "locality",
+        "address",
+        "phone_number",
+        "email",
+        "submitted_by__email",
+    )
+
+    readonly_fields = (
+        "submitted_by",
+        "created_at",
+        "updated_at",
+        "reviewed_at",
+        "reviewed_by",
+        "approved_restaurant",
+    )
+
+    actions = (
+        "approve_places",
+        "reject_places",
+    )
+
+    fieldsets = (
+        (
+            "Submitted Place",
+            {
+                "fields": (
+                    "name",
+                    "restaurant_type",
+                    "description",
+                    "cuisine",
+                )
+            },
+        ),
+        (
+            "Contact",
+            {
+                "fields": (
+                    "phone_number",
+                    "email",
+                    "website",
+                )
+            },
+        ),
+        (
+            "Location",
+            {
+                "fields": (
+                    "address",
+                    "locality",
+                    "city",
+                    "pincode",
+                    "latitude",
+                    "longitude",
+                )
+            },
+        ),
+        (
+            "Restaurant Details",
+            {
+                "fields": (
+                    "price_range",
+                    "average_cost_for_two",
+                    "opening_time",
+                    "closing_time",
+                )
+            },
+        ),
+        (
+            "Facilities",
+            {
+                "fields": (
+                    "has_parking",
+                    "has_wifi",
+                    "accepts_cards",
+                    "family_friendly",
+                    "outdoor_seating",
+                    "wheelchair_accessible",
+                    "serves_vegetarian",
+                    "serves_non_vegetarian",
+                )
+            },
+        ),
+        (
+            "Image",
+            {
+                "fields": (
+                    "image_url",
+                    "image_blob_key",
+                    "image_original_name",
+                    "image_content_type",
+                )
+            },
+        ),
+        (
+            "Admin Review",
+            {
+                "fields": (
+                    "status",
+                    "admin_note",
+                    "approved_restaurant",
+                    "reviewed_by",
+                    "reviewed_at",
+                )
+            },
+        ),
+        (
+            "Submission Information",
+            {
+                "classes": (
+                    "collapse",
+                ),
+                "fields": (
+                    "submitted_by",
+                    "created_at",
+                    "updated_at",
+                )
+            },
+        ),
+    )
+
+
+    # ========================================================
+    # INTERNAL APPROVAL HELPER
+    # ========================================================
+
+    def _approve_submission(
+        self,
+        request,
+        submission,
+    ):
+
+        # Already linked.
+        if (
+            submission.approved_restaurant_id
+            is not None
+        ):
+
+            if submission.status != "approved":
+                submission.status = "approved"
+                submission.reviewed_by = request.user
+                submission.reviewed_at = (
+                    submission.reviewed_at
+                    or timezone.now()
+                )
+
+                submission.save(
+                    update_fields=(
+                        "status",
+                        "reviewed_by",
+                        "reviewed_at",
+                        "updated_at",
+                    )
+                )
+
+            return (
+                submission.approved_restaurant,
+                False,
+            )
+
+
+        with transaction.atomic():
+
+            locked_submission = (
+                RestaurantSubmission.objects
+                .select_for_update()
+                .get(
+                    pk=submission.pk
+                )
+            )
+
+
+            if (
+                locked_submission
+                .approved_restaurant_id
+                is not None
+            ):
+
+                locked_submission.status = (
+                    "approved"
+                )
+
+                locked_submission.reviewed_by = (
+                    request.user
+                )
+
+                locked_submission.reviewed_at = (
+                    locked_submission.reviewed_at
+                    or timezone.now()
+                )
+
+                locked_submission.save(
+                    update_fields=(
+                        "status",
+                        "reviewed_by",
+                        "reviewed_at",
+                        "updated_at",
+                    )
+                )
+
+                submission.refresh_from_db()
+
+                return (
+                    locked_submission
+                    .approved_restaurant,
+                    False,
+                )
+
+
+            # Prevent duplicates.
+            existing = (
+                Restaurant.objects
+                .filter(
+                    name__iexact=
+                        locked_submission.name,
+
+                    city__iexact=
+                        locked_submission.city,
+
+                    locality__iexact=
+                        locked_submission.locality,
+                )
+                .first()
+            )
+
+
+            created = False
+
+
+            if existing:
+
+                restaurant = existing
+
+            else:
+
+                restaurant = (
+                    Restaurant.objects.create(
+
+                        name=
+                            locked_submission.name,
+
+                        restaurant_type=
+                            locked_submission
+                            .restaurant_type,
+
+                        description=
+                            locked_submission.description,
+
+                        cuisine=
+                            locked_submission.cuisine,
+
+                        phone_number=
+                            locked_submission
+                            .phone_number,
+
+                        email=
+                            locked_submission.email,
+
+                        website=
+                            locked_submission.website,
+
+                        address=
+                            locked_submission.address,
+
+                        locality=
+                            locked_submission.locality,
+
+                        city=
+                            locked_submission.city,
+
+                        pincode=
+                            locked_submission.pincode,
+
+                        latitude=
+                            locked_submission.latitude,
+
+                        longitude=
+                            locked_submission.longitude,
+
+                        price_range=
+                            locked_submission.price_range,
+
+                        average_cost_for_two=
+                            locked_submission
+                            .average_cost_for_two,
+
+                        opening_time=
+                            locked_submission.opening_time,
+
+                        closing_time=
+                            locked_submission.closing_time,
+
+                        has_parking=
+                            locked_submission.has_parking,
+
+                        has_wifi=
+                            locked_submission.has_wifi,
+
+                        accepts_cards=
+                            locked_submission.accepts_cards,
+
+                        family_friendly=
+                            locked_submission
+                            .family_friendly,
+
+                        outdoor_seating=
+                            locked_submission
+                            .outdoor_seating,
+
+                        wheelchair_accessible=
+                            locked_submission
+                            .wheelchair_accessible,
+
+                        serves_vegetarian=
+                            locked_submission
+                            .serves_vegetarian,
+
+                        serves_non_vegetarian=
+                            locked_submission
+                            .serves_non_vegetarian,
+
+                        image_blob_key=
+                            locked_submission
+                            .image_blob_key,
+
+                        image_url=
+                            locked_submission.image_url,
+
+                        image_original_name=
+                            locked_submission
+                            .image_original_name,
+
+                        image_content_type=
+                            locked_submission
+                            .image_content_type,
+
+                        # Approved customer-submitted place is active,
+                        # but is not automatically an official partner.
+                        is_foodkindl_partner=
+                            False,
+
+                        accepts_foodkindl_booking=
+                            False,
+
+                        is_active=
+                            True,
+                    )
+                )
+
+                created = True
+
+
+            locked_submission.status = (
+                "approved"
+            )
+
+            locked_submission.approved_restaurant = (
+                restaurant
+            )
+
+            locked_submission.reviewed_by = (
+                request.user
+            )
+
+            locked_submission.reviewed_at = (
+                timezone.now()
+            )
+
+            locked_submission.save(
+                update_fields=(
+                    "status",
+                    "approved_restaurant",
+                    "reviewed_by",
+                    "reviewed_at",
+                    "updated_at",
+                )
+            )
+
+            submission.refresh_from_db()
+
+            return (
+                restaurant,
+                created,
+            )
+
+
+    # ========================================================
+    # SAVE FROM DETAIL PAGE
+    #
+    # If admin changes status to "approved" and clicks Save,
+    # create/link Restaurant automatically.
+    # ========================================================
+
+    def save_model(
+        self,
+        request,
+        obj,
+        form,
+        change,
+    ):
+
+        requested_status = (
+            form.cleaned_data.get(
+                "status"
+            )
+            if hasattr(
+                form,
+                "cleaned_data"
+            )
+            else obj.status
+        )
+
+        super().save_model(
+            request,
+            obj,
+            form,
+            change,
+        )
+
+
+        if requested_status == "approved":
+
+            restaurant, created = (
+                self._approve_submission(
+                    request,
+                    obj,
+                )
+            )
+
+            if created:
+
+                self.message_user(
+                    request,
+                    (
+                        f'"{obj.name}" approved and '
+                        f'created in Restaurants '
+                        f'(Restaurant ID {restaurant.id}).'
+                    ),
+                    level=
+                        messages.SUCCESS,
+                )
+
+            else:
+
+                self.message_user(
+                    request,
+                    (
+                        f'"{obj.name}" approved and '
+                        f'linked to existing Restaurant '
+                        f'ID {restaurant.id}.'
+                    ),
+                    level=
+                        messages.SUCCESS,
+                )
+
+
+        elif requested_status == "rejected":
+
+            obj.reviewed_by = (
+                request.user
+            )
+
+            obj.reviewed_at = (
+                timezone.now()
+            )
+
+            obj.save(
+                update_fields=(
+                    "reviewed_by",
+                    "reviewed_at",
+                    "updated_at",
+                )
+            )
+
+
+    # ========================================================
+    # BULK APPROVE
+    # ========================================================
+
+    @admin.action(
+        description=
+            "Approve selected places and add to Restaurants"
+    )
+    def approve_places(
+        self,
+        request,
+        queryset,
+    ):
+
+        created_count = 0
+        linked_count = 0
+        failed_count = 0
+
+
+        for submission in queryset:
+
+            try:
+
+                restaurant, created = (
+                    self._approve_submission(
+                        request,
+                        submission,
+                    )
+                )
+
+                if created:
+                    created_count += 1
+                else:
+                    linked_count += 1
+
+            except Exception as exc:
+
+                failed_count += 1
+
+                self.message_user(
+                    request,
+                    (
+                        f'Could not approve '
+                        f'"{submission.name}": {exc}'
+                    ),
+                    level=
+                        messages.ERROR,
+                )
+
+
+        if created_count:
+
+            self.message_user(
+                request,
+                (
+                    f"{created_count} new place(s) "
+                    "created in Restaurants."
+                ),
+                level=
+                    messages.SUCCESS,
+            )
+
+
+        if linked_count:
+
+            self.message_user(
+                request,
+                (
+                    f"{linked_count} submission(s) "
+                    "linked to existing Restaurant records."
+                ),
+                level=
+                    messages.INFO,
+            )
+
+
+        if failed_count:
+
+            self.message_user(
+                request,
+                (
+                    f"{failed_count} submission(s) "
+                    "could not be approved."
+                ),
+                level=
+                    messages.ERROR,
+            )
+
+
+    # ========================================================
+    # BULK REJECT
+    # ========================================================
+
+    @admin.action(
+        description=
+            "Reject selected places"
+    )
+    def reject_places(
+        self,
+        request,
+        queryset,
+    ):
+
+        rejected_count = 0
+
+
+        for submission in queryset:
+
+            if (
+                submission.status ==
+                "approved"
+            ):
+
+                continue
+
+
+            submission.status = (
+                "rejected"
+            )
+
+            submission.reviewed_by = (
+                request.user
+            )
+
+            submission.reviewed_at = (
+                timezone.now()
+            )
+
+            submission.save(
+                update_fields=(
+                    "status",
+                    "reviewed_by",
+                    "reviewed_at",
+                    "updated_at",
+                )
+            )
+
+            rejected_count += 1
+
+
+        self.message_user(
+            request,
+            (
+                f"{rejected_count} "
+                "submission(s) rejected."
+            ),
+            level=
+                messages.SUCCESS,
+        )

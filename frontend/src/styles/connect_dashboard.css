@@ -1,0 +1,3853 @@
+/* ============================================================
+   FOODKINDL CONNECT — INTERACTIVE GPS JOURNEY
+============================================================ */
+
+.connect-journey-page {
+  --fk-orange: #ff6b32;
+  --fk-orange-soft: #ff8e61;
+  --fk-green: #62d99a;
+  --fk-road: #232a31;
+  --fk-text: #f7f3f0;
+  --fk-muted: #8c817c;
+
+  position: relative;
+  min-height: 100vh;
+  overflow: hidden;
+
+  padding:
+    104px
+    clamp(18px, 4.8vw, 72px)
+    100px;
+
+  background:
+    radial-gradient(
+      circle at 50% -8%,
+      rgba(255, 110, 48, .11),
+      transparent 24%
+    ),
+    radial-gradient(
+      circle at 12% 42%,
+      rgba(255, 110, 48, .045),
+      transparent 22%
+    ),
+    linear-gradient(
+      180deg,
+      #050403,
+      #080706 55%,
+      #050505
+    );
+
+  color: var(--fk-text);
+}
+
+
+/* ============================================================
+   BACKGROUND
+============================================================ */
+
+.connect-journey-background {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+
+  overflow: hidden;
+  pointer-events: none;
+}
+
+
+.connect-orb {
+  position: absolute;
+
+  width: 420px;
+  height: 420px;
+
+  border-radius: 50%;
+
+  filter: blur(110px);
+
+  opacity: .1;
+}
+
+
+.connect-orb-one {
+  top: 9%;
+  left: -180px;
+
+  background:
+    var(--fk-orange);
+
+  animation:
+    fkOrbOne
+    14s
+    ease-in-out
+    infinite alternate;
+}
+
+
+.connect-orb-two {
+  right: -190px;
+  top: 45%;
+
+  background:
+    #ff9369;
+
+  opacity: .07;
+
+  animation:
+    fkOrbTwo
+    17s
+    ease-in-out
+    infinite alternate;
+}
+
+
+.connect-orb-three {
+  left: 38%;
+  bottom: -230px;
+
+  background:
+    #d94a17;
+
+  opacity: .06;
+
+  animation:
+    fkOrbThree
+    18s
+    ease-in-out
+    infinite alternate;
+}
+
+
+@keyframes fkOrbOne {
+
+  to {
+    transform:
+      translate3d(
+        120px,
+        80px,
+        0
+      );
+  }
+
+}
+
+
+@keyframes fkOrbTwo {
+
+  to {
+    transform:
+      translate3d(
+        -120px,
+        90px,
+        0
+      );
+  }
+
+}
+
+
+@keyframes fkOrbThree {
+
+  to {
+    transform:
+      translate3d(
+        90px,
+        -120px,
+        0
+      );
+  }
+
+}
+
+
+/* ============================================================
+   HEADER
+============================================================ */
+
+.connect-journey-header {
+  position: relative;
+  z-index: 20;
+
+  width:
+    min(
+      1200px,
+      100%
+    );
+
+  margin:
+    0 auto 62px;
+
+  display: flex;
+  align-items: center;
+  justify-content:
+    space-between;
+
+  gap: 28px;
+}
+
+
+.connect-journey-header-copy {
+  min-width: 0;
+}
+
+
+.connect-journey-eyebrow {
+  display: block;
+
+  margin-bottom: 10px;
+
+  color:
+    var(--fk-orange);
+
+  font-size: 10px;
+  font-weight: 900;
+
+  letter-spacing: .17em;
+}
+
+
+.connect-journey-header h1 {
+  margin: 0;
+
+  font-size:
+    clamp(
+      35px,
+      5vw,
+      62px
+    );
+
+  line-height: .98;
+
+  letter-spacing:
+    -.055em;
+}
+
+
+.connect-journey-header h1 span {
+  background:
+    linear-gradient(
+      135deg,
+      #ff9d75,
+      #ff6b32
+    );
+
+  -webkit-background-clip:
+    text;
+
+  background-clip:
+    text;
+
+  color:
+    transparent;
+}
+
+
+.connect-journey-header-copy > p {
+  max-width: 620px;
+
+  margin:
+    17px 0 18px;
+
+  color:
+    var(--fk-muted);
+
+  font-size: 13px;
+
+  line-height: 1.7;
+}
+
+
+.connect-verified-chip,
+.connect-verification-chip {
+  width: fit-content;
+
+  display: inline-flex;
+  align-items: center;
+
+  gap: 7px;
+
+  padding:
+    7px 11px;
+
+  border-radius:
+    999px;
+
+  font-size: 9px;
+  font-weight: 850;
+
+  text-decoration: none;
+}
+
+
+.connect-verified-chip {
+  border:
+    1px solid
+    rgba(98, 217, 154, .18);
+
+  background:
+    rgba(98, 217, 154, .06);
+
+  color:
+    var(--fk-green);
+}
+
+
+.connect-verification-chip {
+  border:
+    1px solid
+    rgba(255, 107, 50, .2);
+
+  background:
+    rgba(255, 107, 50, .06);
+
+  color:
+    var(--fk-orange-soft);
+}
+
+
+/* ============================================================
+   PROFILE
+============================================================ */
+
+.connect-journey-profile {
+  flex: 0 0 auto;
+
+  display: flex;
+  align-items: center;
+
+  gap: 8px;
+
+  padding: 8px;
+
+  border:
+    1px solid
+    rgba(255,255,255,.07);
+
+  border-radius:
+    16px;
+
+  background:
+    linear-gradient(
+      145deg,
+      rgba(255,255,255,.022),
+      rgba(255,107,50,.014)
+    );
+
+  box-shadow:
+    0 14px 34px
+    rgba(0,0,0,.24);
+
+  backdrop-filter:
+    blur(14px);
+}
+
+
+.connect-journey-profile-link {
+  display: flex;
+  align-items: center;
+
+  gap: 10px;
+
+  color: inherit;
+
+  text-decoration: none;
+}
+
+
+.connect-journey-avatar {
+  position: relative;
+
+  width: 44px;
+  height: 44px;
+
+  flex:
+    0 0 44px;
+
+  display: grid;
+  place-items: center;
+
+  overflow: hidden;
+
+  border:
+    1px solid
+    rgba(255,107,50,.22);
+
+  border-radius:
+    50%;
+
+  background:
+    rgba(255,107,50,.07);
+
+  color:
+    var(--fk-orange);
+}
+
+
+.connect-journey-avatar img {
+  width: 100%;
+  height: 100%;
+
+  object-fit: cover;
+}
+
+
+.connect-avatar-check {
+  position: absolute;
+
+  right: -1px;
+  bottom: -1px;
+
+  width: 16px;
+  height: 16px;
+
+  display: grid;
+  place-items: center;
+
+  border:
+    2px solid #080808;
+
+  border-radius: 50%;
+
+  background:
+    var(--fk-green);
+
+  color:
+    #07140d;
+}
+
+
+.connect-journey-profile-link strong,
+.connect-journey-profile-link span {
+  display: block;
+}
+
+
+.connect-journey-profile-link strong {
+  font-size: 10px;
+}
+
+
+.connect-journey-profile-link div > span {
+  margin-top: 3px;
+
+  color:
+    #79706b;
+
+  font-size: 7px;
+}
+
+
+.connect-refresh-button {
+  width: 32px;
+  height: 32px;
+
+  display: grid;
+  place-items: center;
+
+  border:
+    1px solid
+    rgba(255,255,255,.06);
+
+  border-radius: 9px;
+
+  background:
+    rgba(255,255,255,.018);
+
+  color:
+    #756d69;
+
+  cursor: pointer;
+}
+
+
+.connect-refresh-button:hover {
+  color:
+    var(--fk-orange);
+}
+
+
+.connect-refresh-spin {
+  animation:
+    fkSpin
+    .8s linear
+    infinite;
+}
+
+
+@keyframes fkSpin {
+
+  to {
+    transform:
+      rotate(360deg);
+  }
+
+}
+
+
+.connect-refresh-error {
+  position: relative;
+  z-index: 20;
+
+  width:
+    min(
+      1120px,
+      100%
+    );
+
+  margin:
+    -44px auto 38px;
+
+  padding:
+    10px 12px;
+
+  border:
+    1px solid
+    rgba(244, 92, 92, .16);
+
+  border-radius: 10px;
+
+  background:
+    rgba(244, 92, 92, .05);
+
+  color:
+    #e98d8d;
+
+  font-size: 8px;
+}
+
+
+/* ============================================================
+   INTRO
+============================================================ */
+
+.connect-journey-intro {
+  position: relative;
+  z-index: 12;
+
+  max-width: 700px;
+
+  margin:
+    0 auto 34px;
+
+  text-align:
+    center;
+}
+
+
+.connect-journey-intro > span {
+  color:
+    var(--fk-orange);
+
+  font-size: 9px;
+  font-weight: 900;
+
+  letter-spacing:
+    .18em;
+}
+
+
+.connect-journey-intro h2 {
+  margin:
+    12px 0;
+
+  font-size:
+    clamp(
+      34px,
+      5vw,
+      56px
+    );
+
+  line-height:
+    1.04;
+
+  letter-spacing:
+    -.048em;
+}
+
+
+.connect-journey-intro h2 strong {
+  background:
+    linear-gradient(
+      135deg,
+      #ff9b72,
+      #ff6b32
+    );
+
+  -webkit-background-clip:
+    text;
+
+  background-clip:
+    text;
+
+  color:
+    transparent;
+}
+
+
+.connect-journey-intro p {
+  max-width: 510px;
+
+  margin:
+    0 auto;
+
+  color:
+    var(--fk-muted);
+
+  font-size: 11px;
+
+  line-height: 1.7;
+}
+
+
+/* ============================================================
+   ROADMAP
+============================================================ */
+
+.connect-roadmap {
+  position: relative;
+  z-index: 8;
+
+  width:
+    min(
+      1220px,
+      100%
+    );
+
+  min-height:
+    1330px;
+
+  margin:
+    0 auto;
+
+  padding:
+    36px 0 70px;
+}
+
+
+/* ============================================================
+   WINDING ROAD
+============================================================ */
+
+.connect-roadmap-path {
+  position: absolute;
+
+  inset:
+    20px 0 170px 0;
+
+  z-index: 1;
+
+  pointer-events: none;
+
+  background-repeat:
+    no-repeat;
+
+  background-position:
+    center;
+
+  background-size:
+    100% 100%;
+
+  filter:
+    drop-shadow(
+      0 32px 42px
+      rgba(0,0,0,.38)
+    );
+
+  background-image:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1200 1000' preserveAspectRatio='none'%3E%3Cpath d='M-40 170 C160 80 330 110 430 220 C520 320 390 390 270 430 C120 480 100 650 285 685 C475 720 575 565 715 505 C855 445 1040 480 1035 610 C1030 720 890 760 805 720 C710 675 735 565 865 555 C1010 545 1145 635 1235 565' fill='none' stroke='%23242a31' stroke-width='116' stroke-linecap='round' stroke-linejoin='round'/%3E%3Cpath d='M-40 170 C160 80 330 110 430 220 C520 320 390 390 270 430 C120 480 100 650 285 685 C475 720 575 565 715 505 C855 445 1040 480 1035 610 C1030 720 890 760 805 720 C710 675 735 565 865 555 C1010 545 1145 635 1235 565' fill='none' stroke='%23bcc5cc' stroke-opacity='.42' stroke-width='2' stroke-dasharray='12 13' stroke-linecap='round'/%3E%3C/svg%3E");
+}
+
+
+.connect-roadmap-path-fill {
+  position: absolute;
+
+  inset: 0;
+
+  background-repeat:
+    no-repeat;
+
+  background-position:
+    center;
+
+  background-size:
+    100% 100%;
+
+  opacity:
+    .65;
+
+  background-image:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1200 1000' preserveAspectRatio='none'%3E%3Cpath d='M-40 170 C160 80 330 110 430 220 C520 320 390 390 270 430 C120 480 100 650 285 685 C475 720 575 565 715 505 C855 445 1040 480 1035 610 C1030 720 890 760 805 720 C710 675 735 565 865 555 C1010 545 1145 635 1235 565' fill='none' stroke='%23ff6b32' stroke-opacity='.34' stroke-width='6' stroke-dasharray='20 225' stroke-linecap='round'/%3E%3C/svg%3E");
+
+  animation:
+    fkRoadPulse
+    4s ease-in-out
+    infinite;
+}
+
+
+@keyframes fkRoadPulse {
+
+  0%,
+  100% {
+    opacity:
+      .25;
+
+    filter:
+      drop-shadow(
+        0 0 0
+        rgba(255,107,50,0)
+      );
+  }
+
+  50% {
+    opacity:
+      .85;
+
+    filter:
+      drop-shadow(
+        0 0 10px
+        rgba(255,107,50,.58)
+      );
+  }
+
+}
+
+
+/* ============================================================
+   FOOTSTEPS
+============================================================ */
+
+.connect-footsteps {
+  position: absolute;
+
+  z-index: 6;
+
+  width: 34px;
+  height: 34px;
+
+  display: grid;
+  place-items: center;
+
+  color:
+    var(--fk-orange);
+
+  font-size: 21px;
+
+  pointer-events: none;
+
+  filter:
+    drop-shadow(
+      0 0 7px
+      rgba(255,107,50,.55)
+    );
+
+  animation:
+    fkFootGlow
+    1.6s
+    ease-in-out
+    infinite;
+}
+
+
+.connect-footsteps::before {
+  content:
+    "👣";
+}
+
+
+.connect-footstep-1 {
+  left: 7%;
+  top: 150px;
+
+  transform:
+    rotate(20deg);
+}
+
+
+.connect-footstep-2 {
+  left: 31%;
+  top: 175px;
+
+  transform:
+    rotate(75deg);
+
+  animation-delay:
+    .22s;
+}
+
+
+.connect-footstep-3 {
+  left: 23%;
+  top: 470px;
+
+  transform:
+    rotate(150deg);
+
+  animation-delay:
+    .44s;
+}
+
+
+.connect-footstep-4 {
+  left: 54%;
+  top: 600px;
+
+  transform:
+    rotate(-25deg);
+
+  animation-delay:
+    .66s;
+}
+
+
+.connect-footstep-5 {
+  right: 17%;
+  top: 515px;
+
+  transform:
+    rotate(85deg);
+
+  animation-delay:
+    .88s;
+}
+
+
+.connect-footstep-6 {
+  right: 4%;
+  top: 655px;
+
+  transform:
+    rotate(10deg);
+
+  animation-delay:
+    1.1s;
+}
+
+
+@keyframes fkFootGlow {
+
+  0%,
+  100% {
+    opacity: .25;
+  }
+
+  50% {
+    opacity: 1;
+
+    filter:
+      drop-shadow(
+        0 0 12px
+        rgba(255,107,50,.9)
+      );
+  }
+
+}
+
+
+/* ============================================================
+   STEP POSITIONS
+============================================================ */
+
+.connect-step {
+  position: absolute;
+
+  z-index: 10;
+
+  width: 285px;
+
+  min-height: auto;
+
+  margin: 0;
+  padding: 0;
+}
+
+
+.connect-step-01 {
+  left: 1%;
+  top: 34px;
+}
+
+
+.connect-step-02 {
+  left: 34%;
+  top: 208px;
+}
+
+
+.connect-step-03 {
+  right: 1.5%;
+  top: 305px;
+}
+
+
+.connect-step-04 {
+  left: 42%;
+  top: 565px;
+
+  width:
+    410px;
+}
+
+
+.connect-step-05 {
+  left: 5%;
+  top: 720px;
+}
+
+
+.connect-step-06 {
+  right: 8%;
+  top: 835px;
+}
+
+
+/* ============================================================
+   GPS MARKER
+============================================================ */
+
+.connect-step-marker {
+  appearance: none;
+
+  position: absolute;
+
+  top:
+    -50px;
+
+  left:
+    30px;
+
+  width:
+    52px;
+
+  height:
+    52px;
+
+  display: grid;
+  place-items: center;
+
+  padding: 0;
+
+  border:
+    2px solid
+    rgba(255,255,255,.14);
+
+  border-radius:
+    50% 50% 50% 6px;
+
+  background:
+    radial-gradient(
+      circle at 40% 33%,
+      rgba(255,255,255,.95) 0 12%,
+      rgba(255,255,255,.18) 13% 24%,
+      transparent 25%
+    ),
+    linear-gradient(
+      145deg,
+      #ff8052,
+      #f45b25 56%,
+      #c93c12
+    );
+
+  color:
+    #fff;
+
+  transform:
+    rotate(-45deg);
+
+  opacity:
+    .72;
+
+  cursor:
+    pointer;
+
+  box-shadow:
+    0 14px 36px
+    rgba(0,0,0,.5);
+
+  transition:
+    filter .25s ease,
+    opacity .25s ease,
+    box-shadow .25s ease;
+}
+
+
+.connect-step-marker span {
+  transform:
+    rotate(45deg);
+
+  font-size:
+    7px;
+
+  font-weight:
+    900;
+
+  opacity:
+    0;
+}
+
+
+.connect-step-marker:hover {
+  opacity: 1;
+
+  filter:
+    brightness(1.12);
+
+  box-shadow:
+    0 15px 38px
+    rgba(0,0,0,.5),
+    0 0 32px
+    rgba(255,107,50,.25);
+}
+
+
+.connect-step-marker.active {
+  opacity: 1;
+
+  filter:
+    brightness(1.18);
+
+  box-shadow:
+    0 16px 40px
+    rgba(0,0,0,.55),
+    0 0 0 8px
+    rgba(255,107,50,.045),
+    0 0 40px
+    rgba(255,107,50,.42);
+
+  animation:
+    fkPinBounce
+    1.8s
+    ease-in-out
+    infinite;
+}
+
+
+.connect-step-marker.active::before {
+  content: "";
+
+  position: absolute;
+
+  left: 50%;
+  top: 50%;
+
+  width:
+    24px;
+
+  height:
+    24px;
+
+  border:
+    2px solid
+    rgba(255,107,50,.55);
+
+  border-radius:
+    50%;
+
+  transform:
+    translate(
+      -50%,
+      -50%
+    );
+
+  animation:
+    fkGpsRipple
+    1.8s
+    ease-out
+    infinite;
+}
+
+
+@keyframes fkPinBounce {
+
+  0%,
+  100% {
+    translate:
+      0 0;
+  }
+
+  50% {
+    translate:
+      0 -8px;
+  }
+
+}
+
+
+@keyframes fkGpsRipple {
+
+  from {
+    width:
+      24px;
+
+    height:
+      24px;
+
+    opacity:
+      .85;
+  }
+
+  to {
+    width:
+      84px;
+
+    height:
+      84px;
+
+    opacity:
+      0;
+  }
+
+}
+
+
+/* ============================================================
+   CARD VISIBILITY
+============================================================ */
+
+.journey-card-hidden {
+  visibility:
+    hidden;
+
+  pointer-events:
+    none;
+
+  opacity:
+    0;
+
+  transform:
+    translateY(18px)
+    scale(.94);
+
+  filter:
+    blur(4px);
+}
+
+
+.journey-card-visible {
+  visibility:
+    visible;
+
+  pointer-events:
+    auto;
+
+  opacity:
+    1;
+
+  transform:
+    translateY(0)
+    scale(1);
+
+  animation:
+    fkJourneyCardOpen
+    .48s
+    cubic-bezier(
+      .18,
+      .86,
+      .28,
+      1.08
+    );
+}
+
+
+@keyframes fkJourneyCardOpen {
+
+  0% {
+    opacity:
+      0;
+
+    transform:
+      translateY(22px)
+      scale(.91);
+  }
+
+  65% {
+    transform:
+      translateY(-4px)
+      scale(1.015);
+  }
+
+  100% {
+    opacity:
+      1;
+
+    transform:
+      translateY(0)
+      scale(1);
+  }
+
+}
+
+
+/* ============================================================
+   INFO CARD
+============================================================ */
+
+.connect-step-card {
+  position: relative;
+
+  width: 100%;
+
+  overflow: hidden;
+
+  padding:
+    20px;
+
+  border:
+    1px solid
+    rgba(255,120,64,.20);
+
+  border-radius:
+    20px;
+
+  background:
+    linear-gradient(
+      145deg,
+      rgba(20,13,10,.97),
+      rgba(8,8,8,.95)
+    );
+
+  backdrop-filter:
+    blur(17px);
+
+  box-shadow:
+    0 28px 72px
+    rgba(0,0,0,.52),
+    inset 0 1px 0
+    rgba(255,255,255,.025);
+}
+
+
+.connect-step-card::before {
+  content: "";
+
+  position: absolute;
+
+  left:
+    53px;
+
+  top:
+    -30px;
+
+  width:
+    1px;
+
+  height:
+    30px;
+
+  background:
+    linear-gradient(
+      to bottom,
+      rgba(255,107,50,.7),
+      rgba(255,107,50,.06)
+    );
+}
+
+
+.connect-step-card::after {
+  content: "";
+
+  position: absolute;
+
+  top:
+    -75px;
+
+  left:
+    -75px;
+
+  width:
+    170px;
+
+  height:
+    170px;
+
+  border-radius:
+    50%;
+
+  background:
+    radial-gradient(
+      circle,
+      rgba(255,112,55,.12),
+      transparent 70%
+    );
+
+  pointer-events:
+    none;
+}
+
+
+.journey-card-visible {
+  border-color:
+    rgba(255,120,64,.42);
+
+  box-shadow:
+    0 34px 80px
+    rgba(0,0,0,.6),
+    0 0 38px
+    rgba(255,107,50,.09);
+}
+
+
+.connect-step-icon {
+  position: relative;
+
+  z-index: 2;
+
+  width:
+    42px;
+
+  height:
+    42px;
+
+  display: grid;
+  place-items: center;
+
+  margin-bottom:
+    13px;
+
+  border:
+    1px solid
+    rgba(255,107,50,.18);
+
+  border-radius:
+    12px;
+
+  background:
+    rgba(255,107,50,.065);
+
+  color:
+    var(--fk-orange);
+}
+
+
+.connect-step-label {
+  position: relative;
+
+  z-index: 2;
+
+  color:
+    #ff7f4e;
+
+  font-size:
+    7px;
+
+  font-weight:
+    900;
+
+  letter-spacing:
+    .16em;
+}
+
+
+.connect-step-card h3 {
+  position: relative;
+  z-index: 2;
+
+  margin:
+    6px 0 9px;
+
+  color:
+    #f5f1ee;
+
+  font-size:
+    20px;
+
+  line-height:
+    1.12;
+
+  letter-spacing:
+    -.027em;
+}
+
+
+.connect-step-card > p {
+  position: relative;
+  z-index: 2;
+
+  margin: 0;
+
+  color:
+    var(--fk-muted);
+
+  font-size:
+    9px;
+
+  line-height:
+    1.65;
+}
+
+
+/* ============================================================
+   NEXT STOP BUTTON
+============================================================ */
+
+.journey-next-stop {
+  position: relative;
+
+  z-index: 3;
+
+  width: 100%;
+
+  min-height:
+    38px;
+
+  margin-top:
+    16px;
+
+  display:
+    inline-flex;
+
+  align-items:
+    center;
+
+  justify-content:
+    center;
+
+  gap:
+    6px;
+
+  border:
+    1px solid
+    rgba(255,107,50,.18);
+
+  border-radius:
+    10px;
+
+  background:
+    linear-gradient(
+      135deg,
+      rgba(255,107,50,.09),
+      rgba(255,107,50,.035)
+    );
+
+  color:
+    #ff8a5d;
+
+  font-size:
+    8px;
+
+  font-weight:
+    850;
+
+  cursor:
+    pointer;
+
+  transition:
+    transform .18s ease,
+    background .18s ease,
+    border-color .18s ease;
+}
+
+
+.journey-next-stop:hover {
+  transform:
+    translateY(-2px);
+
+  border-color:
+    rgba(255,107,50,.35);
+
+  background:
+    rgba(255,107,50,.12);
+}
+
+
+.journey-next-stop.final {
+  color:
+    #ffffff;
+
+  background:
+    linear-gradient(
+      135deg,
+      #ff7542,
+      #d94a17
+    );
+}
+
+
+/* ============================================================
+   DISCOVER UI
+============================================================ */
+
+.connect-demo-people {
+  position: relative;
+  z-index: 2;
+
+  margin-top:
+    17px;
+
+  display: flex;
+  align-items: center;
+  justify-content:
+    space-between;
+
+  gap:
+    10px;
+
+  padding:
+    9px;
+
+  border:
+    1px solid
+    rgba(255,255,255,.04);
+
+  border-radius:
+    11px;
+
+  background:
+    linear-gradient(
+      145deg,
+      rgba(255,255,255,.022),
+      rgba(255,107,50,.016)
+    );
+}
+
+
+.connect-demo-person {
+  display: flex;
+  align-items: center;
+
+  gap:
+    8px;
+}
+
+
+.connect-demo-person > span {
+  width:
+    31px;
+
+  height:
+    31px;
+
+  display: grid;
+  place-items: center;
+
+  border-radius:
+    50%;
+
+  background:
+    rgba(255,107,50,.08);
+
+  color:
+    var(--fk-orange);
+
+  font-size:
+    8px;
+
+  font-weight:
+    900;
+}
+
+
+.connect-demo-person strong,
+.connect-demo-person small {
+  display: block;
+}
+
+
+.connect-demo-person strong {
+  font-size:
+    8px;
+}
+
+
+.connect-demo-person small {
+  color:
+    #746b67;
+
+  font-size:
+    6px;
+}
+
+
+.connect-match-chip {
+  display:
+    inline-flex;
+
+  align-items:
+    center;
+
+  gap:
+    5px;
+
+  padding:
+    5px 7px;
+
+  border-radius:
+    999px;
+
+  background:
+    rgba(255,107,50,.07);
+
+  color:
+    var(--fk-orange-soft);
+
+  font-size:
+    7px;
+
+  font-weight:
+    850;
+}
+
+
+/* ============================================================
+   CONNECTION
+============================================================ */
+
+.connect-connection-demo {
+  position: relative;
+  z-index: 2;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  gap:
+    8px;
+
+  margin-top:
+    20px;
+}
+
+
+.connect-mini-person {
+  width:
+    33px;
+
+  height:
+    33px;
+
+  display: grid;
+  place-items: center;
+
+  border-radius:
+    50%;
+
+  background:
+    rgba(255,107,50,.08);
+
+  color:
+    var(--fk-orange);
+
+  font-size:
+    9px;
+
+  font-weight:
+    900;
+}
+
+
+.connect-mini-connection {
+  display: flex;
+  align-items: center;
+
+  gap:
+    5px;
+}
+
+
+.connect-mini-connection span {
+  width:
+    25px;
+
+  height:
+    1px;
+
+  background:
+    var(--fk-orange);
+
+  animation:
+    fkJoinPulse
+    1.5s
+    ease-in-out
+    infinite;
+}
+
+
+.connect-mini-connection strong {
+  padding:
+    4px 7px;
+
+  border:
+    1px solid
+    rgba(98,217,154,.12);
+
+  border-radius:
+    999px;
+
+  background:
+    rgba(98,217,154,.04);
+
+  color:
+    var(--fk-green);
+
+  font-size:
+    6px;
+
+  white-space:
+    nowrap;
+}
+
+
+@keyframes fkJoinPulse {
+
+  50% {
+    box-shadow:
+      0 0 10px
+      rgba(255,107,50,.8);
+  }
+
+}
+
+
+/* ============================================================
+   CHAT
+============================================================ */
+
+.connect-chat-demo {
+  position: relative;
+  z-index: 2;
+
+  display: grid;
+
+  gap:
+    6px;
+
+  margin-top:
+    16px;
+}
+
+
+.connect-chat-demo div {
+  width:
+    fit-content;
+
+  max-width:
+    86%;
+
+  padding:
+    7px 9px;
+
+  border:
+    1px solid
+    rgba(255,255,255,.04);
+
+  border-radius:
+    10px 10px 10px 3px;
+
+  background:
+    rgba(255,255,255,.027);
+
+  color:
+    #a89f9a;
+
+  font-size:
+    7px;
+}
+
+
+.connect-chat-demo div:nth-child(2) {
+  justify-self:
+    end;
+
+  border-radius:
+    10px 10px 3px 10px;
+
+  background:
+    rgba(255,107,50,.07);
+
+  color:
+    #f0a281;
+}
+
+
+.connect-chat-demo div:nth-child(3) {
+  animation:
+    fkChatBlink
+    2s ease-in-out
+    infinite alternate;
+}
+
+
+@keyframes fkChatBlink {
+
+  from {
+    opacity:
+      .45;
+  }
+
+  to {
+    opacity:
+      1;
+  }
+
+}
+
+
+/* ============================================================
+   FOOD INVITE
+============================================================ */
+
+.connect-food-branch {
+  position: relative;
+  z-index: 2;
+
+  display: grid;
+
+  grid-template-columns:
+    repeat(
+      3,
+      1fr
+    );
+
+  gap:
+    8px;
+
+  margin-top:
+    22px;
+
+  padding-top:
+    20px;
+}
+
+
+.connect-food-branch-line {
+  position: absolute;
+
+  top:
+    0;
+
+  left:
+    16%;
+
+  right:
+    16%;
+
+  height:
+    1px;
+
+  background:
+    repeating-linear-gradient(
+      to right,
+      var(--fk-orange) 0,
+      var(--fk-orange) 4px,
+      transparent 4px,
+      transparent 9px
+    );
+
+  opacity:
+    .5;
+}
+
+
+.connect-food-option {
+  display: grid;
+  justify-items: center;
+
+  gap:
+    6px;
+
+  padding:
+    10px 6px;
+
+  border:
+    1px solid
+    rgba(255,255,255,.045);
+
+  border-radius:
+    10px;
+
+  background:
+    rgba(255,255,255,.012);
+
+  text-align:
+    center;
+}
+
+
+.connect-food-option > span {
+  width:
+    30px;
+
+  height:
+    30px;
+
+  display: grid;
+  place-items: center;
+
+  border-radius:
+    50%;
+
+  background:
+    rgba(255,107,50,.07);
+
+  color:
+    var(--fk-orange);
+}
+
+
+.connect-food-option strong {
+  font-size:
+    7px;
+}
+
+
+.connect-food-option small {
+  color:
+    #716864;
+
+  font-size:
+    6px;
+
+  line-height:
+    1.4;
+}
+
+
+/* ============================================================
+   MEET
+============================================================ */
+
+.connect-meet-visual {
+  position: relative;
+  z-index: 2;
+
+  display: flex;
+
+  gap:
+    7px;
+
+  margin-top:
+    17px;
+}
+
+
+.connect-meet-visual span {
+  width:
+    38px;
+
+  height:
+    38px;
+
+  display: grid;
+  place-items: center;
+
+  border:
+    1px solid
+    rgba(255,255,255,.04);
+
+  border-radius:
+    10px;
+
+  background:
+    rgba(255,255,255,.014);
+
+  font-size:
+    16px;
+
+  animation:
+    fkFoodFloat
+    2.4s ease-in-out
+    infinite;
+}
+
+
+.connect-meet-visual span:nth-child(2) {
+  animation-delay:
+    .2s;
+}
+
+
+.connect-meet-visual span:nth-child(3) {
+  animation-delay:
+    .4s;
+}
+
+
+.connect-meet-visual span:nth-child(4) {
+  animation-delay:
+    .6s;
+}
+
+
+@keyframes fkFoodFloat {
+
+  50% {
+    transform:
+      translateY(-5px);
+  }
+
+}
+
+
+/* ============================================================
+   SHARE
+============================================================ */
+
+.connect-share-demo {
+  position: relative;
+  z-index: 2;
+
+  display: grid;
+
+  grid-template-columns:
+    repeat(
+      3,
+      1fr
+    );
+
+  gap:
+    5px;
+
+  margin-top:
+    17px;
+}
+
+
+.connect-share-demo > div {
+  height:
+    55px;
+
+  border:
+    1px solid
+    rgba(255,255,255,.04);
+
+  border-radius:
+    8px;
+
+  background:
+    linear-gradient(
+      145deg,
+      rgba(255,107,50,.14),
+      rgba(255,255,255,.02)
+    );
+}
+
+
+.connect-share-demo span {
+  position: absolute;
+
+  right:
+    5px;
+
+  bottom:
+    5px;
+
+  display:
+    inline-flex;
+
+  align-items:
+    center;
+
+  gap:
+    4px;
+
+  padding:
+    4px 6px;
+
+  border-radius:
+    999px;
+
+  background:
+    rgba(0,0,0,.72);
+
+  color:
+    #ff7c50;
+
+  font-size:
+    6px;
+}
+
+
+/* ============================================================
+   FINAL DESTINATION
+============================================================ */
+
+.connect-journey-final {
+  position: absolute;
+
+  left:
+    50%;
+
+  top:
+    1060px;
+
+  width:
+    min(
+      580px,
+      92%
+    );
+
+  transform:
+    translateX(
+      -50%
+    );
+
+  padding:
+    50px 28px;
+
+  border:
+    1px solid
+    rgba(255,107,50,.14);
+
+  border-radius:
+    28px;
+
+  background:
+    radial-gradient(
+      circle at 50% -10%,
+      rgba(255,107,50,.14),
+      transparent 45%
+    ),
+    linear-gradient(
+      145deg,
+      rgba(15,10,8,.95),
+      rgba(6,6,6,.92)
+    );
+
+  box-shadow:
+    0 34px 80px
+    rgba(0,0,0,.45);
+
+  text-align:
+    center;
+}
+
+
+.connect-final-heart {
+  width:
+    74px;
+
+  height:
+    74px;
+
+  display: grid;
+  place-items: center;
+
+  margin:
+    0 auto 17px;
+
+  border:
+    1px solid
+    rgba(255,107,50,.25);
+
+  border-radius:
+    50%;
+
+  background:
+    rgba(255,107,50,.07);
+
+  color:
+    var(--fk-orange);
+
+  box-shadow:
+    0 0 0 10px
+    rgba(255,107,50,.025),
+    0 0 38px
+    rgba(255,107,50,.11);
+
+  animation:
+    fkHeart
+    1.9s ease-in-out
+    infinite;
+}
+
+
+@keyframes fkHeart {
+
+  0%,
+  100% {
+    transform:
+      scale(1);
+  }
+
+  15% {
+    transform:
+      scale(1.12);
+  }
+
+  30% {
+    transform:
+      scale(1);
+  }
+
+  45% {
+    transform:
+      scale(1.07);
+  }
+
+  60% {
+    transform:
+      scale(1);
+  }
+
+}
+
+
+.connect-journey-final > span {
+  color:
+    var(--fk-orange);
+
+  font-size:
+    8px;
+
+  font-weight:
+    900;
+
+  letter-spacing:
+    .16em;
+}
+
+
+.connect-journey-final h2 {
+  margin:
+    12px 0;
+
+  font-size:
+    clamp(
+      30px,
+      4.5vw,
+      49px
+    );
+
+  line-height:
+    1.06;
+
+  letter-spacing:
+    -.044em;
+}
+
+
+.connect-journey-final h2 strong {
+  color:
+    var(--fk-orange-soft);
+}
+
+
+.connect-journey-final p {
+  max-width:
+    440px;
+
+  margin:
+    0 auto 22px;
+
+  color:
+    var(--fk-muted);
+
+  font-size:
+    10px;
+
+  line-height:
+    1.7;
+}
+
+
+.connect-start-button {
+  display:
+    inline-flex;
+
+  align-items:
+    center;
+
+  justify-content:
+    center;
+
+  gap:
+    8px;
+
+  min-height:
+    50px;
+
+  padding:
+    0 24px;
+
+  border-radius:
+    12px;
+
+  background:
+    linear-gradient(
+      135deg,
+      #ff7a45,
+      #f25a24 55%,
+      #ca3d13
+    );
+
+  color:
+    #fff;
+
+  font-size:
+    10px;
+
+  font-weight:
+    850;
+
+  text-decoration:
+    none;
+
+  box-shadow:
+    0 18px 42px
+    rgba(255,107,50,.2);
+}
+
+
+/* ============================================================
+   TABLET
+============================================================ */
+
+@media (
+  max-width: 930px
+) {
+
+  .connect-journey-page {
+    padding:
+      90px 18px 70px;
+  }
+
+
+  .connect-journey-header {
+    align-items:
+      flex-start;
+
+    flex-direction:
+      column;
+  }
+
+
+  .connect-journey-profile {
+    width:
+      100%;
+
+    justify-content:
+      space-between;
+  }
+
+
+  .connect-roadmap {
+    min-height:
+      auto;
+
+    padding:
+      20px 0 40px;
+  }
+
+
+  .connect-roadmap-path {
+    top:
+      0;
+
+    bottom:
+      0;
+
+    left:
+      8px;
+
+    right:
+      auto;
+
+    width:
+      58px;
+
+    height:
+      100%;
+
+    border-radius:
+      30px;
+
+    background:
+      #242a31;
+  }
+
+
+  .connect-roadmap-path::after {
+    content: "";
+
+    position:
+      absolute;
+
+    top:
+      22px;
+
+    bottom:
+      22px;
+
+    left:
+      50%;
+
+    width:
+      1px;
+
+    transform:
+      translateX(
+        -50%
+      );
+
+    background:
+      repeating-linear-gradient(
+        to bottom,
+        rgba(196,205,214,.45) 0,
+        rgba(196,205,214,.45) 8px,
+        transparent 8px,
+        transparent 17px
+      );
+  }
+
+
+  .connect-roadmap-path-fill,
+  .connect-footsteps {
+    display:
+      none;
+  }
+
+
+  .connect-step,
+  .connect-step-01,
+  .connect-step-02,
+  .connect-step-03,
+  .connect-step-04,
+  .connect-step-05,
+  .connect-step-06 {
+    position:
+      relative;
+
+    top:
+      auto;
+
+    left:
+      auto;
+
+    right:
+      auto;
+
+    width:
+      auto;
+
+    margin:
+      0 0 42px 92px;
+  }
+
+
+  .connect-step-marker {
+    left:
+      -84px;
+
+    top:
+      17px;
+  }
+
+
+  .connect-step-card::before {
+    top:
+      42px;
+
+    left:
+      -31px;
+
+    width:
+      31px;
+
+    height:
+      1px;
+  }
+
+
+  .journey-card-hidden {
+    display:
+      none;
+  }
+
+
+  .connect-journey-final {
+    position:
+      relative;
+
+    top:
+      auto;
+
+    left:
+      auto;
+
+    width:
+      auto;
+
+    margin:
+      30px 0 0 92px;
+
+    transform:
+      none;
+  }
+
+}
+
+
+/* ============================================================
+   MOBILE
+============================================================ */
+
+@media (
+  max-width: 600px
+) {
+
+  .connect-journey-page {
+    padding:
+      82px 12px 52px;
+  }
+
+
+  .connect-journey-header {
+    margin-bottom:
+      44px;
+  }
+
+
+  .connect-journey-header h1 {
+    font-size:
+      34px;
+  }
+
+
+  .connect-journey-intro h2 {
+    font-size:
+      34px;
+  }
+
+
+  .connect-roadmap-path {
+    left:
+      0;
+
+    width:
+      48px;
+  }
+
+
+  .connect-step,
+  .connect-step-01,
+  .connect-step-02,
+  .connect-step-03,
+  .connect-step-04,
+  .connect-step-05,
+  .connect-step-06 {
+    margin-left:
+      68px;
+
+    margin-bottom:
+      34px;
+  }
+
+
+  .connect-step-marker {
+    left:
+      -67px;
+
+    width:
+      42px;
+
+    height:
+      42px;
+  }
+
+
+  .connect-step-card {
+    padding:
+      17px;
+
+    border-radius:
+      15px;
+  }
+
+
+  .connect-step-card h3 {
+    font-size:
+      17px;
+  }
+
+
+  .connect-food-branch {
+    grid-template-columns:
+      1fr;
+  }
+
+
+  .connect-food-branch-line {
+    display:
+      none;
+  }
+
+
+  .connect-food-option {
+    grid-template-columns:
+      auto 1fr;
+
+    justify-items:
+      start;
+
+    text-align:
+      left;
+  }
+
+
+  .connect-food-option > span {
+    grid-row:
+      1 / span 2;
+  }
+
+
+  .connect-journey-final {
+    margin-left:
+      68px;
+
+    padding:
+      40px 15px;
+  }
+
+}
+
+
+/* ============================================================
+   REDUCED MOTION
+============================================================ */
+
+@media (
+  prefers-reduced-motion:
+  reduce
+) {
+
+  .connect-orb,
+  .connect-roadmap-path-fill,
+  .connect-footsteps,
+  .connect-step-marker,
+  .connect-final-heart,
+  .connect-meet-visual span,
+  .connect-mini-connection span,
+  .connect-chat-demo div {
+    animation:
+      none !important;
+  }
+
+}
+
+/* ============================================================
+   FOODKINDL CONNECT — JOURNEY PATH REDESIGN
+   Thin progression trail, not a road/navigation map.
+============================================================ */
+
+/* The existing layout/content cards are retained. */
+.connect-roadmap {
+  min-height: 1370px;
+  padding-top: 34px;
+}
+
+/* ------------------------------------------------------------
+   JOURNEY PATH LAYER
+------------------------------------------------------------ */
+
+.connect-journey-path-layer {
+  position: absolute;
+  inset: 0 0 170px;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.connect-journey-line {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.connect-journey-line-base,
+.connect-journey-line-progress {
+  fill: none;
+  vector-effect: non-scaling-stroke;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.connect-journey-line-base {
+  stroke: rgba(255, 255, 255, 0.15);
+  stroke-width: 3;
+  stroke-dasharray: 3 11;
+}
+
+.connect-journey-line-progress {
+  stroke: #ff6b32;
+  stroke-width: 4;
+  filter:
+    drop-shadow(
+      0 0 7px
+      rgba(255, 107, 50, 0.5)
+    );
+  transition:
+    stroke-dashoffset
+    0.8s
+    cubic-bezier(.22, .8, .28, 1);
+}
+
+/* Soft circular "landing pads" make the journey read like
+   progression checkpoints rather than a road. */
+.connect-step-marker::after {
+  content: "";
+
+  position: absolute;
+  left: 50%;
+  top: 50%;
+
+  width: 72px;
+  height: 24px;
+
+  border:
+    2px solid
+    rgba(255, 255, 255, 0.14);
+
+  border-radius: 50%;
+
+  transform:
+    translate(-50%, 28px)
+    rotate(45deg);
+
+  background:
+    rgba(5, 4, 3, 0.88);
+
+  box-shadow:
+    0 10px 30px
+    rgba(0, 0, 0, 0.42);
+
+  pointer-events: none;
+}
+
+
+/* ------------------------------------------------------------
+   START
+------------------------------------------------------------ */
+
+.connect-journey-start-label {
+  position: absolute;
+
+  left: 1.5%;
+  top: 48px;
+
+  display: inline-flex;
+  align-items: center;
+
+  gap: 7px;
+
+  color:
+    rgba(255, 255, 255, 0.52);
+
+  font-size: 7px;
+  font-weight: 900;
+
+  letter-spacing: 0.16em;
+}
+
+.connect-journey-start-label > span {
+  width: 7px;
+  height: 7px;
+
+  border:
+    2px solid
+    rgba(255, 107, 50, 0.6);
+
+  border-radius: 50%;
+
+  background: #080706;
+
+  box-shadow:
+    0 0 0 5px
+    rgba(255, 107, 50, 0.06);
+}
+
+
+/* ------------------------------------------------------------
+   MOVING FOODKINDL MEMBER
+------------------------------------------------------------ */
+
+.connect-journey-traveler {
+  position: absolute;
+
+  z-index: 18;
+
+  width: 58px;
+  height: 70px;
+
+  display: grid;
+  justify-items: center;
+  align-content: center;
+
+  transition:
+    left 0.9s
+      cubic-bezier(.22, .8, .28, 1),
+    top 0.9s
+      cubic-bezier(.22, .8, .28, 1),
+    transform 0.35s ease;
+
+  will-change:
+    left,
+    top;
+
+  filter:
+    drop-shadow(
+      0 12px 18px
+      rgba(0, 0, 0, 0.4)
+    );
+}
+
+.connect-journey-traveler.step-1 {
+  left: calc(3% + 10px);
+  top: 28px;
+}
+
+.connect-journey-traveler.step-2 {
+  left: calc(33% + 10px);
+  top: 168px;
+}
+
+.connect-journey-traveler.step-3 {
+  left: calc(70% + 10px);
+  top: 278px;
+}
+
+.connect-journey-traveler.step-4 {
+  left: calc(46% + 10px);
+  top: 488px;
+}
+
+.connect-journey-traveler.step-5 {
+  left: calc(6% + 10px);
+  top: 668px;
+}
+
+.connect-journey-traveler.step-6 {
+  left: calc(69% + 10px);
+  top: 813px;
+}
+
+.connect-journey-person {
+  position: relative;
+
+  width: 42px;
+  height: 42px;
+
+  display: grid;
+  place-items: center;
+
+  border:
+    2px solid
+    rgba(255, 255, 255, 0.7);
+
+  border-radius:
+    50% 50% 47% 47%;
+
+  background:
+    linear-gradient(
+      145deg,
+      #ff895d,
+      #ff5f24 58%,
+      #c83b13
+    );
+
+  color: #fff;
+
+  box-shadow:
+    0 0 0 6px
+    rgba(255, 107, 50, 0.06),
+    0 0 24px
+    rgba(255, 107, 50, 0.34);
+
+  animation:
+    fkTravelerHop
+    1.25s
+    ease-in-out
+    infinite;
+}
+
+.connect-journey-person::after {
+  content: "";
+
+  position: absolute;
+
+  left: 50%;
+  bottom: -9px;
+
+  width: 3px;
+  height: 10px;
+
+  border-radius: 99px;
+
+  background: #ff6b32;
+
+  transform:
+    translateX(-50%);
+}
+
+.connect-journey-traveler-shadow {
+  position: absolute;
+
+  left: 50%;
+  bottom: 10px;
+
+  width: 38px;
+  height: 10px;
+
+  border-radius: 50%;
+
+  background:
+    rgba(0, 0, 0, 0.42);
+
+  filter: blur(3px);
+
+  transform:
+    translateX(-50%);
+
+  animation:
+    fkTravelerShadow
+    1.25s
+    ease-in-out
+    infinite;
+}
+
+.connect-journey-traveler-label {
+  margin-top: 7px;
+
+  padding:
+    3px 6px;
+
+  border:
+    1px solid
+    rgba(255, 107, 50, 0.16);
+
+  border-radius:
+    999px;
+
+  background:
+    rgba(7, 6, 5, 0.88);
+
+  color:
+    #ff9a71;
+
+  font-size: 6px;
+  font-weight: 900;
+
+  letter-spacing:
+    0.12em;
+}
+
+@keyframes fkTravelerHop {
+
+  0%,
+  100% {
+    transform:
+      translateY(0)
+      rotate(-2deg);
+  }
+
+  45% {
+    transform:
+      translateY(-9px)
+      rotate(3deg);
+  }
+
+  65% {
+    transform:
+      translateY(-5px)
+      rotate(1deg);
+  }
+
+}
+
+@keyframes fkTravelerShadow {
+
+  0%,
+  100% {
+    transform:
+      translateX(-50%)
+      scaleX(1);
+
+    opacity: 0.55;
+  }
+
+  45% {
+    transform:
+      translateX(-50%)
+      scaleX(0.68);
+
+    opacity: 0.22;
+  }
+
+}
+
+
+/* ------------------------------------------------------------
+   FINISH / FRIENDSHIP
+------------------------------------------------------------ */
+
+.connect-journey-finish-marker {
+  position: absolute;
+
+  left: 50%;
+  top: 1010px;
+
+  transform:
+    translateX(-50%);
+
+  display: grid;
+  justify-items: center;
+
+  gap: 7px;
+
+  color:
+    var(--fk-orange);
+
+  animation:
+    fkFinishGlow
+    2s
+    ease-in-out
+    infinite;
+}
+
+.connect-journey-finish-marker::before {
+  content: "";
+
+  position: absolute;
+
+  left: 50%;
+  top: 50%;
+
+  width: 58px;
+  height: 58px;
+
+  border:
+    1px solid
+    rgba(255, 107, 50, 0.22);
+
+  border-radius: 50%;
+
+  transform:
+    translate(-50%, -62%);
+
+  background:
+    rgba(255, 107, 50, 0.045);
+
+  box-shadow:
+    0 0 38px
+    rgba(255, 107, 50, 0.12);
+}
+
+.connect-journey-finish-marker svg {
+  position: relative;
+  z-index: 2;
+}
+
+.connect-journey-finish-marker span {
+  position: relative;
+  z-index: 2;
+
+  color:
+    rgba(255, 255, 255, 0.56);
+
+  font-size: 6px;
+  font-weight: 900;
+
+  letter-spacing: 0.15em;
+}
+
+@keyframes fkFinishGlow {
+
+  50% {
+    filter:
+      drop-shadow(
+        0 0 14px
+        rgba(255, 107, 50, 0.72)
+      );
+  }
+
+}
+
+
+/* ------------------------------------------------------------
+   NEW CHECKPOINT POSITIONS
+   Cards still open on the active checkpoint.
+------------------------------------------------------------ */
+
+.connect-step-01 {
+  left: 3%;
+  top: 60px;
+}
+
+.connect-step-02 {
+  left: 33%;
+  top: 200px;
+}
+
+.connect-step-03 {
+  left: 70%;
+  right: auto;
+  top: 310px;
+}
+
+.connect-step-04 {
+  left: 46%;
+  top: 520px;
+  width: 410px;
+}
+
+.connect-step-05 {
+  left: 6%;
+  top: 700px;
+}
+
+.connect-step-06 {
+  left: 69%;
+  right: auto;
+  top: 845px;
+}
+
+/* Keep the pin on the path and let the card sit beneath it. */
+.connect-step-marker {
+  top: 0;
+  left: 30px;
+
+  width: 48px;
+  height: 48px;
+
+  border-radius:
+    50% 50% 50% 7px;
+
+  background:
+    radial-gradient(
+      circle at 40% 33%,
+      rgba(255,255,255,.98) 0 10%,
+      rgba(255,255,255,.18) 11% 22%,
+      transparent 23%
+    ),
+    linear-gradient(
+      145deg,
+      #ff8052,
+      #f45b25 56%,
+      #c93c12
+    );
+
+  transform:
+    rotate(-45deg);
+
+  box-shadow:
+    0 12px 30px
+    rgba(0,0,0,.48);
+
+  opacity: .72;
+}
+
+.connect-step-marker.active {
+  box-shadow:
+    0 14px 34px
+    rgba(0,0,0,.52),
+    0 0 0 7px
+    rgba(255,107,50,.045),
+    0 0 34px
+    rgba(255,107,50,.34);
+}
+
+/* Important: separate the content card from the pin so the
+   path stays visually readable. */
+.connect-step-card {
+  margin-top: 70px;
+}
+
+.connect-step-card::before {
+  top: -22px;
+  left: 53px;
+  height: 22px;
+}
+
+
+/* ------------------------------------------------------------
+   REMOVE THE OLD "ROAD" VISUAL COMPLETELY
+------------------------------------------------------------ */
+
+.connect-roadmap-path,
+.connect-roadmap-path-fill,
+.connect-footsteps {
+  display: none !important;
+}
+
+
+/* ------------------------------------------------------------
+   FINAL CARD
+------------------------------------------------------------ */
+
+.connect-journey-final {
+  top: 1095px;
+}
+
+
+/* ============================================================
+   TABLET — SIMPLE VERTICAL JOURNEY, STILL NOT A ROAD
+============================================================ */
+
+@media (max-width: 930px) {
+
+  .connect-roadmap {
+    min-height: auto;
+    padding: 26px 0 40px;
+  }
+
+  .connect-journey-path-layer {
+    left: 7px;
+    right: auto;
+    top: 0;
+    bottom: 0;
+
+    width: 56px;
+    height: 100%;
+  }
+
+  .connect-journey-line {
+    display: none;
+  }
+
+  .connect-journey-path-layer::before {
+    content: "";
+
+    position: absolute;
+
+    left: 27px;
+    top: 24px;
+    bottom: 120px;
+
+    width: 2px;
+
+    background:
+      repeating-linear-gradient(
+        to bottom,
+        rgba(255, 107, 50, 0.58) 0,
+        rgba(255, 107, 50, 0.58) 5px,
+        rgba(255, 107, 50, 0.06) 5px,
+        rgba(255, 107, 50, 0.06) 15px
+      );
+  }
+
+  .connect-journey-start-label,
+  .connect-journey-finish-marker,
+  .connect-journey-traveler {
+    display: none;
+  }
+
+  .connect-step,
+  .connect-step-01,
+  .connect-step-02,
+  .connect-step-03,
+  .connect-step-04,
+  .connect-step-05,
+  .connect-step-06 {
+    position: relative;
+
+    top: auto;
+    left: auto;
+    right: auto;
+
+    width: auto;
+
+    margin:
+      0 0
+      42px
+      92px;
+  }
+
+  .connect-step-marker {
+    left: -84px;
+    top: 13px;
+  }
+
+  .connect-step-card {
+    margin-top: 0;
+  }
+
+  .connect-step-card::before {
+    top: 42px;
+    left: -31px;
+
+    width: 31px;
+    height: 1px;
+  }
+
+  .journey-card-hidden {
+    display: none;
+  }
+
+  .connect-journey-final {
+    position: relative;
+
+    top: auto;
+    left: auto;
+
+    width: auto;
+
+    margin:
+      30px 0 0
+      92px;
+
+    transform: none;
+  }
+
+}
+
+
+/* ============================================================
+   MOBILE
+============================================================ */
+
+@media (max-width: 600px) {
+
+  .connect-journey-path-layer {
+    width: 46px;
+  }
+
+  .connect-journey-path-layer::before {
+    left: 22px;
+  }
+
+  .connect-step,
+  .connect-step-01,
+  .connect-step-02,
+  .connect-step-03,
+  .connect-step-04,
+  .connect-step-05,
+  .connect-step-06 {
+    margin-left: 68px;
+    margin-bottom: 34px;
+  }
+
+  .connect-step-marker {
+    left: -67px;
+
+    width: 42px;
+    height: 42px;
+  }
+
+  .connect-step-marker::after {
+    width: 52px;
+    height: 18px;
+
+    transform:
+      translate(-50%, 24px)
+      rotate(45deg);
+  }
+
+  .connect-journey-final {
+    margin-left: 68px;
+  }
+
+}
+
+
+/* ============================================================
+   REDUCED MOTION
+============================================================ */
+
+@media (prefers-reduced-motion: reduce) {
+
+  .connect-journey-line-progress,
+  .connect-journey-traveler,
+  .connect-journey-person,
+  .connect-journey-traveler-shadow,
+  .connect-journey-finish-marker {
+    animation: none !important;
+    transition: none !important;
+  }
+
+}
+
+
+/* ============================================================
+   FOODKINDL CONNECT — PROFILE + GOVERNMENT ID STEP
+   Added for the updated ConnectDashboard.jsx.
+
+   Step 01 now contains:
+   - Profile setup guidance
+   - Government ID upload guidance
+   - Verification status
+   - Profile / upload action
+
+   These styles are intentionally scoped to the new classes
+   so the existing FoodKindl Connect journey remains intact.
+============================================================ */
+
+
+/* ------------------------------------------------------------
+   STEP 01 — GIVE THE PROFILE CARD A LITTLE MORE ROOM
+
+   The first checkpoint now contains more information than the
+   original Discover card, so it needs a slightly wider card.
+------------------------------------------------------------ */
+
+.connect-step-01 {
+  width: 330px;
+}
+
+
+/* ------------------------------------------------------------
+   PROFILE SETUP CHECKLIST
+------------------------------------------------------------ */
+
+.connect-profile-setup {
+  position: relative;
+  z-index: 3;
+
+  display: grid;
+  gap: 9px;
+
+  margin-top: 17px;
+}
+
+
+.connect-profile-setup-row {
+  display: grid;
+  grid-template-columns: 38px minmax(0, 1fr);
+  align-items: center;
+  gap: 10px;
+
+  min-height: 58px;
+
+  padding: 10px 11px;
+
+  border:
+    1px solid
+    rgba(255, 255, 255, 0.055);
+
+  border-radius: 12px;
+
+  background:
+    linear-gradient(
+      135deg,
+      rgba(255, 255, 255, 0.026),
+      rgba(255, 107, 50, 0.022)
+    );
+
+  transition:
+    transform 0.2s ease,
+    border-color 0.2s ease,
+    background 0.2s ease;
+}
+
+
+.connect-profile-setup-row:hover {
+  transform: translateX(3px);
+
+  border-color:
+    rgba(255, 107, 50, 0.16);
+
+  background:
+    linear-gradient(
+      135deg,
+      rgba(255, 107, 50, 0.055),
+      rgba(255, 255, 255, 0.018)
+    );
+}
+
+
+.connect-profile-setup-icon {
+  width: 38px;
+  height: 38px;
+
+  display: grid;
+  place-items: center;
+
+  border:
+    1px solid
+    rgba(255, 107, 50, 0.17);
+
+  border-radius: 11px;
+
+  background:
+    radial-gradient(
+      circle at 35% 25%,
+      rgba(255, 255, 255, 0.07),
+      transparent 45%
+    ),
+    rgba(255, 107, 50, 0.07);
+
+  color: var(--fk-orange-soft);
+}
+
+
+.connect-profile-setup-row strong,
+.connect-profile-setup-row small {
+  display: block;
+}
+
+
+.connect-profile-setup-row strong {
+  color: #f4efec;
+
+  font-size: 9px;
+  font-weight: 850;
+
+  line-height: 1.3;
+}
+
+
+.connect-profile-setup-row small {
+  margin-top: 4px;
+
+  color: #817773;
+
+  font-size: 7px;
+
+  line-height: 1.45;
+}
+
+
+/* ------------------------------------------------------------
+   GOVERNMENT ID VERIFICATION STATUS
+------------------------------------------------------------ */
+
+.connect-profile-verification {
+  position: relative;
+  z-index: 3;
+
+  display: flex;
+  align-items: center;
+  gap: 7px;
+
+  margin-top: 11px;
+
+  padding: 8px 10px;
+
+  border:
+    1px solid
+    rgba(255, 107, 50, 0.14);
+
+  border-radius: 10px;
+
+  background:
+    rgba(255, 107, 50, 0.035);
+
+  color: #c99178;
+
+  font-size: 7px;
+  font-weight: 800;
+
+  line-height: 1.4;
+}
+
+
+.connect-profile-verification svg {
+  flex: 0 0 auto;
+}
+
+
+.connect-profile-verification.verified {
+  border-color:
+    rgba(98, 217, 154, 0.18);
+
+  background:
+    rgba(98, 217, 154, 0.055);
+
+  color: var(--fk-green);
+}
+
+
+.connect-profile-verification.pending {
+  border-color:
+    rgba(255, 177, 92, 0.18);
+
+  background:
+    rgba(255, 177, 92, 0.05);
+
+  color: #f1ae6e;
+}
+
+
+.connect-profile-verification.pending svg {
+  animation:
+    fkVerificationSpin
+    2.4s linear
+    infinite;
+}
+
+
+.connect-profile-verification.rejected {
+  border-color:
+    rgba(244, 92, 92, 0.2);
+
+  background:
+    rgba(244, 92, 92, 0.055);
+
+  color: #e99595;
+}
+
+
+@keyframes fkVerificationSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+
+/* ------------------------------------------------------------
+   COMPLETE PROFILE / UPLOAD GOVERNMENT ID ACTION
+------------------------------------------------------------ */
+
+.connect-profile-action {
+  position: relative;
+  z-index: 3;
+
+  width: 100%;
+  min-height: 42px;
+
+  margin-top: 11px;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+
+  padding: 8px 12px;
+
+  border:
+    1px solid
+    rgba(255, 107, 50, 0.25);
+
+  border-radius: 11px;
+
+  background:
+    linear-gradient(
+      135deg,
+      rgba(255, 119, 67, 0.15),
+      rgba(217, 74, 23, 0.075)
+    );
+
+  color: #ff9b74;
+
+  font-size: 8px;
+  font-weight: 900;
+
+  line-height: 1.35;
+
+  text-align: center;
+  text-decoration: none;
+
+  box-shadow:
+    inset 0 1px 0
+    rgba(255, 255, 255, 0.025);
+
+  transition:
+    transform 0.2s ease,
+    color 0.2s ease,
+    border-color 0.2s ease,
+    background 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+
+.connect-profile-action:hover {
+  transform: translateY(-2px);
+
+  border-color:
+    rgba(255, 107, 50, 0.46);
+
+  background:
+    linear-gradient(
+      135deg,
+      rgba(255, 119, 67, 0.23),
+      rgba(217, 74, 23, 0.11)
+    );
+
+  color: #ffffff;
+
+  box-shadow:
+    0 12px 30px
+    rgba(255, 107, 50, 0.09);
+}
+
+
+.connect-profile-action svg:last-child {
+  transition:
+    transform 0.2s ease;
+}
+
+
+.connect-profile-action:hover svg:last-child {
+  transform: translateX(3px);
+}
+
+
+/* ------------------------------------------------------------
+   STEP 02 — DISCOVER + CONNECT
+
+   The updated JSX combines both concepts in Step 02.
+   Give the example connection visual slightly tighter spacing.
+------------------------------------------------------------ */
+
+.connect-step-02 .connect-connection-demo {
+  margin-top: 13px;
+
+  padding-top: 12px;
+
+  border-top:
+    1px solid
+    rgba(255, 255, 255, 0.045);
+}
+
+
+/* ------------------------------------------------------------
+   DESKTOP POSITION TUNING
+
+   Step 01 is taller now. Moving Step 02 slightly to the right
+   keeps the cards from visually colliding while preserving the
+   winding FoodKindl journey.
+------------------------------------------------------------ */
+
+@media (min-width: 931px) {
+
+  .connect-step-01 {
+    left: 2%;
+    top: 54px;
+  }
+
+
+  .connect-step-02 {
+    left: 37%;
+    top: 210px;
+  }
+
+
+  .connect-journey-traveler.step-1 {
+    left: calc(2% + 10px);
+    top: 22px;
+  }
+
+
+  .connect-journey-traveler.step-2 {
+    left: calc(37% + 10px);
+    top: 174px;
+  }
+
+}
+
+
+/* ------------------------------------------------------------
+   TABLET
+------------------------------------------------------------ */
+
+@media (max-width: 930px) {
+
+  .connect-step-01 {
+    width: auto;
+  }
+
+
+  .connect-profile-setup {
+    grid-template-columns:
+      repeat(2, minmax(0, 1fr));
+  }
+
+
+  .connect-profile-setup-row {
+    min-height: 66px;
+  }
+
+}
+
+
+/* ------------------------------------------------------------
+   MOBILE
+------------------------------------------------------------ */
+
+@media (max-width: 600px) {
+
+  .connect-profile-setup {
+    grid-template-columns: 1fr;
+    gap: 8px;
+
+    margin-top: 14px;
+  }
+
+
+  .connect-profile-setup-row {
+    min-height: auto;
+
+    grid-template-columns:
+      36px minmax(0, 1fr);
+
+    padding: 9px;
+  }
+
+
+  .connect-profile-setup-icon {
+    width: 36px;
+    height: 36px;
+  }
+
+
+  .connect-profile-setup-row strong {
+    font-size: 9px;
+  }
+
+
+  .connect-profile-setup-row small {
+    font-size: 7px;
+  }
+
+
+  .connect-profile-verification {
+    align-items: flex-start;
+
+    padding: 8px 9px;
+
+    font-size: 7px;
+  }
+
+
+  .connect-profile-action {
+    min-height: 44px;
+
+    padding:
+      9px 10px;
+
+    font-size: 8px;
+  }
+
+}
+
+
+/* ------------------------------------------------------------
+   VERY SMALL PHONES
+------------------------------------------------------------ */
+
+@media (max-width: 390px) {
+
+  .connect-profile-setup-row {
+    grid-template-columns: 1fr;
+  }
+
+
+  .connect-profile-setup-icon {
+    width: 34px;
+    height: 34px;
+  }
+
+
+  .connect-profile-action {
+    gap: 5px;
+
+    font-size: 7px;
+  }
+
+}
+
+
+/* ------------------------------------------------------------
+   ACCESSIBILITY — REDUCED MOTION
+------------------------------------------------------------ */
+
+@media (prefers-reduced-motion: reduce) {
+
+  .connect-profile-setup-row,
+  .connect-profile-action,
+  .connect-profile-action svg,
+  .connect-profile-verification.pending svg {
+    animation: none !important;
+    transition: none !important;
+  }
+
+}

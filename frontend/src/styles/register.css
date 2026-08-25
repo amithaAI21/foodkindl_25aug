@@ -1,0 +1,1099 @@
+/* ==========================================================
+   FOODKINDL REGISTER
+========================================================== */
+
+.foodkindl-register-page {
+  --register-orange: #ff5c23;
+  --register-orange-dark: #e53b16;
+  --register-green: #72dca0;
+
+  position: relative;
+
+  min-height: 100vh;
+
+  overflow: hidden;
+
+  background:
+    radial-gradient(
+      circle at 16% 18%,
+      rgba(130, 28, 9, 0.14),
+      transparent 30%
+    ),
+    radial-gradient(
+      circle at 85% 70%,
+      rgba(255, 76, 15, 0.07),
+      transparent 30%
+    ),
+    #050505;
+
+  color: #fff;
+}
+
+
+.foodkindl-register-page * {
+  box-sizing: border-box;
+}
+
+
+/* ==========================================================
+   GLOW
+========================================================== */
+
+.register-glow {
+  position: absolute;
+
+  width: 440px;
+  height: 440px;
+
+  border-radius: 50%;
+
+  filter: blur(120px);
+
+  pointer-events: none;
+
+  opacity: 0.13;
+}
+
+
+.register-glow-one {
+  top: 80px;
+  left: -160px;
+
+  background: #ff4c13;
+}
+
+
+.register-glow-two {
+  right: -160px;
+  bottom: -120px;
+
+  background: #b52d0e;
+}
+
+
+/* ==========================================================
+   TOP BAR
+========================================================== */
+
+.register-topbar {
+  position: relative;
+  z-index: 10;
+
+  width: min(
+    1180px,
+    calc(100% - 48px)
+  );
+
+  min-height: 78px;
+
+  margin: 0 auto;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  border-bottom:
+    1px solid
+    rgba(255, 255, 255, 0.05);
+}
+
+
+.register-brand {
+  display: flex;
+  align-items: center;
+
+  gap: 10px;
+
+  color: #fff;
+
+  text-decoration: none;
+}
+
+
+.register-brand img {
+  width: 42px;
+  height: 42px;
+
+  object-fit: contain;
+}
+
+
+.register-brand strong,
+.register-brand span {
+  display: block;
+}
+
+
+.register-brand strong {
+  font-size: 13px;
+}
+
+
+.register-brand span {
+  margin-top: 2px;
+
+  color: #7f7773;
+
+  font-size: 8px;
+}
+
+
+.register-back-link {
+  display: inline-flex;
+  align-items: center;
+
+  gap: 6px;
+
+  color: #9e9692;
+
+  font-size: 10px;
+  font-weight: 700;
+
+  text-decoration: none;
+
+  transition:
+    color 0.2s ease;
+}
+
+
+.register-back-link:hover {
+  color: #fff;
+}
+
+
+/* ==========================================================
+   MAIN SHELL
+========================================================== */
+
+.register-shell {
+  position: relative;
+  z-index: 2;
+
+  width: min(
+    1180px,
+    calc(100% - 48px)
+  );
+
+  min-height:
+    calc(
+      100vh - 78px
+    );
+
+  margin: 0 auto;
+
+  display: grid;
+
+  grid-template-columns:
+    minmax(0, 1.1fr)
+    minmax(400px, 0.75fr);
+
+  gap: 70px;
+
+  align-items: center;
+
+  padding:
+    48px 0 70px;
+}
+
+
+/* ==========================================================
+   STORY PANEL
+========================================================== */
+
+.register-story-panel {
+  min-width: 0;
+}
+
+
+.register-story-content {
+  max-width: 650px;
+}
+
+
+.register-story-pill {
+  display: inline-flex;
+  align-items: center;
+
+  gap: 7px;
+
+  padding:
+    7px 10px;
+
+  border:
+    1px solid
+    rgba(255, 96, 31, 0.25);
+
+  border-radius: 999px;
+
+  background:
+    rgba(255, 96, 31, 0.055);
+
+  color: #ff7748;
+
+  font-size: 8px;
+  font-weight: 800;
+
+  letter-spacing: 0.11em;
+}
+
+
+.register-story-content h1 {
+  max-width: 620px;
+
+  margin:
+    20px 0 0;
+
+  font-size:
+    clamp(
+      50px,
+      5.6vw,
+      78px
+    );
+
+  line-height: 0.97;
+
+  letter-spacing:
+    -0.055em;
+}
+
+
+.register-story-content h1 span {
+  color:
+    var(
+      --register-orange
+    );
+}
+
+
+.register-story-description {
+  max-width: 520px;
+
+  margin:
+    22px 0 0;
+
+  color: #98908c;
+
+  font-size: 14px;
+
+  line-height: 1.7;
+}
+
+
+/* ==========================================================
+   LIVE CARD
+========================================================== */
+
+.register-live-card {
+  max-width: 510px;
+
+  margin-top: 28px;
+
+  padding: 18px;
+
+  border:
+    1px solid
+    rgba(255, 96, 31, 0.28);
+
+  border-radius: 19px;
+
+  background:
+    linear-gradient(
+      145deg,
+      rgba(28, 13, 8, 0.94),
+      rgba(9, 9, 9, 0.96)
+    );
+
+  box-shadow:
+    0 25px 60px
+    rgba(0, 0, 0, 0.30);
+}
+
+
+.register-live-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  margin-bottom: 14px;
+}
+
+
+.register-live-card-top > span {
+  display: inline-flex;
+  align-items: center;
+
+  gap: 5px;
+
+  color: #827b77;
+
+  font-size: 7px;
+  font-weight: 800;
+
+  letter-spacing: 0.08em;
+}
+
+
+.register-live-card-top > span:first-child {
+  color: #ff7444;
+}
+
+
+.live-dot {
+  width: 6px;
+  height: 6px;
+
+  border-radius: 50%;
+
+  background:
+    var(
+      --register-orange
+    );
+
+  box-shadow:
+    0 0 0 4px
+    rgba(255, 92, 35, 0.10);
+}
+
+
+.register-live-profile {
+  display: flex;
+  align-items: center;
+
+  gap: 10px;
+
+  padding-bottom: 14px;
+
+  border-bottom:
+    1px solid
+    rgba(255, 255, 255, 0.055);
+}
+
+
+.register-live-avatar {
+  display: grid;
+  place-items: center;
+
+  width: 43px;
+  height: 43px;
+
+  flex-shrink: 0;
+
+  border-radius: 13px;
+
+  background:
+    rgba(255, 94, 31, 0.10);
+
+  color: #ff7545;
+
+  font-size: 11px;
+  font-weight: 800;
+}
+
+
+.register-live-profile > div:nth-child(2) {
+  flex: 1;
+}
+
+
+.register-live-profile strong,
+.register-live-profile small {
+  display: block;
+}
+
+
+.register-live-profile strong {
+  font-size: 11px;
+}
+
+
+.register-live-profile small {
+  margin-top: 3px;
+
+  color: #77706c;
+
+  font-size: 7px;
+}
+
+
+.register-verified {
+  display: inline-flex;
+  align-items: center;
+
+  gap: 4px;
+
+  padding:
+    5px 7px;
+
+  border:
+    1px solid
+    rgba(66, 211, 135, 0.15);
+
+  border-radius: 999px;
+
+  background:
+    rgba(66, 211, 135, 0.06);
+
+  color:
+    var(
+      --register-green
+    );
+
+  font-size: 7px;
+  font-weight: 800;
+}
+
+
+.register-live-invite {
+  display: flex;
+  align-items: center;
+
+  gap: 10px;
+
+  margin-top: 14px;
+
+  color: #ff7040;
+}
+
+
+.register-live-invite > div span,
+.register-live-invite > div strong {
+  display: block;
+}
+
+
+.register-live-invite > div span {
+  font-size: 7px;
+  font-weight: 800;
+
+  letter-spacing: 0.10em;
+}
+
+
+.register-live-invite > div strong {
+  margin-top: 3px;
+
+  color: #fff;
+
+  font-size: 12px;
+}
+
+
+.register-food-tags {
+  display: flex;
+  flex-wrap: wrap;
+
+  gap: 6px;
+
+  margin-top: 13px;
+}
+
+
+.register-food-tags span {
+  padding:
+    5px 8px;
+
+  border:
+    1px solid
+    rgba(255, 255, 255, 0.06);
+
+  border-radius: 999px;
+
+  background:
+    rgba(255, 255, 255, 0.025);
+
+  color: #aaa29e;
+
+  font-size: 7px;
+  font-weight: 700;
+}
+
+
+/* ==========================================================
+   EXPERIENCES
+========================================================== */
+
+.register-experience-grid {
+  display: grid;
+
+  grid-template-columns:
+    repeat(
+      3,
+      1fr
+    );
+
+  gap: 9px;
+
+  margin-top: 18px;
+}
+
+
+.register-experience-grid article {
+  min-height: 132px;
+
+  padding: 12px;
+
+  border:
+    1px solid
+    rgba(255, 96, 31, 0.11);
+
+  border-radius: 14px;
+
+  background:
+    rgba(255, 255, 255, 0.015);
+}
+
+
+.register-experience-icon {
+  display: grid;
+  place-items: center;
+
+  width: 33px;
+  height: 33px;
+
+  margin-bottom: 10px;
+
+  border:
+    1px solid
+    rgba(255, 96, 31, 0.22);
+
+  border-radius: 10px;
+
+  color: #ff7443;
+}
+
+
+.register-experience-grid strong {
+  font-size: 9px;
+}
+
+
+.register-experience-grid p {
+  margin:
+    6px 0 0;
+
+  color: #746e6a;
+
+  font-size: 7px;
+
+  line-height: 1.55;
+}
+
+
+/* ==========================================================
+   TRUST
+========================================================== */
+
+.register-trust-row {
+  display: flex;
+  flex-wrap: wrap;
+
+  gap: 15px;
+
+  margin-top: 19px;
+}
+
+
+.register-trust-row span {
+  display: inline-flex;
+  align-items: center;
+
+  gap: 6px;
+
+  color: #817a76;
+
+  font-size: 8px;
+}
+
+
+.register-trust-row svg {
+  color: #ff7444;
+}
+
+
+/* ==========================================================
+   FORM PANEL
+========================================================== */
+
+.register-form-panel {
+  display: flex;
+  justify-content: flex-end;
+}
+
+
+.register-form-card {
+  width: 100%;
+
+  max-width: 445px;
+
+  padding: 30px;
+
+  border:
+    1px solid
+    rgba(255, 98, 31, 0.24);
+
+  border-radius: 24px;
+
+  background:
+    linear-gradient(
+      145deg,
+      rgba(21, 11, 8, 0.97),
+      rgba(8, 8, 8, 0.98)
+    );
+
+  box-shadow:
+    0 35px 80px
+    rgba(0, 0, 0, 0.43);
+}
+
+
+.register-form-heading {
+  margin-bottom: 24px;
+}
+
+
+.register-form-icon {
+  display: grid;
+  place-items: center;
+
+  width: 46px;
+  height: 46px;
+
+  margin-bottom: 14px;
+
+  border:
+    1px solid
+    rgba(255, 95, 31, 0.30);
+
+  border-radius: 14px;
+
+  background:
+    rgba(255, 95, 31, 0.075);
+
+  color: #ff7444;
+}
+
+
+.register-eyebrow {
+  color: #ff7040;
+
+  font-size: 8px;
+  font-weight: 800;
+
+  letter-spacing: 0.12em;
+}
+
+
+.register-form-heading h2 {
+  margin:
+    6px 0 8px;
+
+  font-size: 30px;
+
+  letter-spacing:
+    -0.03em;
+}
+
+
+.register-form-heading p {
+  margin: 0;
+
+  color: #867f7b;
+
+  font-size: 10px;
+
+  line-height: 1.6;
+}
+
+
+/* ==========================================================
+   FORM
+========================================================== */
+
+.register-form-card form {
+  display: grid;
+
+  gap: 14px;
+}
+
+
+.register-form-row {
+  display: grid;
+
+  grid-template-columns:
+    repeat(
+      2,
+      1fr
+    );
+
+  gap: 10px;
+}
+
+
+.register-form-card label {
+  display: grid;
+
+  gap: 7px;
+
+  color: #c6bfbb;
+
+  font-size: 9px;
+  font-weight: 700;
+}
+
+
+.register-form-card input {
+  width: 100%;
+
+  min-height: 45px;
+
+  padding:
+    0 13px;
+
+  border:
+    1px solid
+    rgba(255, 101, 39, 0.19);
+
+  border-radius: 10px;
+
+  outline: none;
+
+  background: #110806;
+
+  color: #fff;
+
+  font: inherit;
+
+  font-size: 10px;
+
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+
+.register-form-card input::placeholder {
+  color: #554e4b;
+}
+
+
+.register-form-card input:focus {
+  border-color:
+    rgba(
+      255,
+      101,
+      39,
+      0.58
+    );
+
+  box-shadow:
+    0 0 0 3px
+    rgba(
+      255,
+      91,
+      31,
+      0.07
+    );
+}
+
+
+.register-password-note {
+  display: flex;
+  align-items: center;
+
+  gap: 5px;
+
+  margin-top: -5px;
+
+  color: #766f6b;
+
+  font-size: 7px;
+}
+
+
+.register-password-note svg {
+  color:
+    var(
+      --register-green
+    );
+}
+
+
+/* ==========================================================
+   ERROR
+========================================================== */
+
+.register-error {
+  padding:
+    10px 11px;
+
+  border:
+    1px solid
+    rgba(255, 83, 83, 0.22);
+
+  border-radius: 9px;
+
+  background:
+    rgba(255, 61, 61, 0.06);
+
+  color: #ff9b9b;
+
+  font-size: 9px;
+
+  line-height: 1.5;
+}
+
+
+/* ==========================================================
+   SUBMIT
+========================================================== */
+
+.register-submit-button {
+  min-height: 47px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  gap: 8px;
+
+  margin-top: 3px;
+
+  border: 0;
+
+  border-radius: 11px;
+
+  background:
+    linear-gradient(
+      135deg,
+      var(--register-orange),
+      var(--register-orange-dark)
+    );
+
+  color: #fff;
+
+  font-size: 10px;
+  font-weight: 800;
+
+  cursor: pointer;
+
+  box-shadow:
+    0 15px 30px
+    rgba(
+      255,
+      70,
+      18,
+      0.18
+    );
+
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease,
+    opacity 0.2s ease;
+}
+
+
+.register-submit-button:hover:not(
+  :disabled
+) {
+  transform:
+    translateY(-1px);
+
+  box-shadow:
+    0 19px 38px
+    rgba(
+      255,
+      70,
+      18,
+      0.25
+    );
+}
+
+
+.register-submit-button:disabled {
+  opacity: 0.55;
+
+  cursor: not-allowed;
+}
+
+
+/* ==========================================================
+   LOGIN + LEGAL
+========================================================== */
+
+.register-login {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  gap: 5px;
+
+  margin-top: 20px;
+
+  padding-top: 18px;
+
+  border-top:
+    1px solid
+    rgba(
+      255,
+      255,
+      255,
+      0.05
+    );
+
+  color: #7b7470;
+
+  font-size: 9px;
+}
+
+
+.register-login a,
+.register-legal a {
+  color: #ff7343;
+
+  font-weight: 800;
+
+  text-decoration: none;
+}
+
+
+.register-legal {
+  margin:
+    15px auto 0;
+
+  max-width: 340px;
+
+  color: #5f5956;
+
+  font-size: 7px;
+
+  line-height: 1.55;
+
+  text-align: center;
+}
+
+
+/* ==========================================================
+   RESPONSIVE
+========================================================== */
+
+@media (
+  max-width: 1000px
+) {
+
+  .register-shell {
+    grid-template-columns:
+      1fr;
+
+    gap: 45px;
+
+    padding-top: 45px;
+  }
+
+
+  .register-story-content {
+    max-width: 750px;
+  }
+
+
+  .register-form-panel {
+    justify-content: flex-start;
+  }
+
+
+  .register-form-card {
+    max-width: 560px;
+  }
+
+}
+
+
+@media (
+  max-width: 700px
+) {
+
+  .register-topbar,
+  .register-shell {
+    width:
+      calc(
+        100% - 28px
+      );
+  }
+
+
+  .register-topbar {
+    min-height: 68px;
+  }
+
+
+  .register-story-content h1 {
+    font-size:
+      clamp(
+        42px,
+        13vw,
+        60px
+      );
+  }
+
+
+  .register-experience-grid {
+    grid-template-columns:
+      1fr;
+  }
+
+
+  .register-experience-grid article {
+    min-height: 0;
+
+    display: flex;
+
+    gap: 10px;
+
+    align-items: flex-start;
+  }
+
+
+  .register-experience-icon {
+    flex-shrink: 0;
+
+    margin-bottom: 0;
+  }
+
+
+  .register-form-card {
+    padding: 22px;
+  }
+
+}
+
+
+@media (
+  max-width: 480px
+) {
+
+  .register-form-row {
+    grid-template-columns:
+      1fr;
+  }
+
+
+  .register-back-link {
+    font-size: 0;
+  }
+
+
+  .register-back-link svg {
+    width: 19px;
+    height: 19px;
+  }
+
+
+  .register-live-profile {
+    flex-wrap: wrap;
+  }
+
+
+  .register-verified {
+    margin-left: 53px;
+  }
+
+}

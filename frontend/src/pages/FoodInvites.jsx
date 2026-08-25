@@ -1,5 +1,6 @@
 import {
   useEffect,
+  useRef,
   useState,
 } from "react";
 
@@ -23,6 +24,26 @@ import {
   X,
 } from "lucide-react";
 
+import {
+  Map,
+  Marker,
+  Popup,
+  NavigationControl,
+  LngLatBounds,
+  setWorkerUrl,
+} from "maplibre-gl";
+
+import mapWorkerUrl from
+  "maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url";
+
+import "maplibre-gl/dist/maplibre-gl.css";
+
+setWorkerUrl(mapWorkerUrl);
+
+import {
+  useNavigate,
+} from "react-router-dom";
+
 import api from "../api";
 
 import {
@@ -32,6 +53,7 @@ import {
 import "../styles/food_invites.css";
 
 import FoodWalkPlanner from "./FoodWalkPlanner";
+import RestaurantSubmissionModal from "../components/RestaurantSubmissionModal";
 
 
 // ============================================================
@@ -146,6 +168,9 @@ function getDefaultForm() {
     max_participants: 2,
     kitchen_contribution: 0,
 
+    // Open invites are visible to all FoodKindl members.
+    is_open: false,
+
     recipient_user_ids: [],
 
     food_walk_stops: [],
@@ -160,7 +185,7 @@ function getDefaultForm() {
 function getDefaultBookingForm() {
   return {
     booking_date: "",
-    booking_hour: "07",
+    booking_hour: "7",
     booking_minute: "00",
     booking_period: "PM",
 
@@ -172,10 +197,573 @@ function getDefaultBookingForm() {
 
 
 // ============================================================
+// DINE OUT MAP
+// ============================================================
+
+const DINE_OUT_MAP_STYLE = {
+  version: 8,
+
+  sources: {
+    osm: {
+      type: "raster",
+      tiles: [
+        "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+      ],
+      tileSize: 256,
+      maxzoom: 19,
+      attribution: "© OpenStreetMap contributors",
+    },
+  },
+
+  layers: [
+    {
+      id: "osm-base",
+      type: "raster",
+      source: "osm",
+      minzoom: 0,
+      maxzoom: 19,
+    },
+  ],
+};
+
+
+function getRestaurantCoordinates(restaurant) {
+  if (!restaurant) {
+    return null;
+  }
+
+  const latitude = Number(
+    restaurant.latitude ??
+    restaurant.lat ??
+    restaurant.restaurant_latitude
+  );
+
+  const longitude = Number(
+    restaurant.longitude ??
+    restaurant.lng ??
+    restaurant.lon ??
+    restaurant.restaurant_longitude
+  );
+
+  if (
+    !Number.isFinite(latitude) ||
+    !Number.isFinite(longitude)
+  ) {
+    return null;
+  }
+
+  return {
+    latitude,
+    longitude,
+  };
+}
+
+
+function createRestaurantMarkerElement(selected = false) {
+  const element = document.createElement("button");
+
+  element.type = "button";
+
+  element.className = selected
+    ? "food-invite-map-marker selected"
+    : "food-invite-map-marker";
+
+  element.setAttribute(
+    "aria-label",
+    "Restaurant"
+  );
+
+  element.innerHTML = "<span>🍴</span>";
+
+  return element;
+}
+
+
+function DineOutMapPanel({
+  restaurants = [],
+  selectedVenueName = "",
+  onSelectRestaurant,
+  onOpenRestaurant,
+  onSuggestPlace,
+}) {
+  const mapContainerRef = useRef(null);
+  const mapRef = useRef(null);
+  const markerRefs = useRef([]);
+
+  const validRestaurants = restaurants.filter(
+    restaurant =>
+      getRestaurantCoordinates(
+        restaurant
+      )
+  );
+
+
+  useEffect(
+    () => {
+      if (
+        !mapContainerRef.current ||
+        mapRef.current
+      ) {
+        return undefined;
+      }
+
+      const firstRestaurant =
+        validRestaurants[0];
+
+      const firstCoords =
+        getRestaurantCoordinates(
+          firstRestaurant
+        );
+
+      const initialCenter = firstCoords
+        ? [
+            firstCoords.longitude,
+            firstCoords.latitude,
+          ]
+        : [
+            77.5946,
+            12.9716,
+          ];
+
+      const map = new Map({
+        container:
+          mapContainerRef.current,
+
+        style:
+          DINE_OUT_MAP_STYLE,
+
+        center:
+          initialCenter,
+
+        zoom:
+          firstCoords
+            ? 13
+            : 11,
+
+        attributionControl:
+          true,
+      });
+
+      map.addControl(
+        new NavigationControl(),
+        "top-right"
+      );
+
+      mapRef.current = map;
+
+      let resizeObserver = null;
+
+      if (
+        typeof ResizeObserver !==
+        "undefined"
+      ) {
+        resizeObserver =
+          new ResizeObserver(
+            () => {
+              map.resize();
+            }
+          );
+
+        resizeObserver.observe(
+          mapContainerRef.current
+        );
+      }
+
+      map.on(
+        "load",
+        () => {
+          map.resize();
+        }
+      );
+
+      return () => {
+        markerRefs.current.forEach(
+          marker =>
+            marker.remove()
+        );
+
+        markerRefs.current = [];
+
+        resizeObserver?.disconnect();
+
+        map.remove();
+
+        mapRef.current = null;
+      };
+    },
+    []
+  );
+
+
+  useEffect(
+    () => {
+      const map =
+        mapRef.current;
+
+      if (!map) {
+        return;
+      }
+
+      markerRefs.current.forEach(
+        marker =>
+          marker.remove()
+      );
+
+      markerRefs.current = [];
+
+      const boundsPoints = [];
+
+      validRestaurants.forEach(
+        restaurant => {
+          const coordinates =
+            getRestaurantCoordinates(
+              restaurant
+            );
+
+          if (!coordinates) {
+            return;
+          }
+
+          const isSelected =
+            selectedVenueName ===
+            restaurant.name;
+
+          const element =
+            createRestaurantMarkerElement(
+              isSelected
+            );
+
+          const popupContent =
+            document.createElement(
+              "div"
+            );
+
+          popupContent.className =
+            "food-invite-map-popup";
+
+          const popupName =
+            document.createElement(
+              "strong"
+            );
+
+          popupName.textContent =
+            restaurant.name ||
+            "Restaurant";
+
+          const popupCuisine =
+            document.createElement(
+              "span"
+            );
+
+          popupCuisine.textContent =
+            restaurant.cuisine ||
+            restaurant.restaurant_type ||
+            "Restaurant";
+
+          const popupLocation =
+            document.createElement(
+              "small"
+            );
+
+          popupLocation.textContent =
+            restaurant.locality ||
+            restaurant.city ||
+            "";
+
+          popupContent.append(
+            popupName,
+            popupCuisine,
+            popupLocation
+          );
+
+          element.addEventListener(
+            "click",
+            event => {
+              event.stopPropagation();
+
+              onSelectRestaurant?.(
+                restaurant
+              );
+            }
+          );
+
+          element.addEventListener(
+            "dblclick",
+            event => {
+              event.preventDefault();
+
+              onOpenRestaurant?.(
+                restaurant
+              );
+            }
+          );
+
+          const marker =
+            new Marker({
+              element,
+              anchor:
+                "bottom",
+            })
+              .setLngLat([
+                coordinates.longitude,
+                coordinates.latitude,
+              ])
+              .setPopup(
+                new Popup({
+                  offset:
+                    18,
+                  closeButton:
+                    false,
+                }).setDOMContent(
+                  popupContent
+                )
+              )
+              .addTo(
+                map
+              );
+
+          markerRefs.current.push(
+            marker
+          );
+
+          boundsPoints.push([
+            coordinates.longitude,
+            coordinates.latitude,
+          ]);
+        }
+      );
+
+      if (
+        boundsPoints.length ===
+        1
+      ) {
+        map.easeTo({
+          center:
+            boundsPoints[0],
+          zoom:
+            14,
+          duration:
+            450,
+        });
+      } else if (
+        boundsPoints.length >
+        1
+      ) {
+        const bounds =
+          boundsPoints.reduce(
+            (
+              current,
+              point
+            ) =>
+              current.extend(
+                point
+              ),
+            new LngLatBounds(
+              boundsPoints[0],
+              boundsPoints[0]
+            )
+          );
+
+        map.fitBounds(
+          bounds,
+          {
+            padding:
+              52,
+            maxZoom:
+              14,
+            duration:
+              500,
+          }
+        );
+      }
+
+      window.setTimeout(
+        () => {
+          map.resize();
+        },
+        50
+      );
+    },
+    [
+      restaurants,
+      selectedVenueName,
+      onSelectRestaurant,
+      onOpenRestaurant,
+    ]
+  );
+
+
+  return (
+    <aside className="food-invite-dine-map-panel">
+
+      <div className="food-invite-dine-map-head">
+
+        <div>
+
+          <span>
+            FOODKINDL PLACES
+          </span>
+
+          <h3>
+            Choose on map
+          </h3>
+
+          <p>
+            Select a blue restaurant marker or choose from the list below.
+          </p>
+
+        </div>
+
+      </div>
+
+
+      <div
+        ref={mapContainerRef}
+        className="food-invite-dine-map"
+      />
+
+
+      <div className="food-invite-dine-map-list">
+
+        {
+          restaurants.length === 0
+            ? (
+                <div className="food-invite-restaurant-state compact">
+
+                  <Utensils size={22} />
+
+                  <strong>
+                    No partner restaurants found
+                  </strong>
+
+                  <span>
+                    Try a different cuisine or locality.
+                  </span>
+
+                </div>
+              )
+            : restaurants.map(
+                restaurant => {
+                  const selected =
+                    selectedVenueName ===
+                    restaurant.name;
+
+                  return (
+                    <button
+                      key={restaurant.id}
+                      type="button"
+                      className={
+                        selected
+                          ? "food-invite-map-list-card selected"
+                          : "food-invite-map-list-card"
+                      }
+                      onClick={() =>
+                        onSelectRestaurant?.(
+                          restaurant
+                        )
+                      }
+                    >
+
+                      <div className="food-invite-map-list-main">
+
+                        <strong>
+                          {restaurant.name}
+                        </strong>
+
+                        <span>
+                          {
+                            restaurant.cuisine ||
+                            (
+                              restaurant.restaurant_type ===
+                                "cafe"
+                                ? "Cafe"
+                                : "Restaurant"
+                            )
+                          }
+                        </span>
+
+                        <small>
+                          {
+                            [
+                              restaurant.locality,
+                              restaurant.city,
+                            ]
+                              .filter(Boolean)
+                              .join(", ")
+                          }
+                        </small>
+
+                      </div>
+
+
+                      <div className="food-invite-map-list-action">
+
+                        {
+                          selected
+                            ? <Check size={16} />
+                            : <Plus size={16} />
+                        }
+
+                      </div>
+
+                    </button>
+                  );
+                }
+              )
+        }
+
+      </div>
+
+
+      <div className="food-invite-place-submission">
+
+        <div className="food-invite-place-submission-icon">
+          <Plus size={14} />
+        </div>
+
+        <div className="food-invite-place-submission-copy">
+          <strong>
+            Can't find the place?
+          </strong>
+
+          <span>
+            Suggest a restaurant, cafe or hotel.
+          </span>
+        </div>
+
+        <button
+          type="button"
+          onClick={event => {
+            event.preventDefault();
+            event.stopPropagation();
+
+            if (
+              typeof onSuggestPlace ===
+              "function"
+            ) {
+              onSuggestPlace();
+            }
+          }}
+        >
+          Add place
+          <ArrowRight size={13} />
+        </button>
+
+      </div>
+
+    </aside>
+  );
+}
+
+
+// ============================================================
 // COMPONENT
 // ============================================================
 
 export default function FoodInvites() {
+
+  const navigate =
+    useNavigate();
 
   const {
     user,
@@ -185,6 +773,13 @@ export default function FoodInvites() {
   const [
     invites,
     setInvites,
+  ] = useState([]);
+
+
+  // Public community invites shown at the top of the page.
+  const [
+    openInvites,
+    setOpenInvites,
   ] = useState([]);
 
 
@@ -271,6 +866,12 @@ export default function FoodInvites() {
   const [
     showCreate,
     setShowCreate,
+  ] = useState(false);
+
+
+  const [
+    showRestaurantSubmission,
+    setShowRestaurantSubmission,
   ] = useState(false);
 
 
@@ -737,6 +1338,51 @@ export default function FoodInvites() {
 
 
   // =========================================================
+  // LOAD OPEN / COMMUNITY INVITES
+  //
+  // Backend endpoint should return future, active invites with
+  // is_open=true and must be visible to every authenticated user.
+  // =========================================================
+
+  async function loadOpenInvites() {
+
+    try {
+
+      const response =
+        await api.get(
+          "/food-invites/open/"
+        );
+
+
+      const data =
+        response.data?.results ||
+        response.data ||
+        [];
+
+
+      setOpenInvites(
+        Array.isArray(data)
+          ? data
+          : []
+      );
+
+    } catch (requestError) {
+
+      console.error(
+        "Open Food Invite API error:",
+        requestError.response?.data ||
+        requestError
+      );
+
+
+      // Keep the rest of the Food Invites page usable even if
+      // the public endpoint has not been deployed yet.
+      setOpenInvites([]);
+    }
+  }
+
+
+  // =========================================================
   // LOAD RESTAURANT BOOKINGS
   //
   // The backend returns bookings belonging to the
@@ -948,6 +1594,7 @@ export default function FoodInvites() {
 
 
     await Promise.all([
+      loadOpenInvites(),
       loadInvites(),
       loadBookings(),
       loadConnections(),
@@ -981,6 +1628,8 @@ export default function FoodInvites() {
       const timer =
         window.setInterval(
           () => {
+
+            loadOpenInvites();
 
             loadInvites();
 
@@ -1240,7 +1889,7 @@ export default function FoodInvites() {
 
         booking_hour:
           form.invite_hour ||
-          "07",
+          "7",
 
         booking_minute:
           form.invite_minute ||
@@ -1749,16 +2398,19 @@ export default function FoodInvites() {
       // ======================================================
 
       if (
-        !Array.isArray(
-          form.recipient_user_ids
+        !form.is_open &&
+        (
+          !Array.isArray(
+            form.recipient_user_ids
+          )
+          ||
+          form.recipient_user_ids.length ===
+          0
         )
-        ||
-        form.recipient_user_ids.length ===
-        0
       ) {
 
         throw new Error(
-          "Please select at least one FoodKindl connection."
+          "Please select at least one FoodKindl connection or make this an Open Invite."
         );
       }
 
@@ -1987,6 +2639,11 @@ export default function FoodInvites() {
             : 0,
 
 
+        // Public/community visibility.
+        is_open:
+          form.is_open === true,
+
+
         recipient_user_ids:
           form.recipient_user_ids
             .map(Number)
@@ -2032,7 +2689,10 @@ export default function FoodInvites() {
       );
 
 
-      await loadInvites();
+      await Promise.all([
+        loadOpenInvites(),
+        loadInvites(),
+      ]);
 
 
     } catch (requestError) {
@@ -2134,6 +2794,80 @@ export default function FoodInvites() {
 
 
   // =========================================================
+  // INVITED MEMBER HELPERS
+  // =========================================================
+
+  function getParticipantName(
+    participant
+  ) {
+    return (
+      participant?.user_name ||
+      participant?.full_name ||
+      participant?.name ||
+      participant?.user_email ||
+      "FoodKindl Member"
+    );
+  }
+
+
+  function getParticipantInitial(
+    participant
+  ) {
+    const name =
+      getParticipantName(
+        participant
+      );
+
+    return (
+      name
+        .trim()
+        .charAt(0)
+        .toUpperCase() ||
+      "F"
+    );
+  }
+
+
+  function getParticipantStatus(
+    participant
+  ) {
+    const value =
+      String(
+        participant?.status ||
+        "pending"
+      ).toLowerCase();
+
+    if (value === "accepted") {
+      return "Accepted";
+    }
+
+    if (value === "declined") {
+      return "Declined";
+    }
+
+    return "Pending";
+  }
+
+
+  function openMemberProfile(
+    participant
+  ) {
+    const userId =
+      participant?.user_id;
+
+    if (!userId) {
+      return;
+    }
+
+    setSelectedInvite(null);
+
+    navigate(
+      `/connect/member/${userId}`
+    );
+  }
+
+
+  // =========================================================
   // OPEN INVITE
   // =========================================================
 
@@ -2173,65 +2907,171 @@ export default function FoodInvites() {
   // RESPOND
   // =========================================================
 
-  async function respondToInvite(
-    responseValue
-  ) {
+ // =========================================================
+// RESPOND TO FOOD INVITE
+// =========================================================
 
-    if (!selectedInvite?.id) {
-      return;
-    }
+async function respondToInvite(
+  responseValue
+) {
 
+  if (!selectedInvite?.id) {
 
-    try {
+    setError(
+      "Food Invite information is missing."
+    );
 
-      setResponding(true);
-
-      setError("");
-
-
-      const response =
-        await api.post(
-          `/food-invites/${selectedInvite.id}/respond/`,
-          {
-            response:
-              responseValue,
-          }
-        );
-
-
-      if (response.data?.invite) {
-
-        setSelectedInvite(
-          response.data.invite
-        );
-      }
-
-
-      setMessage(
-        responseValue ===
-          "accepted"
-          ? "Food Invite accepted."
-          : "Food Invite declined."
-      );
-
-
-      await loadInvites();
-
-    } catch (requestError) {
-
-      setError(
-        getApiErrorMessage(
-          requestError,
-          "Unable to respond to Food Invite."
-        )
-      );
-
-    } finally {
-
-      setResponding(false);
-    }
+    return;
   }
 
+
+  if (
+    responseValue !== "accepted" &&
+    responseValue !== "declined"
+  ) {
+
+    setError(
+      "Invalid Food Invite response."
+    );
+
+    return;
+  }
+
+
+  try {
+
+    setResponding(true);
+
+    setError("");
+
+    setMessage("");
+
+
+    console.log(
+      "RESPONDING TO FOOD INVITE:",
+      {
+        id:
+          selectedInvite.id,
+
+        response:
+          responseValue,
+      }
+    );
+
+
+    const response =
+      await api.post(
+        `/food-invites/${selectedInvite.id}/respond/`,
+        {
+          response:
+            responseValue,
+        }
+      );
+
+
+    console.log(
+      "FOOD INVITE RESPONSE:",
+      response.data
+    );
+
+
+    /* ======================================================
+       UPDATE CURRENT INVITE
+    ====================================================== */
+
+    if (
+      response.data?.invite
+    ) {
+
+      setSelectedInvite(
+        response.data.invite
+      );
+
+    } else {
+
+      setSelectedInvite(
+        previous => ({
+          ...previous,
+
+          my_participant_status:
+            responseValue,
+        })
+      );
+    }
+
+
+    /* ======================================================
+       REFRESH DATA
+    ====================================================== */
+
+    await Promise.all([
+      loadInvites(),
+      loadBookings(),
+    ]);
+
+
+    /* ======================================================
+       SUCCESS
+    ====================================================== */
+
+    setMessage(
+      responseValue ===
+        "accepted"
+        ? "Food Invite accepted."
+        : "Food Invite declined."
+    );
+
+
+    /* ======================================================
+       CLOSE DETAILS MODAL
+    ====================================================== */
+
+    setSelectedInvite(
+      null
+    );
+
+
+  } catch (
+    requestError
+  ) {
+
+    console.error(
+      "FOOD INVITE RESPONSE ERROR:",
+      requestError
+    );
+
+
+    console.error(
+      "BACKEND RESPONSE:",
+      requestError?.response?.data
+    );
+
+
+    console.error(
+      "HTTP STATUS:",
+      requestError?.response?.status
+    );
+
+
+    setError(
+      getApiErrorMessage(
+        requestError,
+
+        responseValue ===
+          "accepted"
+          ? "Food Invite could not be accepted."
+          : "Food Invite could not be declined."
+      )
+    );
+
+
+  } finally {
+
+    setResponding(
+      false
+    );
+  }
+}
 
   // =========================================================
   // BOOK RESTAURANT
@@ -2408,6 +3248,158 @@ export default function FoodInvites() {
           </div>
         )
       }
+
+
+      {/* =====================================================
+          OPEN FOOD INVITES — COMMUNITY DISCOVERY
+      ===================================================== */}
+
+      <section className="food-open-invites-section">
+                  <div className="food-open-invites-grid">
+
+                    {
+                      openInvites.map(
+                        invite => (
+
+                          <article
+                            key={invite.id}
+                            className="food-open-invite-card"
+                          >
+
+                            <div className="food-open-card-top">
+
+                              <div className="food-open-card-icon">
+                                {
+                                  getInviteIcon(
+                                    invite.invite_type
+                                  )
+                                }
+                              </div>
+
+                              <span className="food-open-card-badge">
+                                OPEN INVITE
+                              </span>
+
+                            </div>
+
+
+                            <div className="food-open-card-body">
+
+                              <span className="food-open-card-type">
+                                {
+                                  formatInviteType(
+                                    invite.invite_type
+                                  )
+                                }
+                              </span>
+
+                              <h3>
+                                {
+                                  invite.title ||
+                                  formatInviteType(
+                                    invite.invite_type
+                                  )
+                                }
+                              </h3>
+
+                              {
+                                invite.description &&
+                                (
+                                  <p>
+                                    {invite.description}
+                                  </p>
+                                )
+                              }
+
+
+                              <div className="food-open-card-details">
+
+                                <span>
+                                  <CalendarDays size={15} />
+                                  {formatDate(invite.start_at)}
+                                </span>
+
+                                {
+                                  invite.location_label &&
+                                  (
+                                    <span>
+                                      <MapPin size={15} />
+                                      {invite.location_label}
+                                    </span>
+                                  )
+                                }
+
+                                {
+                                  invite.cuisine &&
+                                  (
+                                    <span>
+                                      <Utensils size={15} />
+                                      {invite.cuisine}
+                                    </span>
+                                  )
+                                }
+
+                              </div>
+
+                            </div>
+
+
+                            <div className="food-open-card-footer">
+
+                              <div className="food-open-host">
+
+                                <div className="food-open-host-avatar">
+                                  {
+                                    (
+                                      invite.creator_name ||
+                                      "F"
+                                    )
+                                      .charAt(0)
+                                      .toUpperCase()
+                                  }
+                                </div>
+
+                                <div>
+                                  <small>
+                                    Hosted by
+                                  </small>
+
+                                  <strong>
+                                    {
+                                      invite.creator_name ||
+                                      "FoodKindl Member"
+                                    }
+                                  </strong>
+                                </div>
+
+                              </div>
+
+
+                              <button
+                                type="button"
+                                className="food-open-view-button"
+                                onClick={() =>
+                                  openInviteDetails(
+                                    invite
+                                  )
+                                }
+                              >
+                                View Invite
+                                <ArrowRight size={16} />
+                              </button>
+
+                            </div>
+
+                          </article>
+                        )
+                      )
+                    }
+
+                  </div>
+                
+        
+
+      </section>
 
 
       {/* =====================================================
@@ -2833,39 +3825,26 @@ export default function FoodInvites() {
               <div className="food-invite-create-modal">
 
                 <div className="food-invite-create-header">
+  <div>
+    <span>Create invite</span>
+    <h2>Plan something worth showing up for.</h2>
+    <p>
+      Pick the kind of food moment, add the details, and invite the
+      right people.
+    </p>
+  </div>
 
-                  <div>
-
-                    <span>
-                      CREATE
-                    </span>
-
-
-                    <h2>
-                      New Food Invite
-                    </h2>
-
-
-                    <p>
-                      Plan a food moment and invite people
-                      from your FoodKindl connections.
-                    </p>
-
-                  </div>
-
-
-                  <button
-                    type="button"
-                    onClick={
-                      closeCreate
-                    }
-                  >
-
-                    <X size={20} />
-
-                  </button>
-
-                </div>
+  {/* Top-right close button */}
+  <button
+    type="button"
+    className="food-invite-create-close"
+    onClick={closeCreate}
+    aria-label="Close create invite"
+    title="Close"
+  >
+    ×
+  </button>
+</div>
 
 
                 <form
@@ -3075,7 +4054,7 @@ export default function FoodInvites() {
 
 
                   {/* =================================================
-                      WHEN
+                      PEOPLE
                   ================================================= */}
 
                   <div className="food-invite-form-section">
@@ -3090,12 +4069,16 @@ export default function FoodInvites() {
                       <div>
 
                         <strong>
-                          When?
+                          Invite people
                         </strong>
 
 
                         <small>
-                          Choose date and time.
+                          {
+                            form.is_open
+                              ? "Optional — you can still directly invite your connections."
+                              : "Select at least one FoodKindl connection."
+                          }
                         </small>
 
                       </div>
@@ -3103,30 +4086,177 @@ export default function FoodInvites() {
                     </div>
 
 
-                    <div className="food-invite-date-time-grid">
+                    <div className="food-invite-connections">
 
-                      <label>
+                      {
+                        connections.length === 0
+                          ? (
+                              <p>
+                                No available connections.
+                              </p>
+                            )
+                          : connections.map(
+                              connection => {
+
+                                const member =
+                                  getConnectionMember(
+                                    connection
+                                  );
+
+
+                                if (!member) {
+                                  return null;
+                                }
+
+
+                                const memberName =
+                                  member.full_name ||
+                                  [
+                                    member.first_name,
+                                    member.last_name,
+                                  ]
+                                    .filter(Boolean)
+                                    .join(" ") ||
+                                  member.email ||
+                                  "FoodKindl Member";
+
+
+                                const selected =
+                                  form.recipient_user_ids.some(
+                                    id =>
+                                      Number(id) ===
+                                      Number(member.id)
+                                  );
+
+
+                                return (
+
+                                  <button
+                                    key={member.id}
+                                    type="button"
+                                    className={
+                                      selected
+                                        ? "food-invite-person selected"
+                                        : "food-invite-person"
+                                    }
+                                    onClick={() =>
+                                      toggleRecipient(
+                                        member.id
+                                      )
+                                    }
+                                  >
+
+                                    <strong>
+                                      {memberName}
+                                    </strong>
+
+
+                                    {
+                                      selected
+                                        ? (
+                                            <Check
+                                              size={17}
+                                            />
+                                          )
+                                        : (
+                                            <Plus
+                                              size={17}
+                                            />
+                                          )
+                                    }
+
+                                  </button>
+
+                                );
+                              }
+                            )
+                      }
+
+                    </div>
+
+
+                    <label>
+
+                      Maximum participants
+
+                      <input
+                        type="number"
+                        min="2"
+                        max="100"
+                        value={
+                          form.max_participants
+                        }
+                        onChange={event =>
+                          updateField(
+                            "max_participants",
+                            event.target.value
+                          )
+                        }
+                      />
+
+                    </label>
+
+                  </div>
+
+
+                  {/* =================================================
+                      WHEN
+                  ================================================= */}
+
+                  <div className="food-invite-form-section">
+
+                    <div className="food-invite-form-section-heading">
+
+                      <span>
+                        04
+                      </span>
+
+                      <div>
+
+                        <strong>
+                          When?
+                        </strong>
+
+                        <small>
+                          Pick a date and choose a 12-hour time.
+                        </small>
+
+                      </div>
+
+                    </div>
+
+
+                    <div className="food-invite-date-time-grid food-invite-date-time-grid-v2">
+
+                      <label className="food-invite-date-field">
 
                         Date
 
-                        <div className="food-invite-input-with-icon">
+                        <div className="food-invite-date-control">
 
-                          <CalendarDays
-                            size={18}
-                          />
-
+                          <CalendarDays size={18} />
 
                           <input
                             type="date"
                             required
-                            value={
-                              form.invite_date
+                            value={form.invite_date}
+                            min={
+                              new Date()
+                                .toISOString()
+                                .slice(
+                                  0,
+                                  10
+                                )
                             }
                             onChange={event =>
                               updateField(
                                 "invite_date",
                                 event.target.value
                               )
+                            }
+                            onClick={event =>
+                              event.currentTarget
+                                .showPicker?.()
                             }
                           />
 
@@ -3135,99 +4265,108 @@ export default function FoodInvites() {
                       </label>
 
 
-                      <label>
+                      <label className="food-invite-time-field">
 
                         Time
 
-                        <div className="food-invite-time-selector">
+                        <div className="food-invite-time-control">
 
-                          <Clock3
-                            size={18}
-                          />
+                          <div className="food-invite-time-icon">
+                            <Clock3 size={18} />
+                          </div>
 
 
-                          <select
-                            value={
-                              form.invite_hour
-                            }
-                            onChange={event =>
-                              updateField(
-                                "invite_hour",
-                                event.target.value
-                              )
-                            }
-                          >
+                          <div className="food-invite-time-dropdowns">
 
-                            {
-                              Array.from(
-                                {
-                                  length: 12,
-                                },
-                                (_, index) => {
+                            <select
+                              aria-label="Hour"
+                              value={
+                                String(
+                                  Number(
+                                    form.invite_hour
+                                  ) || 1
+                                )
+                              }
+                              onChange={event =>
+                                updateField(
+                                  "invite_hour",
+                                  event.target.value
+                                )
+                              }
+                            >
 
-                                  const hour =
-                                    String(
-                                      index + 1
-                                    ).padStart(
-                                      2,
-                                      "0"
+                              {
+                                Array.from(
+                                  {
+                                    length:
+                                      12,
+                                  },
+                                  (
+                                    _,
+                                    index
+                                  ) => {
+                                    const hour =
+                                      String(
+                                        index + 1
+                                      );
+
+                                    return (
+                                      <option
+                                        key={hour}
+                                        value={hour}
+                                      >
+                                        {hour}
+                                      </option>
                                     );
+                                  }
+                                )
+                              }
+
+                            </select>
 
 
-                                  return (
+                            <span className="food-invite-time-colon">
+                              :
+                            </span>
 
+
+                            <select
+                              aria-label="Minutes"
+                              value={
+                                form.invite_minute
+                              }
+                              onChange={event =>
+                                updateField(
+                                  "invite_minute",
+                                  event.target.value
+                                )
+                              }
+                            >
+
+                              {
+                                [
+                                  "00",
+                                  "15",
+                                  "30",
+                                  "45",
+                                ].map(
+                                  minute => (
                                     <option
-                                      key={hour}
-                                      value={hour}
+                                      key={minute}
+                                      value={minute}
                                     >
-                                      {hour}
+                                      {minute}
                                     </option>
+                                  )
+                                )
+                              }
 
-                                  );
-                                }
-                              )
-                            }
+                            </select>
 
-                          </select>
-
-
-                          <strong>
-                            :
-                          </strong>
+                          </div>
 
 
-                          <select
-                            value={
-                              form.invite_minute
-                            }
-                            onChange={event =>
-                              updateField(
-                                "invite_minute",
-                                event.target.value
-                              )
-                            }
-                          >
-
-                            <option value="00">
-                              00
-                            </option>
-
-                            <option value="15">
-                              15
-                            </option>
-
-                            <option value="30">
-                              30
-                            </option>
-
-                            <option value="45">
-                              45
-                            </option>
-
-                          </select>
-
-
-                          <div className="food-invite-ampm">
+                          <div className="food-invite-ampm food-invite-ampm-v2">
 
                             <button
                               type="button"
@@ -3270,6 +4409,23 @@ export default function FoodInvites() {
 
                         </div>
 
+
+                        <small className="food-invite-time-preview">
+                          Selected time:{" "}
+                          {
+                            Number(
+                              form.invite_hour
+                            ) || 1
+                          }
+                          :
+                          {
+                            form.invite_minute
+                          }{" "}
+                          {
+                            form.invite_period
+                          }
+                        </small>
+
                       </label>
 
                     </div>
@@ -3278,180 +4434,209 @@ export default function FoodInvites() {
 
 
                   {/* =================================================
-                      COOK TOGETHER
-                  ================================================= */}
+    COOK TOGETHER
+================================================= */}
 
-                  {
-                    form.invite_type ===
-                      "cook_together" &&
-                    (
+{
+  form.invite_type === "cook_together" && (
+    <div className="food-invite-form-section">
 
-                      <div className="food-invite-form-section">
+      <div className="food-invite-form-section-heading">
 
-                        <div className="food-invite-form-section-heading">
+        <span>
+          05
+        </span>
 
-                          <span>
-                            04
-                          </span>
+        <div>
+          <strong>
+            Cooking venue
+          </strong>
 
+          <small>
+            Choose the place and contribution.
+          </small>
+        </div>
 
-                          <div>
-
-                            <strong>
-                              Cooking venue
-                            </strong>
-
-
-                            <small>
-                              Where will you cook together?
-                            </small>
-
-                          </div>
-
-                        </div>
+      </div>
 
 
-                        <div className="food-invite-venue-selector">
+      {/* ============================================
+          VENUE TYPE
+      ============================================ */}
 
-                          <button
-                            type="button"
-                            className={
-                              form.cook_venue_type ===
-                                "home"
-                                ? "active"
-                                : ""
-                            }
-                            onClick={() =>
-                              updateField(
-                                "cook_venue_type",
-                                "home"
-                              )
-                            }
-                          >
+      <div className="food-invite-venue-selector">
 
-                            <Home size={17} />
+        <button
+          type="button"
+          className={
+            form.cook_venue_type === "home"
+              ? "active"
+              : ""
+          }
+          onClick={() =>
+            updateField(
+              "cook_venue_type",
+              "home"
+            )
+          }
+        >
+          <Home size={17} />
 
-                            Home
-
-                          </button>
-
-
-                          <button
-                            type="button"
-                            className={
-                              form.cook_venue_type ===
-                                "clubhouse"
-                                ? "active"
-                                : ""
-                            }
-                            onClick={() =>
-                              updateField(
-                                "cook_venue_type",
-                                "clubhouse"
-                              )
-                            }
-                          >
-
-                            <UsersRound size={17} />
-
-                            Clubhouse
-
-                          </button>
+          Home
+        </button>
 
 
-                          <button
-                            type="button"
-                            className={
-                              form.cook_venue_type ===
-                                "other"
-                                ? "active"
-                                : ""
-                            }
-                            onClick={() =>
-                              updateField(
-                                "cook_venue_type",
-                                "other"
-                              )
-                            }
-                          >
+        <button
+          type="button"
+          className={
+            form.cook_venue_type === "clubhouse"
+              ? "active"
+              : ""
+          }
+          onClick={() =>
+            updateField(
+              "cook_venue_type",
+              "clubhouse"
+            )
+          }
+        >
+          <UsersRound size={17} />
 
-                            <MapPin size={17} />
-
-                            Other Venue
-
-                          </button>
-
-                        </div>
+          Clubhouse
+        </button>
 
 
-                        <label>
+        <button
+          type="button"
+          className={
+            form.cook_venue_type === "other"
+              ? "active"
+              : ""
+          }
+          onClick={() =>
+            updateField(
+              "cook_venue_type",
+              "other"
+            )
+          }
+        >
+          <MapPin size={17} />
 
-                          Area / locality
+          Other Venue
+        </button>
 
-                          <input
-                            type="text"
-                            value={
-                              form.location_label
-                            }
-                            onChange={event =>
-                              updateField(
-                                "location_label",
-                                event.target.value
-                              )
-                            }
-                            placeholder="Indiranagar, Bengaluru"
-                          />
-
-                        </label>
-
-
-                        <label>
-
-                          Exact address
-
-                          <textarea
-                            rows="3"
-                            value={
-                              form.private_address
-                            }
-                            onChange={event =>
-                              updateField(
-                                "private_address",
-                                event.target.value
-                              )
-                            }
-                            placeholder="Apartment, building, street..."
-                          />
-
-                        </label>
+      </div>
 
 
-                        <label>
+      {/* ============================================
+          KITCHEN CONTRIBUTION
+      ============================================ */}
 
-                          Kitchen contribution
+      <div className="food-invite-kitchen-contribution">
 
-                          <input
-                            type="number"
-                            min="0"
-                            value={
-                              form.kitchen_contribution
-                            }
-                            onChange={event =>
-                              updateField(
-                                "kitchen_contribution",
-                                event.target.value
-                              )
-                            }
-                          />
+        <div className="food-invite-kitchen-copy">
 
-                        </label>
+          <div className="food-invite-kitchen-icon">
+            ₹
+          </div>
 
-                      </div>
+          <div>
+            <strong>
+              Kitchen contribution
+            </strong>
 
-                    )
-                  }
+            <small>
+              Optional contribution per person for ingredients,
+              gas or kitchen use.
+            </small>
+          </div>
+
+        </div>
 
 
+        <div className="food-invite-kitchen-input">
+
+          <span>
+            ₹
+          </span>
+
+          <input
+            type="number"
+            min="0"
+            step="1"
+            value={
+              form.kitchen_contribution
+            }
+            onChange={event =>
+              updateField(
+                "kitchen_contribution",
+                event.target.value
+              )
+            }
+            placeholder="0"
+          />
+
+          <small>
+            per person
+          </small>
+
+        </div>
+
+      </div>
+
+
+      {/* ============================================
+          AREA
+      ============================================ */}
+
+      <label>
+
+        Area / locality
+
+        <input
+          type="text"
+          value={
+            form.location_label
+          }
+          onChange={event =>
+            updateField(
+              "location_label",
+              event.target.value
+            )
+          }
+          placeholder="Indiranagar, Bengaluru"
+        />
+
+      </label>
+
+
+      {/* ============================================
+          ADDRESS
+      ============================================ */}
+
+      <label>
+
+        Exact address
+
+        <textarea
+          rows="3"
+          value={
+            form.private_address
+          }
+          onChange={event =>
+            updateField(
+              "private_address",
+              event.target.value
+            )
+          }
+          placeholder="Apartment, building, street..."
+        />
+
+      </label>
+
+    </div>
+  )
+}
                   {/* =================================================
                       DINE OUT
                   ================================================= */}
@@ -3674,143 +4859,31 @@ export default function FoodInvites() {
 
 
                   {/* =================================================
-                      PEOPLE
+                      OPEN / COMMUNITY VISIBILITY
                   ================================================= */}
 
                   <div className="food-invite-form-section">
 
-                    <div className="food-invite-form-section-heading">
+                    {/* <div className="food-invite-form-section-heading">
 
                       <span>
-                        05
+                        06
                       </span>
-
 
                       <div>
 
                         <strong>
-                          Invite people
+                          Who can discover this invite?
                         </strong>
 
-
                         <small>
-                          Select your FoodKindl connections.
+                          Make it public to the FoodKindl community or
+                          keep it limited to selected connections.
                         </small>
 
                       </div>
 
-                    </div>
-
-
-                    <div className="food-invite-connections">
-
-                      {
-                        connections.length === 0
-                          ? (
-                              <p>
-                                No available connections.
-                              </p>
-                            )
-                          : connections.map(
-                              connection => {
-
-                                const member =
-                                  getConnectionMember(
-                                    connection
-                                  );
-
-
-                                if (!member) {
-                                  return null;
-                                }
-
-
-                                const memberName =
-                                  member.full_name ||
-                                  [
-                                    member.first_name,
-                                    member.last_name,
-                                  ]
-                                    .filter(Boolean)
-                                    .join(" ") ||
-                                  member.email ||
-                                  "FoodKindl Member";
-
-
-                                const selected =
-                                  form.recipient_user_ids.some(
-                                    id =>
-                                      Number(id) ===
-                                      Number(member.id)
-                                  );
-
-
-                                return (
-
-                                  <button
-                                    key={member.id}
-                                    type="button"
-                                    className={
-                                      selected
-                                        ? "food-invite-person selected"
-                                        : "food-invite-person"
-                                    }
-                                    onClick={() =>
-                                      toggleRecipient(
-                                        member.id
-                                      )
-                                    }
-                                  >
-
-                                    <strong>
-                                      {memberName}
-                                    </strong>
-
-
-                                    {
-                                      selected
-                                        ? (
-                                            <Check
-                                              size={17}
-                                            />
-                                          )
-                                        : (
-                                            <Plus
-                                              size={17}
-                                            />
-                                          )
-                                    }
-
-                                  </button>
-
-                                );
-                              }
-                            )
-                      }
-
-                    </div>
-
-
-                    <label>
-
-                      Maximum participants
-
-                      <input
-                        type="number"
-                        min="2"
-                        max="100"
-                        value={
-                          form.max_participants
-                        }
-                        onChange={event =>
-                          updateField(
-                            "max_participants",
-                            event.target.value
-                          )
-                        }
-                      />
-
-                    </label>
+                    </div> */}
 
                   </div>
 
@@ -3824,7 +4897,7 @@ export default function FoodInvites() {
                     <div className="food-invite-form-section-heading">
 
                       <span>
-                        06
+                        07
                       </span>
 
 
@@ -3916,92 +4989,38 @@ export default function FoodInvites() {
 
 
               {/* =================================================
-                  RESTAURANT RECOMMENDATIONS
+                  RIGHT SIDE — DINE OUT MAP
               ================================================= */}
 
               {
                 form.invite_type ===
                   "dine_out" &&
                 (
-
-                  <aside className="food-invite-restaurant-sidebar">
-
-                    <div className="food-invite-restaurant-sidebar-header">
-
-                      <span>
-                        FOODKINDL PARTNERS
-                      </span>
-
-
-                      <h2>
-                        Recommended places
-                      </h2>
-
-
-                      <p>
-                        Showing active FoodKindl partner
-                        restaurants that accept FoodKindl bookings.
-                      </p>
-
-                    </div>
-
-
-                    {
-                      restaurantsLoading
-                        ? (
-                            <div className="food-invite-restaurant-state">
-
-                              Finding partner restaurants...
-
-                            </div>
-                          )
-                        : recommendedRestaurants.length > 0
-                          ? (
-                              <div className="food-invite-restaurant-list">
-
-                                {
-                                  recommendedRestaurants.map(
-                                    restaurant => (
-
-                                      <RestaurantCard
-                                        key={
-                                          restaurant.id
-                                        }
-                                        restaurant={
-                                          restaurant
-                                        }
-                                      />
-
-                                    )
-                                  )
-                                }
-
-                              </div>
-                            )
-                          : (
-                              <div className="food-invite-restaurant-state">
-
-                                <Utensils
-                                  size={28}
-                                />
-
-
-                                <strong>
-                                  No partner restaurants found
-                                </strong>
-
-
-                                <span>
-                                  Try changing restaurant type,
-                                  cuisine or locality.
-                                </span>
-
-                              </div>
-                            )
+                  <DineOutMapPanel
+                    restaurants={
+                      recommendedRestaurants
                     }
-
-                  </aside>
-
+                    selectedVenueName={
+                      form.venue_name
+                    }
+                    onSelectRestaurant={
+                      restaurant =>
+                        selectRestaurant(
+                          restaurant
+                        )
+                    }
+                    onOpenRestaurant={
+                      restaurant =>
+                        openRestaurantDetails(
+                          restaurant
+                        )
+                    }
+                    onSuggestPlace={() => {
+                      setShowRestaurantSubmission(
+                        true
+                      );
+                    }}
+                  />
                 )
               }
 
@@ -5068,6 +6087,538 @@ export default function FoodInvites() {
   )
 }
 
+      {/* =====================================================
+          FOOD INVITE DETAILS
+      ===================================================== */}
+
+      {
+        selectedInvite &&
+        !selectedRestaurant &&
+        (
+
+          <div className="food-invite-modal-backdrop">
+
+            <div className="food-invite-detail-modal">
+
+              <div className="food-invite-detail-header">
+
+                <div className="food-invite-detail-icon">
+                  {
+                    getInviteIcon(
+                      selectedInvite.invite_type
+                    )
+                  }
+                </div>
+
+                <div>
+                  <span>
+                    {
+                      formatInviteType(
+                        selectedInvite.invite_type
+                      )
+                    }
+                  </span>
+
+                  <h2>
+                    {
+                      selectedInvite.title ||
+                      formatInviteType(
+                        selectedInvite.invite_type
+                      )
+                    }
+                  </h2>
+
+                  {
+                    selectedInvite.invite_type === "food_walk" &&
+                    selectedInvite.location_label &&
+                    (
+                      <div className="food-invite-detail-route-chip">
+                        <MapPin size={12} />
+                        <span>
+                          {selectedInvite.location_label}
+                        </span>
+                      </div>
+                    )
+                  }
+                </div>
+
+                <button
+                  type="button"
+                  className="food-invite-detail-close"
+                  aria-label="Close Food Invite details"
+                  title="Close"
+                  onClick={() =>
+                    setSelectedInvite(null)
+                  }
+                  disabled={responding}
+                >
+                  <X size={20} />
+                </button>
+
+              </div>
+
+
+              <div className="food-invite-detail-body">
+
+                <div className="food-invite-detail-row">
+                  <UsersRound size={18} />
+
+                  <div>
+                    <span>
+                      {
+                        selectedInvite.is_creator
+                          ? "Created by"
+                          : "Invited by"
+                      }
+                    </span>
+
+                    <strong>
+                      {
+                        selectedInvite.is_creator
+                          ? "You"
+                          : selectedInvite.creator_name ||
+                            "FoodKindl Member"
+                      }
+                    </strong>
+                  </div>
+                </div>
+
+
+                <div className="food-invite-detail-row">
+                  <CalendarDays size={18} />
+
+                  <div>
+                    <span>
+                      Date & time
+                    </span>
+
+                    <strong>
+                      {
+                        formatDate(
+                          selectedInvite.start_at
+                        )
+                      }
+                    </strong>
+                  </div>
+                </div>
+
+
+                {
+                  selectedInvite.cuisine &&
+                  (
+                    <div className="food-invite-detail-row">
+
+                      <Utensils size={18} />
+
+                      <div>
+                        <span>
+                          Cuisine
+                        </span>
+
+                        <strong>
+                          {
+                            String(
+                              selectedInvite.cuisine
+                            ).replaceAll(
+                              "_",
+                              " "
+                            )
+                          }
+                        </strong>
+                      </div>
+
+                    </div>
+                  )
+                }
+
+
+                {
+                  selectedInvite.location_label &&
+                  (
+                    <div className="food-invite-detail-row">
+
+                      <MapPin size={18} />
+
+                      <div>
+                        <span>
+                          Location
+                        </span>
+
+                        <strong>
+                          {
+                            selectedInvite.location_label
+                          }
+                        </strong>
+                      </div>
+
+                    </div>
+                  )
+                }
+
+
+                {
+                  selectedInvite.venue_name &&
+                  (
+                    <div className="food-invite-detail-row">
+
+                      <ConciergeBell size={18} />
+
+                      <div>
+                        <span>
+                          Venue
+                        </span>
+
+                        <strong>
+                          {
+                            selectedInvite.venue_name
+                          }
+                        </strong>
+                      </div>
+
+                    </div>
+                  )
+                }
+
+
+                {
+                  selectedInvite.max_participants &&
+                  (
+                    <div className="food-invite-detail-row">
+
+                      <UsersRound size={18} />
+
+                      <div>
+                        <span>
+                          Maximum participants
+                        </span>
+
+                        <strong>
+                          {
+                            selectedInvite.max_participants
+                          }
+                        </strong>
+                      </div>
+
+                    </div>
+                  )
+                }
+
+
+                {/* =================================================
+                    INVITED PEOPLE
+                ================================================= */}
+
+                {
+                  Array.isArray(
+                    selectedInvite.participants
+                  ) &&
+                  selectedInvite.participants.length >
+                    0 &&
+                  (
+                    <div className="food-invite-detail-people">
+
+                      <div className="food-invite-detail-people-heading">
+                        <div>
+                          <span className="food-invite-detail-people-label">
+                            Invited people
+                          </span>
+
+                          <strong className="food-invite-detail-people-count">
+                            {
+                              selectedInvite.participants.length
+                            }
+                          </strong>
+                        </div>
+
+                        <small>
+                          Tap a name to view profile
+                        </small>
+                      </div>
+
+
+                      <div className="food-invite-detail-people-list">
+
+                        {
+                          selectedInvite.participants.map(
+                            (
+                              participant,
+                              index
+                            ) => {
+
+                              const participantName =
+                                getParticipantName(
+                                  participant
+                                );
+
+                              const participantStatus =
+                                getParticipantStatus(
+                                  participant
+                                );
+
+                              const canOpenProfile =
+                                Boolean(
+                                  participant?.user_id
+                                );
+
+                              const statusClass =
+                                String(
+                                  participant?.status ||
+                                  "pending"
+                                ).toLowerCase();
+
+                              return (
+                                <div
+                                  key={
+                                    participant?.id ||
+                                    participant?.user_id ||
+                                    index
+                                  }
+                                  className="food-invite-detail-person"
+                                >
+
+                                  <button
+                                    type="button"
+                                    className="food-invite-detail-person-profile"
+                                    disabled={
+                                      !canOpenProfile
+                                    }
+                                    onClick={() =>
+                                      openMemberProfile(
+                                        participant
+                                      )
+                                    }
+                                    title={
+                                      canOpenProfile
+                                        ? `View ${participantName}'s profile`
+                                        : participantName
+                                    }
+                                  >
+
+                                    <span className="food-invite-detail-person-copy">
+                                      <strong>
+                                        {participantName}
+                                      </strong>
+
+                                      {
+                                        participant?.user_email &&
+                                        (
+                                          <small>
+                                            {
+                                              participant.user_email
+                                            }
+                                          </small>
+                                        )
+                                      }
+
+                                      {
+                                        canOpenProfile &&
+                                        (
+                                          <span className="food-invite-detail-person-view">
+                                            View profile →
+                                          </span>
+                                        )
+                                      }
+                                    </span>
+
+                                  </button>
+
+
+                                  <span
+                                    className={
+                                      `food-invite-detail-person-status ${statusClass}`
+                                    }
+                                  >
+                                    {participantStatus}
+                                  </span>
+
+                                </div>
+                              );
+                            }
+                          )
+                        }
+
+                      </div>
+
+                    </div>
+                  )
+                }
+
+
+                {
+                  selectedInvite.description &&
+                  (
+                    <div className="food-invite-detail-message">
+
+                      <span>
+                        Message
+                      </span>
+
+                      <p>
+                        {
+                          selectedInvite.description
+                        }
+                      </p>
+
+                    </div>
+                  )
+                }
+
+
+                {
+                  selectedInvite.invite_type ===
+                    "food_walk" &&
+                  Array.isArray(
+                    selectedInvite.food_walk_stops
+                  ) &&
+                  selectedInvite.food_walk_stops.length >
+                    0 &&
+                  (
+                    <div className="food-invite-detail-walk">
+
+                      <span>
+                        FOOD WALK STOPS
+                      </span>
+
+                      {
+                        selectedInvite.food_walk_stops.map(
+                          (
+                            stop,
+                            index
+                          ) => {
+
+                            const stopName =
+                              typeof stop === "string"
+                                ? stop
+                                : stop?.name ||
+                                  `Stop ${index + 1}`;
+
+                            return (
+                              <div
+                                key={
+                                  `${stopName}-${index}`
+                                }
+                                className="food-invite-detail-stop"
+                              >
+                                <div>
+                                  {index + 1}
+                                </div>
+
+                                <strong>
+                                  {stopName}
+                                </strong>
+                              </div>
+                            );
+                          }
+                        )
+                      }
+
+                    </div>
+                  )
+                }
+
+              </div>
+
+
+              <div className="food-invite-detail-footer">
+
+                <button
+                  type="button"
+                  className="food-invite-create-cancel"
+                  onClick={() =>
+                    setSelectedInvite(null)
+                  }
+                  disabled={responding}
+                >
+                  Close
+                </button>
+
+
+                {
+                  !selectedInvite.is_creator &&
+                  (
+                    !selectedInvite.my_participant_status ||
+                    selectedInvite.my_participant_status ===
+                      "invited" ||
+                    selectedInvite.my_participant_status ===
+                      "pending"
+                  ) &&
+                  (
+                    <>
+                      <button
+                        type="button"
+                        className="food-invite-decline-button"
+                        disabled={responding}
+                        onClick={() =>
+                          respondToInvite(
+                            "declined"
+                          )
+                        }
+                      >
+                        {
+                          responding
+                            ? "Please wait..."
+                            : "Decline"
+                        }
+                      </button>
+
+
+                      <button
+                        type="button"
+                        className="food-invite-accept-button"
+                        disabled={responding}
+                        onClick={() =>
+                          respondToInvite(
+                            "accepted"
+                          )
+                        }
+                      >
+                        <Check size={16} />
+
+                        {
+                          responding
+                            ? "Accepting..."
+                            : "Accept Invite"
+                        }
+                      </button>
+                    </>
+                  )
+                }
+
+
+                {
+                  !selectedInvite.is_creator &&
+                  selectedInvite.my_participant_status ===
+                    "accepted" &&
+                  (
+                    <div className="food-invite-response-status accepted">
+                      <Check size={16} />
+                      Invite accepted
+                    </div>
+                  )
+                }
+
+
+                {
+                  !selectedInvite.is_creator &&
+                  selectedInvite.my_participant_status ===
+                    "declined" &&
+                  (
+                    <div className="food-invite-response-status declined">
+                      <X size={16} />
+                      Invite declined
+                    </div>
+                  )
+                }
+
+              </div>
+
+            </div>
+
+          </div>
+
+        )
+      }
+
 
       {/* =====================================================
           RESTAURANT DETAIL LOADING
@@ -5080,14 +6631,50 @@ export default function FoodInvites() {
           <div className="food-invite-modal-backdrop">
 
             <div className="food-invite-restaurant-state">
-
               Loading restaurant details...
-
             </div>
 
           </div>
         )
       }
+
+
+      {/* =====================================================
+          RESTAURANT / CAFE / HOTEL SUBMISSION
+      ===================================================== */}
+
+      <RestaurantSubmissionModal
+        open={
+          showRestaurantSubmission
+        }
+        onClose={() => {
+          setShowRestaurantSubmission(
+            false
+          );
+        }}
+        onSubmitted={() => {
+          setShowRestaurantSubmission(
+            false
+          );
+
+          if (
+            form.invite_type ===
+            "dine_out"
+          ) {
+            loadRecommendedRestaurants();
+          }
+        }}
+        initialLocation={
+          form.location_label || ""
+        }
+        initialCity=""
+        initialType={
+          form.dine_venue_type ===
+          "cafe"
+            ? "cafe"
+            : "restaurant"
+        }
+      />
 
     </main>
   );

@@ -16,7 +16,7 @@ import MessagingDock from "./components/MessagingDock";
 import LandingPage from "./pages/LandingPage";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
-import Dashboard from "./pages/Dashboard";
+import Dashboard from "./pages/ConnectDashboard";
 import Community from "./pages/Community";
 import CommunityPostDetail from "./pages/CommunityPostDetail";
 import FoodListings from "./pages/FoodListings";
@@ -36,6 +36,9 @@ import SafetyVerification from "./pages/SafetyVerification";
 import SOSSafety from "./pages/SOSSafety";
 
 import FoodInvites from "./pages/FoodInvites";
+import SuggestPlace from "./components/SuggestPlace";
+import ForgotPassword from "./pages/ForgotPassword";
+import ResetPassword from "./pages/ResetPassword";
 
 import {
   useAuth,
@@ -501,6 +504,20 @@ export default function App() {
           }
         />
 
+        <Route
+          path="/forgot-password"
+          element={
+            <ForgotPassword />
+          }
+        />
+
+        <Route
+          path="/reset-password/:uid/:token"
+          element={
+            <ResetPassword />
+          }
+        />
+
 
         {/* ===================================================
             DASHBOARD
@@ -535,6 +552,14 @@ export default function App() {
         />
 
 
+        <Route
+          path="/suggest-place"
+          element={
+            <Protected>
+              <SuggestPlace />
+            </Protected>
+          }
+        />
         {/* ===================================================
             SETTINGS
         =================================================== */}

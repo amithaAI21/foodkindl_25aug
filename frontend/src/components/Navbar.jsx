@@ -691,7 +691,7 @@ export default function Navbar() {
                   </Link>
 
 
-                  <Link
+                  {/* <Link
                     className="launch-button"
                     to="/login"
                     onClick={
@@ -699,7 +699,7 @@ export default function Navbar() {
                     }
                   >
                     Launch FoodKindl App
-                  </Link>
+                  </Link> */}
 
                 </>
 

@@ -1,49 +1,47 @@
-/* ============================================================
-   FOOD INVITES PAGE
-============================================================ */
+/* ==========================================================
+   FOODKINDL FOOD INVITES
+========================================================== */
 
 .food-invites-page {
-  width: min(1280px, calc(100% - 48px));
+  width: min(1180px, calc(100% - 48px));
   margin: 0 auto;
-  padding: 56px 0 100px;
-
-  font-family:
-    Inter,
-    system-ui,
-    -apple-system,
-    BlinkMacSystemFont,
-    "Segoe UI",
-    sans-serif;
+  padding: 36px 0 80px;
 
   color: #f7f4f2;
 }
 
 
-/* ============================================================
+/* ==========================================================
    HERO
-============================================================ */
+========================================================== */
 
 .food-invites-hero {
+  position: relative;
+
+  overflow: hidden;
+
+  min-height: 220px;
+
   display: flex;
-  align-items: center;
-  justify-content: space-between;
+  align-items: flex-end;
 
-  gap: 44px;
+  padding: 34px;
 
-  min-height: 270px;
+  border: 1px solid rgba(255, 96, 31, 0.20);
 
-  padding: 42px;
-
-  border: 1px solid rgba(255, 99, 32, 0.26);
-  border-radius: 28px;
+  border-radius: 24px;
 
   background:
     radial-gradient(
-      circle at 82% 30%,
-      rgba(255, 90, 22, 0.13),
-      transparent 38%
+      circle at 85% 15%,
+      rgba(255, 83, 24, 0.13),
+      transparent 30%
     ),
-    #0d0a09;
+    linear-gradient(
+      145deg,
+      #160b08,
+      #090909 70%
+    );
 }
 
 
@@ -51,41 +49,42 @@
   display: flex;
   align-items: center;
 
-  gap: 8px;
+  gap: 7px;
 
-  margin-bottom: 14px;
+  color: #ff7a48;
 
-  color: #ff6a2a;
-
-  font-size: 11px;
+  font-size: 9px;
   font-weight: 800;
 
-  letter-spacing: 1.5px;
+  letter-spacing: 0.12em;
 }
 
 
 .food-invites-hero h1 {
-  margin: 0;
+  margin: 12px 0 0;
 
-  font-size: clamp(44px, 6vw, 72px);
-  font-weight: 750;
-
-  letter-spacing: -2.5px;
+  font-size: clamp(
+    42px,
+    5vw,
+    64px
+  );
 
   line-height: 1;
+
+  letter-spacing: -0.045em;
 }
 
 
 .food-invites-hero p {
-  max-width: 580px;
+  max-width: 500px;
 
-  margin: 18px 0 26px;
+  margin: 12px 0 0;
 
-  color: rgba(255,255,255,.58);
+  color: #918985;
 
-  font-size: 15px;
+  font-size: 13px;
 
-  line-height: 1.65;
+  line-height: 1.6;
 }
 
 
@@ -94,126 +93,102 @@
   align-items: center;
   justify-content: center;
 
-  gap: 9px;
+  gap: 8px;
 
-  min-height: 46px;
+  min-height: 44px;
 
-  padding: 0 18px;
+  margin-top: 22px;
+
+  padding: 0 17px;
 
   border: 0;
-  border-radius: 12px;
+
+  border-radius: 11px;
 
   background:
     linear-gradient(
       135deg,
-      #ff681e,
-      #cf3007
+      #ff5e24,
+      #df3d17
     );
 
-  color: white;
+  color: #ffffff;
 
-  font-size: 13px;
+  font-size: 10px;
   font-weight: 800;
 
   cursor: pointer;
 }
 
 
-.food-invite-hero-icon {
-  position: relative;
-
-  display: grid;
-  place-items: center;
-
-  width: 170px;
-  height: 170px;
-
-  flex-shrink: 0;
-
-  border-radius: 46px;
-
-  background:
-    rgba(255, 90, 24, .055);
-
-  color:
-    #ff6a2a;
-}
-
-
-.food-invite-hero-icon span {
-  position: absolute;
-
-  font-size: 30px;
-}
-
-
-/* ============================================================
-   SECTIONS
-============================================================ */
+/* ==========================================================
+   SECTION TITLES
+========================================================== */
 
 .food-invite-my-section,
 .food-invite-types-section,
 .food-invite-how {
-  margin-top: 54px;
+  margin-top: 44px;
 }
 
 
-.food-invite-section-title span {
-  color: #ff6a2a;
+.food-invite-section-title > span {
+  color: #ff7545;
 
-  font-size: 10px;
-  font-weight: 900;
+  font-size: 8px;
+  font-weight: 800;
 
-  letter-spacing: 1.4px;
+  letter-spacing: 0.12em;
 }
 
 
 .food-invite-section-title h2 {
-  margin: 7px 0 22px;
+  margin: 6px 0 0;
 
-  font-size: 28px;
-  font-weight: 700;
+  font-size: 26px;
 
-  letter-spacing: -0.7px;
+  letter-spacing: -0.03em;
 }
 
 
-/* ============================================================
+/* ==========================================================
    UPCOMING INVITES
-============================================================ */
+========================================================== */
 
 .food-invite-list {
   display: grid;
 
-  gap: 10px;
+  gap: 9px;
+
+  margin-top: 16px;
 }
 
 
 .food-invite-row {
+  width: 100%;
+
   display: grid;
 
   grid-template-columns:
-    48px
-    minmax(180px, 1fr)
-    minmax(180px, auto)
     auto
-    22px;
+    minmax(0, 1fr)
+    auto
+    auto;
 
   align-items: center;
 
   gap: 14px;
 
-  width: 100%;
+  padding: 15px 16px;
 
-  min-height: 72px;
+  border:
+    1px solid
+    rgba(255, 255, 255, 0.06);
 
-  padding: 13px 16px;
-
-  border: 1px solid rgba(255,255,255,.08);
-  border-radius: 16px;
+  border-radius: 14px;
 
   background:
-    #100d0c;
+    rgba(255, 255, 255, 0.012);
 
   color: inherit;
 
@@ -222,16 +197,17 @@
   cursor: pointer;
 
   transition:
-    transform .2s ease,
-    border-color .2s ease;
+    background 0.2s ease,
+    border-color 0.2s ease;
 }
 
 
 .food-invite-row:hover {
-  transform: translateY(-2px);
-
   border-color:
-    rgba(255, 100, 32, .45);
+    rgba(255, 96, 31, 0.22);
+
+  background:
+    rgba(255, 96, 31, 0.025);
 }
 
 
@@ -242,62 +218,109 @@
   width: 42px;
   height: 42px;
 
-  border-radius: 13px;
+  border:
+    1px solid
+    rgba(255, 96, 31, 0.17);
+
+  border-radius: 12px;
 
   background:
-    rgba(255, 93, 24, .09);
+    rgba(255, 96, 31, 0.055);
 
-  color:
-    #ff6a2a;
+  color: #ff7545;
 }
 
 
-.food-invite-row-main {
-  display: grid;
-
-  gap: 5px;
+.food-invite-row-main strong,
+.food-invite-row-main span {
+  display: block;
 }
 
 
 .food-invite-row-main strong {
-  font-size: 13px;
-}
-
-
-.food-invite-row-main span,
-.food-invite-row-time {
-  color: rgba(255,255,255,.46);
-
   font-size: 11px;
 }
 
 
+.food-invite-row-main span {
+  margin-top: 4px;
+
+  color: #716a66;
+
+  font-size: 8px;
+}
+
+
 .food-invite-row-time {
-  display: flex;
+  display: inline-flex;
   align-items: center;
 
-  gap: 7px;
+  gap: 6px;
+
+  color: #8d8581;
+
+  font-size: 8px;
+
+  white-space: nowrap;
 }
 
 
-.food-invite-status {
-  padding: 5px 9px;
+/* ==========================================================
+   EMPTY
+========================================================== */
 
-  border-radius: 999px;
+.food-invite-empty {
+  min-height: 150px;
+
+  display: grid;
+
+  justify-items: start;
+
+  gap: 7px;
+
+  margin-top: 16px;
+
+  padding: 24px;
+
+  border:
+    1px dashed
+    rgba(255, 255, 255, 0.08);
+
+  border-radius: 16px;
 
   background:
-    rgba(255,255,255,.05);
+    rgba(255, 255, 255, 0.01);
 
-  text-transform: capitalize;
-
-  font-size: 9px;
-  font-weight: 700;
+  color: #817a76;
 }
 
 
-/* ============================================================
-   TYPE CARDS
-============================================================ */
+.food-invite-empty svg {
+  color: #ff7545;
+}
+
+
+.food-invite-empty h3 {
+  margin: 3px 0 0;
+
+  color: #eee8e5;
+
+  font-size: 16px;
+}
+
+
+.food-invite-empty p {
+  margin: 0;
+
+  font-size: 9px;
+
+  line-height: 1.5;
+}
+
+
+/* ==========================================================
+   INVITE TYPES
+========================================================== */
 
 .food-invite-types-grid {
   display: grid;
@@ -305,27 +328,50 @@
   grid-template-columns:
     repeat(3, 1fr);
 
-  gap: 18px;
+  gap: 12px;
+
+  margin-top: 16px;
 }
 
 
 .food-invite-type-card {
   position: relative;
 
-  min-height: 230px;
+  min-height: 180px;
 
-  padding: 24px;
+  padding: 20px;
 
-  border: 1px solid rgba(255,255,255,.08);
-  border-radius: 20px;
+  border:
+    1px solid
+    rgba(255, 255, 255, 0.06);
 
-  background: #100d0c;
+  border-radius: 17px;
+
+  background:
+    linear-gradient(
+      145deg,
+      rgba(23, 12, 9, 0.9),
+      rgba(255, 255, 255, 0.01)
+    );
 
   color: inherit;
 
   text-align: left;
 
   cursor: pointer;
+
+  transition:
+    transform 0.2s ease,
+    border-color 0.2s ease;
+}
+
+
+.food-invite-type-card:hover {
+  transform:
+    translateY(-2px);
+
+  border-color:
+    rgba(255, 97, 31, 0.28);
 }
 
 
@@ -333,56 +379,56 @@
   display: grid;
   place-items: center;
 
-  width: 50px;
-  height: 50px;
+  width: 48px;
+  height: 48px;
 
-  margin-bottom: 23px;
+  border:
+    1px solid
+    rgba(255, 96, 31, 0.18);
 
-  border-radius: 15px;
+  border-radius: 14px;
 
   background:
-    rgba(255, 94, 24, .09);
+    rgba(255, 96, 31, 0.055);
 
-  color:
-    #ff6a2a;
+  color: #ff7545;
 }
 
 
 .food-invite-type-card h3 {
-  margin: 0 0 11px;
+  margin: 17px 0 0;
 
-  font-size: 20px;
+  font-size: 17px;
 }
 
 
 .food-invite-type-card p {
-  margin: 0;
+  max-width: 270px;
 
-  max-width: 280px;
+  margin: 7px 0 0;
 
-  color:
-    rgba(255,255,255,.5);
+  color: #8b837f;
 
-  font-size: 13px;
+  font-size: 9px;
 
-  line-height: 1.65;
+  line-height: 1.55;
 }
 
 
-.food-invite-type-arrow {
+.food-invite-type-card > svg {
   position: absolute;
 
-  left: 24px;
-  bottom: 22px;
+  right: 18px;
+  bottom: 18px;
 
   color:
-    #ff6a2a;
+    rgba(255, 255, 255, 0.35);
 }
 
 
-/* ============================================================
+/* ==========================================================
    HOW IT WORKS
-============================================================ */
+========================================================== */
 
 .food-invite-how-grid {
   display: grid;
@@ -390,176 +436,775 @@
   grid-template-columns:
     repeat(4, 1fr);
 
-  gap: 15px;
+  gap: 9px;
+
+  margin-top: 15px;
 }
 
 
 .food-invite-how-grid article {
   position: relative;
 
-  min-height: 150px;
+  min-height: 105px;
 
-  padding: 22px;
+  padding: 15px;
 
-  border: 1px solid rgba(255,255,255,.08);
-  border-radius: 17px;
+  border:
+    1px solid
+    rgba(255, 255, 255, 0.055);
 
-  background: #100d0c;
+  border-radius: 13px;
+
+  background:
+    rgba(255, 255, 255, 0.01);
 }
 
 
 .food-invite-how-grid article > span {
   position: absolute;
 
-  top: 15px;
-  right: 17px;
+  top: 12px;
+  right: 13px;
 
   color:
-    rgba(255,255,255,.17);
+    rgba(255, 255, 255, 0.10);
 
-  font-size: 24px;
+  font-size: 21px;
+
   font-weight: 900;
 }
 
 
-.food-invite-how-grid svg {
-  color:
-    #ff6a2a;
+.food-invite-how-grid article > svg {
+  color: #ff7545;
 }
 
 
 .food-invite-how-grid h3 {
-  margin: 19px 0 8px;
+  margin: 23px 0 0;
 
-  font-size: 15px;
+  font-size: 10px;
 }
 
 
-.food-invite-how-grid p {
-  margin: 0;
-
-  color:
-    rgba(255,255,255,.48);
-
-  font-size: 12px;
-
-  line-height: 1.55;
-}
-
-
-/* ============================================================
-   MODAL BACKDROP
-============================================================ */
+/* ==========================================================
+   MODAL
+========================================================== */
 
 .food-invite-modal-backdrop {
   position: fixed;
+
   inset: 0;
 
-  z-index: 2000;
+  z-index: 1000;
+
+  display: grid;
+  place-items: center;
+
+  padding: 20px;
+
+  overflow-y: auto;
+
+  background:
+    rgba(0, 0, 0, 0.80);
+
+  backdrop-filter: blur(8px);
+}
+
+
+.food-invite-create-shell {
+  width: min(
+    760px,
+    100%
+  );
+
+  max-height:
+    calc(
+      100vh - 40px
+    );
+
+  overflow: hidden;
+
+  border:
+    1px solid
+    rgba(255, 96, 31, 0.18);
+
+  border-radius: 22px;
+
+  background: #0b0b0b;
+
+  box-shadow:
+    0 30px 90px
+    rgba(0, 0, 0, 0.55);
+}
+
+
+.food-invite-create-shell.dine-out {
+  width: min(
+    1180px,
+    100%
+  );
+
+  display: grid;
+
+  grid-template-columns:
+    minmax(0, 1fr)
+    360px;
+}
+
+
+.food-invite-create-modal {
+  max-height:
+    calc(
+      100vh - 40px
+    );
+
+  overflow-y: auto;
+
+  padding: 24px;
+}
+
+
+/* ==========================================================
+   MODAL HEADER
+========================================================== */
+
+.food-invite-create-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+
+  gap: 18px;
+
+  padding-bottom: 18px;
+
+  border-bottom:
+    1px solid
+    rgba(255, 255, 255, 0.06);
+}
+
+
+.food-invite-create-header span {
+  color: #ff7545;
+
+  font-size: 7px;
+  font-weight: 800;
+
+  letter-spacing: 0.12em;
+}
+
+
+.food-invite-create-header h2 {
+  margin: 5px 0 0;
+
+  font-size: 24px;
+}
+
+
+.food-invite-create-header p {
+  max-width: 500px;
+
+  margin: 6px 0 0;
+
+  color: #817a76;
+
+  font-size: 9px;
+
+  line-height: 1.5;
+}
+
+
+.food-invite-create-header > button {
+  display: grid;
+  place-items: center;
+
+  width: 34px;
+  height: 34px;
+
+  border:
+    1px solid
+    rgba(255, 255, 255, 0.07);
+
+  border-radius: 10px;
+
+  background: transparent;
+
+  color: #9c9490;
+
+  cursor: pointer;
+}
+
+
+/* ==========================================================
+   FORM
+========================================================== */
+
+.food-invite-form {
+  display: grid;
+
+  gap: 13px;
+
+  margin-top: 18px;
+}
+
+
+.food-invite-form-section {
+  padding: 16px;
+
+  border:
+    1px solid
+    rgba(255, 255, 255, 0.055);
+
+  border-radius: 14px;
+
+  background:
+    rgba(255, 255, 255, 0.01);
+}
+
+
+.food-invite-form-section-heading {
+  display: flex;
+  align-items: center;
+
+  gap: 10px;
+
+  margin-bottom: 13px;
+}
+
+
+.food-invite-form-section-heading > span {
+  display: grid;
+  place-items: center;
+
+  width: 29px;
+  height: 29px;
+
+  flex-shrink: 0;
+
+  border:
+    1px solid
+    rgba(255, 96, 31, 0.16);
+
+  border-radius: 9px;
+
+  color: #ff7545;
+
+  font-size: 8px;
+
+  font-weight: 800;
+}
+
+
+.food-invite-form-section-heading strong,
+.food-invite-form-section-heading small {
+  display: block;
+}
+
+
+.food-invite-form-section-heading strong {
+  font-size: 10px;
+}
+
+
+.food-invite-form-section-heading small {
+  margin-top: 3px;
+
+  color: #716a66;
+
+  font-size: 7px;
+}
+
+
+/* INPUTS */
+
+.food-invite-form label {
+  display: grid;
+
+  gap: 6px;
+
+  margin-top: 10px;
+
+  color: #c4bdb9;
+
+  font-size: 8px;
+  font-weight: 700;
+}
+
+
+.food-invite-form input,
+.food-invite-form select,
+.food-invite-form textarea {
+  width: 100%;
+
+  min-height: 42px;
+
+  padding:
+    0 12px;
+
+  border:
+    1px solid
+    rgba(255, 255, 255, 0.07);
+
+  border-radius: 10px;
+
+  outline: none;
+
+  background: #101010;
+
+  color: #ffffff;
+
+  font: inherit;
+
+  font-size: 9px;
+}
+
+
+.food-invite-form textarea {
+  min-height: 90px;
+
+  padding-top: 10px;
+
+  resize: vertical;
+}
+
+
+.food-invite-form input:focus,
+.food-invite-form select:focus,
+.food-invite-form textarea:focus {
+  border-color:
+    rgba(255, 96, 31, 0.34);
+}
+
+
+/* ==========================================================
+   SELECTORS
+========================================================== */
+
+.food-invite-type-selector,
+.food-invite-venue-selector {
+  display: grid;
+
+  grid-template-columns:
+    repeat(3, 1fr);
+
+  gap: 7px;
+}
+
+
+.food-invite-type-selector button,
+.food-invite-venue-selector button {
+  min-height: 42px;
 
   display: flex;
   align-items: center;
   justify-content: center;
 
-  padding: 28px;
+  gap: 7px;
+
+  padding: 8px;
+
+  border:
+    1px solid
+    rgba(255, 255, 255, 0.06);
+
+  border-radius: 10px;
 
   background:
-    rgba(0,0,0,.84);
+    rgba(255, 255, 255, 0.01);
 
-  backdrop-filter:
-    blur(10px);
+  color: #8f8783;
+
+  font-size: 8px;
+  font-weight: 700;
+
+  cursor: pointer;
 }
 
 
-/* ============================================================
-   DETAIL MODAL
-============================================================ */
+.food-invite-type-selector button.active,
+.food-invite-venue-selector button.active {
+  border-color:
+    rgba(255, 96, 31, 0.30);
+
+  background:
+    rgba(255, 96, 31, 0.07);
+
+  color: #ff7545;
+}
+
+
+/* ==========================================================
+   PEOPLE
+========================================================== */
+
+.food-invite-connections {
+  display: flex;
+  flex-wrap: wrap;
+
+  gap: 7px;
+}
+
+
+.food-invite-person {
+  display: inline-flex;
+  align-items: center;
+
+  gap: 7px;
+
+  padding:
+    8px 10px;
+
+  border:
+    1px solid
+    rgba(255, 255, 255, 0.06);
+
+  border-radius: 999px;
+
+  background:
+    rgba(255, 255, 255, 0.01);
+
+  color: #aea6a2;
+
+  font-size: 8px;
+
+  cursor: pointer;
+}
+
+
+.food-invite-person.selected {
+  border-color:
+    rgba(80, 206, 138, 0.22);
+
+  background:
+    rgba(80, 206, 138, 0.055);
+
+  color: #6fd69c;
+}
+
+
+/* ==========================================================
+   FOOTER BUTTONS
+========================================================== */
+
+.food-invite-create-footer {
+  display: flex;
+  justify-content: flex-end;
+
+  gap: 8px;
+
+  margin-top: 3px;
+}
+
+
+.food-invite-create-cancel,
+.food-invite-submit {
+  min-height: 42px;
+
+  padding:
+    0 14px;
+
+  border-radius: 10px;
+
+  font-size: 9px;
+  font-weight: 800;
+
+  cursor: pointer;
+}
+
+
+.food-invite-create-cancel {
+  border:
+    1px solid
+    rgba(255, 255, 255, 0.07);
+
+  background: transparent;
+
+  color: #918985;
+}
+
+
+.food-invite-submit {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  gap: 7px;
+
+  border: 0;
+
+  background:
+    linear-gradient(
+      135deg,
+      #ff5e24,
+      #dc3c16
+    );
+
+  color: #ffffff;
+}
+
+
+/* ==========================================================
+   RESPONSIVE
+========================================================== */
+
+@media (max-width: 980px) {
+
+  .food-invite-create-shell.dine-out {
+    grid-template-columns: 1fr;
+
+    overflow-y: auto;
+  }
+
+
+  .food-invite-types-grid {
+    grid-template-columns:
+      repeat(2, 1fr);
+  }
+
+
+  .food-invite-how-grid {
+    grid-template-columns:
+      repeat(2, 1fr);
+  }
+
+}
+
+
+@media (max-width: 720px) {
+
+  .food-invites-page {
+    width:
+      calc(
+        100% - 28px
+      );
+
+    padding:
+      24px 0 56px;
+  }
+
+
+  .food-invites-hero {
+    min-height: auto;
+
+    padding: 22px;
+  }
+
+
+  .food-invite-create-main {
+    width: 100%;
+  }
+
+
+  .food-invite-types-grid,
+  .food-invite-how-grid {
+    grid-template-columns: 1fr;
+  }
+
+
+  .food-invite-row {
+    grid-template-columns:
+      auto
+      1fr;
+  }
+
+
+  .food-invite-row-time {
+    grid-column: 2;
+  }
+
+
+  .food-invite-row > svg:last-child {
+    display: none;
+  }
+
+
+  .food-invite-modal-backdrop {
+    align-items: flex-start;
+
+    padding: 10px;
+  }
+
+
+  .food-invite-create-shell {
+    max-height: none;
+  }
+
+
+  .food-invite-create-modal {
+    max-height: none;
+
+    padding: 16px;
+  }
+
+
+  .food-invite-type-selector,
+  .food-invite-venue-selector {
+    grid-template-columns: 1fr;
+  }
+
+
+  .food-invite-type-selector button,
+  .food-invite-venue-selector button {
+    justify-content: flex-start;
+
+    padding-left: 12px;
+  }
+
+
+  .food-invite-create-footer {
+    flex-direction: column-reverse;
+  }
+
+
+  .food-invite-create-cancel,
+  .food-invite-submit {
+    width: 100%;
+  }
+
+}
+
+
+@media (max-width: 480px) {
+
+  .food-invites-page {
+    width:
+      calc(
+        100% - 20px
+      );
+  }
+
+
+  .food-invites-hero {
+    padding: 18px;
+
+    border-radius: 18px;
+  }
+
+
+  .food-invite-type-card {
+    min-height: 150px;
+
+    padding: 16px;
+  }
+
+
+  .food-invite-form-section {
+    padding: 13px;
+  }
+
+}
+
+/* ==========================================================
+   FOOD INVITE DETAIL MODAL
+========================================================== */
 
 .food-invite-detail-modal {
-  width: min(720px, 100%);
+  width: min(
+    620px,
+    100%
+  );
 
-  max-height: calc(100vh - 56px);
+  max-height:
+    calc(
+      100vh - 40px
+    );
 
   overflow-y: auto;
 
   border:
     1px solid
-    rgba(255, 99, 32, .35);
+    rgba(255, 96, 31, 0.18);
 
-  border-radius:
-    28px;
+  border-radius: 20px;
 
   background:
-    #0e0b0a;
+    linear-gradient(
+      145deg,
+      #140a07,
+      #090909 70%
+    );
 
   box-shadow:
-    0 40px 120px
-    rgba(0,0,0,.8);
+    0 30px 90px
+    rgba(
+      0,
+      0,
+      0,
+      0.55
+    );
 }
 
 
 .food-invite-detail-header {
-  position: sticky;
-  top: 0;
+  display: grid;
 
-  z-index: 5;
+  grid-template-columns:
+    auto 1fr auto;
 
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
+  align-items: center;
 
-  gap: 20px;
+  gap: 12px;
 
-  padding: 28px 30px 23px;
+  padding: 20px;
 
   border-bottom:
     1px solid
-    rgba(255,255,255,.06);
-
-  background:
-    rgba(14, 11, 10, .96);
-
-  backdrop-filter:
-    blur(12px);
+    rgba(
+      255,
+      255,
+      255,
+      0.06
+    );
 }
 
 
-.food-invite-detail-kicker {
-  display: block;
+.food-invite-detail-icon {
+  display: grid;
+  place-items: center;
 
-  margin-bottom: 8px;
+  width: 46px;
+  height: 46px;
 
-  color:
-    #ff6a2a;
+  border:
+    1px solid
+    rgba(
+      255,
+      96,
+      31,
+      0.20
+    );
 
-  font-size:
-    10px;
+  border-radius: 13px;
 
-  font-weight:
-    900;
+  background:
+    rgba(
+      255,
+      96,
+      31,
+      0.06
+    );
 
-  letter-spacing:
-    1.4px;
+  color: #ff7545;
+}
+
+
+.food-invite-detail-header span {
+  color: #ff7545;
+
+  font-size: 7px;
+  font-weight: 800;
+
+  letter-spacing: 0.10em;
+
+  text-transform: uppercase;
 }
 
 
 .food-invite-detail-header h2 {
-  margin: 0;
+  margin:
+    4px 0 0;
 
-  color:
-    #fff;
-
-  font-size:
-    29px;
-
-  font-weight:
-    750;
-
-  line-height:
-    1.15;
-
-  letter-spacing:
-    -.7px;
+  font-size: 22px;
 }
 
 
@@ -567,23 +1212,23 @@
   display: grid;
   place-items: center;
 
-  width: 39px;
-  height: 39px;
-
-  flex-shrink: 0;
+  width: 34px;
+  height: 34px;
 
   border:
     1px solid
-    rgba(255,255,255,.08);
+    rgba(
+      255,
+      255,
+      255,
+      0.07
+    );
 
-  border-radius:
-    50%;
+  border-radius: 10px;
 
-  background:
-    rgba(255,255,255,.025);
+  background: transparent;
 
-  color:
-    #fff;
+  color: #968e8a;
 
   cursor: pointer;
 }
@@ -592,167 +1237,566 @@
 .food-invite-detail-body {
   display: grid;
 
-  gap: 14px;
+  gap: 9px;
 
-  padding:
-    24px
-    30px
-    30px;
+  padding: 20px;
 }
 
 
-/* ============================================================
-   TYPE CARD
-============================================================ */
-
-.food-invite-detail-type-card {
-  display: flex;
-  align-items: center;
-
-  gap: 15px;
-
-  padding: 17px;
-
-  border:
-    1px solid
-    rgba(255,255,255,.075);
-
-  border-radius:
-    17px;
-
-  background:
-    rgba(255,255,255,.022);
-}
-
-
-.food-invite-detail-type-icon {
-  display: grid;
-  place-items: center;
-
-  width: 50px;
-  height: 50px;
-
-  flex-shrink: 0;
-
-  border-radius: 15px;
-
-  background:
-    rgba(255, 95, 24, .1);
-
-  color:
-    #ff6a2a;
-}
-
-
-.food-invite-detail-type-card > div:last-child {
-  display: grid;
-
-  gap: 3px;
-}
-
-
-.food-invite-detail-type-card span {
-  color:
-    rgba(255,255,255,.38);
-
-  font-size: 9px;
-
-  font-weight: 900;
-
-  letter-spacing: 1px;
-}
-
-
-.food-invite-detail-type-card strong {
-  color:
-    #fff;
-
-  font-size:
-    18px;
-
-  font-weight:
-    750;
-}
-
-
-.food-invite-detail-type-card small {
-  color:
-    #ff7440;
-
-  font-size:
-    12px;
-}
-
-
-/* ============================================================
-   INVITED BY
-============================================================ */
-
-.food-invite-detail-host {
+.food-invite-detail-row {
   display: flex;
   align-items: center;
 
   gap: 11px;
 
-  padding:
-    4px
-    2px;
+  padding: 12px;
+
+  border:
+    1px solid
+    rgba(
+      255,
+      255,
+      255,
+      0.055
+    );
+
+  border-radius: 11px;
+
+  background:
+    rgba(
+      255,
+      255,
+      255,
+      0.012
+    );
 }
 
 
-.food-invite-host-avatar {
+.food-invite-detail-row > svg {
+  flex-shrink: 0;
+
+  color: #ff7545;
+}
+
+
+.food-invite-detail-row span,
+.food-invite-detail-row strong {
+  display: block;
+}
+
+
+.food-invite-detail-row span {
+  color: #706965;
+
+  font-size: 7px;
+}
+
+
+.food-invite-detail-row strong {
+  margin-top: 3px;
+
+  font-size: 9px;
+
+  text-transform: capitalize;
+}
+
+
+.food-invite-detail-message {
+  margin-top: 5px;
+
+  padding: 14px;
+
+  border:
+    1px solid
+    rgba(
+      255,
+      96,
+      31,
+      0.10
+    );
+
+  border-radius: 12px;
+
+  background:
+    rgba(
+      255,
+      96,
+      31,
+      0.025
+    );
+}
+
+
+.food-invite-detail-message > span,
+.food-invite-detail-walk > span {
+  color: #ff7545;
+
+  font-size: 7px;
+  font-weight: 800;
+
+  letter-spacing: 0.10em;
+}
+
+
+.food-invite-detail-message p {
+  margin:
+    7px 0 0;
+
+  color: #aaa29e;
+
+  font-size: 9px;
+
+  line-height: 1.6;
+}
+
+
+/* ==========================================================
+   FOOD WALK
+========================================================== */
+
+.food-invite-detail-walk {
+  display: grid;
+
+  gap: 8px;
+
+  margin-top: 6px;
+}
+
+
+.food-invite-detail-stop {
+  display: flex;
+  align-items: center;
+
+  gap: 9px;
+
+  padding:
+    9px 11px;
+
+  border:
+    1px solid
+    rgba(
+      255,
+      255,
+      255,
+      0.055
+    );
+
+  border-radius: 10px;
+}
+
+
+.food-invite-detail-stop > div {
   display: grid;
   place-items: center;
 
-  width: 38px;
-  height: 38px;
+  width: 24px;
+  height: 24px;
 
   border-radius: 50%;
 
   background:
-    rgba(255, 95, 24, .12);
+    rgba(
+      255,
+      96,
+      31,
+      0.08
+    );
 
-  color:
-    #ff6a2a;
+  color: #ff7545;
 
-  font-weight:
-    800;
+  font-size: 7px;
+  font-weight: 800;
 }
 
 
-.food-invite-detail-host > div:last-child {
-  display: grid;
-
-  gap: 3px;
+.food-invite-detail-stop strong {
+  font-size: 8px;
 }
 
 
-.food-invite-detail-host span {
-  color:
-    rgba(255,255,255,.38);
+/* ==========================================================
+   FOOTER
+========================================================== */
 
-  font-size:
-    8px;
+.food-invite-detail-footer {
+  display: flex;
+  justify-content: flex-end;
 
-  font-weight:
-    900;
+  gap: 8px;
 
-  letter-spacing:
-    1px;
+  padding: 15px 20px 20px;
+
+  border-top:
+    1px solid
+    rgba(
+      255,
+      255,
+      255,
+      0.055
+    );
 }
 
 
-.food-invite-detail-host strong {
-  font-size:
-    13px;
+.food-invite-decline-button,
+.food-invite-accept-button {
+  min-height: 40px;
+
+  padding:
+    0 13px;
+
+  border-radius: 10px;
+
+  font-size: 8px;
+  font-weight: 800;
+
+  cursor: pointer;
 }
 
 
-/* ============================================================
-   DATE / LOCATION
-============================================================ */
+.food-invite-decline-button {
+  border:
+    1px solid
+    rgba(
+      255,
+      89,
+      89,
+      0.18
+    );
 
-.food-invite-detail-info-grid {
+  background:
+    rgba(
+      255,
+      89,
+      89,
+      0.04
+    );
+
+  color: #ff9898;
+}
+
+
+.food-invite-accept-button {
+  display: inline-flex;
+  align-items: center;
+
+  gap: 6px;
+
+  border: 0;
+
+  background:
+    linear-gradient(
+      135deg,
+      #ff5e24,
+      #db3b16
+    );
+
+  color: #ffffff;
+}
+
+
+/* ==========================================================
+   MOBILE
+========================================================== */
+
+@media (max-width: 600px) {
+
+  .food-invite-detail-modal {
+    max-height: none;
+
+    border-radius: 16px;
+  }
+
+
+  .food-invite-detail-header {
+    padding: 16px;
+  }
+
+
+  .food-invite-detail-body {
+    padding: 16px;
+  }
+
+
+  .food-invite-detail-footer {
+    padding:
+      13px 16px 16px;
+
+    flex-direction: column-reverse;
+  }
+
+
+  .food-invite-detail-footer button {
+    width: 100%;
+
+    justify-content: center;
+  }
+
+}
+
+/* ==========================================================
+   INVITE RESPONSE STATUS
+========================================================== */
+
+.food-invite-response-status {
+  min-height: 40px;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  gap: 7px;
+
+  padding:
+    0 14px;
+
+  border-radius: 10px;
+
+  font-size: 8px;
+  font-weight: 800;
+}
+
+
+/* ACCEPTED */
+
+.food-invite-response-status.accepted {
+  border:
+    1px solid
+    rgba(
+      74,
+      211,
+      139,
+      0.20
+    );
+
+  background:
+    rgba(
+      74,
+      211,
+      139,
+      0.06
+    );
+
+  color: #71dba2;
+}
+
+
+/* DECLINED */
+
+.food-invite-response-status.declined {
+  border:
+    1px solid
+    rgba(
+      255,
+      91,
+      91,
+      0.18
+    );
+
+  background:
+    rgba(
+      255,
+      91,
+      91,
+      0.05
+    );
+
+  color: #ff9999;
+}
+
+
+/* ==========================================================
+   ACCEPT / DECLINE BUTTONS
+========================================================== */
+
+.food-invite-decline-button,
+.food-invite-accept-button {
+
+  min-height: 40px;
+
+  padding:
+    0 14px;
+
+  border-radius: 10px;
+
+  font-size: 8px;
+  font-weight: 800;
+
+  cursor: pointer;
+}
+
+
+/* DECLINE */
+
+.food-invite-decline-button {
+
+  border:
+    1px solid
+    rgba(
+      255,
+      91,
+      91,
+      0.18
+    );
+
+  background:
+    rgba(
+      255,
+      91,
+      91,
+      0.04
+    );
+
+  color: #ff9898;
+}
+
+
+/* ACCEPT */
+
+.food-invite-accept-button {
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  gap: 6px;
+
+  border: 0;
+
+  background:
+    linear-gradient(
+      135deg,
+      #ff5e24,
+      #db3b16
+    );
+
+  color: #ffffff;
+}
+
+
+/* DISABLED */
+
+.food-invite-decline-button:disabled,
+.food-invite-accept-button:disabled {
+
+  opacity: 0.55;
+
+  cursor: not-allowed;
+}
+
+
+/* ==========================================================
+   MOBILE
+========================================================== */
+
+@media (
+  max-width: 600px
+) {
+
+  .food-invite-detail-footer {
+
+    flex-direction:
+      column-reverse;
+
+  }
+
+
+  .food-invite-detail-footer button,
+  .food-invite-response-status {
+
+    width: 100%;
+
+  }
+
+}
+
+
+/* ==========================================================
+   PRIORITY: INVITE PEOPLE FIRST
+========================================================== */
+
+.food-invite-people-priority {
+  position: relative;
+  overflow: hidden;
+
+  border-color:
+    rgba(255, 96, 31, 0.24);
+
+  background:
+    linear-gradient(
+      135deg,
+      rgba(255, 96, 31, 0.075),
+      rgba(255, 255, 255, 0.012)
+    );
+}
+
+.food-invite-people-priority::before {
+  content: "";
+
+  position: absolute;
+  top: 0;
+  left: 0;
+
+  width: 4px;
+  height: 100%;
+
+  background:
+    linear-gradient(
+      180deg,
+      #ff7545,
+      #d93f18
+    );
+}
+
+.food-invite-people-priority
+.food-invite-form-section-heading {
+  padding-left: 4px;
+}
+
+.food-invite-people-priority
+.food-invite-connections {
+  margin-top: 4px;
+}
+
+.food-invite-people-priority
+.food-invite-person {
+  min-height: 40px;
+
+  padding: 9px 12px;
+
+  border-radius: 12px;
+
+  transition:
+    transform 0.18s ease,
+    border-color 0.18s ease,
+    background 0.18s ease;
+}
+
+.food-invite-people-priority
+.food-invite-person:hover {
+  transform: translateY(-1px);
+
+  border-color:
+    rgba(255, 117, 69, 0.26);
+
+  background:
+    rgba(255, 117, 69, 0.045);
+}
+
+.food-invite-people-priority
+.food-invite-person.selected {
+  border-color:
+    rgba(89, 217, 146, 0.30);
+
+  background:
+    rgba(89, 217, 146, 0.075);
+}
+
+
+/* ==========================================================
+   FRIENDLY CALENDAR + CLOCK PICKERS
+========================================================== */
+
+.food-invite-picker-grid {
   display: grid;
 
   grid-template-columns:
@@ -761,4793 +1805,852 @@
   gap: 12px;
 }
 
-
-.food-invite-detail-info {
-  display: flex;
-
-  gap: 12px;
-
-  padding: 16px;
-
-  border:
-    1px solid
-    rgba(255,255,255,.075);
-
-  border-radius: 15px;
-
-  background:
-    rgba(255,255,255,.018);
-}
-
-
-.food-invite-detail-info svg {
-  flex-shrink: 0;
-
-  color:
-    #ff6a2a;
-}
-
-
-.food-invite-detail-info > div {
-  display: grid;
-
+.food-invite-picker-label {
   min-width: 0;
-
-  gap: 5px;
 }
 
+.food-invite-smart-picker {
+  position: relative;
 
-.food-invite-detail-info span {
-  color:
-    rgba(255,255,255,.36);
+  min-height: 68px;
 
-  font-size:
-    8px;
-
-  font-weight:
-    900;
-
-  letter-spacing:
-    .9px;
-}
-
-
-.food-invite-detail-info strong {
-  font-size:
-    13px;
-
-  line-height:
-    1.5;
-}
-
-
-/* ============================================================
-   COMMON DETAIL CARD
-============================================================ */
-
-.food-invite-detail-card {
-  padding: 17px;
-
-  border:
-    1px solid
-    rgba(255,255,255,.075);
-
-  border-radius: 16px;
-
-  background:
-    rgba(255,255,255,.018);
-}
-
-
-.food-invite-detail-label {
-  display: block;
-
-  color:
-    rgba(255,255,255,.38);
-
-  font-size:
-    8px;
-
-  font-weight:
-    900;
-
-  letter-spacing:
-    1px;
-}
-
-
-.food-invite-detail-primary-value {
-  display: block;
-
-  margin-top: 7px;
-
-  text-transform:
-    capitalize;
-
-  font-size:
-    17px;
-
-  font-weight:
-    750;
-}
-
-
-.food-invite-detail-address {
-  display: flex;
-  align-items: flex-start;
-
-  gap: 7px;
-
-  margin-top: 11px;
-
-  padding-top: 11px;
-
-  border-top:
-    1px solid
-    rgba(255,255,255,.06);
-
-  color:
-    rgba(255,255,255,.55);
-
-  font-size:
-    12px;
-
-  line-height:
-    1.55;
-}
-
-
-.food-invite-detail-address svg {
-  margin-top: 1px;
-
-  flex-shrink: 0;
-
-  color:
-    #ff6a2a;
-}
-
-
-/* ============================================================
-   CONTRIBUTION
-============================================================ */
-
-.food-invite-contribution-card {
   display: grid;
 
   grid-template-columns:
-    auto 1fr;
+    auto minmax(0, 1fr) auto;
 
-  align-items: center;
-
-  gap: 28px;
-
-  padding: 18px;
-
-  border:
-    1px solid
-    rgba(255, 103, 32, .25);
-
-  border-radius:
-    16px;
-
-  background:
-    rgba(255, 91, 22, .045);
-}
-
-
-.food-invite-contribution-card > div {
-  display: grid;
-
-  gap: 4px;
-}
-
-
-.food-invite-contribution-card span {
-  color:
-    #ff6a2a;
-
-  font-size:
-    8px;
-
-  font-weight:
-    900;
-
-  letter-spacing:
-    1px;
-}
-
-
-.food-invite-contribution-card strong {
-  font-size:
-    27px;
-
-  font-weight:
-    800;
-}
-
-
-.food-invite-contribution-card p {
-  margin: 0;
-
-  color:
-    rgba(255,255,255,.5);
-
-  font-size:
-    11px;
-
-  line-height:
-    1.55;
-}
-
-
-/* ============================================================
-   MESSAGE
-============================================================ */
-
-.food-invite-detail-message {
-  padding: 18px;
-
-  border-radius:
-    16px;
-
-  background:
-    rgba(255, 91, 22, .055);
-}
-
-
-.food-invite-detail-message span {
-  color:
-    #ff6a2a;
-
-  font-size:
-    8px;
-
-  font-weight:
-    900;
-
-  letter-spacing:
-    1px;
-}
-
-
-.food-invite-detail-message blockquote {
-  margin:
-    9px
-    0
-    0;
-
-  padding: 0;
-
-  border: 0;
-
-  color:
-    rgba(255,255,255,.82);
-
-  font-size:
-    14px;
-
-  font-style:
-    normal;
-
-  line-height:
-    1.65;
-}
-
-
-/* ============================================================
-   PARTICIPANTS
-============================================================ */
-
-.food-invite-participant-heading {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-
-.food-invite-participant-heading strong {
-  display: grid;
-  place-items: center;
-
-  min-width: 27px;
-  height: 27px;
-
-  border-radius:
-    999px;
-
-  background:
-    rgba(255,255,255,.05);
-
-  font-size:
-    11px;
-}
-
-
-.food-invite-participants {
-  display: grid;
-
-  gap: 8px;
-
-  margin-top: 13px;
-}
-
-
-.food-invite-participant {
-  display: grid;
-
-  grid-template-columns:
-    36px
-    1fr
-    auto;
-
-  align-items: center;
-
-  gap: 10px;
-
-  padding-top: 10px;
-
-  border-top:
-    1px solid
-    rgba(255,255,255,.055);
-}
-
-
-.food-invite-participant-avatar {
-  display: grid;
-  place-items: center;
-
-  width: 34px;
-  height: 34px;
-
-  border-radius: 50%;
-
-  background:
-    rgba(255, 96, 24, .09);
-
-  color:
-    #ff6a2a;
-
-  font-size:
-    12px;
-
-  font-weight:
-    800;
-}
-
-
-.food-invite-participant strong {
-  font-size:
-    12px;
-}
-
-
-.food-invite-participant-status {
-  padding:
-    5px
-    8px;
-
-  border-radius:
-    999px;
-
-  background:
-    rgba(255,255,255,.05);
-
-  text-transform:
-    capitalize;
-
-  font-size:
-    8px;
-
-  font-weight:
-    750;
-}
-
-
-.food-invite-participant-status.accepted {
-  background:
-    rgba(55, 211, 115, .09);
-
-  color:
-    #61df91;
-}
-
-
-.food-invite-participant-status.declined {
-  background:
-    rgba(255, 84, 67, .08);
-
-  color:
-    #ff7566;
-}
-
-
-/* ============================================================
-   ACCEPT / DECLINE
-============================================================ */
-
-.food-invite-response-actions {
-  display: grid;
-
-  grid-template-columns:
-    1fr 1fr;
-
-  gap: 11px;
-
-  padding-top:
-    6px;
-}
-
-
-.food-invite-accept,
-.food-invite-decline {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  gap: 8px;
-
-  min-height: 48px;
-
-  border-radius:
-    13px;
-
-  font-size:
-    12px;
-
-  font-weight:
-    800;
-
-  cursor:
-    pointer;
-}
-
-
-.food-invite-accept {
-  border:
-    1px solid
-    rgba(57, 218, 119, .4);
-
-  background:
-    rgba(57, 218, 119, .11);
-
-  color:
-    #61df91;
-}
-
-
-.food-invite-decline {
-  border:
-    1px solid
-    rgba(255, 86, 70, .36);
-
-  background:
-    rgba(255, 86, 70, .07);
-
-  color:
-    #ff7466;
-}
-
-
-/* ============================================================
-   RESULT / CREATOR STATUS
-============================================================ */
-
-.food-invite-response-confirmed,
-.food-invite-response-declined,
-.food-invite-host-status {
-  display: flex;
   align-items: center;
 
   gap: 11px;
 
-  padding: 15px 17px;
+  margin-top: 6px;
 
-  border-radius:
-    14px;
-}
-
-
-.food-invite-response-confirmed {
-  background:
-    rgba(57, 218, 119, .08);
-
-  color:
-    #61df91;
-}
-
-
-.food-invite-response-declined {
-  background:
-    rgba(255, 86, 70, .07);
-
-  color:
-    #ff7466;
-}
-
-
-.food-invite-host-status {
-  background:
-    rgba(255, 99, 31, .065);
-
-  color:
-    #ff763d;
-}
-
-
-.food-invite-response-confirmed > div,
-.food-invite-response-declined > div,
-.food-invite-host-status > div {
-  display: grid;
-
-  gap: 3px;
-}
-
-
-.food-invite-response-confirmed strong,
-.food-invite-response-declined strong,
-.food-invite-host-status strong {
-  font-size:
-    12px;
-}
-
-
-.food-invite-response-confirmed span,
-.food-invite-response-declined span,
-.food-invite-host-status span {
-  color:
-    rgba(255,255,255,.48);
-
-  font-size:
-    10px;
-}
-
-
-/* ============================================================
-   FOOD WALK STOPS
-============================================================ */
-
-.food-invite-stops {
-  display: grid;
-
-  gap: 8px;
-
-  margin-top: 12px;
-}
-
-
-.food-invite-stop {
-  display: flex;
-  align-items: center;
-
-  gap: 9px;
-}
-
-
-.food-invite-stop > span {
-  display: grid;
-  place-items: center;
-
-  width: 25px;
-  height: 25px;
-
-  border-radius:
-    50%;
-
-  background:
-    rgba(255, 93, 24, .1);
-
-  color:
-    #ff6a2a;
-
-  font-size:
-    9px;
-
-  font-weight:
-    900;
-}
-
-
-.food-invite-stop strong {
-  font-size:
-    12px;
-}
-
-
-/* ============================================================
-   CREATE MODAL
-============================================================ */
-
-.food-invite-create-modal {
-  width:
-    min(
-      650px,
-      100%
-    );
-
-  max-height:
-    calc(
-      100vh - 56px
-    );
-
-  overflow-y:
-    auto;
-
-  padding:
-    27px;
-
-  border:
-    1px solid
-    rgba(255, 99, 32, .3);
-
-  border-radius:
-    25px;
-
-  background:
-    #0e0b0a;
-}
-
-
-.food-invite-create-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-}
-
-
-.food-invite-create-header span {
-  color:
-    #ff6a2a;
-
-  font-size:
-    9px;
-
-  font-weight:
-    900;
-
-  letter-spacing:
-    1.2px;
-}
-
-
-.food-invite-create-header h2 {
-  margin:
-    6px
-    0
-    0;
-
-  font-size:
-    27px;
-}
-
-
-.food-invite-create-header button {
-  display: grid;
-  place-items: center;
-
-  width:
-    38px;
-
-  height:
-    38px;
-
-  border:
-    1px solid
-    rgba(255,255,255,.08);
-
-  border-radius:
-    50%;
-
-  background:
-    transparent;
-
-  color:
-    white;
-
-  cursor:
-    pointer;
-}
-
-
-/* ============================================================
-   FORM
-============================================================ */
-
-.food-invite-form {
-  display: grid;
-
-  gap:
-    17px;
-
-  margin-top:
-    24px;
-}
-
-
-.food-invite-form label {
-  display: grid;
-
-  gap:
-    8px;
-
-  color:
-    rgba(255,255,255,.76);
-
-  font-size:
-    11px;
-
-  font-weight:
-    650;
-}
-
-
-.food-invite-form input,
-.food-invite-form select,
-.food-invite-form textarea {
-  width:
-    100%;
-
-  box-sizing:
-    border-box;
-
-  padding:
-    12px
-    13px;
-
-  border:
-    1px solid
-    rgba(255,255,255,.09);
-
-  border-radius:
-    11px;
-
-  outline:
-    none;
-
-  background:
-    rgba(255,255,255,.028);
-
-  color:
-    #fff;
-
-  font-family:
-    inherit;
-
-  font-size:
-    12px;
-}
-
-
-.food-invite-form input:focus,
-.food-invite-form select:focus,
-.food-invite-form textarea:focus {
-  border-color:
-    rgba(255, 100, 33, .55);
-}
-
-
-.food-invite-form small {
-  color:
-    rgba(255,255,255,.38);
-
-  font-size:
-    9px;
-
-  line-height:
-    1.5;
-}
-
-
-.food-invite-form option {
-  background:
-    #111;
-
-  color:
-    white;
-}
-
-
-.food-invite-connections {
-  display: grid;
-
-  gap:
-    9px;
-}
-
-
-.food-invite-person {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-
-  padding:
-    11px
-    13px;
-
-  border:
-    1px solid
-    rgba(255,255,255,.08);
-
-  border-radius:
-    11px;
-
-  background:
-    rgba(255,255,255,.022);
-
-  color:
-    inherit;
-
-  cursor:
-    pointer;
-}
-
-
-.food-invite-person.selected {
-  border-color:
-    rgba(255, 100, 31, .52);
-
-  background:
-    rgba(255, 90, 20, .07);
-}
-
-
-.food-invite-submit {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-
-  gap:
-    8px;
-
-  min-height:
-    48px;
-
-  border:
-    0;
-
-  border-radius:
-    12px;
-
-  background:
-    linear-gradient(
-      135deg,
-      #ff671f,
-      #ce2e06
-    );
-
-  color:
-    white;
-
-  font-weight:
-    800;
-
-  cursor:
-    pointer;
-}
-
-
-/* ============================================================
-   FOOD WALK FORM
-============================================================ */
-
-.food-walk-stops {
-  display: grid;
-
-  gap:
-    9px;
-}
-
-
-.food-invite-add-stop {
-  justify-self:
-    start;
-
-  display:
-    inline-flex;
-
-  align-items:
-    center;
-
-  gap:
-    6px;
-
-  padding:
-    0;
-
-  border:
-    0;
-
-  background:
-    transparent;
-
-  color:
-    #ff6a2a;
-
-  font-size:
-    11px;
-
-  cursor:
-    pointer;
-}
-
-
-/* ============================================================
-   EMPTY / MESSAGES
-============================================================ */
-
-.food-invite-empty {
-  padding:
-    45px;
-
-  border:
-    1px solid
-    rgba(255,255,255,.075);
-
-  border-radius:
-    18px;
-
-  background:
-    #100d0c;
-
-  text-align:
-    center;
-}
-
-
-.food-invite-empty h3 {
-  margin:
-    12px 0 6px;
-}
-
-
-.food-invite-empty p {
-  margin:
-    0 auto;
-
-  max-width:
-    400px;
-
-  color:
-    rgba(255,255,255,.45);
-
-  font-size:
-    12px;
-
-  line-height:
-    1.6;
-}
-
-
-.food-invite-page-error,
-.food-invite-page-message {
-  margin-top:
-    16px;
-
-  padding:
-    12px
-    15px;
-
-  border-radius:
-    11px;
-
-  font-size:
-    12px;
-}
-
-
-.food-invite-page-error {
-  background:
-    rgba(255, 76, 60, .08);
-
-  color:
-    #ff796c;
-}
-
-
-.food-invite-page-message {
-  background:
-    rgba(57, 213, 116, .08);
-
-  color:
-    #64df91;
-}
-
-
-/* ============================================================
-   RESPONSIVE
-============================================================ */
-
-@media (
-  max-width: 900px
-) {
-
-  .food-invite-types-grid {
-    grid-template-columns:
-      1fr
-      1fr;
-  }
-
-
-  .food-invite-how-grid {
-    grid-template-columns:
-      1fr
-      1fr;
-  }
-
-
-  .food-invite-row {
-    grid-template-columns:
-      48px
-      1fr
-      auto;
-  }
-
-
-  .food-invite-row-time {
-    grid-column:
-      2;
-  }
-
-}
-
-
-@media (
-  max-width: 650px
-) {
-
-  .food-invites-page {
-    width:
-      calc(
-        100% - 26px
-      );
-
-    padding-top:
-      30px;
-  }
-
-
-  .food-invites-hero {
-    flex-direction:
-      column;
-
-    align-items:
-      flex-start;
-
-    padding:
-      27px
-      22px;
-  }
-
-
-  .food-invite-hero-icon {
-    display:
-      none;
-  }
-
-
-  .food-invite-types-grid,
-  .food-invite-how-grid {
-    grid-template-columns:
-      1fr;
-  }
-
-
-  .food-invite-detail-modal {
-    max-height:
-      calc(
-        100vh - 24px
-      );
-  }
-
-
-  .food-invite-detail-header {
-    padding:
-      22px
-      20px
-      18px;
-  }
-
-
-  .food-invite-detail-header h2 {
-    font-size:
-      24px;
-  }
-
-
-  .food-invite-detail-body {
-    padding:
-      19px
-      20px
-      24px;
-  }
-
-
-  .food-invite-detail-info-grid {
-    grid-template-columns:
-      1fr;
-  }
-
-
-  .food-invite-contribution-card {
-    grid-template-columns:
-      1fr;
-
-    gap:
-      9px;
-  }
-
-
-  .food-invite-response-actions {
-    grid-template-columns:
-      1fr;
-  }
-
-
-  .food-invite-create-modal {
-    padding:
-      21px;
-  }
-
-}
-
-/* ============================================================
-   FOODKINDL - CREATE FOOD INVITE MODAL
-============================================================ */
-
-.food-invite-create-modal {
-  width: min(720px, calc(100vw - 40px));
-  max-height: calc(100vh - 40px);
-
-  overflow-y: auto;
-  overflow-x: hidden;
-
-  border: 1px solid rgba(255, 103, 35, 0.32);
-  border-radius: 26px;
-
-  background:
-    radial-gradient(
-      circle at 90% 0%,
-      rgba(255, 94, 25, 0.06),
-      transparent 28%
-    ),
-    #0b0908;
-
-  color: #f8f4f1;
-
-  box-shadow:
-    0 30px 100px rgba(0, 0, 0, 0.82);
-
-  font-family:
-    Inter,
-    system-ui,
-    -apple-system,
-    BlinkMacSystemFont,
-    "Segoe UI",
-    sans-serif;
-}
-
-
-/* ============================================================
-   SCROLLBAR
-============================================================ */
-
-.food-invite-create-modal::-webkit-scrollbar {
-  width: 7px;
-}
-
-.food-invite-create-modal::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.food-invite-create-modal::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.16);
-  border-radius: 999px;
-}
-
-
-/* ============================================================
-   HEADER
-============================================================ */
-
-.food-invite-create-header {
-  position: sticky;
-  top: 0;
-  z-index: 30;
-
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-
-  gap: 24px;
-
-  padding: 28px 32px 24px;
-
-  border-bottom:
-    1px solid rgba(255, 255, 255, 0.065);
-
-  background:
-    rgba(11, 9, 8, 0.96);
-
-  backdrop-filter: blur(14px);
-}
-
-
-.food-invite-create-header > div:first-child {
-  min-width: 0;
-}
-
-
-.food-invite-create-header > div:first-child > span {
-  display: block;
-
-  margin-bottom: 7px;
-
-  color: #ff6828;
-
-  font-size: 9px;
-  font-weight: 900;
-
-  letter-spacing: 1.8px;
-}
-
-
-.food-invite-create-header h2 {
-  margin: 0;
-
-  color: #ffffff;
-
-  font-size: 29px;
-  font-weight: 760;
-
-  line-height: 1.15;
-
-  letter-spacing: -0.8px;
-}
-
-
-.food-invite-create-header p {
-  margin: 9px 0 0;
-
-  color: rgba(255, 255, 255, 0.48);
-
-  font-size: 12px;
-  line-height: 1.55;
-}
-
-
-.food-invite-create-header > button {
-  appearance: none;
-
-  display: grid;
-  place-items: center;
-
-  width: 40px;
-  height: 40px;
-
-  flex: 0 0 40px;
-
-  padding: 0;
-
-  border:
-    1px solid rgba(255, 255, 255, 0.1);
-
-  border-radius: 50%;
-
-  background:
-    rgba(255, 255, 255, 0.025);
-
-  color: #ffffff;
-
-  cursor: pointer;
-
-  transition:
-    background 0.2s ease,
-    border-color 0.2s ease,
-    transform 0.2s ease;
-}
-
-
-.food-invite-create-header > button:hover {
-  transform: rotate(5deg);
-
-  border-color:
-    rgba(255, 102, 35, 0.4);
-
-  background:
-    rgba(255, 92, 24, 0.08);
-}
-
-
-/* ============================================================
-   FORM
-============================================================ */
-
-.food-invite-form {
-  display: block;
-
-  margin: 0;
-  padding: 0;
-}
-
-
-/* ============================================================
-   EACH SECTION
-============================================================ */
-
-.food-invite-form-section {
-  display: grid;
-
-  gap: 20px;
-
-  padding: 27px 32px 29px;
-
-  border-bottom:
-    1px solid rgba(255, 255, 255, 0.055);
-}
-
-
-/* ============================================================
-   SECTION HEADER
-============================================================ */
-
-.food-invite-form-section-heading {
-  display: flex;
-  align-items: center;
-
-  gap: 13px;
-
-  min-height: 38px;
-}
-
-
-.food-invite-form-section-heading > span {
-  display: grid;
-  place-items: center;
-
-  width: 34px;
-  height: 34px;
-
-  flex: 0 0 34px;
-
-  border: 1px solid rgba(255, 104, 34, 0.18);
-
-  border-radius: 11px;
-
-  background:
-    rgba(255, 97, 25, 0.075);
-
-  color: #ff6c30;
-
-  font-size: 9px;
-  font-weight: 900;
-
-  letter-spacing: 0.4px;
-}
-
-
-.food-invite-form-section-heading > div {
-  display: grid;
-
-  gap: 3px;
-}
-
-
-.food-invite-form-section-heading strong {
-  display: block;
-
-  color: #ffffff;
-
-  font-size: 15px;
-  font-weight: 720;
-
-  line-height: 1.25;
-}
-
-
-.food-invite-form-section-heading small {
-  display: block;
-
-  margin: 0;
-
-  color: rgba(255, 255, 255, 0.38);
-
-  font-size: 9px;
-  font-weight: 500;
-
-  line-height: 1.35;
-}
-
-
-/* ============================================================
-   GLOBAL FORM LABELS
-============================================================ */
-
-.food-invite-create-modal label {
-  display: grid;
-
-  gap: 8px;
-
-  margin: 0;
-
-  color: rgba(255, 255, 255, 0.72);
-
-  font-size: 10px;
-  font-weight: 700;
-
-  line-height: 1.3;
-}
-
-
-/* ============================================================
-   GLOBAL INPUTS
-============================================================ */
-
-.food-invite-create-modal input,
-.food-invite-create-modal select,
-.food-invite-create-modal textarea {
-  appearance: none;
-
-  width: 100%;
-
-  box-sizing: border-box;
-
-  border:
-    1px solid rgba(255, 105, 34, 0.2);
-
-  border-radius: 12px;
-
-  outline: none;
-
-  background:
-    #110d0c;
-
-  color: #ffffff;
-
-  font-family: inherit;
-
-  font-size: 12px;
-  font-weight: 500;
-
-  transition:
-    border-color 0.2s ease,
-    box-shadow 0.2s ease,
-    background 0.2s ease;
-}
-
-
-.food-invite-create-modal input,
-.food-invite-create-modal select {
-  min-height: 47px;
-
-  padding: 0 14px;
-}
-
-
-.food-invite-create-modal textarea {
-  min-height: 92px;
-
-  padding: 13px 14px;
-
-  line-height: 1.55;
-
-  resize: vertical;
-}
-
-
-.food-invite-create-modal input::placeholder,
-.food-invite-create-modal textarea::placeholder {
-  color:
-    rgba(255, 255, 255, 0.32);
-}
-
-
-.food-invite-create-modal input:focus,
-.food-invite-create-modal select:focus,
-.food-invite-create-modal textarea:focus {
-  border-color:
-    rgba(255, 105, 34, 0.65);
-
-  background:
-    #130e0c;
-
-  box-shadow:
-    0 0 0 3px
-    rgba(255, 92, 24, 0.055);
-}
-
-
-.food-invite-create-modal select option {
-  background: #17110f;
-  color: #ffffff;
-}
-
-
-/* ============================================================
-   EXPERIENCE BUTTONS
-============================================================ */
-
-.food-invite-type-selector {
-  display: grid;
-
-  grid-template-columns:
-    repeat(3, minmax(0, 1fr));
-
-  gap: 10px;
-}
-
-
-.food-invite-type-selector > button {
-  appearance: none;
-
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  justify-content: center;
-
-  gap: 9px;
-
-  min-height: 84px;
-
-  padding: 14px;
-
-  border:
-    1px solid rgba(255, 255, 255, 0.08);
-
-  border-radius: 14px;
-
-  background:
-    rgba(255, 255, 255, 0.018);
-
-  color:
-    rgba(255, 255, 255, 0.68);
-
-  font-family: inherit;
-
-  font-size: 11px;
-  font-weight: 700;
-
-  text-align: left;
-
-  cursor: pointer;
-
-  transition:
-    transform 0.2s ease,
-    border-color 0.2s ease,
-    background 0.2s ease,
-    color 0.2s ease;
-}
-
-
-.food-invite-type-selector > button svg {
-  color: #ff692a;
-}
-
-
-.food-invite-type-selector > button:hover {
-  transform: translateY(-2px);
-
-  border-color:
-    rgba(255, 100, 30, 0.3);
-
-  background:
-    rgba(255, 96, 24, 0.04);
-}
-
-
-.food-invite-type-selector > button.active {
-  border-color:
-    rgba(255, 105, 34, 0.62);
-
-  background:
-    linear-gradient(
-      145deg,
-      rgba(255, 91, 20, 0.11),
-      rgba(255, 91, 20, 0.035)
-    );
-
-  color: #ffffff;
-}
-
-
-/* ============================================================
-   DATE + TIME CONTAINER
-============================================================ */
-
-.food-invite-date-time-grid {
-  display: grid;
-
-  grid-template-columns:
-    minmax(0, 0.9fr)
-    minmax(0, 1.3fr);
-
-  gap: 14px;
-}
-
-
-/* ============================================================
-   ICON INPUT
-============================================================ */
-
-.food-invite-input-with-icon {
-  display: flex;
-  align-items: center;
-
-  gap: 10px;
-
-  min-height: 47px;
-
-  padding: 0 13px;
-
-  box-sizing: border-box;
-
-  border:
-    1px solid rgba(255, 105, 34, 0.2);
-
-  border-radius: 12px;
-
-  background: #110d0c;
-}
-
-
-.food-invite-input-with-icon svg {
-  flex: 0 0 auto;
-
-  color: #ff692a;
-}
-
-
-.food-invite-input-with-icon input {
-  flex: 1;
-
-  min-width: 0;
-  min-height: auto;
-
-  padding: 12px 0;
-
-  border: 0 !important;
-  border-radius: 0;
-
-  background: transparent !important;
-
-  box-shadow: none !important;
-}
-
-
-/* ============================================================
-   TIME PICKER
-============================================================ */
-
-.food-invite-time-selector {
-  display: grid;
-
-  grid-template-columns:
-    20px
-    minmax(56px, 70px)
-    10px
-    minmax(56px, 70px)
-    minmax(110px, 1fr);
-
-  align-items: center;
-
-  gap: 8px;
-
-  min-height: 47px;
-
-  padding: 6px 8px 6px 12px;
-
-  box-sizing: border-box;
-
-  border:
-    1px solid rgba(255, 105, 34, 0.2);
-
-  border-radius: 12px;
-
-  background: #110d0c;
-}
-
-
-.food-invite-time-selector > svg {
-  color: #ff692a;
-}
-
-
-.food-invite-time-selector > select {
-  min-height: 35px;
-
-  padding: 0 8px;
-
-  border:
-    1px solid rgba(255, 255, 255, 0.07);
-
-  border-radius: 8px;
-
-  background:
-    rgba(255, 255, 255, 0.035);
-
-  color: #ffffff;
-
-  text-align: center;
-}
-
-
-.food-invite-time-colon {
-  color:
-    rgba(255, 255, 255, 0.45);
-
-  text-align: center;
-
-  font-size: 16px;
-  font-weight: 800;
-}
-
-
-/* ============================================================
-   AM / PM
-============================================================ */
-
-.food-invite-ampm {
-  display: grid;
-
-  grid-template-columns:
-    repeat(2, 1fr);
-
-  gap: 3px;
-
-  padding: 3px;
-
-  border-radius: 9px;
-
-  background:
-    rgba(255, 255, 255, 0.04);
-}
-
-
-.food-invite-ampm > button {
-  appearance: none;
-
-  min-height: 31px;
-
-  padding: 0 9px;
-
-  border: 0;
-
-  border-radius: 7px;
-
-  background: transparent;
-
-  color:
-    rgba(255, 255, 255, 0.44);
-
-  font-family: inherit;
-
-  font-size: 9px;
-  font-weight: 900;
-
-  cursor: pointer;
-}
-
-
-.food-invite-ampm > button.active {
-  background:
-    #ff6426;
-
-  color: #ffffff;
-
-  box-shadow:
-    0 4px 12px
-    rgba(255, 91, 20, 0.18);
-}
-
-
-/* ============================================================
-   VENUE SELECTOR
-============================================================ */
-
-.food-invite-venue-selector {
-  display: grid;
-
-  grid-template-columns:
-    repeat(3, minmax(0, 1fr));
-
-  gap: 9px;
-}
-
-
-.food-invite-venue-selector > button {
-  appearance: none;
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  gap: 8px;
-
-  min-height: 48px;
-
-  padding: 0 12px;
-
-  border:
-    1px solid rgba(255, 255, 255, 0.08);
-
-  border-radius: 12px;
-
-  background:
-    rgba(255, 255, 255, 0.018);
-
-  color:
-    rgba(255, 255, 255, 0.62);
-
-  font-family: inherit;
-
-  font-size: 10px;
-  font-weight: 700;
-
-  cursor: pointer;
-}
-
-
-.food-invite-venue-selector > button svg {
-  color: #ff692a;
-}
-
-
-.food-invite-venue-selector > button.active {
-  border-color:
-    rgba(255, 105, 34, 0.58);
-
-  background:
-    rgba(255, 92, 24, 0.085);
-
-  color: #ffffff;
-}
-
-
-/* ============================================================
-   KITCHEN CONTRIBUTION
-============================================================ */
-
-.food-invite-money-input {
-  display: flex;
-  align-items: center;
-
-  min-height: 47px;
-
-  border:
-    1px solid rgba(255, 105, 34, 0.2);
-
-  border-radius: 12px;
-
-  background: #110d0c;
+  padding: 11px 13px;
 
   overflow: hidden;
-}
-
-
-.food-invite-money-input > span {
-  display: grid;
-  place-items: center;
-
-  width: 46px;
-
-  align-self: stretch;
-
-  border-right:
-    1px solid rgba(255, 255, 255, 0.055);
-
-  color: #ff692a;
-
-  font-size: 15px;
-  font-weight: 800;
-}
-
-
-.food-invite-money-input > input {
-  flex: 1;
-
-  min-height: 45px;
-
-  border: 0 !important;
-
-  background: transparent !important;
-
-  box-shadow: none !important;
-}
-
-
-/* ============================================================
-   HELP TEXT
-============================================================ */
-
-.food-invite-create-modal label > small {
-  color:
-    rgba(255, 255, 255, 0.34);
-
-  font-size: 9px;
-  font-weight: 500;
-
-  line-height: 1.5;
-}
-
-
-/* ============================================================
-   CONNECTIONS
-============================================================ */
-
-.food-invite-connections {
-  display: grid;
-
-  gap: 9px;
-}
-
-
-.food-invite-person {
-  appearance: none;
-
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-
-  gap: 12px;
-
-  width: 100%;
-  min-height: 56px;
-
-  padding: 9px 12px;
 
   border:
-    1px solid rgba(255, 255, 255, 0.08);
+    1px solid
+    rgba(255, 255, 255, 0.075);
 
   border-radius: 13px;
 
   background:
-    rgba(255, 255, 255, 0.018);
-
-  color: #ffffff;
-
-  font-family: inherit;
-
-  cursor: pointer;
-
-  transition:
-    border-color 0.2s ease,
-    background 0.2s ease;
-}
-
-
-.food-invite-person:hover {
-  border-color:
-    rgba(255, 102, 31, 0.3);
-}
-
-
-.food-invite-person.selected {
-  border-color:
-    rgba(255, 104, 31, 0.58);
-
-  background:
-    rgba(255, 91, 22, 0.065);
-}
-
-
-.food-invite-person-left {
-  display: flex;
-  align-items: center;
-
-  gap: 10px;
-
-  min-width: 0;
-}
-
-
-.food-invite-person-avatar {
-  display: grid;
-  place-items: center;
-
-  width: 36px;
-  height: 36px;
-
-  flex: 0 0 36px;
-
-  border-radius: 50%;
-
-  background:
-    rgba(255, 95, 24, 0.1);
-
-  color: #ff6a2a;
-
-  font-size: 11px;
-  font-weight: 850;
-}
-
-
-.food-invite-person-left strong {
-  overflow: hidden;
-
-  color: rgba(255, 255, 255, 0.88);
-
-  font-size: 11px;
-  font-weight: 700;
-
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-
-.food-invite-selection-mark {
-  display: grid;
-  place-items: center;
-
-  width: 28px;
-  height: 28px;
-
-  flex: 0 0 28px;
-
-  border-radius: 50%;
-
-  background:
-    rgba(255, 255, 255, 0.04);
-
-  color:
-    rgba(255, 255, 255, 0.48);
-}
-
-
-.food-invite-person.selected
-.food-invite-selection-mark {
-  background:
-    rgba(255, 97, 24, 0.13);
-
-  color: #ff7336;
-}
-
-
-/* ============================================================
-   FOOD WALK
-============================================================ */
-
-.food-walk-stops {
-  display: grid;
-
-  gap: 14px;
-}
-
-
-.food-invite-add-stop {
-  appearance: none;
-
-  display: inline-flex;
-  align-items: center;
-
-  gap: 7px;
-
-  justify-self: start;
-
-  padding: 8px 0;
-
-  border: 0;
-
-  background: transparent;
-
-  color: #ff6d30;
-
-  font-family: inherit;
-
-  font-size: 10px;
-  font-weight: 750;
-
-  cursor: pointer;
-}
-
-
-/* ============================================================
-   FOOTER
-============================================================ */
-
-.food-invite-create-footer {
-  position: sticky;
-  bottom: 0;
-
-  z-index: 30;
-
-  display: flex;
-  justify-content: flex-end;
-
-  gap: 10px;
-
-  padding: 18px 32px;
-
-  border-top:
-    1px solid rgba(255, 255, 255, 0.065);
-
-  background:
-    rgba(11, 9, 8, 0.97);
-
-  backdrop-filter:
-    blur(14px);
-}
-
-
-.food-invite-create-cancel {
-  appearance: none;
-
-  min-width: 100px;
-  min-height: 47px;
-
-  padding: 0 18px;
-
-  border:
-    1px solid rgba(255, 255, 255, 0.09);
-
-  border-radius: 12px;
-
-  background:
-    rgba(255, 255, 255, 0.025);
-
-  color:
-    rgba(255, 255, 255, 0.66);
-
-  font-family: inherit;
-
-  font-size: 11px;
-  font-weight: 700;
-
-  cursor: pointer;
-}
-
-
-.food-invite-submit {
-  appearance: none;
-
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-
-  gap: 8px;
-
-  min-width: 200px;
-  min-height: 47px;
-
-  padding: 0 20px;
-
-  border: 0;
-
-  border-radius: 12px;
-
-  background:
-    linear-gradient(
-      135deg,
-      #ff6b2b,
-      #d93a0a
-    );
-
-  color: #ffffff;
-
-  font-family: inherit;
-
-  font-size: 11px;
-  font-weight: 850;
-
-  cursor: pointer;
-
-  box-shadow:
-    0 10px 28px
-    rgba(222, 52, 5, 0.13);
-
-  transition:
-    transform 0.2s ease,
-    box-shadow 0.2s ease;
-}
-
-
-.food-invite-submit:hover:not(:disabled) {
-  transform:
-    translateY(-1px);
-
-  box-shadow:
-    0 14px 34px
-    rgba(222, 52, 5, 0.2);
-}
-
-
-.food-invite-submit:disabled {
-  opacity: 0.55;
-
-  cursor: not-allowed;
-}
-
-
-/* ============================================================
-   MOBILE
-============================================================ */
-
-@media (max-width: 680px) {
-
-  .food-invite-create-modal {
-    width:
-      calc(100vw - 20px);
-
-    max-height:
-      calc(100vh - 20px);
-
-    border-radius:
-      20px;
-  }
-
-
-  .food-invite-create-header {
-    padding:
-      22px
-      20px
-      19px;
-  }
-
-
-  .food-invite-create-header h2 {
-    font-size:
-      24px;
-  }
-
-
-  .food-invite-form-section {
-    padding:
-      23px
-      20px
-      25px;
-  }
-
-
-  .food-invite-type-selector {
-    grid-template-columns:
-      1fr;
-  }
-
-
-  .food-invite-type-selector > button {
-    flex-direction:
-      row;
-
-    align-items:
-      center;
-
-    min-height:
-      52px;
-  }
-
-
-  .food-invite-date-time-grid {
-    grid-template-columns:
-      1fr;
-  }
-
-
-  .food-invite-time-selector {
-    grid-template-columns:
-      20px
-      1fr
-      10px
-      1fr;
-  }
-
-
-  .food-invite-ampm {
-    grid-column:
-      1 / -1;
-
-    margin-top:
-      2px;
-  }
-
-
-  .food-invite-venue-selector {
-    grid-template-columns:
-      1fr;
-  }
-
-
-  .food-invite-create-footer {
-    padding:
-      15px
-      20px;
-  }
-
-
-  .food-invite-create-cancel,
-  .food-invite-submit {
-    flex: 1;
-
-    min-width: 0;
-  }
-
-}
-
-/* ============================================================
-   FOODKINDL TYPOGRAPHY — FINAL READABILITY OVERRIDES
-   Keep this block at the VERY END of the file.
-============================================================ */
-
-.food-invite-create-modal {
-  font-size: 14px;
-  line-height: 1.5;
-  -webkit-font-smoothing: antialiased;
-  text-rendering: optimizeLegibility;
-}
-
-/* Header */
-.food-invite-create-header > div:first-child > span {
-  font-size: 11px;
-}
-
-.food-invite-create-header h2 {
-  font-size: 31px;
-  font-weight: 800;
-}
-
-.food-invite-create-header p {
-  font-size: 13px;
-  color: rgba(255, 255, 255, 0.62);
-}
-
-/* Section numbering + headings */
-.food-invite-form-section-heading > span {
-  font-size: 10px;
-}
-
-.food-invite-form-section-heading strong {
-  font-size: 16px;
-  font-weight: 800;
-}
-
-.food-invite-form-section-heading small {
-  font-size: 11px;
-  color: rgba(255, 255, 255, 0.52);
-}
-
-/* Form labels */
-.food-invite-create-modal label,
-.food-invite-form label {
-  font-size: 12px;
-  font-weight: 750;
-  color: rgba(255, 255, 255, 0.86);
-}
-
-/* Inputs */
-.food-invite-create-modal input,
-.food-invite-create-modal select,
-.food-invite-create-modal textarea,
-.food-invite-form input,
-.food-invite-form select,
-.food-invite-form textarea {
-  font-size: 13px;
-  font-weight: 600;
-}
-
-.food-invite-create-modal input::placeholder,
-.food-invite-create-modal textarea::placeholder,
-.food-invite-form input::placeholder,
-.food-invite-form textarea::placeholder {
-  color: rgba(255, 255, 255, 0.46);
-  opacity: 1;
-}
-
-/* Help text */
-.food-invite-create-modal label > small,
-.food-invite-form small {
-  font-size: 10.5px;
-  color: rgba(255, 255, 255, 0.48);
-}
-
-/* Experience buttons */
-.food-invite-type-selector > button {
-  font-size: 12px;
-  font-weight: 800;
-}
-
-.food-invite-type-selector > button.active {
-  color: #ffffff;
-}
-
-/* Venue buttons */
-.food-invite-venue-selector > button {
-  font-size: 11.5px;
-  font-weight: 800;
-}
-
-/* Time picker */
-.food-invite-time-selector > select {
-  font-size: 12.5px;
-  font-weight: 800;
-}
-
-.food-invite-time-colon {
-  font-size: 17px;
-}
-
-.food-invite-ampm > button {
-  font-size: 10px;
-  font-weight: 900;
-}
-
-/* Connection/member text */
-.food-invite-person-left strong {
-  font-size: 12.5px;
-  font-weight: 800;
-}
-
-/* Buttons */
-.food-invite-create-cancel {
-  font-size: 12px;
-  font-weight: 800;
-}
-
-.food-invite-submit {
-  font-size: 12px;
-  font-weight: 850;
-}
-
-/* Detail modal typography */
-.food-invite-detail-kicker {
-  font-size: 11px;
-}
-
-.food-invite-detail-header h2 {
-  font-size: 31px;
-  font-weight: 800;
-}
-
-.food-invite-detail-type-card span,
-.food-invite-detail-host span,
-.food-invite-detail-info span,
-.food-invite-detail-label,
-.food-invite-contribution-card span,
-.food-invite-detail-message span {
-  font-size: 10px;
-}
-
-.food-invite-detail-type-card strong {
-  font-size: 19px;
-}
-
-.food-invite-detail-type-card small {
-  font-size: 13px;
-}
-
-.food-invite-detail-host strong,
-.food-invite-detail-info strong {
-  font-size: 14px;
-}
-
-.food-invite-detail-primary-value {
-  font-size: 18px;
-}
-
-.food-invite-detail-address {
-  font-size: 13px;
-}
-
-.food-invite-contribution-card p {
-  font-size: 12px;
-}
-
-.food-invite-detail-message blockquote {
-  font-size: 15px;
-}
-
-.food-invite-participant strong {
-  font-size: 13px;
-}
-
-.food-invite-participant-status {
-  font-size: 9px;
-}
-
-/* Page typography */
-.food-invite-section-title span {
-  font-size: 11px;
-}
-
-.food-invite-section-title h2 {
-  font-size: 30px;
-}
-
-.food-invite-row-main strong {
-  font-size: 14px;
-}
-
-.food-invite-row-main span,
-.food-invite-row-time {
-  font-size: 12px;
-}
-
-.food-invite-status {
-  font-size: 10px;
-}
-
-.food-invite-type-card p {
-  font-size: 14px;
-}
-
-.food-invite-how-grid h3 {
-  font-size: 16px;
-}
-
-.food-invite-how-grid p {
-  font-size: 13px;
-}
-
-/* Mobile tuning */
-@media (max-width: 680px) {
-  .food-invite-create-header h2 {
-    font-size: 26px;
-  }
-
-  .food-invite-form-section-heading strong {
-    font-size: 15px;
-  }
-
-  .food-invite-create-modal label,
-  .food-invite-form label {
-    font-size: 11.5px;
-  }
-
-  .food-invite-create-modal input,
-  .food-invite-create-modal select,
-  .food-invite-create-modal textarea {
-    font-size: 13px;
-  }
-}
-
-
-/* ============================================================
-   DINE OUT — FORM LEFT / RECOMMENDATIONS RIGHT
-   FINAL OVERRIDES
-============================================================ */
-
-.food-invite-create-layout {
-  width: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.food-invite-create-layout.dine-out-layout {
-  display: grid;
-  grid-template-columns: minmax(640px, 720px) 310px;
-  align-items: start;
-  justify-content: center;
-  gap: 22px;
-  width: min(1080px, calc(100vw - 40px));
-}
-
-.food-invite-create-layout.dine-out-layout .food-invite-create-modal {
-  width: 100%;
-  min-width: 0;
-  margin: 0;
-}
-
-.food-invite-restaurant-panel {
-  width: 100%;
-  max-height: calc(100vh - 48px);
-  overflow-y: auto;
-  overflow-x: hidden;
-  box-sizing: border-box;
-  padding: 20px;
-  border: 1px solid rgba(255, 103, 32, 0.28);
-  border-radius: 24px;
-  background:
-    radial-gradient(
-      circle at 70% 0%,
-      rgba(255, 95, 25, 0.07),
-      transparent 30%
-    ),
-    #0d0a09;
-  box-shadow: 0 35px 90px rgba(0, 0, 0, 0.55);
-}
-
-.food-invite-restaurant-panel::-webkit-scrollbar {
-  width: 6px;
-}
-
-.food-invite-restaurant-panel::-webkit-scrollbar-thumb {
-  background: rgba(255,255,255,.15);
-  border-radius: 999px;
-}
-
-.food-invite-restaurant-panel-heading {
-  padding-bottom: 16px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-}
-
-.food-invite-restaurant-panel-heading > span {
-  display: block;
-  margin-bottom: 6px;
-  color: #ff6a2a;
-  font-size: 10px;
-  font-weight: 900;
-  letter-spacing: 1.3px;
-}
-
-.food-invite-restaurant-panel-heading h3 {
-  margin: 0;
-  color: #ffffff;
-  font-size: 20px;
-  font-weight: 800;
-  line-height: 1.25;
-}
-
-.food-invite-restaurant-panel-heading p {
-  margin: 7px 0 0;
-  color: rgba(255, 255, 255, 0.56);
-  font-size: 11px;
-  line-height: 1.55;
-}
-
-.food-invite-restaurant-list {
-  display: grid;
-  gap: 12px;
-  margin-top: 16px;
-}
-
-.food-invite-restaurant-card {
-  appearance: none;
-  display: grid;
-  grid-template-columns: 76px minmax(0, 1fr);
-  gap: 12px;
-  width: 100%;
-  padding: 10px;
-  border: 1px solid rgba(255, 255, 255, 0.075);
-  border-radius: 15px;
-  background: rgba(255, 255, 255, 0.018);
-  color: #ffffff;
-  text-align: left;
-  cursor: pointer;
-  transition:
-    transform .2s ease,
-    border-color .2s ease,
-    background .2s ease;
-}
-
-.food-invite-restaurant-card:hover {
-  transform: translateY(-2px);
-  border-color: rgba(255, 103, 32, 0.42);
-  background: rgba(255, 95, 25, 0.035);
-}
-
-.food-invite-restaurant-card.selected {
-  border-color: #ff6828;
-  background: rgba(255, 94, 24, 0.085);
-}
-
-.food-invite-restaurant-image {
-  display: grid;
-  place-items: center;
-  width: 76px;
-  height: 76px;
-  overflow: hidden;
-  border-radius: 12px;
-  background: rgba(255, 93, 24, 0.08);
-  color: #ff6a2a;
-}
-
-.food-invite-restaurant-image img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.food-invite-restaurant-content {
-  display: grid;
-  align-content: center;
-  gap: 4px;
-  min-width: 0;
-}
-
-.food-invite-restaurant-content strong {
-  overflow: hidden;
-  color: #ffffff;
-  font-size: 13px;
-  font-weight: 800;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.food-invite-restaurant-content > span {
-  color: rgba(255, 255, 255, 0.60);
-  font-size: 10.5px;
-}
-
-.food-invite-restaurant-meta {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 7px;
-}
-
-.food-invite-restaurant-meta > span {
-  display: inline-flex;
-  align-items: center;
-  gap: 3px;
-  color: rgba(255, 255, 255, 0.58);
-  font-size: 9.5px;
-}
-
-.food-invite-restaurant-meta > span:first-child {
-  color: #ffc15a;
-}
-
-.food-invite-restaurant-content small {
-  margin-top: 2px;
-  color: #ff7136;
-  font-size: 9.5px;
-  font-weight: 750;
-}
-
-.food-invite-restaurant-empty,
-.food-invite-restaurant-loading {
-  display: grid;
-  place-items: center;
-  gap: 8px;
-  min-height: 180px;
-  padding: 20px;
-  color: rgba(255, 255, 255, 0.48);
-  text-align: center;
-}
-
-.food-invite-restaurant-empty svg {
-  color: #ff6a2a;
-}
-
-.food-invite-restaurant-empty strong {
-  color: rgba(255, 255, 255, 0.82);
-  font-size: 12px;
-}
-
-.food-invite-restaurant-empty span {
-  max-width: 190px;
-  font-size: 10px;
-  line-height: 1.5;
-}
-
-@media (max-width: 1100px) {
-  .food-invite-create-layout.dine-out-layout {
-    grid-template-columns: minmax(560px, 680px) 260px;
-    width: calc(100vw - 30px);
-    gap: 14px;
-  }
-}
-
-@media (max-width: 900px) {
-  .food-invite-create-layout.dine-out-layout {
-    display: flex;
-    flex-direction: column;
-    width: min(720px, calc(100vw - 24px));
-  }
-
-  .food-invite-create-layout.dine-out-layout .food-invite-create-modal {
-    width: 100%;
-  }
-
-  .food-invite-restaurant-panel {
-    width: 100%;
-    max-height: none;
-  }
-
-  .food-invite-restaurant-list {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
-
-@media (max-width: 600px) {
-  .food-invite-restaurant-list {
-    grid-template-columns: 1fr;
-  }
-}
-
-/* ============================================================
-   FINAL DINE OUT MODAL LAYOUT
-============================================================ */
-
-.food-invite-modal-backdrop {
-  position: fixed;
-  inset: 0;
-
-  z-index: 9999;
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  padding: 24px;
-
-  box-sizing: border-box;
-
-  background:
-    rgba(0, 0, 0, 0.86);
-
-  backdrop-filter:
-    blur(10px);
-
-  overflow: hidden;
-}
-
-
-/* ============================================================
-   DEFAULT CREATE SHELL
-============================================================ */
-
-.food-invite-create-shell {
-  width:
-    min(
-      720px,
-      calc(100vw - 48px)
-    );
-
-  height:
-    min(
-      940px,
-      calc(100vh - 48px)
-    );
-
-  display: block;
-
-  margin: auto;
-}
-
-
-/* ============================================================
-   DINE OUT = FORM LEFT + RESTAURANT RIGHT
-============================================================ */
-
-.food-invite-create-shell.dine-out {
-  width:
-    min(
-      1120px,
-      calc(100vw - 48px)
-    );
-
-  height:
-    min(
-      940px,
-      calc(100vh - 48px)
-    );
-
-  display: grid;
-
-  grid-template-columns:
-    minmax(0, 720px)
-    minmax(280px, 340px);
-
-  gap: 20px;
-
-  align-items: stretch;
-
-  margin: auto;
-}
-
-
-/* ============================================================
-   MAIN FORM
-============================================================ */
-
-.food-invite-create-shell
-.food-invite-create-modal {
-  width: 100%;
-  height: 100%;
-
-  min-width: 0;
-
-  box-sizing: border-box;
-
-  overflow-y: auto;
-  overflow-x: hidden;
-
-  margin: 0;
-
-  border:
-    1px solid
-    rgba(255, 103, 31, 0.35);
-
-  border-radius: 26px;
-
-  background:
-    #0d0a09;
-
-  box-shadow:
-    0 35px 100px
-    rgba(0, 0, 0, 0.7);
-}
-
-
-/* ============================================================
-   RESTAURANT SIDEBAR
-============================================================ */
-
-.food-invite-restaurant-sidebar {
-  width: 100%;
-  height: 100%;
-
-  min-width: 0;
-
-  box-sizing: border-box;
-
-  overflow-y: auto;
-  overflow-x: hidden;
-
-  padding: 22px;
-
-  border:
-    1px solid
-    rgba(255, 103, 31, 0.3);
-
-  border-radius: 26px;
-
-  background:
-    radial-gradient(
-      circle at 80% 0%,
-      rgba(255, 91, 23, 0.08),
-      transparent 30%
-    ),
-    #0d0a09;
-
-  box-shadow:
-    0 35px 100px
-    rgba(0, 0, 0, 0.55);
-}
-
-
-/* ============================================================
-   RESTAURANT HEADER
-============================================================ */
-
-.food-invite-restaurant-sidebar-header {
-  padding-bottom: 18px;
-
-  border-bottom:
-    1px solid
-    rgba(255, 255, 255, 0.07);
-}
-
-
-.food-invite-restaurant-sidebar-header > span {
-  display: block;
-
-  margin-bottom: 7px;
-
-  color:
-    #ff6b2a;
-
-  font-size:
-    10px;
-
-  font-weight:
-    900;
-
-  letter-spacing:
-    1.4px;
-}
-
-
-.food-invite-restaurant-sidebar-header h2 {
-  margin:
-    0;
-
-  color:
-    #fff;
-
-  font-size:
-    22px;
-
-  font-weight:
-    800;
-
-  line-height:
-    1.25;
-}
-
-
-.food-invite-restaurant-sidebar-header p {
-  margin:
-    8px
-    0
-    0;
-
-  color:
-    rgba(255, 255, 255, 0.58);
-
-  font-size:
-    11px;
-
-  line-height:
-    1.55;
-}
-
-
-/* ============================================================
-   RESTAURANT LIST
-============================================================ */
-
-.food-invite-restaurant-list {
-  display: grid;
-
-  gap: 12px;
-
-  margin-top: 18px;
-}
-
-
-/* ============================================================
-   RESTAURANT CARD
-============================================================ */
-
-.food-invite-restaurant-card {
-  appearance: none;
-
-  display: grid;
-
-  grid-template-columns:
-    78px
-    minmax(0, 1fr);
-
-  gap: 12px;
-
-  width: 100%;
-
-  box-sizing: border-box;
-
-  padding: 10px;
-
-  border:
-    1px solid
-    rgba(255, 255, 255, 0.08);
-
-  border-radius:
-    15px;
-
-  background:
-    rgba(255, 255, 255, 0.02);
-
-  color:
-    #fff;
-
-  text-align:
-    left;
-
-  cursor:
-    pointer;
-
-  transition:
-    transform 0.2s ease,
-    border-color 0.2s ease,
-    background 0.2s ease;
-}
-
-
-.food-invite-restaurant-card:hover {
-  transform:
-    translateY(-2px);
-
-  border-color:
-    rgba(255, 101, 31, 0.42);
-
-  background:
-    rgba(255, 93, 22, 0.04);
-}
-
-
-.food-invite-restaurant-card.selected {
-  border-color:
-    #ff6728;
-
-  background:
-    rgba(255, 94, 23, 0.1);
-}
-
-
-/* ============================================================
-   RESTAURANT IMAGE
-============================================================ */
-
-.food-invite-restaurant-image {
-  display: grid;
-  place-items: center;
-
-  width: 78px;
-  height: 78px;
-
-  overflow: hidden;
-
-  border-radius:
-    12px;
-
-  background:
-    rgba(255, 94, 22, 0.09);
-
-  color:
-    #ff6a2a;
-}
-
-
-.food-invite-restaurant-image img {
-  width: 100%;
-  height: 100%;
-
-  object-fit:
-    cover;
-}
-
-
-/* ============================================================
-   RESTAURANT CONTENT
-============================================================ */
-
-.food-invite-restaurant-content {
-  display: grid;
-
-  align-content: center;
-
-  gap: 4px;
-
-  min-width: 0;
-}
-
-
-.food-invite-restaurant-content strong {
-  overflow: hidden;
-
-  color:
-    #fff;
-
-  font-size:
-    13px;
-
-  font-weight:
-    800;
-
-  text-overflow:
-    ellipsis;
-
-  white-space:
-    nowrap;
-}
-
-
-.food-invite-restaurant-content > span {
-  color:
-    rgba(255, 255, 255, 0.62);
-
-  font-size:
-    11px;
-}
-
-
-.food-invite-restaurant-meta {
-  display: flex;
-  align-items: center;
-
-  flex-wrap: wrap;
-
-  gap: 7px;
-}
-
-
-.food-invite-restaurant-meta span {
-  display: inline-flex;
-  align-items: center;
-
-  gap: 3px;
-
-  color:
-    rgba(255, 255, 255, 0.57);
-
-  font-size:
-    9px;
-}
-
-
-.food-invite-restaurant-meta
-.restaurant-rating {
-  color:
-    #ffc45e;
-}
-
-
-.food-invite-restaurant-content small {
-  margin-top:
-    2px;
-
-  color:
-    #ff7337;
-
-  font-size:
-    9px;
-
-  font-weight:
-    800;
-}
-
-
-/* ============================================================
-   EMPTY / LOADING
-============================================================ */
-
-.food-invite-restaurant-state {
-  display: grid;
-
-  place-items: center;
-
-  gap: 8px;
-
-  min-height: 220px;
-
-  padding: 25px;
-
-  color:
-    rgba(255, 255, 255, 0.5);
-
-  text-align: center;
-
-  font-size:
-    11px;
-}
-
-
-.food-invite-restaurant-state svg {
-  color:
-    #ff6a2a;
-}
-
-
-.food-invite-restaurant-state strong {
-  color:
-    rgba(255, 255, 255, 0.82);
-
-  font-size:
-    13px;
-}
-
-
-/* ============================================================
-   FORM WIDTH SAFETY
-============================================================ */
-
-.food-invite-create-shell.dine-out
-.food-invite-form-section {
-  width: 100%;
-
-  box-sizing: border-box;
-}
-
-
-.food-invite-create-shell.dine-out
-.food-invite-create-header {
-  width: 100%;
-
-  box-sizing: border-box;
-}
-
-
-.food-invite-create-shell.dine-out
-.food-invite-create-footer {
-  width: 100%;
-
-  box-sizing: border-box;
-}
-
-
-/* ============================================================
-   TABLET
-============================================================ */
-
-@media (
-  max-width: 1050px
-) {
-
-  .food-invite-create-shell.dine-out {
-    grid-template-columns:
-      minmax(0, 1fr)
-      280px;
-
-    width:
-      calc(100vw - 32px);
-  }
-
-}
-
-
-/* ============================================================
-   MOBILE / SMALL TABLET
-============================================================ */
-
-@media (
-  max-width: 850px
-) {
-
-  .food-invite-modal-backdrop {
-    overflow-y:
-      auto;
-
-    align-items:
-      flex-start;
-  }
-
-
-  .food-invite-create-shell,
-  .food-invite-create-shell.dine-out {
-    display:
-      flex;
-
-    flex-direction:
-      column;
-
-    width:
-      min(
-        720px,
-        calc(100vw - 24px)
-      );
-
-    height:
-      auto;
-
-    max-height:
-      none;
-  }
-
-
-  .food-invite-create-shell
-  .food-invite-create-modal {
-    height:
-      auto;
-
-    max-height:
-      none;
-  }
-
-
-  .food-invite-restaurant-sidebar {
-    height:
-      auto;
-
-    max-height:
-      none;
-  }
-
-
-  .food-invite-restaurant-list {
-    grid-template-columns:
-      repeat(
-        2,
-        minmax(0, 1fr)
-      );
-  }
-
-}
-
-
-/* ============================================================
-   PHONE
-============================================================ */
-
-@media (
-  max-width: 560px
-) {
-
-  .food-invite-restaurant-list {
-    grid-template-columns:
-      1fr;
-  }
-
-}
-
-/* ============================================================
-   FOODKINDL PARTNER BADGE
-============================================================ */
-
-.foodkindl-partner-mini-badge {
-  display: inline-flex;
-  align-items: center;
-
-  width: fit-content;
-
-  gap: 4px;
-
-  margin-top: 3px;
-
-  padding: 4px 8px;
-
-  border: 1px solid
-    rgba(255, 106, 42, 0.3);
-
-  border-radius: 999px;
-
-  background:
-    rgba(255, 106, 42, 0.08);
-
-  color: #ff7136;
-
-  font-size: 9px;
-  font-weight: 800;
-
-  line-height: 1;
-
-  letter-spacing: 0.2px;
-}
-
-
-.foodkindl-partner-label {
-  display: inline-flex;
-  align-items: center;
-
-  width: fit-content;
-
-  gap: 6px;
-
-  padding: 6px 10px;
-
-  border: 1px solid
-    rgba(255, 106, 42, 0.3);
-
-  border-radius: 999px;
-
-  background:
-    rgba(255, 106, 42, 0.09);
-
-  color: #ff7136;
-
-  font-size: 10px;
-  font-weight: 900;
-
-  letter-spacing: 1px;
-}
-
-
-/* ============================================================
-   BOOKING UNAVAILABLE
-============================================================ */
-
-.foodkindl-booking-unavailable {
-  margin-top: 22px;
-
-  padding: 18px;
-
-  border: 1px solid
-    rgba(255, 255, 255, 0.08);
-
-  border-radius: 16px;
-
-  background:
-    rgba(255, 255, 255, 0.025);
-}
-
-
-.foodkindl-booking-unavailable > span {
-  display: block;
-
-  margin-bottom: 6px;
-
-  color: #ff7136;
-
-  font-size: 9px;
-  font-weight: 900;
-
-  letter-spacing: 1px;
-}
-
-
-.foodkindl-booking-unavailable strong {
-  display: block;
-
-  color: #ffffff;
-
-  font-size: 14px;
-}
-
-
-.foodkindl-booking-unavailable p {
-  margin:
-    6px
-    0
-    0;
-
-  color:
-    rgba(255, 255, 255, 0.56);
-
-  font-size: 11px;
-
-  line-height: 1.5;
-}
-
-/* ============================================================
-   FINAL MODAL SCROLL FIX
-============================================================ */
-
-.food-invite-modal-backdrop {
-  position: fixed;
-  inset: 0;
-
-  z-index: 9999;
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  padding: 28px;
-
-  box-sizing: border-box;
-
-  background: rgba(0, 0, 0, 0.88);
-  backdrop-filter: blur(10px);
-
-  overflow: hidden;
-}
-
-
-/* ============================================================
-   CREATE SHELL
-============================================================ */
-
-.food-invite-create-shell {
-  width: min(
-    720px,
-    calc(100vw - 40px)
-  );
-
-  height: calc(100vh - 56px);
-
-  max-height: 920px;
-
-  display: block;
-
-  margin: auto;
-}
-
-
-/* ============================================================
-   DINE OUT TWO-COLUMN LAYOUT
-============================================================ */
-
-.food-invite-create-shell.dine-out {
-  width: min(
-    1180px,
-    calc(100vw - 56px)
-  );
-
-  height: calc(100vh - 56px);
-
-  max-height: 920px;
-
-  display: grid;
-
-  grid-template-columns:
-    minmax(0, 760px)
-    minmax(300px, 340px);
-
-  gap: 20px;
-
-  align-items: stretch;
-}
-
-
-/* ============================================================
-   LEFT FORM
-============================================================ */
-
-.food-invite-create-modal {
-  position: relative;
-
-  width: 100%;
-  height: 100%;
-
-  min-height: 0;
-  min-width: 0;
-
-  box-sizing: border-box;
-
-  overflow: hidden;
-
-  border: 1px solid rgba(255, 101, 31, 0.38);
-  border-radius: 28px;
-
-  background: #0d0a09;
-
-  box-shadow:
-    0 35px 100px rgba(0, 0, 0, 0.68);
-}
-
-
-/* ============================================================
-   HEADER
-============================================================ */
-
-.food-invite-create-header {
-  position: relative;
-
-  padding: 38px 32px 26px;
-
-  box-sizing: border-box;
-
-  background: #0d0a09;
-
-  border-bottom:
-    1px solid rgba(255, 255, 255, 0.06);
-
-  z-index: 3;
-}
-
-
-/* ============================================================
-   FORM = ACTUAL SCROLL AREA
-============================================================ */
-
-.food-invite-form {
-  height: calc(100% - 158px);
-
-  overflow-y: auto;
-  overflow-x: hidden;
-
-  box-sizing: border-box;
-
-  padding:
-    0
-    32px
-    150px;
-
-  scroll-behavior: smooth;
-
-  scrollbar-width: thin;
-
-  scrollbar-color:
-    rgba(255, 255, 255, 0.25)
-    transparent;
-}
-
-
-.food-invite-form::-webkit-scrollbar {
-  width: 7px;
-}
-
-
-.food-invite-form::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-
-.food-invite-form::-webkit-scrollbar-thumb {
-  background:
-    rgba(255, 255, 255, 0.22);
-
-  border-radius: 999px;
-}
-
-
-.food-invite-form::-webkit-scrollbar-thumb:hover {
-  background:
-    rgba(255, 255, 255, 0.34);
-}
-
-
-/* ============================================================
-   FORM SECTIONS
-============================================================ */
-
-.food-invite-form-section {
-  width: 100%;
-
-  box-sizing: border-box;
-
-  padding: 28px 0;
-
-  border-bottom:
-    1px solid rgba(255, 255, 255, 0.065);
-}
-
-
-.food-invite-form-section:last-of-type {
-  border-bottom: 0;
-}
-
-
-/* ============================================================
-   IMPORTANT:
-   GIVE LAST SECTION EXTRA SPACE
-============================================================ */
-
-.food-invite-form-section:last-of-type {
-  margin-bottom: 90px;
-}
-
-
-/* ============================================================
-   STICKY ACTION FOOTER
-============================================================ */
-
-.food-invite-create-footer {
-  position: sticky;
-
-  left: 0;
-  right: 0;
-  bottom: 0;
-
-  z-index: 20;
-
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-
-  gap: 12px;
-
-  width: 100%;
-
-  box-sizing: border-box;
-
-  margin-top: 30px;
-
-  padding:
-    18px
-    0
-    6px;
-
-  background:
-    linear-gradient(
-      to top,
-      #0d0a09 72%,
-      rgba(13, 10, 9, 0)
-    );
-}
-
-/* ============================================================
-   RIGHT RESTAURANT SIDEBAR
-============================================================ */
-
-.food-invite-restaurant-sidebar {
-  width: 100%;
-  height: 100%;
-
-  min-width: 0;
-  min-height: 0;
-
-  box-sizing: border-box;
-
-  padding: 22px;
-
-  overflow-y: auto;
-  overflow-x: hidden;
-
-  border: 1px solid rgba(255, 103, 31, 0.33);
-
-  border-radius: 26px;
-
-  background:
-    radial-gradient(
-      circle at 75% 0%,
-      rgba(255, 88, 22, 0.08),
-      transparent 32%
-    ),
-    #0d0a09;
-
-  scrollbar-width: thin;
-
-  scrollbar-color:
-    rgba(255, 255, 255, 0.22)
-    transparent;
-}
-
-
-/* ============================================================
-   SIDEBAR SCROLLBAR
-============================================================ */
-
-.food-invite-restaurant-sidebar::-webkit-scrollbar {
-  width: 6px;
-}
-
-.food-invite-restaurant-sidebar::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.food-invite-restaurant-sidebar::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.20);
-
-  border-radius: 999px;
-}
-
-.food-invite-restaurant-sidebar::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 103, 31, 0.45);
-}
-
-
-/* ============================================================
-   SIDEBAR HEADER
-============================================================ */
-
-.food-invite-restaurant-sidebar-header {
-  margin-bottom: 18px;
-
-  padding-bottom: 18px;
-
-  border-bottom: 1px solid
-    rgba(255, 255, 255, 0.08);
-}
-
-
-.food-invite-restaurant-sidebar-eyebrow {
-  margin: 0 0 8px;
-
-  color: #ff641f;
-
-  font-size: 10px;
-
-  font-weight: 800;
-
-  line-height: 1;
-
-  letter-spacing: 1.5px;
-
-  text-transform: uppercase;
-}
-
-
-.food-invite-restaurant-sidebar-title {
-  margin: 0;
-
-  color: #ffffff;
-
-  font-size: 23px;
-
-  font-weight: 800;
-
-  line-height: 1.15;
-
-  letter-spacing: -0.5px;
-}
-
-
-.food-invite-restaurant-sidebar-description {
-  margin: 9px 0 0;
-
-  max-width: 260px;
-
-  color: rgba(255, 255, 255, 0.48);
-
-  font-size: 11px;
-
-  font-weight: 500;
-
-  line-height: 1.55;
-}
-
-
-/* ============================================================
-   RECOMMENDATION LIST
-============================================================ */
-
-.food-invite-restaurant-recommendations {
-  width: 100%;
-
-  display: flex;
-
-  flex-direction: column;
-
-  gap: 12px;
-
-  min-width: 0;
-}
-
-
-/* ============================================================
-   RESTAURANT CARD
-============================================================ */
-
-.food-invite-restaurant-card {
-  width: 100%;
-
-  min-width: 0;
-
-  box-sizing: border-box;
-
-  display: grid;
-
-  grid-template-columns:
-    88px
-    minmax(0, 1fr);
-
-  gap: 12px;
-
-  padding: 10px;
-
-  border: 1px solid
-    rgba(255, 255, 255, 0.10);
-
-  border-radius: 17px;
-
-  background:
     linear-gradient(
       145deg,
-      rgba(255, 255, 255, 0.045),
-      rgba(255, 255, 255, 0.018)
+      #121212,
+      #0d0d0d
     );
+
+  cursor: pointer;
 
   transition:
     border-color 0.2s ease,
     background 0.2s ease,
     transform 0.2s ease;
-
-  overflow: hidden;
 }
 
+.food-invite-smart-picker:hover {
+  transform: translateY(-1px);
 
-.food-invite-restaurant-card:hover {
   border-color:
-    rgba(255, 103, 31, 0.38);
+    rgba(255, 96, 31, 0.30);
 
   background:
     linear-gradient(
       145deg,
-      rgba(255, 103, 31, 0.08),
-      rgba(255, 255, 255, 0.025)
+      rgba(255, 96, 31, 0.055),
+      #0d0d0d
     );
-
-  transform: translateY(-1px);
 }
 
+.food-invite-smart-picker:focus-within {
+  border-color:
+    rgba(255, 96, 31, 0.42);
 
-/* ============================================================
-   RESTAURANT IMAGE
-============================================================ */
+  box-shadow:
+    0 0 0 3px
+    rgba(255, 96, 31, 0.07);
+}
 
-.food-invite-restaurant-card-image {
-  width: 88px;
+.food-invite-smart-picker-icon {
+  width: 40px;
+  height: 40px;
 
-  height: 118px;
+  display: grid;
+  place-items: center;
 
-  min-width: 88px;
+  flex-shrink: 0;
 
-  border-radius: 12px;
+  border:
+    1px solid
+    rgba(255, 96, 31, 0.17);
 
+  border-radius: 11px;
+
+  background:
+    rgba(255, 96, 31, 0.065);
+
+  color: #ff7545;
+}
+
+.food-invite-smart-picker-copy {
+  min-width: 0;
+}
+
+.food-invite-smart-picker-copy small,
+.food-invite-smart-picker-copy strong {
+  display: block;
+}
+
+.food-invite-smart-picker-copy small {
+  margin: 0 0 5px;
+
+  color: #746d69;
+
+  font-size: 7px;
+  font-weight: 800;
+
+  letter-spacing: 0.10em;
+}
+
+.food-invite-smart-picker-copy strong {
   overflow: hidden;
 
-  background: #171210;
-
-  position: relative;
-}
-
-
-.food-invite-restaurant-card-image img {
-  display: block;
-
-  width: 100%;
-
-  height: 100%;
-
-  object-fit: cover;
-
-  object-position: center;
-
-  transition:
-    transform 0.3s ease;
-}
-
-
-.food-invite-restaurant-card:hover
-.food-invite-restaurant-card-image img {
-  transform: scale(1.04);
-}
-
-
-/* ============================================================
-   IMAGE PLACEHOLDER
-============================================================ */
-
-.food-invite-restaurant-card-image-placeholder {
-  width: 100%;
-
-  height: 100%;
-
-  display: flex;
-
-  align-items: center;
-
-  justify-content: center;
-
-  color: rgba(255, 255, 255, 0.25);
+  color: #f6f1ee;
 
   font-size: 11px;
 
-  background:
-    linear-gradient(
-      135deg,
-      #1a1411,
-      #0f0c0b
-    );
-}
-
-
-/* ============================================================
-   RESTAURANT CONTENT
-============================================================ */
-
-.food-invite-restaurant-card-content {
-  min-width: 0;
-
-  min-height: 118px;
-
-  display: flex;
-
-  flex-direction: column;
-
-  align-items: stretch;
-
-  justify-content: space-between;
-
-  overflow: hidden;
-}
-
-
-/* ============================================================
-   RESTAURANT NAME
-============================================================ */
-
-.food-invite-restaurant-card-name {
-  margin: 1px 0 5px;
-
-  color: #ffffff;
-
-  font-size: 13px;
-
-  font-weight: 750;
-
-  line-height: 1.25;
-
-  white-space: nowrap;
-
-  overflow: hidden;
-
   text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
+.food-invite-picker-action {
+  padding: 6px 8px;
 
-/* ============================================================
-   PARTNER BADGE
-============================================================ */
+  border:
+    1px solid
+    rgba(255, 96, 31, 0.14);
 
-.food-invite-restaurant-partner-badge {
-  display: inline-flex;
+  border-radius: 8px;
 
-  align-items: center;
+  background:
+    rgba(255, 96, 31, 0.045);
 
-  align-self: flex-start;
+  color: #ff8559;
 
-  max-width: 100%;
-
-  box-sizing: border-box;
-
-  margin-bottom: 8px;
-
-  padding: 5px 8px;
-
-  color: #ff8a57;
-
-  font-size: 8px;
-
+  font-size: 7px;
   font-weight: 800;
 
-  line-height: 1;
-
-  letter-spacing: 0.7px;
-
-  text-transform: uppercase;
-
-  border: 1px solid
-    rgba(255, 103, 31, 0.35);
-
-  border-radius: 999px;
-
-  background:
-    rgba(255, 103, 31, 0.08);
-
-  white-space: nowrap;
-
-  overflow: hidden;
-
-  text-overflow: ellipsis;
-}
-
-
-/* ============================================================
-   RESTAURANT META
-============================================================ */
-
-.food-invite-restaurant-card-meta {
-  display: flex;
-
-  align-items: center;
-
-  gap: 8px;
-
-  min-width: 0;
-
-  margin-bottom: 5px;
-}
-
-
-.food-invite-restaurant-card-rating {
-  display: inline-flex;
-
-  align-items: center;
-
-  gap: 3px;
-
-  color: #ffc24a;
-
-  font-size: 10px;
-
-  font-weight: 700;
-
   white-space: nowrap;
 }
 
+.food-invite-period-badge {
+  min-width: 38px;
+  height: 30px;
 
-.food-invite-restaurant-card-location {
-  min-width: 0;
+  display: inline-grid;
+  place-items: center;
 
-  color: rgba(255, 255, 255, 0.42);
-
-  font-size: 9px;
-
-  font-weight: 500;
-
-  white-space: nowrap;
-
-  overflow: hidden;
-
-  text-overflow: ellipsis;
-}
-
-
-/* ============================================================
-   CUISINE
-============================================================ */
-
-.food-invite-restaurant-card-cuisine {
-  min-width: 0;
-
-  margin: 0 0 8px;
-
-  color: rgba(255, 255, 255, 0.48);
-
-  font-size: 9px;
-
-  font-weight: 500;
-
-  line-height: 1.35;
-
-  white-space: nowrap;
-
-  overflow: hidden;
-
-  text-overflow: ellipsis;
-}
-
-
-/* ============================================================
-   CARD BOTTOM ROW
-============================================================ */
-
-.food-invite-restaurant-card-actions {
-  width: 100%;
-
-  min-width: 0;
-
-  display: flex;
-
-  align-items: center;
-
-  justify-content: space-between;
-
-  gap: 6px;
-
-  margin-top: auto;
-}
-
-
-/* ============================================================
-   VIEW RESTAURANT
-============================================================ */
-
-.food-invite-restaurant-view {
-  min-width: 0;
-
-  color: #ff6420;
-
-  font-size: 9px;
-
-  font-weight: 750;
-
-  line-height: 1;
-
-  text-decoration: none;
-
-  white-space: nowrap;
-
-  overflow: hidden;
-
-  text-overflow: ellipsis;
-
-  transition:
-    color 0.2s ease;
-}
-
-
-.food-invite-restaurant-view:hover {
-  color: #ff9668;
-}
-
-
-/* ============================================================
-   ADD TO INVITE BUTTON
-============================================================ */
-
-.food-invite-restaurant-add {
-  flex: 0 0 auto;
-
-  min-width: 0;
-
-  height: 32px;
-
-  padding: 0 11px;
-
-  display: inline-flex;
-
-  align-items: center;
-
-  justify-content: center;
-
-  gap: 5px;
-
-  box-sizing: border-box;
-
-  color: #ffffff;
-
-  background:
-    #11100f;
-
-  border: 1px solid
-    rgba(255, 255, 255, 0.13);
+  padding: 0 8px;
 
   border-radius: 9px;
 
-  font-size: 9px;
+  font-size: 8px;
+  font-weight: 900;
 
-  font-weight: 700;
+  letter-spacing: 0.06em;
+}
 
-  line-height: 1;
+.food-invite-period-badge.am {
+  border:
+    1px solid
+    rgba(255, 186, 82, 0.20);
+
+  background:
+    rgba(255, 186, 82, 0.07);
+
+  color: #ffc46f;
+}
+
+.food-invite-period-badge.pm {
+  border:
+    1px solid
+    rgba(255, 111, 63, 0.22);
+
+  background:
+    rgba(255, 111, 63, 0.075);
+
+  color: #ff8a61;
+}
+
+/*
+  The real browser date/time input covers the card.
+  It stays visually hidden, but clicking/tapping anywhere
+  on the card opens the native calendar/clock picker.
+*/
+.food-invite-native-picker {
+  position: absolute !important;
+  inset: 0 !important;
+
+  z-index: 5;
+
+  width: 100% !important;
+  height: 100% !important;
+
+  margin: 0 !important;
+  padding: 0 !important;
+
+  opacity: 0;
 
   cursor: pointer;
-
-  white-space: nowrap;
-
-  transition:
-    background 0.2s ease,
-    border-color 0.2s ease,
-    color 0.2s ease,
-    transform 0.2s ease;
 }
 
+.food-invite-native-picker::-webkit-calendar-picker-indicator {
+  position: absolute;
+  inset: 0;
 
-.food-invite-restaurant-add:hover {
-  color: #ffffff;
-
-  background:
-    rgba(255, 103, 31, 0.15);
-
-  border-color:
-    rgba(255, 103, 31, 0.45);
-
-  transform: translateY(-1px);
-}
-
-
-.food-invite-restaurant-add:active {
-  transform: translateY(0);
-}
-
-
-/* ============================================================
-   ADD BUTTON ICON
-============================================================ */
-
-.food-invite-restaurant-add-icon {
-  display: inline-flex;
-
-  align-items: center;
-
-  justify-content: center;
-
-  width: 13px;
-
-  height: 13px;
-
-  color: #ff6420;
-
-  font-size: 15px;
-
-  line-height: 1;
-}
-
-
-/* ============================================================
-   SELECTED RESTAURANT
-============================================================ */
-
-.food-invite-restaurant-card.is-selected {
-  border-color:
-    rgba(255, 103, 31, 0.75);
-
-  background:
-    linear-gradient(
-      145deg,
-      rgba(255, 103, 31, 0.12),
-      rgba(255, 103, 31, 0.035)
-    );
-
-  box-shadow:
-    0 0 0 1px
-      rgba(255, 103, 31, 0.08),
-    0 8px 24px
-      rgba(0, 0, 0, 0.22);
-}
-
-
-/* ============================================================
-   SELECTED BADGE
-============================================================ */
-
-.food-invite-restaurant-selected-badge {
-  display: inline-flex;
-
-  align-items: center;
-
-  justify-content: center;
-
-  padding: 4px 7px;
-
-  color: #0d0a09;
-
-  background: #ff6420;
-
-  border-radius: 999px;
-
-  font-size: 8px;
-
-  font-weight: 800;
-
-  line-height: 1;
-
-  text-transform: uppercase;
-}
-
-
-/* ============================================================
-   EMPTY STATE
-============================================================ */
-
-.food-invite-restaurant-empty {
-  width: 100%;
-
-  box-sizing: border-box;
-
-  padding: 28px 18px;
-
-  text-align: center;
-
-  border: 1px dashed
-    rgba(255, 255, 255, 0.10);
-
-  border-radius: 16px;
-
-  background:
-    rgba(255, 255, 255, 0.015);
-}
-
-
-.food-invite-restaurant-empty-title {
-  margin: 0 0 6px;
-
-  color: rgba(255, 255, 255, 0.72);
-
-  font-size: 12px;
-
-  font-weight: 700;
-}
-
-
-.food-invite-restaurant-empty-text {
-  margin: 0;
-
-  color: rgba(255, 255, 255, 0.38);
-
-  font-size: 10px;
-
-  line-height: 1.5;
-}
-
-
-/* ============================================================
-   LOADING STATE
-============================================================ */
-
-.food-invite-restaurant-loading {
-  width: 100%;
-
-  display: flex;
-
-  align-items: center;
-
-  justify-content: center;
-
-  padding: 35px 0;
-
-  color: rgba(255, 255, 255, 0.42);
-
-  font-size: 10px;
-}
-
-
-/* ============================================================
-   RESPONSIVE
-============================================================ */
-
-@media (max-width: 900px) {
-
-  .food-invite-restaurant-sidebar {
-    padding: 18px;
-
-    border-radius: 20px;
-  }
-
-
-  .food-invite-restaurant-card {
-    grid-template-columns:
-      76px
-      minmax(0, 1fr);
-
-    gap: 10px;
-
-    padding: 9px;
-  }
-
-
-  .food-invite-restaurant-card-image {
-    width: 76px;
-
-    min-width: 76px;
-
-    height: 105px;
-  }
-
-
-  .food-invite-restaurant-card-content {
-    min-height: 105px;
-  }
-
-}
-
-
-/* ============================================================
-   SMALL MOBILE
-============================================================ */
-
-@media (max-width: 600px) {
-
-  .food-invite-restaurant-sidebar {
-    padding: 16px;
-
-    border-radius: 18px;
-  }
-
-
-  .food-invite-restaurant-sidebar-title {
-    font-size: 20px;
-  }
-
-
-  .food-invite-restaurant-card {
-    grid-template-columns:
-      72px
-      minmax(0, 1fr);
-  }
-
-
-  .food-invite-restaurant-card-image {
-    width: 72px;
-
-    min-width: 72px;
-
-    height: 96px;
-  }
-
-
-  .food-invite-restaurant-card-content {
-    min-height: 96px;
-  }
-
-
-  .food-invite-restaurant-add {
-    height: 29px;
-
-    padding: 0 8px;
-
-    font-size: 8px;
-  }
-
-}
-
-/* ============================================================
-   MOBILE / TABLET
-============================================================ */
-
-@media (max-width: 900px) {
-
-  .food-invite-modal-backdrop {
-    align-items: flex-start;
-
-    padding: 14px;
-
-    overflow-y: auto;
-  }
-
-
-  .food-invite-create-shell,
-  .food-invite-create-shell.dine-out {
-    display: flex;
-
-    flex-direction: column;
-
-    width: 100%;
-
-    height: auto;
-
-    max-height: none;
-
-    gap: 18px;
-  }
-
-
-  .food-invite-create-modal {
-    height: auto;
-
-    max-height: none;
-
-    overflow: visible;
-  }
-
-
-  .food-invite-form {
-    height: auto;
-
-    max-height: none;
-
-    overflow: visible;
-
-    padding-bottom: 40px;
-  }
-
-
-  .food-invite-create-footer {
-    position: relative;
-
-    bottom: auto;
-
-    margin-top: 20px;
-
-    background: #0d0a09;
-  }
-
-
-  .food-invite-restaurant-sidebar {
-    height: auto;
-
-    max-height: none;
-  }
-
-}
-
-/* ============================================================
-   FOODKINDL RESTAURANT CARDS
-   FINAL OVERRIDE
-   KEEP THIS AT THE VERY END OF food_invites.css
-============================================================ */
-
-
-/* ============================================================
-   RESTAURANT SIDEBAR
-============================================================ */
-
-.food-invite-restaurant-sidebar {
   width: 100%;
   height: 100%;
 
-  min-width: 0;
-  min-height: 0;
-
-  box-sizing: border-box;
-
-  padding: 22px;
-
-  overflow-y: auto;
-  overflow-x: hidden;
-
-  border: 1px solid rgba(255, 103, 31, 0.34);
-  border-radius: 26px;
-
-  background:
-    radial-gradient(
-      circle at 80% 0%,
-      rgba(255, 94, 25, 0.08),
-      transparent 34%
-    ),
-    #0d0a09;
-
-  box-shadow:
-    0 30px 80px rgba(0, 0, 0, 0.45);
+  cursor: pointer;
 }
 
-
-/* ============================================================
-   SIDEBAR HEADER
-============================================================ */
-
-.food-invite-restaurant-sidebar-header {
-  margin: 0;
-  padding: 0 0 20px;
-
-  border-bottom:
-    1px solid rgba(255, 255, 255, 0.08);
-}
-
-
-.food-invite-restaurant-sidebar-header > span {
+.food-invite-picker-help {
   display: block;
 
-  margin-bottom: 8px;
+  margin-top: 6px;
 
-  color: #ff6b2a;
+  color: #6f6864;
 
-  font-size: 10px;
+  font-size: 7px;
+
+  line-height: 1.45;
+}
+
+
+/* ==========================================================
+   PICKER RESPONSIVE
+========================================================== */
+
+@media (max-width: 720px) {
+
+  .food-invite-picker-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .food-invite-smart-picker {
+    min-height: 72px;
+  }
+
+  .food-invite-picker-action {
+    display: none;
+  }
+
+  .food-invite-smart-picker-copy strong {
+    font-size: 12px;
+  }
+
+  .food-invite-people-priority
+  .food-invite-connections {
+    display: grid;
+
+    grid-template-columns: 1fr;
+  }
+
+  .food-invite-people-priority
+  .food-invite-person {
+    width: 100%;
+
+    justify-content: space-between;
+
+    border-radius: 11px;
+  }
+}
+
+
+/* =========================================================
+   FOOD INVITE DETAILS V2
+   Append to food_invites.css
+========================================================= */
+
+.food-invite-detail-modal-v2 {
+  width: min(860px, calc(100vw - 34px));
+  max-height: min(88vh, 900px);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.food-invite-detail-header-v2 {
+  flex: 0 0 auto;
+  padding: 20px 24px;
+}
+
+.food-invite-detail-header-main {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+}
+
+.food-invite-detail-heading-copy {
+  min-width: 0;
+}
+
+.food-invite-detail-type-label {
+  display: block;
+  margin-bottom: 4px;
+  color: #ff6d32;
+  font-size: 9px;
   font-weight: 900;
-
-  letter-spacing: 1.5px;
-
+  letter-spacing: 0.09em;
   text-transform: uppercase;
 }
 
-
-.food-invite-restaurant-sidebar-header h2 {
+.food-invite-detail-heading-copy h2 {
   margin: 0;
-
-  color: #ffffff;
-
-  font-size: 23px;
-  font-weight: 800;
-
-  line-height: 1.15;
-
-  letter-spacing: -0.5px;
+  color: #fff;
+  font-size: 22px;
+  line-height: 1.2;
 }
 
-
-.food-invite-restaurant-sidebar-header p {
-  margin: 8px 0 0;
-
-  color: rgba(255, 255, 255, 0.5);
-
-  font-size: 11px;
-  font-weight: 500;
-
-  line-height: 1.55;
+.food-invite-detail-heading-copy p {
+  margin: 5px 0 0;
+  color: rgba(255, 255, 255, 0.46);
+  font-size: 10px;
 }
 
+.food-invite-detail-body-v2 {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px 24px 26px;
+}
 
-/* ============================================================
-   RESTAURANT LIST
-============================================================ */
-
-.food-invite-restaurant-list {
+.food-invite-detail-summary-grid {
   display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
 
-  grid-template-columns: 1fr;
+.food-invite-detail-summary-card {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  min-height: 60px;
+  padding: 11px 13px;
+  box-sizing: border-box;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.018);
+}
 
-  gap: 14px;
+.food-invite-detail-summary-icon {
+  width: 35px;
+  height: 35px;
+  flex: 0 0 35px;
+  display: grid;
+  place-items: center;
+  border-radius: 11px;
+  background: rgba(255, 105, 45, 0.09);
+  color: #ff713a;
+}
 
-  width: 100%;
+.food-invite-detail-summary-card > div:last-child {
+  min-width: 0;
+}
 
+.food-invite-detail-summary-card span,
+.food-invite-detail-summary-card strong {
+  display: block;
+}
+
+.food-invite-detail-summary-card span {
+  margin-bottom: 3px;
+  color: #69615d;
+  font-size: 7px;
+}
+
+.food-invite-detail-summary-card strong {
+  overflow: hidden;
+  color: #f4efec;
+  font-size: 10px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.food-invite-detail-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  margin-top: 11px;
+}
+
+.food-invite-detail-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 9px;
+  border: 1px solid rgba(255, 111, 55, 0.12);
+  border-radius: 999px;
+  background: rgba(255, 111, 55, 0.05);
+  color: #d7cfca;
+  font-size: 8px;
+}
+
+.food-invite-detail-chip svg {
+  color: #ff713a;
+}
+
+/* PEOPLE */
+
+.food-invite-detail-people {
+  margin-top: 18px;
+  padding: 17px;
+  border: 1px solid rgba(255, 255, 255, 0.075);
+  border-radius: 17px;
+  background:
+    linear-gradient(
+      145deg,
+      rgba(255, 255, 255, 0.025),
+      rgba(255, 105, 45, 0.018)
+    );
+}
+
+.food-invite-detail-section-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.food-invite-detail-eyebrow {
+  display: block;
+  margin-bottom: 3px;
+  color: #ff6d32;
+  font-size: 8px;
+  font-weight: 900;
+  letter-spacing: 0.11em;
+}
+
+.food-invite-detail-section-head h4 {
+  margin: 0;
+  color: #fff;
+  font-size: 14px;
+}
+
+.food-invite-detail-count {
+  display: inline-flex;
+  align-items: center;
+  min-height: 25px;
+  padding: 0 9px;
+  border: 1px solid rgba(255, 112, 58, 0.16);
+  border-radius: 999px;
+  background: rgba(255, 112, 58, 0.065);
+  color: #ff8150;
+  font-size: 8px;
+  font-weight: 850;
+}
+
+.food-invite-detail-status-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.food-invite-detail-status-summary span {
+  padding: 4px 7px;
+  border-radius: 999px;
+  font-size: 7px;
+  font-weight: 800;
+}
+
+.food-invite-detail-status-summary .accepted {
+  background: rgba(74, 211, 142, 0.07);
+  color: #5bd895;
+}
+
+.food-invite-detail-status-summary .pending {
+  background: rgba(255, 178, 78, 0.07);
+  color: #ffb95d;
+}
+
+.food-invite-detail-status-summary .declined {
+  background: rgba(255, 89, 89, 0.06);
+  color: #ff8f8f;
+}
+
+.food-invite-detail-people-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.food-invite-detail-person {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 9px;
+  padding: 9px 10px;
+  border: 1px solid rgba(255, 255, 255, 0.055);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.018);
+}
+
+.food-invite-detail-person-left {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.food-invite-detail-avatar {
+  width: 35px;
+  height: 35px;
+  flex: 0 0 35px;
+  object-fit: cover;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 50%;
+}
+
+.food-invite-detail-avatar.fallback {
+  display: grid;
+  place-items: center;
+  background: linear-gradient(135deg, #ff7138, #c64016);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 900;
+}
+
+.food-invite-detail-person-copy {
+  min-width: 0;
+}
+
+.food-invite-detail-person-copy strong {
+  display: block;
+  max-width: 145px;
+  overflow: hidden;
+  color: #f7f3f0;
+  font-size: 9px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.food-invite-detail-person-copy span {
+  display: block;
+  max-width: 145px;
+  margin-top: 2px;
+  overflow: hidden;
+  color: #726b67;
+  font-size: 7px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.food-invite-detail-status {
+  flex: 0 0 auto;
+  padding: 5px 7px;
+  border-radius: 999px;
+  font-size: 7px;
+  font-weight: 850;
+}
+
+.food-invite-detail-status.accepted {
+  border: 1px solid rgba(74, 211, 142, 0.18);
+  background: rgba(74, 211, 142, 0.07);
+  color: #5bd895;
+}
+
+.food-invite-detail-status.pending {
+  border: 1px solid rgba(255, 178, 78, 0.18);
+  background: rgba(255, 178, 78, 0.07);
+  color: #ffb95d;
+}
+
+.food-invite-detail-status.declined {
+  border: 1px solid rgba(255, 89, 89, 0.18);
+  background: rgba(255, 89, 89, 0.06);
+  color: #ff8f8f;
+}
+
+.food-invite-detail-no-people {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 12px;
+  border: 1px dashed rgba(255, 255, 255, 0.08);
+  border-radius: 11px;
+  color: #716b67;
+}
+
+.food-invite-detail-no-people svg {
+  flex: 0 0 auto;
+  color: #ff7138;
+}
+
+.food-invite-detail-no-people strong,
+.food-invite-detail-no-people span {
+  display: block;
+}
+
+.food-invite-detail-no-people strong {
+  margin-bottom: 2px;
+  color: #d8d0cb;
+  font-size: 9px;
+}
+
+.food-invite-detail-no-people span {
+  font-size: 7px;
+  line-height: 1.4;
+}
+
+/* CONTENT */
+
+.food-invite-detail-content-section {
+  margin-top: 18px;
+}
+
+.food-invite-detail-content-heading {
+  margin-bottom: 8px;
+}
+
+.food-invite-detail-content-heading-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.food-invite-detail-content-heading > span {
+  color: #ff6d32;
+  font-size: 8px;
+  font-weight: 900;
+  letter-spacing: 0.11em;
+}
+
+.food-invite-detail-content-heading > strong {
+  color: #6f6763;
+  font-size: 7px;
+  font-weight: 750;
+}
+
+.food-invite-detail-message-v2 {
+  margin: 0;
+  padding: 13px 14px;
+}
+
+.food-invite-detail-message-v2 p {
+  margin: 0;
+  color: #b5aca7;
+  font-size: 9px;
+  line-height: 1.6;
+}
+
+.food-invite-detail-walk-v2 {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin: 0;
+}
+
+.food-invite-detail-stop-v2 {
+  margin: 0;
+  min-height: 52px;
+}
+
+.food-invite-detail-stop-number {
+  flex: 0 0 auto;
+}
+
+.food-invite-detail-stop-copy {
+  min-width: 0;
+}
+
+.food-invite-detail-stop-copy strong,
+.food-invite-detail-stop-copy span {
+  display: block;
+}
+
+.food-invite-detail-stop-copy strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.food-invite-detail-stop-copy span {
+  margin-top: 3px;
+  color: #6b635f;
+  font-size: 7px;
+}
+
+.food-invite-detail-footer-v2 {
+  flex: 0 0 auto;
+  padding: 14px 24px;
+}
+
+@media (max-width: 720px) {
+  .food-invite-detail-modal-v2 {
+    width: calc(100vw - 20px);
+    max-height: 92vh;
+  }
+
+  .food-invite-detail-header-v2,
+  .food-invite-detail-body-v2,
+  .food-invite-detail-footer-v2 {
+    padding-left: 14px;
+    padding-right: 14px;
+  }
+
+  .food-invite-detail-summary-grid,
+  .food-invite-detail-people-list,
+  .food-invite-detail-walk-v2 {
+    grid-template-columns: 1fr;
+  }
+
+  .food-invite-detail-person-copy strong,
+  .food-invite-detail-person-copy span {
+    max-width: 180px;
+  }
+}
+
+.food-invite-create-shell:has(.food-walk-workspace) {
+  width: min(1440px, calc(100vw - 36px)) !important;
+  max-width: 1440px !important;
+  display: block !important;
+  grid-template-columns: none !important;
+}
+
+.food-invite-create-shell:has(.food-walk-workspace) .food-invite-create-modal {
+  width: 100% !important;
+  max-width: none !important;
+  min-width: 0 !important;
+}
+
+/* DOM order is now correct in FoodInvites.jsx; cancel any old CSS order hacks. */
+.food-invite-create-shell:has(.food-walk-workspace) .food-invite-form {
+  display: block !important;
+}
+
+.food-invite-create-shell:has(.food-walk-workspace) .food-invite-form > * {
+  order: initial !important;
+}
+
+/* Give Invite People a stronger visual priority. */
+.food-invite-create-shell:has(.food-walk-workspace)
+.food-invite-connections {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.food-invite-create-shell:has(.food-walk-workspace)
+.food-invite-person {
+  min-width: 120px;
+}
+
+/* Keep form sections spacious but not huge. */
+.food-invite-create-shell:has(.food-walk-workspace)
+.food-invite-form-section {
+  margin-bottom: 12px;
+}
+
+/* ==========================================================
+   INVITED PEOPLE
+========================================================== */
+
+.invite-people-section {
   margin-top: 18px;
 }
 
 
-/* ============================================================
-   RESTAURANT CARD CONTAINER
-============================================================ */
+.invite-detail-section-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 
-.food-invite-restaurant-card {
-  display: block;
+  margin-bottom: 10px;
+}
 
-  width: 100%;
-  min-width: 0;
 
-  box-sizing: border-box;
+.invite-detail-section-heading > div {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
 
-  padding: 10px;
 
-  overflow: hidden;
+.invite-people-count {
+  min-width: 20px;
+  height: 20px;
 
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 17px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 0 6px;
+
+  border-radius: 999px;
 
   background:
-    linear-gradient(
-      145deg,
-      rgba(255, 255, 255, 0.045),
-      rgba(255, 255, 255, 0.018)
-    );
+    rgba(255, 111, 60, 0.1);
 
-  color: #ffffff;
+  color: #ff7b4d;
+
+  font-size: 11px;
+  font-weight: 800;
+}
+
+
+.invite-people-list {
+  display: grid;
+  gap: 8px;
+}
+
+
+.invite-person {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  gap: 12px;
+
+  padding: 10px 11px;
+
+  border:
+    1px solid
+    rgba(255, 255, 255, 0.07);
+
+  border-radius: 11px;
+
+  background:
+    rgba(255, 255, 255, 0.018);
 
   transition:
-    border-color 0.2s ease,
-    background 0.2s ease,
-    transform 0.2s ease;
+    border-color 160ms ease,
+    background 160ms ease,
+    transform 160ms ease;
 }
 
 
-.food-invite-restaurant-card:hover {
-  transform: translateY(-2px);
-
+.invite-person:hover {
   border-color:
-    rgba(255, 103, 31, 0.48);
+    rgba(255, 120, 70, 0.18);
 
   background:
-    linear-gradient(
-      145deg,
-      rgba(255, 103, 31, 0.075),
-      rgba(255, 255, 255, 0.02)
-    );
+    rgba(255, 120, 70, 0.025);
 }
 
 
-.food-invite-restaurant-card.selected {
-  border-color: #ff6728;
-
-  background:
-    linear-gradient(
-      145deg,
-      rgba(255, 103, 31, 0.13),
-      rgba(255, 103, 31, 0.035)
-    );
-
-  box-shadow:
-    0 0 0 1px
-      rgba(255, 103, 31, 0.08);
-}
-
-
-/* ============================================================
-   MAIN RESTAURANT CLICK AREA
-============================================================ */
-
-.food-invite-restaurant-open {
-  appearance: none;
-
-  display: grid;
-
-  grid-template-columns:
-    84px
-    minmax(0, 1fr);
-
-  align-items: stretch;
-
-  gap: 13px;
-
-  width: 100%;
-
+.invite-person-profile {
   min-width: 0;
+
+  display: flex;
+  align-items: center;
+
+  gap: 10px;
 
   padding: 0;
 
@@ -5559,1819 +2662,1930 @@
 
   text-align: left;
 
-  font-family: inherit;
-
   cursor: pointer;
 }
 
 
+.invite-person-profile:disabled {
+  cursor: default;
+}
+
+
+.invite-person-avatar {
+  width: 36px;
+  height: 36px;
+
+  flex: 0 0 36px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border:
+    1px solid
+    rgba(255, 119, 70, 0.18);
+
+  border-radius: 50%;
+
+  background:
+    rgba(255, 111, 60, 0.08);
+
+  color: #ff8458;
+
+  font-size: 13px;
+  font-weight: 800;
+
+  text-transform: uppercase;
+}
+
+
+.invite-person-copy {
+  min-width: 0;
+
+  display: flex;
+  flex-direction: column;
+
+  gap: 2px;
+}
+
+
+.invite-person-copy strong {
+  overflow: hidden;
+
+  color: var(
+    --text-primary,
+    #f5f1ee
+  );
+
+  font-size: 12px;
+  font-weight: 700;
+
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+
+.invite-person-copy small {
+  overflow: hidden;
+
+  max-width: 220px;
+
+  color: var(
+    --text-muted,
+    #8e8783
+  );
+
+  font-size: 10px;
+
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+
+.invite-person-view {
+  margin-top: 2px;
+
+  color: #ff7d50;
+
+  font-size: 9px;
+  font-weight: 700;
+
+  opacity: 0;
+
+  transition:
+    opacity 160ms ease;
+}
+
+
+.invite-person-profile:hover
+.invite-person-view {
+  opacity: 1;
+}
+
+
+.invite-person-profile:hover
+.invite-person-copy strong {
+  color: #ff8b62;
+}
+
+
+/* ==========================================================
+   PARTICIPANT STATUS
+========================================================== */
+
+.invite-person-status {
+  flex-shrink: 0;
+
+  padding: 5px 8px;
+
+  border-radius: 999px;
+
+  background:
+    rgba(255, 178, 74, 0.08);
+
+  color: #e4a34e;
+
+  font-size: 9px;
+  font-weight: 800;
+
+  text-transform: capitalize;
+}
+
+
+.invite-person-status.accepted {
+  background:
+    rgba(69, 201, 128, 0.09);
+
+  color: #62d494;
+}
+
+
+.invite-person-status.declined {
+  background:
+    rgba(239, 91, 91, 0.09);
+
+  color: #ef8585;
+}
+
+
+.invite-person-status.pending {
+  background:
+    rgba(255, 178, 74, 0.08);
+
+  color: #e4a34e;
+}
+
+
+/* ==========================================================
+   LIGHT THEME
+========================================================== */
+
+.foodkindl-app-light
+.invite-person {
+  border-color:
+    rgba(31, 24, 20, 0.08);
+
+  background:
+    rgba(31, 24, 20, 0.02);
+}
+
+
+.foodkindl-app-light
+.invite-person-copy strong {
+  color: #29231f;
+}
+
+
+.foodkindl-app-light
+.invite-person-copy small {
+  color: #77706b;
+}
+
+
+/* ==========================================================
+   MOBILE
+========================================================== */
+
+@media (max-width: 600px) {
+
+  .invite-person {
+    gap: 8px;
+
+    padding: 10px;
+  }
+
+
+  .invite-person-avatar {
+    width: 34px;
+    height: 34px;
+
+    flex-basis: 34px;
+  }
+
+
+  .invite-person-copy small {
+    max-width: 155px;
+  }
+
+
+  .invite-person-status {
+    padding: 4px 7px;
+
+    font-size: 8px;
+  }
+
+
+  .invite-person-view {
+    opacity: 1;
+  }
+
+}
+
+.food-invite-detail-people-clean {
+  margin-top: 16px;
+  padding: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.018);
+}
+
+.food-invite-detail-people-clean-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.food-invite-detail-people-clean-head > div {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.food-invite-detail-people-clean-head span {
+  color: #ff6a32;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.09em;
+}
+
+.food-invite-detail-people-clean-head strong {
+  min-width: 22px;
+  height: 22px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 7px;
+  border-radius: 999px;
+  background: rgba(255, 106, 50, 0.11);
+  color: #ff875c;
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.food-invite-detail-people-clean-head small {
+  color: rgba(255, 255, 255, 0.38);
+  font-size: 9px;
+}
+
+.food-invite-detail-people-clean-list {
+  display: grid;
+  gap: 8px;
+}
+
+.food-invite-detail-person-clean {
+  min-height: 58px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 14px;
+  padding: 10px 12px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 11px;
+  background: #0d0b0a;
+  transition: border-color 160ms ease, background 160ms ease;
+}
+
+.food-invite-detail-person-clean:hover {
+  border-color: rgba(255, 106, 50, 0.24);
+  background: rgba(255, 106, 50, 0.025);
+}
+
+.food-invite-detail-person-main {
+  min-width: 0;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.food-invite-detail-person-main:disabled {
+  cursor: default;
+}
+
+.food-invite-detail-person-text {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.food-invite-detail-person-text > strong {
+  overflow: hidden;
+  color: #f7f3f1;
+  font-size: 12px;
+  font-weight: 750;
+  line-height: 1.2;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  transition: color 160ms ease;
+}
+
+.food-invite-detail-person-main:hover
+.food-invite-detail-person-text > strong {
+  color: #ff875c;
+}
+
+.food-invite-detail-person-subline {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.food-invite-detail-person-subline small {
+  max-width: 240px;
+  overflow: hidden;
+  color: rgba(255, 255, 255, 0.42);
+  font-size: 9px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.food-invite-detail-person-view-clean {
+  color: #ff7442;
+  font-size: 9px;
+  font-weight: 700;
+}
+
+.food-invite-detail-person-status-clean {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 72px;
+  padding: 6px 9px;
+  border-radius: 999px;
+  font-size: 9px;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.food-invite-detail-person-status-clean.accepted {
+  border: 1px solid rgba(63, 201, 125, 0.18);
+  background: rgba(63, 201, 125, 0.08);
+  color: #65d99a;
+}
+
+.food-invite-detail-person-status-clean.declined {
+  border: 1px solid rgba(237, 91, 91, 0.18);
+  background: rgba(237, 91, 91, 0.08);
+  color: #f08b8b;
+}
+
+.food-invite-detail-person-status-clean.invited,
+.food-invite-detail-person-status-clean.pending {
+  border: 1px solid rgba(255, 168, 70, 0.18);
+  background: rgba(255, 168, 70, 0.07);
+  color: #f1ae59;
+}
+
+/* Remove visual impact from older invited-person styles if they
+   remain elsewhere in your original stylesheet. */
+.food-invite-detail-people-clean .food-invite-detail-person-avatar,
+.food-invite-detail-people-clean .invite-person-avatar {
+  display: none !important;
+}
+
 /* ============================================================
-   IMAGE
+   LIGHT MODE
 ============================================================ */
 
-.food-invite-restaurant-image {
-  display: grid;
-  place-items: center;
+.foodkindl-app-light .food-invite-detail-people-clean {
+  border-color: rgba(29, 22, 18, 0.09);
+  background: rgba(29, 22, 18, 0.018);
+}
 
-  width: 84px;
-  height: 104px;
+.foodkindl-app-light .food-invite-detail-person-clean {
+  border-color: rgba(29, 22, 18, 0.08);
+  background: #ffffff;
+}
 
-  min-width: 84px;
+.foodkindl-app-light .food-invite-detail-person-text > strong {
+  color: #2c2521;
+}
 
+.foodkindl-app-light .food-invite-detail-person-subline small {
+  color: #7a716c;
+}
+
+.foodkindl-app-light .food-invite-detail-people-clean-head small {
+  color: #857b76;
+}
+
+/* ============================================================
+   MOBILE
+============================================================ */
+
+@media (max-width: 600px) {
+  .food-invite-detail-people-clean {
+    padding: 12px;
+    border-radius: 12px;
+  }
+
+  .food-invite-detail-people-clean-head {
+    align-items: flex-start;
+  }
+
+  .food-invite-detail-people-clean-head small {
+    display: none;
+  }
+
+  .food-invite-detail-person-clean {
+    min-height: 54px;
+    gap: 8px;
+    padding: 9px 10px;
+  }
+
+  .food-invite-detail-person-text > strong {
+    font-size: 11px;
+  }
+
+  .food-invite-detail-person-subline {
+    gap: 5px;
+  }
+
+  .food-invite-detail-person-subline small {
+    max-width: 150px;
+    font-size: 8px;
+  }
+
+  .food-invite-detail-person-view-clean {
+    font-size: 8px;
+  }
+
+  .food-invite-detail-person-status-clean {
+    min-width: 62px;
+    padding: 5px 7px;
+    font-size: 8px;
+  }
+}
+
+/* ==========================================================
+   FOOD INVITE DETAIL — FINAL UNIQUE CLEAN DESIGN
+   Keeps the full existing page intact and only refines the
+   invite-detail modal and invited people area.
+========================================================== */
+
+/* Keep the modal below the fixed FoodKindl navigation. */
+.food-invite-modal-backdrop {
+  place-items: start center !important;
+  padding: 92px 18px 24px !important;
+  box-sizing: border-box !important;
+}
+
+.food-invite-detail-modal {
+  position: relative !important;
+  width: min(640px, 100%) !important;
+  max-height: calc(100vh - 116px) !important;
+  overflow-y: auto !important;
+  overscroll-behavior: contain !important;
+
+  border: 1px solid rgba(255, 103, 44, 0.24) !important;
+  border-radius: 22px !important;
+
+  background:
+    radial-gradient(
+      circle at 12% -8%,
+      rgba(255, 104, 45, 0.13),
+      transparent 30%
+    ),
+    linear-gradient(
+      155deg,
+      #120b08 0%,
+      #090909 44%,
+      #070707 100%
+    ) !important;
+
+  box-shadow:
+    0 30px 90px rgba(0, 0, 0, 0.68),
+    0 0 0 1px rgba(255, 255, 255, 0.012) inset !important;
+}
+
+/* Sticky header prevents "Food Walk" title and close control
+   from disappearing while the modal is scrolled. */
+.food-invite-detail-header {
+  position: sticky !important;
+  top: 0 !important;
+  z-index: 20 !important;
+
+  grid-template-columns: auto minmax(0, 1fr) auto !important;
+  padding: 18px 20px !important;
+
+  background:
+    linear-gradient(
+      180deg,
+      rgba(17, 10, 7, 0.99),
+      rgba(10, 9, 9, 0.97)
+    ) !important;
+
+  border-bottom: 1px solid rgba(255, 255, 255, 0.065) !important;
+  backdrop-filter: blur(18px) !important;
+}
+
+.food-invite-detail-icon {
+  width: 44px !important;
+  height: 44px !important;
+  border-radius: 13px !important;
+  border: 1px solid rgba(255, 104, 45, 0.24) !important;
+  background:
+    linear-gradient(
+      145deg,
+      rgba(255, 104, 45, 0.12),
+      rgba(255, 104, 45, 0.035)
+    ) !important;
+  color: #ff7643 !important;
+}
+
+.food-invite-detail-header > div:nth-child(2) {
+  min-width: 0 !important;
+}
+
+.food-invite-detail-header > div:nth-child(2) > span {
+  display: block !important;
+  color: #ff7545 !important;
+  font-size: 7px !important;
+  font-weight: 900 !important;
+  letter-spacing: 0.13em !important;
+  text-transform: uppercase !important;
+}
+
+.food-invite-detail-header h2 {
+  margin: 4px 0 0 !important;
+  color: #f8f4f1 !important;
+  font-size: clamp(20px, 3vw, 25px) !important;
+  line-height: 1.08 !important;
+  letter-spacing: -0.035em !important;
+}
+
+.food-invite-detail-route-chip {
+  min-width: 0;
+  width: fit-content;
+  max-width: 100%;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 7px;
+  padding: 5px 8px;
+  border: 1px solid rgba(255, 117, 69, 0.12);
+  border-radius: 999px;
+  background: rgba(255, 117, 69, 0.04);
+  color: #9d918b;
+}
+
+.food-invite-detail-route-chip svg {
+  flex: 0 0 auto;
+  color: #ff7545;
+}
+
+.food-invite-detail-route-chip span {
+  min-width: 0;
+  max-width: 340px;
   overflow: hidden;
+  color: #a69c97 !important;
+  font-size: 7px !important;
+  font-weight: 650 !important;
+  letter-spacing: 0 !important;
+  text-overflow: ellipsis;
+  text-transform: none !important;
+  white-space: nowrap;
+}
+
+/* Highly visible top close button. */
+.food-invite-detail-close {
+  position: relative !important;
+  width: 36px !important;
+  height: 36px !important;
+  display: grid !important;
+  place-items: center !important;
+
+  border: 1px solid rgba(255, 255, 255, 0.09) !important;
+  border-radius: 11px !important;
+  background: rgba(255, 255, 255, 0.025) !important;
+  color: #a79d98 !important;
+
+  cursor: pointer !important;
+  transition:
+    background 160ms ease,
+    border-color 160ms ease,
+    color 160ms ease,
+    transform 160ms ease !important;
+}
+
+.food-invite-detail-close:hover {
+  transform: translateY(-1px) !important;
+  border-color: rgba(255, 111, 60, 0.28) !important;
+  background: rgba(255, 111, 60, 0.08) !important;
+  color: #ff875c !important;
+}
+
+/* Body cards: cleaner, slightly denser. */
+.food-invite-detail-body {
+  gap: 8px !important;
+  padding: 18px 20px 20px !important;
+}
+
+.food-invite-detail-row {
+  min-height: 56px !important;
+  padding: 11px 12px !important;
+  border: 1px solid rgba(255, 255, 255, 0.055) !important;
+  border-radius: 13px !important;
+  background:
+    linear-gradient(
+      145deg,
+      rgba(255, 255, 255, 0.018),
+      rgba(255, 255, 255, 0.007)
+    ) !important;
+}
+
+.food-invite-detail-row > svg {
+  color: #ff7545 !important;
+}
+
+.food-invite-detail-row span {
+  color: #706965 !important;
+  font-size: 7px !important;
+}
+
+.food-invite-detail-row strong {
+  margin-top: 3px !important;
+  color: #f1ece9 !important;
+  font-size: 9px !important;
+}
+
+/* ==========================================================
+   INVITED PEOPLE — TEXT ONLY, NO AVATAR/WHITE BOX
+========================================================== */
+
+.food-invite-detail-people {
+  margin-top: 14px !important;
+  padding: 14px !important;
+
+  border: 1px solid rgba(255, 255, 255, 0.07) !important;
+  border-radius: 15px !important;
+
+  background:
+    linear-gradient(
+      145deg,
+      rgba(255, 255, 255, 0.018),
+      rgba(255, 102, 43, 0.014)
+    ) !important;
+}
+
+.food-invite-detail-people-heading {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 12px !important;
+  margin-bottom: 10px !important;
+}
+
+.food-invite-detail-people-heading > div {
+  display: flex !important;
+  align-items: center !important;
+  gap: 7px !important;
+}
+
+.food-invite-detail-people-label {
+  color: #f5f1ee !important;
+  font-size: 12px !important;
+  font-weight: 760 !important;
+  letter-spacing: -0.01em !important;
+  text-transform: none !important;
+}
+
+.food-invite-detail-people-count {
+  min-width: 21px !important;
+  height: 21px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 0 6px !important;
+
+  border: 1px solid rgba(255, 116, 65, 0.16) !important;
+  border-radius: 999px !important;
+
+  background: rgba(255, 116, 65, 0.07) !important;
+  color: #ff875c !important;
+
+  font-size: 8px !important;
+  font-weight: 850 !important;
+}
+
+.food-invite-detail-people-heading > small {
+  color: rgba(255, 255, 255, 0.32) !important;
+  font-size: 7px !important;
+}
+
+.food-invite-detail-people-list {
+  display: grid !important;
+  gap: 7px !important;
+}
+
+/* Important: old avatar is removed in JSX, but this ensures
+   no old/fallback avatar can show if cached markup survives. */
+.food-invite-detail-person-avatar,
+.invite-person-avatar,
+.food-invite-detail-avatar {
+  display: none !important;
+}
+
+.food-invite-detail-person {
+  min-height: 54px !important;
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) auto !important;
+  align-items: center !important;
+  gap: 12px !important;
+
+  padding: 9px 11px !important;
+
+  border: 1px solid rgba(255, 255, 255, 0.055) !important;
+  border-radius: 11px !important;
+
+  background: rgba(5, 5, 5, 0.44) !important;
+
+  transition:
+    border-color 160ms ease,
+    background 160ms ease,
+    transform 160ms ease !important;
+}
+
+.food-invite-detail-person:hover {
+  transform: translateY(-1px) !important;
+  border-color: rgba(255, 112, 58, 0.19) !important;
+  background: rgba(255, 112, 58, 0.022) !important;
+}
+
+.food-invite-detail-person-profile {
+  min-width: 0 !important;
+  width: 100% !important;
+  display: block !important;
+  padding: 0 !important;
+  border: 0 !important;
+  background: transparent !important;
+  color: inherit !important;
+  text-align: left !important;
+  cursor: pointer !important;
+}
+
+.food-invite-detail-person-profile:disabled {
+  cursor: default !important;
+}
+
+.food-invite-detail-person-copy {
+  min-width: 0 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 3px !important;
+}
+
+.food-invite-detail-person-copy > strong {
+  display: block !important;
+  overflow: hidden !important;
+
+  color: #f5f1ee !important;
+  font-size: 10px !important;
+  font-weight: 760 !important;
+  line-height: 1.2 !important;
+
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+.food-invite-detail-person-profile:hover
+.food-invite-detail-person-copy > strong {
+  color: #ff875c !important;
+}
+
+.food-invite-detail-person-copy small {
+  display: block !important;
+  max-width: 280px !important;
+  overflow: hidden !important;
+
+  color: rgba(255, 255, 255, 0.40) !important;
+  font-size: 8px !important;
+
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+.food-invite-detail-person-view {
+  display: inline-block !important;
+  width: fit-content !important;
+  margin-top: 1px !important;
+
+  color: #ff7545 !important;
+  font-size: 7px !important;
+  font-weight: 760 !important;
+  opacity: 1 !important;
+}
+
+.food-invite-detail-person-status {
+  min-width: 68px !important;
+  flex: 0 0 auto !important;
+
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+
+  padding: 5px 8px !important;
+  border-radius: 999px !important;
+
+  font-size: 7px !important;
+  font-weight: 850 !important;
+  line-height: 1 !important;
+  text-transform: capitalize !important;
+}
+
+.food-invite-detail-person-status.accepted {
+  border: 1px solid rgba(72, 210, 139, 0.17) !important;
+  background: rgba(72, 210, 139, 0.065) !important;
+  color: #67d99c !important;
+}
+
+.food-invite-detail-person-status.pending,
+.food-invite-detail-person-status.invited {
+  border: 1px solid rgba(255, 177, 76, 0.17) !important;
+  background: rgba(255, 177, 76, 0.06) !important;
+  color: #efb05e !important;
+}
+
+.food-invite-detail-person-status.declined {
+  border: 1px solid rgba(242, 91, 91, 0.17) !important;
+  background: rgba(242, 91, 91, 0.06) !important;
+  color: #ef8d8d !important;
+}
+
+/* Message has a soft warmer treatment instead of a large block. */
+.food-invite-detail-message {
+  margin-top: 6px !important;
+  padding: 13px !important;
+  border: 1px solid rgba(255, 104, 45, 0.11) !important;
+  border-radius: 13px !important;
+  background: rgba(255, 104, 45, 0.022) !important;
+}
+
+/* Food Walk stops remain very light and compact. */
+.food-invite-detail-walk {
+  margin-top: 8px !important;
+}
+
+.food-invite-detail-stop {
+  min-height: 45px !important;
+  padding: 9px 10px !important;
+  border-radius: 11px !important;
+  background: rgba(255, 255, 255, 0.006) !important;
+}
+
+/* Footer remains visible and clear. */
+.food-invite-detail-footer {
+  position: sticky !important;
+  bottom: 0 !important;
+  z-index: 15 !important;
+
+  padding: 13px 20px 16px !important;
+
+  background:
+    linear-gradient(
+      180deg,
+      rgba(8, 8, 8, 0.94),
+      rgba(8, 8, 8, 0.99)
+    ) !important;
+
+  backdrop-filter: blur(14px) !important;
+}
+
+/* ==========================================================
+   MOBILE
+========================================================== */
+
+@media (max-width: 720px) {
+  .food-invite-modal-backdrop {
+    padding: 78px 10px 14px !important;
+  }
+
+  .food-invite-detail-modal {
+    width: 100% !important;
+    max-height: calc(100vh - 92px) !important;
+    border-radius: 17px !important;
+  }
+
+  .food-invite-detail-header {
+    padding: 14px !important;
+  }
+
+  .food-invite-detail-icon {
+    width: 39px !important;
+    height: 39px !important;
+  }
+
+  .food-invite-detail-header h2 {
+    font-size: 19px !important;
+  }
+
+  .food-invite-detail-route-chip {
+    max-width: 100%;
+  }
+
+  .food-invite-detail-route-chip span {
+    max-width: 190px;
+  }
+
+  .food-invite-detail-body {
+    padding: 14px !important;
+  }
+
+  .food-invite-detail-people {
+    padding: 12px !important;
+  }
+
+  .food-invite-detail-people-heading > small {
+    display: none !important;
+  }
+
+  .food-invite-detail-person {
+    gap: 8px !important;
+    padding: 9px 10px !important;
+  }
+
+  .food-invite-detail-person-copy small {
+    max-width: 160px !important;
+  }
+
+  .food-invite-detail-person-status {
+    min-width: 60px !important;
+    padding: 5px 7px !important;
+    font-size: 7px !important;
+  }
+
+  .food-invite-detail-footer {
+    padding: 12px 14px 14px !important;
+  }
+}
+
+/* ==========================================================
+   COOK TOGETHER — KITCHEN CONTRIBUTION
+========================================================== */
+
+.food-invite-kitchen-contribution {
+  margin-top: 14px;
+
+  display: grid;
+  grid-template-columns:
+    minmax(0, 1fr)
+    auto;
+
+  align-items: center;
+
+  gap: 18px;
+
+  padding: 14px;
+
+  border:
+    1px solid
+    rgba(255, 112, 55, 0.16);
 
   border-radius: 13px;
 
   background:
     linear-gradient(
       145deg,
-      #1b1411,
-      #100c0a
+      rgba(255, 104, 45, 0.055),
+      rgba(255, 255, 255, 0.012)
     );
-
-  color: #ff6a2a;
 }
 
 
-.food-invite-restaurant-image img {
-  display: block;
-
-  width: 100%;
-  height: 100%;
-
-  object-fit: cover;
-  object-position: center;
-
-  border-radius: inherit;
-}
-
-
-/* ============================================================
-   RESTAURANT TEXT CONTENT
-============================================================ */
-
-.food-invite-restaurant-content {
-  display: flex;
-
-  flex-direction: column;
-
-  align-items: flex-start;
-
-  justify-content: flex-start;
-
-  gap: 5px;
-
+.food-invite-kitchen-copy {
   min-width: 0;
 
-  padding-top: 2px;
-}
-
-
-/* ============================================================
-   NAME
-============================================================ */
-
-.food-invite-restaurant-content > strong {
-  display: block;
-
-  width: 100%;
-
-  margin: 0;
-
-  overflow: hidden;
-
-  color: #ffffff;
-
-  font-size: 14px;
-  font-weight: 800;
-
-  line-height: 1.25;
-
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-
-/* ============================================================
-   PARTNER BADGE
-============================================================ */
-
-.foodkindl-partner-mini-badge {
-  display: inline-flex !important;
-
+  display: flex;
   align-items: center;
 
-  gap: 4px;
+  gap: 11px;
+}
 
-  width: auto !important;
-  max-width: 100%;
 
-  margin: 1px 0 2px;
+.food-invite-kitchen-icon {
+  width: 36px;
+  height: 36px;
 
-  padding: 4px 7px;
+  flex: 0 0 36px;
 
-  box-sizing: border-box;
+  display: grid;
+  place-items: center;
 
   border:
-    1px solid rgba(255, 111, 48, 0.35);
-
-  border-radius: 999px;
-
-  background:
-    rgba(255, 103, 31, 0.085);
-
-  color: #ff8a57 !important;
-
-  font-size: 8px !important;
-  font-weight: 850;
-
-  line-height: 1;
-
-  letter-spacing: 0.4px;
-
-  white-space: nowrap;
-}
-
-
-/* ============================================================
-   CUISINE
-============================================================ */
-
-.food-invite-restaurant-content > span:not(
-  .foodkindl-partner-mini-badge
-) {
-  display: block;
-
-  width: 100%;
-
-  overflow: hidden;
-
-  color: rgba(255, 255, 255, 0.55);
-
-  font-size: 10px;
-
-  line-height: 1.35;
-
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-
-/* ============================================================
-   RATING + LOCATION
-============================================================ */
-
-.food-invite-restaurant-meta {
-  display: flex;
-
-  align-items: center;
-
-  flex-wrap: wrap;
-
-  gap: 8px;
-
-  width: 100%;
-
-  margin-top: 1px;
-}
-
-
-.food-invite-restaurant-meta > span {
-  display: inline-flex;
-
-  align-items: center;
-
-  gap: 4px;
-
-  color: rgba(255, 255, 255, 0.47);
-
-  font-size: 9px;
-
-  line-height: 1.2;
-}
-
-
-.food-invite-restaurant-meta .restaurant-rating {
-  color: #ffc24d;
-}
-
-
-/* ============================================================
-   VIEW RESTAURANT
-============================================================ */
-
-.food-invite-restaurant-content > small {
-  display: block;
-
-  margin-top: auto;
-
-  padding-top: 3px;
-
-  color: #ff7136;
-
-  font-size: 9px;
-  font-weight: 800;
-
-  line-height: 1.2;
-}
-
-
-/* ============================================================
-   ADD TO INVITE BUTTON
-============================================================ */
-
-.food-invite-restaurant-select {
-  appearance: none;
-
-  display: flex;
-
-  align-items: center;
-  justify-content: center;
-
-  gap: 7px;
-
-  width: 100%;
-
-  min-height: 38px;
-
-  margin-top: 11px;
-
-  padding: 0 14px;
-
-  box-sizing: border-box;
-
-  border:
-    1px solid rgba(255, 103, 31, 0.27);
+    1px solid
+    rgba(255, 112, 55, 0.18);
 
   border-radius: 11px;
 
   background:
-    rgba(255, 103, 31, 0.065);
+    rgba(255, 112, 55, 0.07);
 
-  color: #ff7a40;
+  color: #ff7545;
 
-  font-family: inherit;
+  font-size: 14px;
+  font-weight: 900;
+}
+
+
+.food-invite-kitchen-copy strong,
+.food-invite-kitchen-copy small {
+  display: block;
+}
+
+
+.food-invite-kitchen-copy strong {
+  color: #f5f0ed;
 
   font-size: 10px;
-  font-weight: 800;
-
-  cursor: pointer;
-
-  transition:
-    transform 0.2s ease,
-    border-color 0.2s ease,
-    background 0.2s ease,
-    color 0.2s ease;
 }
 
 
-.food-invite-restaurant-select:hover {
-  transform: translateY(-1px);
+.food-invite-kitchen-copy small {
+  max-width: 390px;
 
-  border-color:
-    rgba(255, 103, 31, 0.58);
+  margin-top: 4px;
 
-  background:
-    rgba(255, 103, 31, 0.13);
+  color: #756d68;
 
-  color: #ffffff;
-}
-
-
-.food-invite-restaurant-card.selected
-.food-invite-restaurant-select {
-  border-color:
-    rgba(255, 103, 31, 0.7);
-
-  background: #ff6424;
-
-  color: #ffffff;
-}
-
-
-/* ============================================================
-   DO NOT LET BUTTON DEFAULT STYLING WIN
-============================================================ */
-
-.food-invite-restaurant-open,
-.food-invite-restaurant-select {
-  box-shadow: none;
-  text-transform: none;
-  text-decoration: none;
-}
-
-
-/* ============================================================
-   RECOMMENDATION EMPTY / LOADING
-============================================================ */
-
-.food-invite-restaurant-state {
-  display: flex;
-
-  flex-direction: column;
-
-  align-items: center;
-  justify-content: center;
-
-  gap: 12px;
-
-  min-height: 260px;
-
-  padding: 30px 15px;
-
-  box-sizing: border-box;
-
-  color:
-    rgba(255, 255, 255, 0.44);
-
-  text-align: center;
-}
-
-
-.food-invite-restaurant-state svg {
-  color: #ff6a2a;
-}
-
-
-.food-invite-restaurant-state strong {
-  color:
-    rgba(255, 255, 255, 0.82);
-
-  font-size: 12px;
-  font-weight: 750;
-}
-
-
-.food-invite-restaurant-state span {
-  max-width: 230px;
-
-  color:
-    rgba(255, 255, 255, 0.4);
-
-  font-size: 10px;
-
-  line-height: 1.55;
-}
-
-
-/* ============================================================
-   SIDEBAR SCROLLBAR
-============================================================ */
-
-.food-invite-restaurant-sidebar::-webkit-scrollbar {
-  width: 6px;
-}
-
-
-.food-invite-restaurant-sidebar::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-
-.food-invite-restaurant-sidebar::-webkit-scrollbar-thumb {
-  border-radius: 999px;
-
-  background:
-    rgba(255, 255, 255, 0.18);
-}
-
-
-.food-invite-restaurant-sidebar::-webkit-scrollbar-thumb:hover {
-  background:
-    rgba(255, 103, 31, 0.45);
-}
-
-
-/* ============================================================
-   DINE OUT TWO COLUMN WIDTH
-============================================================ */
-
-.food-invite-create-shell.dine-out {
-  grid-template-columns:
-    minmax(0, 740px)
-    minmax(330px, 370px);
-
-  gap: 22px;
-
-  width:
-    min(
-      1160px,
-      calc(100vw - 56px)
-    );
-}
-
-
-/* ============================================================
-   TABLET
-============================================================ */
-
-@media (max-width: 1050px) {
-
-  .food-invite-create-shell.dine-out {
-    grid-template-columns:
-      minmax(0, 1fr)
-      310px;
-
-    width:
-      calc(100vw - 32px);
-  }
-
-
-  .food-invite-restaurant-sidebar {
-    padding: 18px;
-  }
-
-
-  .food-invite-restaurant-open {
-    grid-template-columns:
-      72px
-      minmax(0, 1fr);
-  }
-
-
-  .food-invite-restaurant-image {
-    width: 72px;
-    height: 94px;
-
-    min-width: 72px;
-  }
-
-}
-
-
-/* ============================================================
-   MOBILE
-============================================================ */
-
-@media (max-width: 850px) {
-
-  .food-invite-create-shell.dine-out {
-    display: flex;
-
-    flex-direction: column;
-
-    width: 100%;
-
-    height: auto;
-
-    gap: 18px;
-  }
-
-
-  .food-invite-restaurant-sidebar {
-    width: 100%;
-
-    height: auto;
-
-    max-height: none;
-  }
-
-
-  .food-invite-restaurant-list {
-    grid-template-columns:
-      repeat(
-        2,
-        minmax(0, 1fr)
-      );
-  }
-
-}
-
-
-/* ============================================================
-   PHONE
-============================================================ */
-
-@media (max-width: 600px) {
-
-  .food-invite-restaurant-list {
-    grid-template-columns: 1fr;
-  }
-
-
-  .food-invite-restaurant-sidebar {
-    padding: 16px;
-
-    border-radius: 20px;
-  }
-
-
-  .food-invite-restaurant-open {
-    grid-template-columns:
-      78px
-      minmax(0, 1fr);
-  }
-
-
-  .food-invite-restaurant-image {
-    width: 78px;
-    min-width: 78px;
-
-    height: 100px;
-  }
-
-
-  .food-invite-restaurant-content > strong {
-    font-size: 13px;
-  }
-
-}
-
-/* ============================================================
-   FOODKINDL RESTAURANT DETAIL
-   FINAL OVERRIDE
-============================================================ */
-
-.foodkindl-restaurant-detail-modal {
-  position: relative;
-
-  width: min(1050px, calc(100vw - 50px));
-  height: min(900px, calc(100vh - 50px));
-
-  overflow-y: auto;
-  overflow-x: hidden;
-
-  border: 1px solid rgba(255, 103, 31, 0.32);
-  border-radius: 28px;
-
-  background: #0c0908;
-
-  color: #ffffff;
-
-  font-family:
-    Inter,
-    system-ui,
-    -apple-system,
-    BlinkMacSystemFont,
-    "Segoe UI",
-    sans-serif;
-
-  box-shadow:
-    0 40px 120px rgba(0, 0, 0, 0.82);
-
-  scrollbar-width: thin;
-  scrollbar-color:
-    rgba(255,255,255,.2)
-    transparent;
-}
-
-
-.foodkindl-restaurant-detail-modal::-webkit-scrollbar {
-  width: 7px;
-}
-
-
-.foodkindl-restaurant-detail-modal::-webkit-scrollbar-thumb {
-  background:
-    rgba(255,255,255,.2);
-
-  border-radius: 999px;
-}
-
-
-/* ============================================================
-   CLOSE
-============================================================ */
-
-.foodkindl-restaurant-close {
-  position: absolute;
-
-  top: 20px;
-  right: 20px;
-
-  z-index: 20;
-
-  display: grid;
-  place-items: center;
-
-  width: 42px;
-  height: 42px;
-
-  padding: 0;
-
-  border: 1px solid rgba(255,255,255,.16);
-  border-radius: 50%;
-
-  background:
-    rgba(0,0,0,.62);
-
-  color: #ffffff;
-
-  cursor: pointer;
-
-  backdrop-filter: blur(10px);
-
-  transition:
-    transform .2s ease,
-    background .2s ease;
-}
-
-
-.foodkindl-restaurant-close:hover {
-  transform: rotate(5deg);
-
-  background:
-    rgba(255,103,31,.18);
-}
-
-
-/* ============================================================
-   HERO
-============================================================ */
-
-.foodkindl-restaurant-hero {
-  position: relative;
-
-  width: 100%;
-  height: 330px;
-
-  overflow: hidden;
-}
-
-
-.foodkindl-restaurant-hero > img {
-  display: block;
-
-  width: 100%;
-  height: 100%;
-
-  object-fit: cover;
-  object-position: center;
-}
-
-
-.foodkindl-restaurant-image-placeholder {
-  display: grid;
-  place-items: center;
-
-  width: 100%;
-  height: 100%;
-
-  background:
-    linear-gradient(
-      145deg,
-      #1e1410,
-      #0c0908
-    );
-
-  color: #ff6728;
-}
-
-
-.foodkindl-restaurant-hero-overlay {
-  position: absolute;
-  inset: 0;
-
-  background:
-    linear-gradient(
-      to top,
-      rgba(12,9,8,1) 0%,
-      rgba(12,9,8,.8) 24%,
-      rgba(12,9,8,.18) 68%,
-      transparent 100%
-    );
-}
-
-
-.foodkindl-restaurant-hero-content {
-  position: absolute;
-
-  left: 38px;
-  right: 80px;
-  bottom: 28px;
-}
-
-
-.foodkindl-restaurant-partner {
-  display: inline-flex;
-  align-items: center;
-
-  gap: 5px;
-
-  margin-bottom: 12px;
-
-  padding: 6px 10px;
-
-  border: 1px solid
-    rgba(255,112,48,.5);
-
-  border-radius: 999px;
-
-  background:
-    rgba(10,8,7,.68);
-
-  color: #ff8a57;
-
-  font-size: 9px;
-  font-weight: 900;
-
-  letter-spacing: 1px;
-}
-
-
-.foodkindl-restaurant-hero-content h2 {
-  margin: 0;
-
-  color: #ffffff;
-
-  font-size: 38px;
-  font-weight: 850;
-
-  line-height: 1.08;
-
-  letter-spacing: -1px;
-}
-
-
-.foodkindl-restaurant-hero-meta {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-
-  gap: 8px;
-
-  margin-top: 13px;
-}
-
-
-.foodkindl-restaurant-hero-meta > span {
-  display: inline-flex;
-  align-items: center;
-
-  min-height: 27px;
-
-  padding: 0 9px;
-
-  border-radius: 999px;
-
-  background:
-    rgba(255,255,255,.1);
-
-  color:
-    rgba(255,255,255,.8);
-
-  font-size: 11px;
-  font-weight: 650;
-}
-
-
-.foodkindl-restaurant-hero-meta
-.foodkindl-rating {
-  color: #ffd063;
-}
-
-
-/* ============================================================
-   BODY
-============================================================ */
-
-.foodkindl-restaurant-detail-body {
-  display: grid;
-
-  grid-template-columns:
-    minmax(0, 1fr)
-    320px;
-
-  gap: 28px;
-
-  padding: 30px 36px 40px;
-}
-
-
-.foodkindl-restaurant-main {
-  min-width: 0;
-}
-
-
-/* ============================================================
-   SECTION
-============================================================ */
-
-.foodkindl-restaurant-section {
-  padding: 0 0 28px;
-
-  margin-bottom: 28px;
-
-  border-bottom:
-    1px solid rgba(255,255,255,.065);
-}
-
-
-.foodkindl-section-label {
-  display: block;
-
-  margin-bottom: 7px;
-
-  color: #ff6a2a;
-
-  font-size: 9px;
-  font-weight: 900;
-
-  letter-spacing: 1.4px;
-}
-
-
-.foodkindl-restaurant-section h3,
-.foodkindl-booking-section h3 {
-  margin: 0 0 12px;
-
-  color: #ffffff;
-
-  font-size: 20px;
-  font-weight: 800;
-
-  letter-spacing: -.35px;
-}
-
-
-.foodkindl-restaurant-description {
-  margin: 0;
-
-  color:
-    rgba(255,255,255,.56);
-
-  font-size: 13px;
-
-  line-height: 1.7;
-}
-
-
-/* ============================================================
-   QUICK INFO
-============================================================ */
-
-.foodkindl-restaurant-info-grid {
-  display: grid;
-
-  grid-template-columns:
-    repeat(2, minmax(0, 1fr));
-
-  gap: 12px;
-
-  margin-bottom: 28px;
-}
-
-
-.foodkindl-restaurant-info-card {
-  display: flex;
-  align-items: flex-start;
-
-  gap: 12px;
-
-  padding: 16px;
-
-  border:
-    1px solid rgba(255,255,255,.075);
-
-  border-radius: 16px;
-
-  background:
-    rgba(255,255,255,.02);
-}
-
-
-.foodkindl-restaurant-info-card > svg,
-.foodkindl-rupee-icon {
-  flex: 0 0 auto;
-
-  color: #ff6a2a;
-}
-
-
-.foodkindl-rupee-icon {
-  display: grid;
-  place-items: center;
-
-  width: 20px;
-  height: 20px;
-
-  font-size: 17px;
-  font-weight: 800;
-}
-
-
-.foodkindl-restaurant-info-card > div {
-  display: grid;
-
-  gap: 5px;
-}
-
-
-.foodkindl-restaurant-info-card span {
-  color:
-    rgba(255,255,255,.36);
-
-  font-size: 8px;
-  font-weight: 900;
-
-  letter-spacing: .9px;
-}
-
-
-.foodkindl-restaurant-info-card strong {
-  color: #ffffff;
-
-  font-size: 12px;
-  font-weight: 700;
+  font-size: 7px;
 
   line-height: 1.45;
 }
 
 
-/* ============================================================
-   MENU
-============================================================ */
+.food-invite-kitchen-input {
+  min-width: 190px;
 
-.foodkindl-menu-list {
   display: grid;
 
-  gap: 10px;
-}
+  grid-template-columns:
+    auto
+    70px
+    auto;
 
-
-.foodkindl-menu-item {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-
-  gap: 20px;
-
-  padding: 13px 14px;
-
-  border:
-    1px solid rgba(255,255,255,.07);
-
-  border-radius: 14px;
-
-  background:
-    rgba(255,255,255,.018);
-}
-
-
-.foodkindl-menu-item-main {
-  display: flex;
-  align-items: center;
-
-  gap: 12px;
-
-  min-width: 0;
-}
-
-
-.foodkindl-menu-item-main > img {
-  width: 56px;
-  height: 56px;
-
-  flex: 0 0 56px;
-
-  object-fit: cover;
-
-  border-radius: 11px;
-}
-
-
-.foodkindl-menu-item-main > div {
-  min-width: 0;
-}
-
-
-.foodkindl-menu-name-row {
-  display: flex;
   align-items: center;
 
   gap: 7px;
 
-  flex-wrap: wrap;
+  padding: 7px 9px;
+
+  border:
+    1px solid
+    rgba(255, 255, 255, 0.075);
+
+  border-radius: 10px;
+
+  background: #0b0b0b;
 }
 
 
-.foodkindl-menu-name-row > strong {
-  color: #ffffff;
-
-  font-size: 12px;
-}
-
-
-.foodkindl-menu-item p {
-  margin: 5px 0 0;
-
-  color:
-    rgba(255,255,255,.42);
-
-  font-size: 10px;
-
-  line-height: 1.5;
-}
-
-
-.foodkindl-menu-price {
-  flex: 0 0 auto;
-
-  color: #ffffff;
+.food-invite-kitchen-input > span {
+  color: #ff7545;
 
   font-size: 13px;
-}
-
-
-.foodkindl-veg-badge,
-.foodkindl-nonveg-badge {
-  padding: 3px 5px;
-
-  border-radius: 5px;
-
-  font-size: 7px;
   font-weight: 900;
 }
 
 
-.foodkindl-veg-badge {
-  background:
-    rgba(58,214,117,.1);
+.food-invite-kitchen-input input {
+  width: 70px !important;
+  min-height: 30px !important;
 
-  color: #5ddb8c;
-}
+  padding: 0 !important;
 
+  border: 0 !important;
 
-.foodkindl-nonveg-badge {
-  background:
-    rgba(255,94,68,.1);
+  background: transparent !important;
 
-  color: #ff7765;
-}
+  color: #ffffff !important;
 
-
-.foodkindl-menu-empty {
-  display: flex;
-  align-items: center;
-
-  gap: 13px;
-
-  padding: 18px;
-
-  border:
-    1px dashed rgba(255,255,255,.11);
-
-  border-radius: 14px;
-
-  color:
-    rgba(255,255,255,.4);
-}
-
-
-.foodkindl-menu-empty svg {
-  color: #ff6a2a;
-}
-
-
-.foodkindl-menu-empty div {
-  display: grid;
-
-  gap: 4px;
-}
-
-
-.foodkindl-menu-empty strong {
-  color:
-    rgba(255,255,255,.75);
-
-  font-size: 12px;
-}
-
-
-.foodkindl-menu-empty span {
-  font-size: 10px;
-}
-
-
-/* ============================================================
-   LOCATION
-============================================================ */
-
-.foodkindl-restaurant-location-card {
-  display: flex;
-  align-items: flex-start;
-
-  gap: 12px;
-
-  padding: 16px;
-
-  border:
-    1px solid rgba(255,255,255,.075);
-
-  border-radius: 15px;
-
-  background:
-    rgba(255,255,255,.02);
-}
-
-
-.foodkindl-restaurant-location-card > svg {
-  flex: 0 0 auto;
-
-  color: #ff6a2a;
-}
-
-
-.foodkindl-restaurant-location-card > div {
-  display: grid;
-
-  gap: 8px;
-}
-
-
-.foodkindl-restaurant-location-card strong {
-  font-size: 12px;
-
-  line-height: 1.55;
-}
-
-
-.foodkindl-restaurant-location-card a {
-  display: inline-flex;
-  align-items: center;
-
-  gap: 5px;
-
-  color: #ff793e;
-
-  font-size: 10px;
-
-  text-decoration: none;
-}
-
-
-.foodkindl-location-button {
-  display: inline-flex;
-  align-items: center;
-
-  gap: 7px;
-
-  margin-top: 11px;
-
-  padding: 9px 12px;
-
-  border:
-    1px solid rgba(255,103,31,.3);
-
-  border-radius: 10px;
-
-  color: #ff793e;
-
-  background:
-    rgba(255,103,31,.06);
-
-  font-size: 10px;
-  font-weight: 750;
-
-  text-decoration: none;
-}
-
-
-/* ============================================================
-   FACILITIES
-============================================================ */
-
-.foodkindl-facility-list {
-  display: flex;
-
-  flex-wrap: wrap;
-
-  gap: 8px;
-}
-
-
-.foodkindl-facility-list > span {
-  display: inline-flex;
-  align-items: center;
-
-  gap: 5px;
-
-  padding: 7px 10px;
-
-  border:
-    1px solid rgba(255,255,255,.075);
-
-  border-radius: 999px;
-
-  background:
-    rgba(255,255,255,.025);
-
-  color:
-    rgba(255,255,255,.65);
-
-  font-size: 10px;
-}
-
-
-.foodkindl-facility-list svg {
-  color: #ff6a2a;
-}
-
-
-/* ============================================================
-   BOOKING SIDEBAR
-============================================================ */
-
-.foodkindl-restaurant-booking-panel {
-  position: sticky;
-
-  top: 20px;
-
-  align-self: start;
-
-  padding: 18px;
-
-  border:
-    1px solid rgba(255,103,31,.2);
-
-  border-radius: 19px;
-
-  background:
-    linear-gradient(
-      145deg,
-      rgba(255,103,31,.05),
-      rgba(255,255,255,.015)
-    );
-}
-
-
-.foodkindl-select-restaurant-button {
-  appearance: none;
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  gap: 7px;
-
-  width: 100%;
-  min-height: 44px;
-
-  padding: 0 14px;
-
-  border:
-    1px solid rgba(255,103,31,.42);
-
-  border-radius: 11px;
-
-  background:
-    rgba(255,103,31,.095);
-
-  color: #ff7c42;
-
-  font-family: inherit;
-
-  font-size: 11px;
-  font-weight: 800;
-
-  cursor: pointer;
-}
-
-
-.foodkindl-booking-section {
-  margin-top: 23px;
-
-  padding-top: 20px;
-
-  border-top:
-    1px solid rgba(255,255,255,.07);
-}
-
-
-.foodkindl-booking-section > p {
-  margin: -3px 0 18px;
-
-  color:
-    rgba(255,255,255,.45);
-
-  font-size: 10px;
-
-  line-height: 1.55;
-}
-
-
-/* ============================================================
-   BOOKING FORM
-============================================================ */
-
-.foodkindl-booking-form {
-  display: grid;
-
-  gap: 14px;
-}
-
-
-.foodkindl-booking-form label {
-  display: grid;
-
-  gap: 7px;
-
-  color:
-    rgba(255,255,255,.72);
-
-  font-size: 10px;
-  font-weight: 700;
-}
-
-
-.foodkindl-booking-form input,
-.foodkindl-booking-form select,
-.foodkindl-booking-form textarea {
-  width: 100%;
-
-  box-sizing: border-box;
-
-  min-height: 43px;
-
-  padding: 0 12px;
-
-  border:
-    1px solid rgba(255,103,31,.22);
-
-  border-radius: 10px;
-
-  outline: none;
-
-  background: #130d0b;
-
-  color: #ffffff;
-
-  font-family: inherit;
-
-  font-size: 11px;
-}
-
-
-.foodkindl-booking-form textarea {
-  min-height: 85px;
-
-  padding: 11px 12px;
-
-  resize: vertical;
-}
-
-
-.foodkindl-booking-input {
-  display: flex;
-  align-items: center;
-
-  gap: 8px;
-
-  padding-left: 11px;
-
-  border:
-    1px solid rgba(255,103,31,.22);
-
-  border-radius: 10px;
-
-  background: #130d0b;
-}
-
-
-.foodkindl-booking-input svg {
-  color: #ff6a2a;
-}
-
-
-.foodkindl-booking-input input {
-  border: 0;
-
-  background: transparent;
-}
-
-
-.foodkindl-booking-time-row {
-  display: grid;
-
-  grid-template-columns:
-    1fr
-    auto
-    1fr
-    64px;
-
-  align-items: center;
-
-  gap: 6px;
-}
-
-
-.foodkindl-period-button {
-  min-height: 43px;
-
-  border:
-    1px solid rgba(255,103,31,.3);
-
-  border-radius: 10px;
-
-  background:
-    rgba(255,103,31,.09);
-
-  color: #ff7c42;
-
-  font-size: 10px;
-  font-weight: 850;
-
-  cursor: pointer;
-}
-
-
-.foodkindl-booking-submit {
-  appearance: none;
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  gap: 7px;
-
-  width: 100%;
-  min-height: 46px;
-
-  margin-top: 4px;
-
-  border: 0;
-
-  border-radius: 11px;
-
-  background:
-    linear-gradient(
-      135deg,
-      #ff6827,
-      #d83a0b
-    );
-
-  color: #ffffff;
-
-  font-family: inherit;
-
-  font-size: 11px;
-  font-weight: 850;
-
-  cursor: pointer;
-}
-
-
-/* ============================================================
-   BOOKING SUCCESS
-============================================================ */
-
-.foodkindl-booking-success {
-  display: grid;
-
-  justify-items: center;
-
-  gap: 7px;
-
-  padding: 22px 15px;
-
-  border-radius: 14px;
-
-  background:
-    rgba(56,211,115,.07);
+  font-size: 12px !important;
+  font-weight: 800 !important;
 
   text-align: center;
 }
 
 
-.foodkindl-booking-success-icon {
+.food-invite-kitchen-input input:focus {
+  outline: none;
+}
+
+
+.food-invite-kitchen-input small {
+  color: #736c68;
+
+  font-size: 7px;
+
+  white-space: nowrap;
+}
+
+
+/* ==========================================================
+   MOBILE
+========================================================== */
+
+@media (max-width: 600px) {
+
+  .food-invite-kitchen-contribution {
+    grid-template-columns: 1fr;
+
+    gap: 12px;
+
+    padding: 12px;
+  }
+
+
+  .food-invite-kitchen-input {
+    width: 100%;
+
+    min-width: 0;
+
+    grid-template-columns:
+      auto
+      minmax(60px, 1fr)
+      auto;
+  }
+
+
+  .food-invite-kitchen-input input {
+    width: 100% !important;
+
+    text-align: left;
+  }
+
+}
+
+/* ==========================================================
+   CUSTOMER PLACE SUBMISSION — DINE OUT
+========================================================== */
+
+.food-invite-place-submission {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 9px;
+  margin: 10px 12px 12px;
+  padding: 10px;
+  border: 1px dashed rgba(255, 103, 48, 0.2);
+  border-radius: 11px;
+  background: rgba(255, 96, 31, 0.025);
+}
+
+.food-invite-place-submission-icon {
+  width: 31px;
+  height: 31px;
   display: grid;
   place-items: center;
+  border-radius: 9px 9px 4px 9px;
+  background: rgba(255, 96, 31, 0.07);
+  color: #ff7545;
+}
+
+.food-invite-place-submission-copy {
+  min-width: 0;
+}
+
+.food-invite-place-submission-copy strong,
+.food-invite-place-submission-copy span {
+  display: block;
+}
+
+.food-invite-place-submission-copy strong {
+  color: #eee8e5;
+  font-size: 8px;
+}
+
+.food-invite-place-submission-copy span {
+  margin-top: 2px;
+  color: #726a66;
+  font-size: 7px;
+}
+
+.food-invite-place-submission > button {
+  min-height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  padding: 0 9px;
+  border: 1px solid rgba(255, 96, 31, 0.17);
+  border-radius: 8px;
+  background: rgba(255, 96, 31, 0.045);
+  color: #ff8053;
+  font-size: 7px;
+  font-weight: 850;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.food-invite-place-submission > button:hover {
+  background: #ff5f24;
+  color: #fff;
+}
+
+@media (max-width: 720px) {
+  .food-invite-place-submission {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .food-invite-place-submission > button {
+    grid-column: 1 / -1;
+    width: 100%;
+  }
+}
+
+/* ==========================================================
+   HERO
+========================================================== */
+
+.food-invites-kicker {
+  font-size: 13px !important;
+}
+
+.food-invites-hero h1 {
+  font-size: clamp(48px, 5vw, 68px) !important;
+}
+
+.food-invites-hero p {
+  font-size: 17px !important;
+  line-height: 1.65 !important;
+}
+
+.food-invite-create-main {
+  font-size: 14px !important;
+}
+
+
+/* ==========================================================
+   SECTION HEADINGS
+========================================================== */
+
+.food-invite-section-title > span {
+  font-size: 12px !important;
+}
+
+.food-invite-section-title h2 {
+  font-size: 30px !important;
+}
+
+
+/* ==========================================================
+   UPCOMING INVITES
+========================================================== */
+
+.food-invite-row-main strong {
+  font-size: 15px !important;
+}
+
+.food-invite-row-main span {
+  font-size: 12px !important;
+}
+
+.food-invite-row-time {
+  font-size: 12px !important;
+}
+
+
+/* ==========================================================
+   EMPTY STATE
+========================================================== */
+
+.food-invite-empty h3 {
+  font-size: 20px !important;
+}
+
+.food-invite-empty p {
+  font-size: 13px !important;
+}
+
+
+/* ==========================================================
+   INVITE TYPE CARDS
+========================================================== */
+
+.food-invite-type-card h3 {
+  font-size: 20px !important;
+}
+
+.food-invite-type-card p {
+  font-size: 13px !important;
+  line-height: 1.6 !important;
+}
+
+
+/* ==========================================================
+   HOW IT WORKS
+========================================================== */
+
+.food-invite-how-grid article > span {
+  font-size: 25px !important;
+}
+
+.food-invite-how-grid h3 {
+  font-size: 14px !important;
+}
+
+
+/* ==========================================================
+   CREATE INVITE MODAL HEADER
+========================================================== */
+
+.food-invite-create-header span {
+  font-size: 11px !important;
+}
+
+.food-invite-create-header h2 {
+  font-size: 28px !important;
+}
+
+.food-invite-create-header p {
+  font-size: 13px !important;
+  line-height: 1.6 !important;
+}
+
+
+/* ==========================================================
+   FORM SECTION HEADINGS
+========================================================== */
+
+.food-invite-form-section-heading > span {
+  font-size: 12px !important;
+}
+
+.food-invite-form-section-heading strong {
+  font-size: 15px !important;
+}
+
+.food-invite-form-section-heading small {
+  font-size: 12px !important;
+  line-height: 1.45 !important;
+}
+
+
+/* ==========================================================
+   FORM LABELS
+========================================================== */
+
+.food-invite-form label {
+  font-size: 13px !important;
+  font-weight: 700 !important;
+}
+
+
+/* ==========================================================
+   INPUTS / SELECT / TEXTAREA
+========================================================== */
+
+.food-invite-form input,
+.food-invite-form select,
+.food-invite-form textarea {
+  font-size: 14px !important;
+}
+
+.food-invite-form input::placeholder,
+.food-invite-form textarea::placeholder {
+  font-size: 14px !important;
+}
+
+
+/* ==========================================================
+   INVITE TYPE / VENUE SELECTORS
+========================================================== */
+
+.food-invite-type-selector button,
+.food-invite-venue-selector button {
+  font-size: 13px !important;
+}
+
+
+/* ==========================================================
+   PEOPLE SELECTOR
+========================================================== */
+
+.food-invite-person {
+  font-size: 13px !important;
+}
+
+
+/* ==========================================================
+   CREATE / CANCEL BUTTONS
+========================================================== */
+
+.food-invite-create-cancel,
+.food-invite-submit {
+  font-size: 13px !important;
+}
+
+
+/* ==========================================================
+   SMART DATE / TIME PICKERS
+========================================================== */
+
+.food-invite-smart-picker-copy small {
+  font-size: 11px !important;
+}
+
+.food-invite-smart-picker-copy strong {
+  font-size: 15px !important;
+}
+
+.food-invite-picker-action {
+  font-size: 11px !important;
+}
+
+.food-invite-period-badge {
+  font-size: 12px !important;
+}
+
+.food-invite-picker-help {
+  font-size: 11px !important;
+}
+
+
+/* ==========================================================
+   INVITE DETAIL HEADER
+========================================================== */
+
+.food-invite-detail-header > div:nth-child(2) > span {
+  font-size: 11px !important;
+}
+
+.food-invite-detail-header h2 {
+  font-size: clamp(24px, 3vw, 30px) !important;
+}
+
+
+/* ==========================================================
+   ROUTE CHIP
+========================================================== */
+
+.food-invite-detail-route-chip span {
+  font-size: 11px !important;
+}
+
+
+/* ==========================================================
+   DETAIL ROWS
+========================================================== */
+
+.food-invite-detail-row span {
+  font-size: 11px !important;
+}
+
+.food-invite-detail-row strong {
+  font-size: 14px !important;
+}
+
+
+/* ==========================================================
+   DETAIL MESSAGE
+========================================================== */
+
+.food-invite-detail-message > span,
+.food-invite-detail-walk > span {
+  font-size: 11px !important;
+}
+
+.food-invite-detail-message p,
+.food-invite-detail-message-v2 p {
+  font-size: 13px !important;
+  line-height: 1.65 !important;
+}
+
+
+/* ==========================================================
+   FOOD WALK STOPS
+========================================================== */
+
+.food-invite-detail-stop > div {
+  font-size: 11px !important;
+}
+
+.food-invite-detail-stop strong,
+.food-invite-detail-stop-copy strong {
+  font-size: 13px !important;
+}
+
+.food-invite-detail-stop-copy span {
+  font-size: 11px !important;
+}
+
+
+/* ==========================================================
+   ACCEPT / DECLINE
+========================================================== */
+
+.food-invite-decline-button,
+.food-invite-accept-button {
+  font-size: 13px !important;
+}
+
+.food-invite-response-status {
+  font-size: 13px !important;
+}
+
+
+/* ==========================================================
+   DETAIL V2
+========================================================== */
+
+.food-invite-detail-type-label {
+  font-size: 11px !important;
+}
+
+.food-invite-detail-heading-copy h2 {
+  font-size: 27px !important;
+}
+
+.food-invite-detail-heading-copy p {
+  font-size: 13px !important;
+}
+
+
+/* ==========================================================
+   SUMMARY CARDS
+========================================================== */
+
+.food-invite-detail-summary-card span {
+  font-size: 11px !important;
+}
+
+.food-invite-detail-summary-card strong {
+  font-size: 14px !important;
+}
+
+.food-invite-detail-chip {
+  font-size: 12px !important;
+}
+
+
+/* ==========================================================
+   DETAIL SECTION HEADINGS
+========================================================== */
+
+.food-invite-detail-eyebrow {
+  font-size: 11px !important;
+}
+
+.food-invite-detail-section-head h4 {
+  font-size: 18px !important;
+}
+
+.food-invite-detail-count {
+  font-size: 12px !important;
+}
+
+
+/* ==========================================================
+   STATUS SUMMARY
+========================================================== */
+
+.food-invite-detail-status-summary span {
+  font-size: 11px !important;
+}
+
+
+/* ==========================================================
+   INVITED PEOPLE
+========================================================== */
+
+.food-invite-detail-people-label {
+  font-size: 16px !important;
+}
+
+.food-invite-detail-people-count {
+  font-size: 12px !important;
+}
+
+.food-invite-detail-people-heading > small {
+  font-size: 11px !important;
+}
+
+
+/* Person name */
+
+.food-invite-detail-person-copy > strong {
+  font-size: 14px !important;
+}
+
+
+/* Person secondary text */
+
+.food-invite-detail-person-copy small {
+  font-size: 11px !important;
+}
+
+
+/* View profile */
+
+.food-invite-detail-person-view {
+  font-size: 11px !important;
+}
+
+
+/* Status */
+
+.food-invite-detail-person-status {
+  font-size: 11px !important;
+}
+
+
+/* ==========================================================
+   CLEAN INVITED PEOPLE VERSION
+========================================================== */
+
+.food-invite-detail-people-clean-head span {
+  font-size: 13px !important;
+}
+
+.food-invite-detail-people-clean-head strong {
+  font-size: 13px !important;
+}
+
+.food-invite-detail-people-clean-head small {
+  font-size: 11px !important;
+}
+
+.food-invite-detail-person-text > strong {
+  font-size: 14px !important;
+}
+
+.food-invite-detail-person-subline small {
+  font-size: 11px !important;
+}
+
+.food-invite-detail-person-view-clean {
+  font-size: 11px !important;
+}
+
+.food-invite-detail-person-status-clean {
+  font-size: 11px !important;
+}
+
+
+/* ==========================================================
+   INVITE PERSON ALTERNATE STYLES
+========================================================== */
+
+.invite-person-avatar {
+  font-size: 15px !important;
+}
+
+.invite-person-copy strong {
+  font-size: 14px !important;
+}
+
+.invite-person-copy small {
+  font-size: 12px !important;
+}
+
+.invite-person-view {
+  font-size: 11px !important;
+}
+
+.invite-person-status {
+  font-size: 11px !important;
+}
+
+.invite-people-count {
+  font-size: 13px !important;
+}
+
+
+/* ==========================================================
+   KITCHEN CONTRIBUTION
+========================================================== */
+
+.food-invite-kitchen-icon {
+  font-size: 16px !important;
+}
+
+.food-invite-kitchen-copy strong {
+  font-size: 14px !important;
+}
+
+.food-invite-kitchen-copy small {
+  font-size: 11px !important;
+  line-height: 1.5 !important;
+}
+
+.food-invite-kitchen-input > span {
+  font-size: 16px !important;
+}
+
+.food-invite-kitchen-input input {
+  font-size: 15px !important;
+}
+
+.food-invite-kitchen-input small {
+  font-size: 11px !important;
+}
+
+
+/* ==========================================================
+   CUSTOMER PLACE SUBMISSION
+========================================================== */
+
+.food-invite-place-submission-copy strong {
+  font-size: 13px !important;
+}
+
+.food-invite-place-submission-copy span {
+  font-size: 11px !important;
+  line-height: 1.45 !important;
+}
+
+.food-invite-place-submission > button {
+  font-size: 11px !important;
+}
+
+
+/* ==========================================================
+   MOBILE
+========================================================== */
+
+@media (max-width: 720px) {
+
+  .food-invites-kicker {
+    font-size: 12px !important;
+  }
+
+  .food-invites-hero h1 {
+    font-size: clamp(40px, 11vw, 54px) !important;
+  }
+
+  .food-invites-hero p {
+    font-size: 16px !important;
+  }
+
+  .food-invite-section-title h2 {
+    font-size: 27px !important;
+  }
+
+  .food-invite-create-header h2 {
+    font-size: 25px !important;
+  }
+
+  .food-invite-form label {
+    font-size: 13px !important;
+  }
+
+  .food-invite-form input,
+  .food-invite-form select,
+  .food-invite-form textarea {
+    font-size: 14px !important;
+  }
+
+  .food-invite-smart-picker-copy strong {
+    font-size: 15px !important;
+  }
+
+  .food-invite-detail-header h2 {
+    font-size: 23px !important;
+  }
+
+  .food-invite-detail-person-copy > strong {
+    font-size: 14px !important;
+  }
+
+  .food-invite-detail-person-copy small {
+    font-size: 11px !important;
+  }
+
+  .food-invite-detail-person-status {
+    font-size: 10px !important;
+  }
+
+  .food-invite-detail-people-label {
+    font-size: 15px !important;
+  }
+
+  .food-invite-detail-row strong {
+    font-size: 14px !important;
+  }
+
+  .food-invite-detail-row span {
+    font-size: 11px !important;
+  }
+}
+
+
+/* ==========================================================
+   VERY SMALL PHONE
+========================================================== */
+
+@media (max-width: 480px) {
+
+  .food-invites-hero p {
+    font-size: 15px !important;
+  }
+
+  .food-invite-type-card h3 {
+    font-size: 19px !important;
+  }
+
+  .food-invite-type-card p {
+    font-size: 13px !important;
+  }
+
+  .food-invite-form-section-heading strong {
+    font-size: 14px !important;
+  }
+
+  .food-invite-form-section-heading small {
+    font-size: 11px !important;
+  }
+
+  .food-invite-detail-person-copy > strong {
+    font-size: 13px !important;
+  }
+
+  .food-invite-detail-person-copy small {
+    font-size: 10px !important;
+  }
+}
+
+/* ==========================================================
+   CREATE INVITE — TOP CLOSE BUTTON
+========================================================== */
+
+.food-invite-create-header {
+  position: relative;
+  padding-right: 70px;
+}
+
+.food-invite-create-close {
+  position: absolute;
+
+  /* IMPORTANT: move it down so navbar doesn't clip it */
+  top: 18px;
+  right: 18px;
 
   width: 42px;
   height: 42px;
 
-  border-radius: 50%;
-
-  background:
-    rgba(56,211,115,.12);
-
-  color: #5ddd8c;
-}
-
-
-.foodkindl-booking-success strong {
-  color: #5ddd8c;
-
-  font-size: 12px;
-}
-
-
-.foodkindl-booking-success span {
-  color:
-    rgba(255,255,255,.45);
-
-  font-size: 9px;
-}
-
-
-/* ============================================================
-   TABLET
-============================================================ */
-
-@media (max-width: 900px) {
-
-  .foodkindl-restaurant-detail-body {
-    grid-template-columns: 1fr;
-  }
-
-
-  .foodkindl-restaurant-booking-panel {
-    position: relative;
-
-    top: auto;
-  }
-
-}
-
-
-/* ============================================================
-   MOBILE
-============================================================ */
-
-@media (max-width: 600px) {
-
-  .foodkindl-restaurant-detail-modal {
-    width:
-      calc(100vw - 20px);
-
-    height:
-      calc(100vh - 20px);
-
-    border-radius: 20px;
-  }
-
-
-  .foodkindl-restaurant-hero {
-    height: 250px;
-  }
-
-
-  .foodkindl-restaurant-hero-content {
-    left: 20px;
-    right: 65px;
-    bottom: 20px;
-  }
-
-
-  .foodkindl-restaurant-hero-content h2 {
-    font-size: 28px;
-  }
-
-
-  .foodkindl-restaurant-detail-body {
-    padding: 23px 20px 30px;
-  }
-
-
-  .foodkindl-restaurant-info-grid {
-    grid-template-columns: 1fr;
-  }
-
-
-  .foodkindl-menu-item {
-    align-items: flex-start;
-  }
-
-}
-
-/* ============================================================
-   FOODKINDL RESTAURANT DETAIL — GALLERY + FINAL FIXES
-   KEEP THIS AT THE ABSOLUTE END OF THE FILE
-============================================================ */
-
-.foodkindl-restaurant-detail-modal {
-  width: min(1100px, calc(100vw - 48px));
-  height: min(920px, calc(100vh - 48px));
-}
-
-.foodkindl-restaurant-hero {
-  height: 360px;
-  background: #110c0a;
-}
-
-.foodkindl-restaurant-hero > img {
-  display: block;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  object-position: center;
-}
-
-.foodkindl-restaurant-gallery-strip {
-  position: absolute;
-  z-index: 8;
-  top: 20px;
-  left: 22px;
-
   display: flex;
-  gap: 8px;
-
-  max-width: calc(100% - 110px);
-  overflow-x: auto;
-  padding: 2px;
-
-  scrollbar-width: none;
-}
-
-.foodkindl-restaurant-gallery-strip::-webkit-scrollbar {
-  display: none;
-}
-
-.foodkindl-restaurant-gallery-thumb {
-  appearance: none;
-
-  flex: 0 0 66px;
-  width: 66px;
-  height: 52px;
+  align-items: center;
+  justify-content: center;
 
   padding: 0;
-  overflow: hidden;
+  margin: 0;
 
-  border: 1px solid rgba(255, 255, 255, 0.22);
-  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 50%;
 
-  background: rgba(0, 0, 0, 0.55);
+  background: #151515;
+  color: #ffffff;
+
+  font-size: 27px;
+  font-weight: 300;
+  line-height: 1;
+
   cursor: pointer;
-
-  opacity: 0.72;
+  z-index: 50;
 
   transition:
-    opacity 0.2s ease,
+    background 0.2s ease,
     border-color 0.2s ease,
     transform 0.2s ease;
 }
 
-.foodkindl-restaurant-gallery-thumb:hover {
-  opacity: 1;
-  transform: translateY(-1px);
+.food-invite-create-close:hover {
+  background: #242424;
+  border-color: rgba(255, 122, 35, 0.6);
+  transform: scale(1.05);
 }
 
-.foodkindl-restaurant-gallery-thumb.active {
-  opacity: 1;
-  border-color: #ff6a2a;
-  box-shadow: 0 0 0 2px rgba(255, 106, 42, 0.16);
+.food-invite-create-close:active {
+  transform: scale(0.95);
 }
 
-.foodkindl-restaurant-gallery-thumb img {
-  display: block;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
+.food-invite-create-close:focus-visible {
+  outline: 2px solid #ff7a23;
+  outline-offset: 3px;
 }
 
-.foodkindl-menu-category {
-  display: inline-flex;
-  align-items: center;
-
-  padding: 3px 6px;
-
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.05);
-
-  color: rgba(255, 255, 255, 0.52);
-
-  font-size: 7px;
-  font-weight: 800;
-  letter-spacing: 0.3px;
-  text-transform: capitalize;
-}
-
-.foodkindl-menu-item-main {
-  flex: 1;
-  min-width: 0;
-}
-
-.foodkindl-menu-item-main > div {
-  min-width: 0;
-}
-
-.foodkindl-menu-item p {
-  overflow-wrap: anywhere;
-}
-
-.foodkindl-booking-time-row select,
-.foodkindl-period-button {
-  min-width: 0;
-}
-
-.foodkindl-booking-submit:hover:not(:disabled),
-.foodkindl-select-restaurant-button:hover {
-  transform: translateY(-1px);
-  filter: brightness(1.07);
-}
-
-.foodkindl-booking-submit:disabled {
-  opacity: 0.55;
-  cursor: not-allowed;
-}
-
-/* Final correction for old restaurant-card rules. */
-.food-invite-restaurant-card {
-  display: block !important;
-}
-
-.food-invite-restaurant-open {
-  display: grid !important;
-  grid-template-columns: 84px minmax(0, 1fr) !important;
-}
-
-.food-invite-restaurant-select {
-  display: flex !important;
-}
-
-.food-invite-create-shell.dine-out {
-  grid-template-columns: minmax(0, 740px) minmax(330px, 370px);
-}
-
-@media (max-width: 900px) {
-  .foodkindl-restaurant-detail-modal {
-    width: calc(100vw - 24px);
-    height: calc(100vh - 24px);
+@media (max-width: 720px) {
+  .food-invite-create-header {
+    padding-right: 60px;
   }
 
-  .foodkindl-restaurant-hero {
-    height: 300px;
-  }
-
-  .foodkindl-restaurant-detail-body {
-    grid-template-columns: 1fr;
-  }
-
-  .foodkindl-restaurant-booking-panel {
-    position: relative;
-    top: auto;
-  }
-}
-
-@media (max-width: 600px) {
-  .foodkindl-restaurant-hero {
-    height: 260px;
-  }
-
-  .foodkindl-restaurant-gallery-strip {
+  .food-invite-create-close {
     top: 14px;
-    left: 14px;
-    max-width: calc(100% - 82px);
-  }
-
-  .foodkindl-restaurant-gallery-thumb {
-    flex-basis: 54px;
-    width: 54px;
-    height: 44px;
-  }
-
-  .foodkindl-restaurant-hero-content {
-    left: 18px;
-    right: 64px;
-    bottom: 18px;
+    right: 14px;
+    width: 40px;
+    height: 40px;
+    font-size: 25px;
   }
 }
-
-.food-invite-booking-row {
-  border-color: rgba(55, 190, 120, 0.18);
-}
-
-.food-invite-booking-row:hover {
-  border-color: rgba(55, 190, 120, 0.4);
-}
-
-.food-invite-booking-row
-.food-invite-row-main
-span {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.food-invite-booking-status {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 4px;
-}
-
-.food-invite-booking-status > span {
-  padding: 5px 9px;
-
-  border: 1px solid
-    rgba(55, 190, 120, 0.25);
-
-  border-radius: 999px;
-
-  background:
-    rgba(55, 190, 120, 0.08);
-
-  color: #80d9a5;
-
-  font-size: 10px;
-  font-weight: 800;
-  letter-spacing: 0.5px;
-}
-
-.food-invite-booking-status small {
-  color:
-    rgba(255, 255, 255, 0.45);
-
-  font-size: 9px;
-}
-

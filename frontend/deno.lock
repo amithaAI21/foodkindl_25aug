@@ -11,13 +11,15 @@
   "workspace": {
     "packageJson": {
       "dependencies": [
-        "npm:@netlify/blobs@^10.7.12",
+        "npm:@netlify/blobs@^10.7.13",
         "npm:@vitejs/plugin-react@^4.3.4",
         "npm:axios@^1.7.9",
         "npm:date-fns@^4.4.0",
+        "npm:leaflet@^1.9.4",
         "npm:lucide-react@0.468",
         "npm:react-datepicker@^9.1.0",
         "npm:react-dom@19",
+        "npm:react-leaflet@5",
         "npm:react-router-dom@^7.1.5",
         "npm:react@19",
         "npm:vite@^6.0.5"

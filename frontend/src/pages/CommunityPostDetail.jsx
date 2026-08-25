@@ -22,6 +22,7 @@ import {
 
 import api from "../api";
 import { useAuth } from "../context/AuthContext";
+import "../styles/community_post_detail.css";
 
 
 const REACTIONS = [
@@ -353,7 +354,7 @@ export default function CommunityPostDetail() {
 
         } else {
           setError(
-            "This community post could not be loaded."
+            "This post could not be loaded."
           );
         }
 
@@ -571,8 +572,8 @@ export default function CommunityPostDetail() {
 
       setSuccess(
         response.data.saved
-          ? "Post saved successfully."
-          : "Post removed from saved posts."
+          ? "Post saved."
+          : "Removed from saved posts."
       );
 
     } catch (
@@ -648,7 +649,7 @@ export default function CommunityPostDetail() {
       setCommentText("");
 
       setSuccess(
-        "Comment posted successfully."
+        "Comment posted."
       );
 
     } catch (
@@ -681,7 +682,7 @@ export default function CommunityPostDetail() {
   async function shareToCommunity() {
     const message =
       window.prompt(
-        "Add a message for your community share:",
+        "Add a note to your repost (optional):",
         ""
       );
 
@@ -724,7 +725,7 @@ export default function CommunityPostDetail() {
       );
 
       setSuccess(
-        "Post shared to the FoodKindl community."
+        "Shared to FoodKindl Community."
       );
 
     } catch (
@@ -780,7 +781,7 @@ export default function CommunityPostDetail() {
           );
 
         setSuccess(
-          "Post link copied successfully."
+          "Post link copied."
         );
       }
 
@@ -806,7 +807,7 @@ export default function CommunityPostDetail() {
 
   if (loading) {
     return (
-      <main className="app-page">
+      <main className="app-page community-detail-status-page">
         Loading post...
       </main>
     );
@@ -822,7 +823,7 @@ export default function CommunityPostDetail() {
     !post
   ) {
     return (
-      <main className="app-page">
+      <main className="app-page community-detail-status-page">
 
         <p className="error-message">
           {error}
@@ -868,7 +869,7 @@ export default function CommunityPostDetail() {
 
   if (!post) {
     return (
-      <main className="app-page">
+      <main className="app-page community-detail-status-page">
 
         <p className="error-message">
           Post not found.
@@ -930,17 +931,7 @@ export default function CommunityPostDetail() {
             BACK + REFRESH
         ================================================= */}
 
-        <div
-          style={{
-            display: "flex",
-            justifyContent:
-              "space-between",
-            alignItems: "center",
-            gap: "12px",
-            flexWrap: "wrap",
-            marginBottom: "20px",
-          }}
-        >
+        <div className="community-detail-topbar">
 
           <Link
             to="/community"
@@ -1163,7 +1154,7 @@ export default function CommunityPostDetail() {
               post.community_share_count ||
               0
             }
-            {" "}community shares
+            {" "}reposts
           </span>
 
         </div>
@@ -1338,7 +1329,7 @@ export default function CommunityPostDetail() {
               size={20}
             />
 
-            Share to Community
+            Repost
 
           </button>
 

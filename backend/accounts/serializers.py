@@ -134,128 +134,180 @@ class ProfileSerializer(
             # =================================================
 
             "interests": {
-                "required": False,
-                "allow_blank": True,
+                "required":
+                    False,
+
+                "allow_blank":
+                    True,
             },
 
             "favorite_cuisines": {
-                "required": False,
-                "allow_blank": True,
+                "required":
+                    False,
+
+                "allow_blank":
+                    True,
             },
 
             "food_connection_preferences": {
-                "required": False,
-                "allow_blank": True,
+                "required":
+                    False,
+
+                "allow_blank":
+                    True,
             },
 
             # =================================================
-            # LEGACY PROFILE PHOTOS
+            # LEGACY PHOTOS
             # =================================================
 
             "profile_image_1": {
-                "required": False,
-                "allow_null": True,
+                "required":
+                    False,
+
+                "allow_null":
+                    True,
             },
 
             "profile_image_2": {
-                "required": False,
-                "allow_null": True,
+                "required":
+                    False,
+
+                "allow_null":
+                    True,
             },
 
             "profile_image_3": {
-                "required": False,
-                "allow_null": True,
+                "required":
+                    False,
+
+                "allow_null":
+                    True,
             },
 
             # =================================================
-            # NETLIFY PROFILE PHOTO 1
+            # NETLIFY PHOTOS
             # =================================================
 
             "profile_image_1_blob_key": {
-                "required": False,
-                "allow_blank": True,
+                "required":
+                    False,
+
+                "allow_blank":
+                    True,
             },
 
             "profile_image_1_url": {
-                "required": False,
-                "allow_blank": True,
+                "required":
+                    False,
+
+                "allow_blank":
+                    True,
             },
 
-            # =================================================
-            # NETLIFY PROFILE PHOTO 2
-            # =================================================
-
             "profile_image_2_blob_key": {
-                "required": False,
-                "allow_blank": True,
+                "required":
+                    False,
+
+                "allow_blank":
+                    True,
             },
 
             "profile_image_2_url": {
-                "required": False,
-                "allow_blank": True,
+                "required":
+                    False,
+
+                "allow_blank":
+                    True,
             },
 
-            # =================================================
-            # NETLIFY PROFILE PHOTO 3
-            # =================================================
-
             "profile_image_3_blob_key": {
-                "required": False,
-                "allow_blank": True,
+                "required":
+                    False,
+
+                "allow_blank":
+                    True,
             },
 
             "profile_image_3_url": {
-                "required": False,
-                "allow_blank": True,
+                "required":
+                    False,
+
+                "allow_blank":
+                    True,
             },
 
             # =================================================
-            # LEGACY GOVERNMENT ID
+            # GOVERNMENT ID
             # =================================================
 
             "government_id": {
-                "write_only": True,
-                "required": False,
-                "allow_null": True,
+                "write_only":
+                    True,
+
+                "required":
+                    False,
+
+                "allow_null":
+                    True,
             },
 
-            # =================================================
-            # NETLIFY GOVERNMENT ID
-            # =================================================
-
             "government_id_blob_key": {
-                "write_only": True,
-                "required": False,
-                "allow_blank": True,
+                "write_only":
+                    True,
+
+                "required":
+                    False,
+
+                "allow_blank":
+                    True,
             },
 
             "government_id_url": {
-                "write_only": True,
-                "required": False,
-                "allow_blank": True,
+                "write_only":
+                    True,
+
+                "required":
+                    False,
+
+                "allow_blank":
+                    True,
             },
 
             "government_id_original_name": {
-                "write_only": True,
-                "required": False,
-                "allow_blank": True,
+                "write_only":
+                    True,
+
+                "required":
+                    False,
+
+                "allow_blank":
+                    True,
             },
 
             "government_id_content_type": {
-                "write_only": True,
-                "required": False,
-                "allow_blank": True,
+                "write_only":
+                    True,
+
+                "required":
+                    False,
+
+                "allow_blank":
+                    True,
             },
 
             "government_id_type": {
-                "required": False,
-                "allow_blank": True,
+                "required":
+                    False,
+
+                "allow_blank":
+                    True,
             },
         }
 
 
     # ========================================================
-    # BLOCKED USERS COUNT
+    # BLOCKED COUNT
     # ========================================================
 
     def get_blocked_users_count(
@@ -279,13 +331,15 @@ class ProfileSerializer(
 
         return bool(
             obj.government_id_blob_key
-            or obj.government_id_url
-            or obj.government_id
+            or
+            obj.government_id_url
+            or
+            obj.government_id
         )
 
 
     # ========================================================
-    # FOOD MATCH FIELD CLEANING
+    # CLEAN FOOD MATCH VALUES
     # ========================================================
 
     def clean_comma_separated_value(
@@ -297,13 +351,27 @@ class ProfileSerializer(
             return ""
 
         values = [
-            item.strip()
-            for item in str(value).split(",")
+
+            item
+            .strip()
+
+            for item
+            in (
+                str(value)
+                .replace(
+                    ";",
+                    ",",
+                )
+                .split(",")
+            )
+
             if item.strip()
         ]
 
         unique_values = list(
-            dict.fromkeys(values)
+            dict.fromkeys(
+                values
+            )
         )
 
         return ",".join(
@@ -356,8 +424,10 @@ class ProfileSerializer(
         uploaded_file,
     ):
 
-        return self.validate_profile_image(
-            uploaded_file
+        return (
+            self.validate_profile_image(
+                uploaded_file
+            )
         )
 
 
@@ -366,8 +436,10 @@ class ProfileSerializer(
         uploaded_file,
     ):
 
-        return self.validate_profile_image(
-            uploaded_file
+        return (
+            self.validate_profile_image(
+                uploaded_file
+            )
         )
 
 
@@ -376,8 +448,10 @@ class ProfileSerializer(
         uploaded_file,
     ):
 
-        return self.validate_profile_image(
-            uploaded_file
+        return (
+            self.validate_profile_image(
+                uploaded_file
+            )
         )
 
 
@@ -389,11 +463,13 @@ class ProfileSerializer(
         if not uploaded_file:
             return uploaded_file
 
-
         maximum_size = (
-            10 * 1024 * 1024
+            10
+            *
+            1024
+            *
+            1024
         )
-
 
         if (
             uploaded_file.size >
@@ -404,13 +480,11 @@ class ProfileSerializer(
                 "Profile image must be smaller than 10 MB."
             )
 
-
         allowed_types = {
             "image/jpeg",
             "image/png",
             "image/webp",
         }
-
 
         content_type = getattr(
             uploaded_file,
@@ -418,23 +492,22 @@ class ProfileSerializer(
             "",
         )
 
-
         if (
             content_type
             and
-            content_type not in allowed_types
+            content_type not in
+            allowed_types
         ):
 
             raise serializers.ValidationError(
                 "Upload a JPG, PNG, or WebP image."
             )
 
-
         return uploaded_file
 
 
     # ========================================================
-    # GOVERNMENT ID FILE VALIDATION
+    # GOVERNMENT ID FILE
     # ========================================================
 
     def validate_government_id(
@@ -445,11 +518,13 @@ class ProfileSerializer(
         if not uploaded_file:
             return uploaded_file
 
-
         maximum_size = (
-            5 * 1024 * 1024
+            5
+            *
+            1024
+            *
+            1024
         )
-
 
         if (
             uploaded_file.size >
@@ -460,7 +535,6 @@ class ProfileSerializer(
                 "Government ID must be smaller than 5 MB."
             )
 
-
         allowed_types = {
             "image/jpeg",
             "image/png",
@@ -468,38 +542,28 @@ class ProfileSerializer(
             "application/pdf",
         }
 
-
         content_type = getattr(
             uploaded_file,
             "content_type",
             "",
         )
 
-
         if (
             content_type
             and
-            content_type not in allowed_types
+            content_type not in
+            allowed_types
         ):
 
             raise serializers.ValidationError(
                 "Upload a JPG, PNG, WebP, or PDF document."
             )
 
-
         return uploaded_file
 
 
     # ========================================================
-    # GOVERNMENT ID URL VALIDATION
-    #
-    # DEVELOPMENT:
-    # DEBUG=True
-    # HTTP localhost allowed
-    #
-    # PRODUCTION:
-    # DEBUG=False
-    # HTTPS only
+    # GOVERNMENT ID URL
     # ========================================================
 
     def validate_government_id_url(
@@ -513,14 +577,8 @@ class ProfileSerializer(
             else ""
         )
 
-
         if not value:
             return ""
-
-
-        # ====================================================
-        # DEVELOPMENT
-        # ====================================================
 
         if settings.DEBUG:
 
@@ -531,16 +589,11 @@ class ProfileSerializer(
                 "https://127.0.0.1:",
             )
 
-
             if value.startswith(
                 allowed_local_prefixes
             ):
 
                 return value
-
-
-            # HTTPS public URL is also fine
-            # while testing locally.
 
             if value.startswith(
                 "https://"
@@ -548,18 +601,12 @@ class ProfileSerializer(
 
                 return value
 
-
             raise serializers.ValidationError(
                 (
                     "During development, Government ID URL "
                     "must use localhost or HTTPS."
                 )
             )
-
-
-        # ====================================================
-        # PRODUCTION
-        # ====================================================
 
         if not value.startswith(
             "https://"
@@ -572,12 +619,11 @@ class ProfileSerializer(
                 )
             )
 
-
         return value
 
 
     # ========================================================
-    # GENERAL PROFILE VALIDATION
+    # GENERAL VALIDATION
     # ========================================================
 
     def validate(
@@ -591,13 +637,11 @@ class ProfileSerializer(
             )
         )
 
-
         government_id_blob_key = (
             attrs.get(
                 "government_id_blob_key"
             )
         )
-
 
         government_id_url = (
             attrs.get(
@@ -605,20 +649,16 @@ class ProfileSerializer(
             )
         )
 
-
         government_id_type = (
             attrs.get(
                 "government_id_type"
             )
         )
 
-
-        # If updating profile and ID type
-        # was not sent, use existing ID type.
-
         if (
             not government_id_type
-            and self.instance
+            and
+            self.instance
         ):
 
             government_id_type = (
@@ -626,14 +666,12 @@ class ProfileSerializer(
                 .government_id_type
             )
 
-
-        # If new ID information was uploaded,
-        # ID type is mandatory.
-
         if (
             government_id
-            or government_id_blob_key
-            or government_id_url
+            or
+            government_id_blob_key
+            or
+            government_id_url
         ):
 
             if not government_id_type:
@@ -647,7 +685,6 @@ class ProfileSerializer(
                             )
                     }
                 )
-
 
         return attrs
 
@@ -669,24 +706,17 @@ class ProfileSerializer(
             )
         )
 
-
         new_government_blob = (
             validated_data.get(
                 "government_id_blob_key"
             )
         )
 
-
         new_government_url = (
             validated_data.get(
                 "government_id_url"
             )
         )
-
-
-        # ====================================================
-        # SAVE ALL PROVIDED FIELDS
-        # ====================================================
 
         for (
             field,
@@ -699,16 +729,12 @@ class ProfileSerializer(
                 value,
             )
 
-
-        # ====================================================
-        # NEW GOVERNMENT ID
-        # RESET VERIFICATION
-        # ====================================================
-
         if (
             new_government_id
-            or new_government_blob
-            or new_government_url
+            or
+            new_government_blob
+            or
+            new_government_url
         ):
 
             instance.verification_status = (
@@ -723,9 +749,7 @@ class ProfileSerializer(
 
             instance.rejection_reason = ""
 
-
         instance.save()
-
 
         return instance
 
@@ -743,7 +767,6 @@ class UserSerializer(
             read_only=True
         )
     )
-
 
     full_name = (
         serializers.SerializerMethodField()
@@ -771,8 +794,10 @@ class UserSerializer(
 
         return (
             obj.get_full_name().strip()
-            or obj.email
-            or "FoodKindl Member"
+            or
+            obj.email
+            or
+            "FoodKindl Member"
         )
 
 
@@ -784,78 +809,88 @@ class FoodMatchMemberSerializer(
     serializers.ModelSerializer
 ):
 
+    user_id = (
+        serializers.IntegerField(
+            source="id",
+            read_only=True,
+        )
+    )
+
+    member_id = (
+        serializers.IntegerField(
+            source="id",
+            read_only=True,
+        )
+    )
+
     full_name = (
         serializers.SerializerMethodField()
     )
-
 
     profile_image = (
         serializers.SerializerMethodField()
     )
 
-
     city = (
         serializers.CharField(
-            source="profile.city",
+            source=
+                "profile.city",
             read_only=True,
         )
     )
-
 
     locality = (
         serializers.CharField(
-            source="profile.locality",
+            source=
+                "profile.locality",
             read_only=True,
         )
     )
-
 
     dietary_preference = (
         serializers.CharField(
-            source="profile.dietary_preference",
+            source=
+                "profile.dietary_preference",
             read_only=True,
         )
     )
-
 
     interests = (
         serializers.CharField(
-            source="profile.interests",
+            source=
+                "profile.interests",
             read_only=True,
         )
     )
-
 
     favorite_cuisines = (
         serializers.CharField(
-            source="profile.favorite_cuisines",
+            source=
+                "profile.favorite_cuisines",
             read_only=True,
         )
     )
-
 
     food_connection_preferences = (
         serializers.CharField(
-            source=(
-                "profile."
-                "food_connection_preferences"
-            ),
+            source=
+                "profile.food_connection_preferences",
             read_only=True,
         )
     )
-
 
     is_verified = (
         serializers.BooleanField(
-            source="profile.is_verified",
+            source=
+                "profile.is_verified",
             read_only=True,
         )
     )
 
-
     verification_status = (
         serializers.CharField(
-            source="profile.verification_status",
+            source=
+                "profile.verification_status",
             read_only=True,
         )
     )
@@ -866,7 +901,14 @@ class FoodMatchMemberSerializer(
         model = User
 
         fields = (
+
             "id",
+
+            # Explicit IDs for frontend matching
+
+            "user_id",
+            "member_id",
+
             "first_name",
             "last_name",
             "full_name",
@@ -877,11 +919,15 @@ class FoodMatchMemberSerializer(
             "locality",
 
             "dietary_preference",
+
             "interests",
+
             "favorite_cuisines",
+
             "food_connection_preferences",
 
             "is_verified",
+
             "verification_status",
         )
 
@@ -893,7 +939,10 @@ class FoodMatchMemberSerializer(
 
         return (
             obj.get_full_name().strip()
-            or "FoodKindl Member"
+            or
+            obj.email
+            or
+            "FoodKindl Member"
         )
 
 
@@ -908,7 +957,6 @@ class FoodMatchMemberSerializer(
             None,
         )
 
-
         if not profile:
             return None
 
@@ -917,18 +965,25 @@ class FoodMatchMemberSerializer(
         # NETLIFY IMAGE FIRST
         # ====================================================
 
-        if profile.profile_image_1_url:
+        if (
+            profile
+            .profile_image_1_url
+        ):
 
             return (
-                profile.profile_image_1_url
+                profile
+                .profile_image_1_url
             )
 
 
         # ====================================================
-        # LEGACY DJANGO IMAGE FALLBACK
+        # LEGACY DJANGO IMAGE
         # ====================================================
 
-        if profile.profile_image_1:
+        if (
+            profile
+            .profile_image_1
+        ):
 
             try:
 
@@ -942,25 +997,22 @@ class FoodMatchMemberSerializer(
 
                 return None
 
-
             request = (
                 self.context.get(
                     "request"
                 )
             )
 
-
             if request:
 
                 return (
-                    request.build_absolute_uri(
+                    request
+                    .build_absolute_uri(
                         image_url
                     )
                 )
 
-
             return image_url
-
 
         return None
 
@@ -977,7 +1029,6 @@ class BlockedMemberSerializer(
         serializers.SerializerMethodField()
     )
 
-
     profile_image = (
         serializers.SerializerMethodField()
     )
@@ -1003,7 +1054,10 @@ class BlockedMemberSerializer(
 
         return (
             obj.get_full_name().strip()
-            or "FoodKindl Member"
+            or
+            obj.email
+            or
+            "FoodKindl Member"
         )
 
 
@@ -1018,27 +1072,23 @@ class BlockedMemberSerializer(
             None,
         )
 
-
         if not profile:
             return None
 
-
-        # ====================================================
-        # NETLIFY IMAGE FIRST
-        # ====================================================
-
-        if profile.profile_image_1_url:
+        if (
+            profile
+            .profile_image_1_url
+        ):
 
             return (
-                profile.profile_image_1_url
+                profile
+                .profile_image_1_url
             )
 
-
-        # ====================================================
-        # DJANGO IMAGE FALLBACK
-        # ====================================================
-
-        if profile.profile_image_1:
+        if (
+            profile
+            .profile_image_1
+        ):
 
             try:
 
@@ -1052,25 +1102,22 @@ class BlockedMemberSerializer(
 
                 return None
 
-
             request = (
                 self.context.get(
                     "request"
                 )
             )
 
-
             if request:
 
                 return (
-                    request.build_absolute_uri(
+                    request
+                    .build_absolute_uri(
                         image_url
                     )
                 )
 
-
             return image_url
-
 
         return None
 
@@ -1104,7 +1151,6 @@ class RegisterSerializer(
             "password",
         )
 
-
         read_only_fields = (
             "id",
         )
@@ -1121,18 +1167,17 @@ class RegisterSerializer(
             .lower()
         )
 
-
         if not email:
 
             raise serializers.ValidationError(
                 "Email is required."
             )
 
-
         if (
             User.objects
             .filter(
-                email__iexact=email
+                email__iexact=
+                    email
             )
             .exists()
         ):
@@ -1143,7 +1188,6 @@ class RegisterSerializer(
                     "email already exists."
                 )
             )
-
 
         return email
 
@@ -1160,7 +1204,6 @@ class RegisterSerializer(
             )
         )
 
-
         email = (
             validated_data[
                 "email"
@@ -1169,12 +1212,13 @@ class RegisterSerializer(
             .lower()
         )
 
-
         user = User(
 
-            username=email,
+            username=
+                email,
 
-            email=email,
+            email=
+                email,
 
             first_name=(
                 validated_data.get(
@@ -1191,19 +1235,15 @@ class RegisterSerializer(
             ),
         )
 
-
         user.set_password(
             password
         )
 
-
         user.save()
-
 
         Profile.objects.get_or_create(
             user=user
         )
-
 
         return user
 
@@ -1221,7 +1261,6 @@ class EmailLoginSerializer(
             write_only=True
         )
     )
-
 
     password = (
         serializers.CharField(
@@ -1244,19 +1283,18 @@ class EmailLoginSerializer(
             .lower()
         )
 
-
         password = (
             attrs[
                 "password"
             ]
         )
 
-
         try:
 
             database_user = (
                 User.objects.get(
-                    email__iexact=email
+                    email__iexact=
+                        email
                 )
             )
 
@@ -1272,7 +1310,6 @@ class EmailLoginSerializer(
                 }
             )
 
-
         user = authenticate(
 
             request=(
@@ -1282,12 +1319,13 @@ class EmailLoginSerializer(
             ),
 
             username=(
-                database_user.username
+                database_user
+                .username
             ),
 
-            password=password,
+            password=
+                password,
         )
-
 
         if user is None:
 
@@ -1301,7 +1339,6 @@ class EmailLoginSerializer(
                 }
             )
 
-
         if not user.is_active:
 
             raise serializers.ValidationError(
@@ -1311,11 +1348,9 @@ class EmailLoginSerializer(
                 }
             )
 
-
         Profile.objects.get_or_create(
             user=user
         )
-
 
         refresh = (
             RefreshToken.for_user(
@@ -1323,20 +1358,226 @@ class EmailLoginSerializer(
             )
         )
 
-
         return {
 
             "refresh":
-                str(refresh),
+                str(
+                    refresh
+                ),
 
             "access":
                 str(
-                    refresh.access_token
+                    refresh
+                    .access_token
                 ),
 
             "user":
                 UserSerializer(
                     user,
-                    context=self.context,
+
+                    context=
+                        self.context,
                 ).data,
         }
+        
+#####################################################
+from django.contrib.auth import (
+    get_user_model,
+)
+
+from django.contrib.auth.password_validation import (
+    validate_password,
+)
+
+from django.core.exceptions import (
+    ValidationError as DjangoValidationError,
+)
+
+from django.utils.encoding import (
+    force_str,
+)
+
+from django.utils.http import (
+    urlsafe_base64_decode,
+)
+
+from django.contrib.auth.tokens import (
+    default_token_generator,
+)
+
+from rest_framework import serializers
+
+
+User = get_user_model()
+
+
+# ============================================================
+# FORGOT PASSWORD — EMAIL
+# ============================================================
+
+class ForgotPasswordSerializer(
+    serializers.Serializer
+):
+
+    email = serializers.EmailField()
+
+
+    def validate_email(
+        self,
+        value,
+    ):
+
+        return (
+            value
+            .strip()
+            .lower()
+        )
+
+
+# ============================================================
+# RESET PASSWORD
+# ============================================================
+
+class ResetPasswordSerializer(
+    serializers.Serializer
+):
+
+    uid = serializers.CharField()
+
+    token = serializers.CharField()
+
+    password = serializers.CharField(
+        write_only=True,
+        min_length=8,
+        style={
+            "input_type":
+                "password",
+        },
+    )
+
+    confirm_password = serializers.CharField(
+        write_only=True,
+        min_length=8,
+        style={
+            "input_type":
+                "password",
+        },
+    )
+
+
+    def validate(
+        self,
+        attrs,
+    ):
+
+        password = attrs.get(
+            "password"
+        )
+
+        confirm_password = attrs.get(
+            "confirm_password"
+        )
+
+
+        # ----------------------------------------------------
+        # PASSWORDS MUST MATCH
+        # ----------------------------------------------------
+
+        if (
+            password
+            !=
+            confirm_password
+        ):
+
+            raise serializers.ValidationError(
+                {
+                    "confirm_password":
+                        "Passwords do not match."
+                }
+            )
+
+
+        # ----------------------------------------------------
+        # DECODE USER ID
+        # ----------------------------------------------------
+
+        try:
+
+            user_id = force_str(
+                urlsafe_base64_decode(
+                    attrs["uid"]
+                )
+            )
+
+            user = (
+                User.objects
+                .filter(
+                    pk=user_id
+                )
+                .first()
+            )
+
+        except Exception:
+
+            user = None
+
+
+        if not user:
+
+            raise serializers.ValidationError(
+                {
+                    "detail":
+                        "Invalid password reset link."
+                }
+            )
+
+
+        # ----------------------------------------------------
+        # CHECK TOKEN
+        # ----------------------------------------------------
+
+        if not (
+            default_token_generator
+            .check_token(
+                user,
+                attrs["token"],
+            )
+        ):
+
+            raise serializers.ValidationError(
+                {
+                    "detail":
+                        (
+                            "This password reset link "
+                            "is invalid or has expired."
+                        )
+                }
+            )
+
+
+        # ----------------------------------------------------
+        # DJANGO PASSWORD VALIDATION
+        # ----------------------------------------------------
+
+        try:
+
+            validate_password(
+                password,
+                user=user,
+            )
+
+        except DjangoValidationError as error:
+
+            raise serializers.ValidationError(
+                {
+                    "password":
+                        list(
+                            error.messages
+                        )
+                }
+            )
+
+
+        attrs["user"] = user
+
+        return attrs

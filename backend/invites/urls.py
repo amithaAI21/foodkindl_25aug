@@ -6,16 +6,29 @@ from .views import (
     FoodInviteDetailView,
     FoodInviteListCreateView,
     FoodInviteRespondView,
+
     FoodWalkRestaurantRecommendationView,
+
     RecommendedRestaurantListView,
+
     RestaurantBookingCancelView,
     RestaurantBookingDetailView,
     RestaurantBookingListCreateView,
     RestaurantBookingStatusView,
+
     RestaurantCreateView,
     RestaurantDetailView,
     RestaurantGeocodeView,
     RestaurantUpdateView,
+
+    LocationAutocompleteView,
+
+    # ========================================================
+    # CUSTOMER RESTAURANT SUBMISSIONS
+    # ========================================================
+
+    RestaurantSubmissionListCreateView,
+    RestaurantSubmissionDetailView,
 )
 
 
@@ -23,11 +36,6 @@ urlpatterns = [
 
     # ========================================================
     # FOOD INVITES
-    #
-    # IMPORTANT:
-    # We intentionally use "food-invites/" instead of
-    # "invitations/" because another app already uses the
-    # /invitations/ endpoint and expects receiver_email.
     # ========================================================
 
     path(
@@ -62,6 +70,34 @@ urlpatterns = [
 
 
     # ========================================================
+    # CUSTOMER RESTAURANT / CAFE / HOTEL SUBMISSIONS
+    #
+    # Logged-in users:
+    #
+    # POST /restaurant-submissions/
+    #     -> create pending submission
+    #
+    # GET /restaurant-submissions/
+    #     -> user's own submissions
+    #
+    # GET /restaurant-submissions/<id>/
+    #     -> submission detail
+    # ========================================================
+
+    path(
+        "restaurant-submissions/",
+        RestaurantSubmissionListCreateView.as_view(),
+        name="restaurant-submission-list-create",
+    ),
+
+    path(
+        "restaurant-submissions/<int:pk>/",
+        RestaurantSubmissionDetailView.as_view(),
+        name="restaurant-submission-detail",
+    ),
+
+
+    # ========================================================
     # FOOD WALK / RESTAURANT RECOMMENDATIONS
     #
     # Keep static paths before restaurants/<int:id>/.
@@ -82,8 +118,6 @@ urlpatterns = [
 
     # ========================================================
     # ADMIN RESTAURANT MANAGEMENT
-    #
-    # Keep "create/" before <int:id>/.
     # ========================================================
 
     path(
@@ -144,4 +178,14 @@ urlpatterns = [
         name="restaurant-booking-status",
     ),
 
+
+    # ========================================================
+    # LOCATION AUTOCOMPLETE
+    # ========================================================
+
+    path(
+        "locations/autocomplete/",
+        LocationAutocompleteView.as_view(),
+        name="location-autocomplete",
+    ),
 ]

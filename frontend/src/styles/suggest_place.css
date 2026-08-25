@@ -1,0 +1,630 @@
+/* ==========================================================
+   FOODKINDL — SUGGEST A PLACE
+========================================================== */
+
+.suggest-place-page {
+  width: min(
+    880px,
+    calc(100% - 40px)
+  );
+
+  margin: 0 auto;
+
+  padding:
+    38px 0
+    80px;
+
+  color: #f6f2ef;
+}
+
+
+/* ==========================================================
+   INTRO
+========================================================== */
+
+.suggest-place-intro {
+  display: flex;
+  align-items: flex-start;
+
+  gap: 15px;
+
+  padding-bottom: 25px;
+
+  border-bottom:
+    1px solid
+    rgba(255, 255, 255, 0.06);
+}
+
+
+.suggest-place-intro-icon {
+  width: 46px;
+  height: 46px;
+
+  flex: 0 0 46px;
+
+  display: grid;
+  place-items: center;
+
+  border:
+    1px solid
+    rgba(255, 105, 46, 0.2);
+
+  border-radius: 14px;
+
+  background:
+    rgba(255, 105, 46, 0.06);
+
+  color: #ff7545;
+}
+
+
+.suggest-place-intro span {
+  color: #ff7545;
+
+  font-size: 8px;
+  font-weight: 850;
+
+  letter-spacing: 0.12em;
+}
+
+
+.suggest-place-intro h1 {
+  margin: 6px 0 0;
+
+  font-size: clamp(
+    31px,
+    5vw,
+    48px
+  );
+
+  line-height: 1;
+
+  letter-spacing: -0.045em;
+}
+
+
+.suggest-place-intro p {
+  max-width: 580px;
+
+  margin: 10px 0 0;
+
+  color: #817874;
+
+  font-size: 10px;
+
+  line-height: 1.6;
+}
+
+
+/* ==========================================================
+   FORM
+========================================================== */
+
+.suggest-place-form {
+  display: grid;
+
+  gap: 12px;
+
+  margin-top: 22px;
+}
+
+
+.suggest-place-section {
+  padding: 18px;
+
+  border:
+    1px solid
+    rgba(255, 255, 255, 0.06);
+
+  border-radius: 16px;
+
+  background:
+    rgba(255, 255, 255, 0.012);
+}
+
+
+/* ==========================================================
+   SECTION HEADING
+========================================================== */
+
+.suggest-place-section-heading {
+  display: flex;
+  align-items: center;
+
+  gap: 10px;
+
+  margin-bottom: 14px;
+}
+
+
+.suggest-place-section-heading > span {
+  width: 30px;
+  height: 30px;
+
+  flex: 0 0 30px;
+
+  display: grid;
+  place-items: center;
+
+  border:
+    1px solid
+    rgba(255, 105, 46, 0.17);
+
+  border-radius: 9px;
+
+  color: #ff7545;
+
+  font-size: 8px;
+  font-weight: 850;
+}
+
+
+.suggest-place-section-heading strong,
+.suggest-place-section-heading small {
+  display: block;
+}
+
+
+.suggest-place-section-heading strong {
+  font-size: 10px;
+}
+
+
+.suggest-place-section-heading small {
+  margin-top: 3px;
+
+  color: #6e6763;
+
+  font-size: 7px;
+}
+
+
+/* ==========================================================
+   TYPE
+========================================================== */
+
+.suggest-place-type-grid {
+  display: grid;
+
+  grid-template-columns:
+    repeat(3, 1fr);
+
+  gap: 8px;
+}
+
+
+.suggest-place-type-grid button {
+  min-height: 52px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  gap: 8px;
+
+  border:
+    1px solid
+    rgba(255, 255, 255, 0.06);
+
+  border-radius: 12px;
+
+  background:
+    rgba(255, 255, 255, 0.012);
+
+  color: #8c847f;
+
+  font-size: 9px;
+  font-weight: 750;
+
+  cursor: pointer;
+}
+
+
+.suggest-place-type-grid button.active {
+  border-color:
+    rgba(255, 105, 46, 0.28);
+
+  background:
+    rgba(255, 105, 46, 0.065);
+
+  color: #ff8152;
+}
+
+
+/* ==========================================================
+   GRID
+========================================================== */
+
+.suggest-place-grid {
+  display: grid;
+
+  grid-template-columns:
+    repeat(2, minmax(0, 1fr));
+
+  gap: 11px;
+}
+
+
+.suggest-place-full {
+  grid-column: 1 / -1;
+}
+
+
+/* ==========================================================
+   INPUTS
+========================================================== */
+
+.suggest-place-form label {
+  display: grid;
+
+  gap: 6px;
+
+  color: #b5ada8;
+
+  font-size: 8px;
+  font-weight: 700;
+}
+
+
+.suggest-place-form input,
+.suggest-place-form select,
+.suggest-place-form textarea {
+  width: 100%;
+
+  box-sizing: border-box;
+
+  min-height: 42px;
+
+  padding: 0 11px;
+
+  border:
+    1px solid
+    rgba(255, 255, 255, 0.07);
+
+  border-radius: 10px;
+
+  outline: none;
+
+  background: #0d0d0d;
+
+  color: #f5f0ed;
+
+  font: inherit;
+
+  font-size: 9px;
+}
+
+
+.suggest-place-form textarea {
+  min-height: 78px;
+
+  padding-top: 10px;
+
+  resize: vertical;
+}
+
+
+.suggest-place-form input:focus,
+.suggest-place-form select:focus,
+.suggest-place-form textarea:focus {
+  border-color:
+    rgba(255, 105, 46, 0.34);
+}
+
+
+/* ==========================================================
+   ICON INPUT
+========================================================== */
+
+.suggest-place-input-icon {
+  position: relative;
+}
+
+
+.suggest-place-input-icon > svg {
+  position: absolute;
+
+  left: 11px;
+  top: 50%;
+
+  z-index: 2;
+
+  transform: translateY(-50%);
+
+  color: #ff7545;
+}
+
+
+.suggest-place-input-icon input {
+  padding-left: 36px;
+}
+
+
+/* ==========================================================
+   LOCATION
+========================================================== */
+
+.suggest-place-location-action {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+
+  gap: 5px;
+}
+
+
+.suggest-place-location-action button {
+  min-height: 42px;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  gap: 7px;
+
+  border:
+    1px solid
+    rgba(255, 105, 46, 0.17);
+
+  border-radius: 10px;
+
+  background:
+    rgba(255, 105, 46, 0.045);
+
+  color: #ff8050;
+
+  font-size: 8px;
+  font-weight: 750;
+
+  cursor: pointer;
+}
+
+
+.suggest-place-location-action small {
+  color: #6f6864;
+
+  font-size: 7px;
+}
+
+
+/* ==========================================================
+   CHECKBOXES
+========================================================== */
+
+.suggest-place-check-grid {
+  display: grid;
+
+  grid-template-columns:
+    repeat(4, minmax(0, 1fr));
+
+  gap: 7px;
+}
+
+
+.suggest-place-check {
+  min-height: 40px;
+
+  display: flex !important;
+  align-items: center;
+
+  gap: 7px !important;
+
+  padding: 0 10px;
+
+  border:
+    1px solid
+    rgba(255, 255, 255, 0.055);
+
+  border-radius: 10px;
+
+  background:
+    rgba(255, 255, 255, 0.01);
+
+  cursor: pointer;
+}
+
+
+.suggest-place-check input {
+  width: 14px;
+  height: 14px;
+
+  min-height: 0;
+
+  accent-color: #ff6a35;
+}
+
+
+.suggest-place-check span {
+  color: #918883;
+
+  font-size: 8px;
+}
+
+
+/* ==========================================================
+   STATUS
+========================================================== */
+
+.suggest-place-error,
+.suggest-place-success {
+  margin: 0;
+
+  padding: 11px 12px;
+
+  border-radius: 10px;
+
+  font-size: 8px;
+}
+
+
+.suggest-place-error {
+  border:
+    1px solid
+    rgba(239, 82, 82, 0.16);
+
+  background:
+    rgba(239, 82, 82, 0.04);
+
+  color: #ef8c8c;
+}
+
+
+.suggest-place-success {
+  border:
+    1px solid
+    rgba(77, 209, 139, 0.16);
+
+  background:
+    rgba(77, 209, 139, 0.04);
+
+  color: #67d99c;
+}
+
+
+/* ==========================================================
+   FOOTER
+========================================================== */
+
+.suggest-place-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  gap: 15px;
+
+  margin-top: 3px;
+}
+
+
+.suggest-place-footer p {
+  margin: 0;
+
+  color: #706965;
+
+  font-size: 8px;
+}
+
+
+.suggest-place-footer button {
+  min-height: 43px;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  gap: 7px;
+
+  padding: 0 15px;
+
+  border: 0;
+
+  border-radius: 11px;
+
+  background:
+    linear-gradient(
+      135deg,
+      #ff6433,
+      #d9421a
+    );
+
+  color: white;
+
+  font-size: 9px;
+  font-weight: 800;
+
+  cursor: pointer;
+}
+
+
+.suggest-place-footer button:disabled {
+  opacity: 0.55;
+
+  cursor: not-allowed;
+}
+
+
+/* ==========================================================
+   TABLET
+========================================================== */
+
+@media (
+  max-width: 760px
+) {
+
+  .suggest-place-check-grid {
+    grid-template-columns:
+      repeat(2, 1fr);
+  }
+
+}
+
+
+/* ==========================================================
+   MOBILE
+========================================================== */
+
+@media (
+  max-width: 600px
+) {
+
+  .suggest-place-page {
+    width:
+      calc(
+        100% - 20px
+      );
+
+    padding:
+      24px 0
+      55px;
+  }
+
+
+  .suggest-place-intro {
+    gap: 11px;
+  }
+
+
+  .suggest-place-section {
+    padding: 14px;
+  }
+
+
+  .suggest-place-type-grid {
+    grid-template-columns: 1fr;
+  }
+
+
+  .suggest-place-type-grid button {
+    justify-content: flex-start;
+
+    padding-left: 12px;
+  }
+
+
+  .suggest-place-grid {
+    grid-template-columns: 1fr;
+  }
+
+
+  .suggest-place-full {
+    grid-column: auto;
+  }
+
+
+  .suggest-place-check-grid {
+    grid-template-columns: 1fr;
+  }
+
+
+  .suggest-place-footer {
+    align-items: stretch;
+
+    flex-direction: column;
+  }
+
+
+  .suggest-place-footer button {
+    width: 100%;
+  }
+
+}

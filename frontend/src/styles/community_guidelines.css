@@ -1,0 +1,711 @@
+/* ==========================================================
+   FOODKINDL COMMUNITY GUIDELINES
+========================================================== */
+
+.guidelines-page {
+  width: min(
+    1120px,
+    calc(100% - 48px)
+  );
+
+  margin: 0 auto;
+
+  padding:
+    28px 0 70px;
+}
+
+
+/* ==========================================================
+   TOP BAR
+========================================================== */
+
+.guidelines-topbar {
+  display: flex;
+  align-items: center;
+
+  min-height: 54px;
+
+  margin-bottom: 30px;
+
+  border-bottom:
+    1px solid
+    rgba(255, 255, 255, 0.05);
+}
+
+
+.guidelines-back-link {
+  display: inline-flex;
+  align-items: center;
+
+  gap: 7px;
+
+  color: #9b9490;
+
+  font-size: 10px;
+  font-weight: 700;
+
+  text-decoration: none;
+}
+
+
+.guidelines-back-link:hover {
+  color: #ffffff;
+}
+
+
+/* ==========================================================
+   HERO
+========================================================== */
+
+.guidelines-hero {
+  max-width: 760px;
+
+  margin-bottom: 58px;
+}
+
+
+.guidelines-pill {
+  display: inline-flex;
+  align-items: center;
+
+  gap: 7px;
+
+  padding:
+    7px 10px;
+
+  border:
+    1px solid
+    rgba(255, 96, 31, 0.25);
+
+  border-radius: 999px;
+
+  background:
+    rgba(255, 96, 31, 0.05);
+
+  color: #ff7545;
+
+  font-size: 8px;
+  font-weight: 800;
+
+  letter-spacing: 0.11em;
+}
+
+
+.guidelines-hero h1 {
+  margin:
+    17px 0 0;
+
+  font-size:
+    clamp(
+      42px,
+      5vw,
+      68px
+    );
+
+  line-height: 1;
+
+  letter-spacing:
+    -0.045em;
+}
+
+
+.guidelines-hero h1 span {
+  color: #ff5d23;
+}
+
+
+.guidelines-hero p {
+  max-width: 650px;
+
+  margin:
+    17px 0 0;
+
+  color: #908985;
+
+  font-size: 13px;
+
+  line-height: 1.7;
+}
+
+
+/* ==========================================================
+   SECTION HEADER
+========================================================== */
+
+.guidelines-section-header {
+  max-width: 690px;
+
+  margin-bottom: 24px;
+}
+
+
+.guidelines-section-header > span,
+.guidelines-content-copy > span {
+  color: #ff7040;
+
+  font-size: 8px;
+  font-weight: 900;
+
+  letter-spacing: 0.11em;
+}
+
+
+.guidelines-section-header h2,
+.guidelines-content-copy h2 {
+  margin:
+    7px 0 0;
+
+  font-size:
+    clamp(
+      26px,
+      3vw,
+      40px
+    );
+
+  line-height: 1.08;
+
+  letter-spacing:
+    -0.035em;
+}
+
+
+.guidelines-section-header p {
+  margin:
+    12px 0 0;
+
+  color: #877f7b;
+
+  font-size: 11px;
+
+  line-height: 1.65;
+}
+
+
+/* ==========================================================
+   GUIDELINE CARDS
+========================================================== */
+
+.guidelines-section {
+  margin-bottom: 68px;
+}
+
+
+.guidelines-grid {
+  display: grid;
+
+  grid-template-columns:
+    repeat(3, 1fr);
+
+  gap: 12px;
+}
+
+
+.guideline-card {
+  position: relative;
+
+  min-height: 230px;
+
+  padding: 19px;
+
+  border:
+    1px solid
+    rgba(255, 96, 31, 0.15);
+
+  border-radius: 16px;
+
+  background:
+    linear-gradient(
+      145deg,
+      rgba(22, 11, 8, 0.85),
+      rgba(255, 255, 255, 0.012)
+    );
+}
+
+
+.guideline-number {
+  position: absolute;
+
+  top: 16px;
+  right: 16px;
+
+  color:
+    rgba(255, 255, 255, 0.10);
+
+  font-size: 24px;
+  font-weight: 900;
+}
+
+
+.guideline-icon {
+  display: grid;
+  place-items: center;
+
+  width: 41px;
+  height: 41px;
+
+  margin-bottom: 17px;
+
+  border:
+    1px solid
+    rgba(255, 96, 31, 0.20);
+
+  border-radius: 11px;
+
+  background:
+    rgba(255, 96, 31, 0.06);
+
+  color: #ff7545;
+}
+
+
+.guideline-card h3 {
+  margin: 0;
+
+  font-size: 15px;
+}
+
+
+.guideline-card p {
+  margin:
+    9px 0 0;
+
+  color: #847d79;
+
+  font-size: 9px;
+
+  line-height: 1.65;
+}
+
+
+/* ==========================================================
+   IN PERSON GATHERINGS
+========================================================== */
+
+.guidelines-meetups {
+  margin-bottom: 68px;
+
+  padding: 27px;
+
+  border:
+    1px solid
+    rgba(255, 96, 31, 0.17);
+
+  border-radius: 18px;
+
+  background:
+    rgba(255, 95, 31, 0.025);
+}
+
+
+.guidelines-meetup-list {
+  display: grid;
+
+  grid-template-columns:
+    repeat(2, 1fr);
+
+  gap: 11px;
+
+  margin-top: 21px;
+}
+
+
+.guidelines-meetup-list > div {
+  display: flex;
+  align-items: flex-start;
+
+  gap: 9px;
+
+  padding: 13px;
+
+  border:
+    1px solid
+    rgba(255, 255, 255, 0.05);
+
+  border-radius: 12px;
+
+  background:
+    rgba(255, 255, 255, 0.012);
+}
+
+
+.guidelines-meetup-list svg {
+  flex-shrink: 0;
+
+  color: #6ed69b;
+}
+
+
+.guidelines-meetup-list p {
+  margin: 0;
+
+  color: #8c8581;
+
+  font-size: 9px;
+
+  line-height: 1.6;
+}
+
+
+/* ==========================================================
+   CONTENT & COMMUNICATION
+========================================================== */
+
+.guidelines-content-rules {
+  display: grid;
+
+  grid-template-columns:
+    1fr 0.72fr;
+
+  gap: 30px;
+
+  align-items: center;
+
+  margin-bottom: 68px;
+}
+
+
+.guidelines-content-copy p {
+  max-width: 580px;
+
+  margin:
+    12px 0 0;
+
+  color: #847d79;
+
+  font-size: 10px;
+
+  line-height: 1.7;
+}
+
+
+.guidelines-content-card {
+  padding: 21px;
+
+  border:
+    1px solid
+    rgba(255, 96, 31, 0.17);
+
+  border-radius: 16px;
+
+  background:
+    rgba(255, 95, 31, 0.025);
+}
+
+
+.guidelines-content-card > svg {
+  color: #ff7040;
+}
+
+
+.guidelines-content-card h3 {
+  margin:
+    13px 0 7px;
+
+  font-size: 16px;
+}
+
+
+.guidelines-content-card p {
+  margin: 0;
+
+  color: #817a76;
+
+  font-size: 9px;
+
+  line-height: 1.65;
+}
+
+
+.guidelines-action-link {
+  display: inline-flex;
+
+  margin-top: 14px;
+
+  color: #ff7545;
+
+  font-size: 9px;
+  font-weight: 800;
+
+  text-decoration: none;
+}
+
+
+/* ==========================================================
+   ENFORCEMENT
+========================================================== */
+
+.guidelines-enforcement {
+  margin-bottom: 62px;
+}
+
+
+.guidelines-enforcement-grid {
+  display: grid;
+
+  grid-template-columns:
+    repeat(4, 1fr);
+
+  gap: 11px;
+}
+
+
+.guidelines-enforcement-grid article {
+  padding: 17px;
+
+  border:
+    1px solid
+    rgba(255, 255, 255, 0.055);
+
+  border-radius: 14px;
+
+  background:
+    rgba(255, 255, 255, 0.012);
+}
+
+
+.guidelines-enforcement-grid strong {
+  font-size: 11px;
+}
+
+
+.guidelines-enforcement-grid p {
+  margin:
+    8px 0 0;
+
+  color: #77706c;
+
+  font-size: 8px;
+
+  line-height: 1.6;
+}
+
+
+/* ==========================================================
+   NOTE
+========================================================== */
+
+.guidelines-note {
+  display: grid;
+
+  grid-template-columns:
+    auto 1fr;
+
+  gap: 13px;
+
+  align-items: flex-start;
+
+  padding: 18px;
+
+  border:
+    1px solid
+    rgba(255, 163, 59, 0.18);
+
+  border-radius: 14px;
+
+  background:
+    rgba(255, 163, 59, 0.035);
+}
+
+
+.guidelines-note > svg {
+  color: #f1a34a;
+}
+
+
+.guidelines-note strong {
+  font-size: 10px;
+}
+
+
+.guidelines-note p {
+  margin:
+    5px 0 0;
+
+  color: #817a76;
+
+  font-size: 8px;
+
+  line-height: 1.6;
+}
+
+
+/* ==========================================================
+   FOOTER NOTE
+========================================================== */
+
+.guidelines-footer-note {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  gap: 18px;
+
+  margin-top: 35px;
+
+  padding-top: 18px;
+
+  border-top:
+    1px solid
+    rgba(255, 255, 255, 0.05);
+}
+
+
+.guidelines-footer-note p,
+.guidelines-footer-note span {
+  margin: 0;
+
+  color: #5f5956;
+
+  font-size: 7px;
+}
+
+
+/* ==========================================================
+   TABLET
+========================================================== */
+
+@media (max-width: 950px) {
+
+  .guidelines-grid {
+    grid-template-columns:
+      repeat(2, 1fr);
+  }
+
+
+  .guidelines-content-rules {
+    grid-template-columns: 1fr;
+  }
+
+
+  .guidelines-enforcement-grid {
+    grid-template-columns:
+      repeat(2, 1fr);
+  }
+
+}
+
+
+/* ==========================================================
+   MOBILE
+========================================================== */
+
+@media (max-width: 700px) {
+
+  .guidelines-page {
+    width:
+      calc(100% - 28px);
+
+    padding:
+      18px 0 50px;
+  }
+
+
+  .guidelines-topbar {
+    margin-bottom: 24px;
+  }
+
+
+  .guidelines-hero {
+    margin-bottom: 45px;
+  }
+
+
+  .guidelines-hero h1 {
+    font-size:
+      clamp(
+        39px,
+        12vw,
+        54px
+      );
+  }
+
+
+  .guidelines-hero p {
+    font-size: 11px;
+  }
+
+
+  .guidelines-section,
+  .guidelines-meetups,
+  .guidelines-content-rules,
+  .guidelines-enforcement {
+    margin-bottom: 48px;
+  }
+
+
+  .guidelines-grid,
+  .guidelines-meetup-list,
+  .guidelines-enforcement-grid {
+    grid-template-columns: 1fr;
+  }
+
+
+  .guideline-card {
+    min-height: auto;
+  }
+
+
+  .guidelines-meetups {
+    padding: 18px;
+  }
+
+
+  .guidelines-content-rules {
+    gap: 20px;
+  }
+
+
+  .guidelines-footer-note {
+    align-items: flex-start;
+    flex-direction: column;
+
+    gap: 7px;
+  }
+
+}
+
+
+/* ==========================================================
+   SMALL MOBILE
+========================================================== */
+
+@media (max-width: 480px) {
+
+  .guidelines-page {
+    width:
+      calc(100% - 20px);
+  }
+
+
+  .guidelines-back-link {
+    font-size: 9px;
+  }
+
+
+  .guidelines-hero h1 {
+    font-size:
+      clamp(
+        36px,
+        13vw,
+        48px
+      );
+  }
+
+
+  .guidelines-pill {
+    font-size: 7px;
+  }
+
+
+  .guidelines-meetups,
+  .guidelines-content-card,
+  .guideline-card {
+    padding: 15px;
+  }
+
+
+  .guidelines-note {
+    grid-template-columns: 1fr;
+  }
+
+}

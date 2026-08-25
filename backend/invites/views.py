@@ -1,4 +1,6 @@
 import math
+import os
+import requests
 
 from django.core.exceptions import (
     ValidationError as DjangoValidationError,
@@ -50,13 +52,14 @@ from .models import (
     ParticipantStatus,
     Restaurant,
     RestaurantBooking,
+    RestaurantSubmission,
 )
-
 
 from .serializers import (
     FoodInviteSerializer,
     RestaurantBookingSerializer,
     RestaurantSerializer,
+    RestaurantSubmissionSerializer,
 )
 
 
@@ -1214,6 +1217,10 @@ def _distance_from_route(
 # &max_detour_km=2
 # ============================================================
 
+# ============================================================
+# FOOD WALK RESTAURANT RECOMMENDATIONS
+# ============================================================
+
 class FoodWalkRestaurantRecommendationView(
     APIView
 ):
@@ -1229,7 +1236,7 @@ class FoodWalkRestaurantRecommendationView(
     ):
 
         # ====================================================
-        # START
+        # TEXT VALUES
         # ====================================================
 
         start = (
@@ -1242,10 +1249,6 @@ class FoodWalkRestaurantRecommendationView(
         )
 
 
-        # ====================================================
-        # DESTINATION
-        # ====================================================
-
         destination = (
             request.query_params
             .get(
@@ -1256,10 +1259,6 @@ class FoodWalkRestaurantRecommendationView(
         )
 
 
-        # ====================================================
-        # CUISINE
-        # ====================================================
-
         cuisine = (
             request.query_params
             .get(
@@ -1267,6 +1266,42 @@ class FoodWalkRestaurantRecommendationView(
                 "",
             )
             .strip()
+        )
+
+
+        # ====================================================
+        # AUTOCOMPLETE COORDINATES
+        # ====================================================
+
+        start_lat_param = (
+            request.query_params
+            .get(
+                "start_lat"
+            )
+        )
+
+
+        start_lng_param = (
+            request.query_params
+            .get(
+                "start_lng"
+            )
+        )
+
+
+        destination_lat_param = (
+            request.query_params
+            .get(
+                "destination_lat"
+            )
+        )
+
+
+        destination_lng_param = (
+            request.query_params
+            .get(
+                "destination_lng"
+            )
         )
 
 
@@ -1285,19 +1320,13 @@ class FoodWalkRestaurantRecommendationView(
                 )
             )
 
-
         except (
             ValueError,
             TypeError,
         ):
 
-            max_detour_km = (
-                2.0
-            )
+            max_detour_km = 2.0
 
-
-        # Minimum 300 metres
-        # Maximum 5 km
 
         max_detour_km = max(
             0.3,
@@ -1317,12 +1346,8 @@ class FoodWalkRestaurantRecommendationView(
             return Response(
                 {
                     "detail":
-                        (
-                            "Starting point "
-                            "is required."
-                        )
+                        "Starting point is required."
                 },
-
                 status=
                     status.HTTP_400_BAD_REQUEST,
             )
@@ -1333,105 +1358,238 @@ class FoodWalkRestaurantRecommendationView(
             return Response(
                 {
                     "detail":
-                        (
-                            "Destination "
-                            "is required."
-                        )
+                        "Destination is required."
                 },
-
                 status=
                     status.HTTP_400_BAD_REQUEST,
             )
 
 
         # ====================================================
-        # GEOCODE START
+        # START LOCATION
+        #
+        # IMPORTANT:
+        # Use autocomplete coordinates when available.
+        # Only geocode text as fallback.
         # ====================================================
 
-        try:
+        start_location = None
 
-            start_location = (
-                geocode_place(
-                    start
+
+        if (
+            start_lat_param not in (
+                None,
+                "",
+            )
+            and
+            start_lng_param not in (
+                None,
+                "",
+            )
+        ):
+
+            try:
+
+                start_lat = float(
+                    start_lat_param
                 )
-            )
 
 
-        except DjangoValidationError as exc:
-
-            return Response(
-                {
-                    "detail":
-                        (
-                            "Could not locate "
-                            f"starting point: {exc}"
-                        )
-                },
-
-                status=
-                    status.HTTP_400_BAD_REQUEST,
-            )
-
-
-        # ====================================================
-        # GEOCODE DESTINATION
-        # ====================================================
-
-        try:
-
-            destination_location = (
-                geocode_place(
-                    destination
+                start_lon = float(
+                    start_lng_param
                 )
+
+
+                start_location = {
+                    "latitude":
+                        start_lat,
+
+                    "longitude":
+                        start_lon,
+
+                    "display_name":
+                        start,
+                }
+
+
+            except (
+                ValueError,
+                TypeError,
+            ):
+
+                start_location = None
+
+
+        if start_location is None:
+
+            try:
+
+                start_location = (
+                    geocode_place(
+                        start
+                    )
+                )
+
+
+            except DjangoValidationError as exc:
+
+                return Response(
+                    {
+                        "detail":
+                            (
+                                "Could not locate "
+                                f"starting point: {exc}"
+                            )
+                    },
+                    status=
+                        status.HTTP_400_BAD_REQUEST,
+                )
+
+
+            start_lat = float(
+                start_location[
+                    "latitude"
+                ]
             )
 
 
-        except DjangoValidationError as exc:
-
-            return Response(
-                {
-                    "detail":
-                        (
-                            "Could not locate "
-                            f"destination: {exc}"
-                        )
-                },
-
-                status=
-                    status.HTTP_400_BAD_REQUEST,
+            start_lon = float(
+                start_location[
+                    "longitude"
+                ]
             )
 
 
-        start_lat = (
-            start_location[
-                "latitude"
-            ]
+        # ====================================================
+        # DESTINATION
+        # ====================================================
+
+        destination_location = None
+
+
+        if (
+            destination_lat_param not in (
+                None,
+                "",
+            )
+            and
+            destination_lng_param not in (
+                None,
+                "",
+            )
+        ):
+
+            try:
+
+                destination_lat = float(
+                    destination_lat_param
+                )
+
+
+                destination_lon = float(
+                    destination_lng_param
+                )
+
+
+                destination_location = {
+                    "latitude":
+                        destination_lat,
+
+                    "longitude":
+                        destination_lon,
+
+                    "display_name":
+                        destination,
+                }
+
+
+            except (
+                ValueError,
+                TypeError,
+            ):
+
+                destination_location = None
+
+
+        if destination_location is None:
+
+            try:
+
+                destination_location = (
+                    geocode_place(
+                        destination
+                    )
+                )
+
+
+            except DjangoValidationError as exc:
+
+                return Response(
+                    {
+                        "detail":
+                            (
+                                "Could not locate "
+                                f"destination: {exc}"
+                            )
+                    },
+                    status=
+                        status.HTTP_400_BAD_REQUEST,
+                )
+
+
+            destination_lat = float(
+                destination_location[
+                    "latitude"
+                ]
+            )
+
+
+            destination_lon = float(
+                destination_location[
+                    "longitude"
+                ]
+            )
+
+
+        # ====================================================
+        # DEBUG
+        # ====================================================
+
+        print(
+            "========================================"
         )
 
-
-        start_lon = (
-            start_location[
-                "longitude"
-            ]
+        print(
+            "FOOD WALK START:",
+            start,
+            start_lat,
+            start_lon,
         )
 
-
-        destination_lat = (
-            destination_location[
-                "latitude"
-            ]
+        print(
+            "FOOD WALK DESTINATION:",
+            destination,
+            destination_lat,
+            destination_lon,
         )
 
+        print(
+            "FOOD WALK CUISINE:",
+            cuisine,
+        )
 
-        destination_lon = (
-            destination_location[
-                "longitude"
-            ]
+        print(
+            "FOOD WALK DETOUR:",
+            max_detour_km,
+        )
+
+        print(
+            "========================================"
         )
 
 
         # ====================================================
-        # DIRECT DISTANCE
+        # DIRECT ROUTE DISTANCE
         # ====================================================
 
         route_distance_km = (
@@ -1447,7 +1605,10 @@ class FoodWalkRestaurantRecommendationView(
 
 
         # ====================================================
-        # FOODKINDL PARTNER RESTAURANTS
+        # RESTAURANTS
+        #
+        # IMPORTANT:
+        # These are currently restaurants stored in FoodKindl.
         # ====================================================
 
         queryset = (
@@ -1456,10 +1617,6 @@ class FoodWalkRestaurantRecommendationView(
 
             .filter(
                 is_active=True,
-
-                is_foodkindl_partner=True,
-
-                accepts_foodkindl_booking=True,
 
                 latitude__isnull=False,
 
@@ -1473,31 +1630,41 @@ class FoodWalkRestaurantRecommendationView(
         )
 
 
+        # ====================================================
+        # BUILD RECOMMENDATIONS
+        # ====================================================
+
         restaurants = []
 
 
-        # ====================================================
-        # CHECK EACH RESTAURANT
-        # ====================================================
-
         for restaurant in queryset:
 
-            (
-                distance_from_route,
-                route_position,
-            ) = (
-                _distance_from_route(
+            try:
 
-                    restaurant.latitude,
-                    restaurant.longitude,
+                (
+                    distance_from_route,
+                    route_position,
+                ) = (
+                    _distance_from_route(
 
-                    start_lat,
-                    start_lon,
+                        restaurant.latitude,
+                        restaurant.longitude,
 
-                    destination_lat,
-                    destination_lon,
+                        start_lat,
+                        start_lon,
+
+                        destination_lat,
+                        destination_lon,
+                    )
                 )
-            )
+
+
+            except (
+                ValueError,
+                TypeError,
+            ):
+
+                continue
 
 
             # =================================================
@@ -1517,9 +1684,7 @@ class FoodWalkRestaurantRecommendationView(
             # CUISINE MATCH
             # =================================================
 
-            cuisine_match = (
-                False
-            )
+            cuisine_match = False
 
 
             if cuisine:
@@ -1538,12 +1703,10 @@ class FoodWalkRestaurantRecommendationView(
 
 
             # =================================================
-            # RECOMMENDATION SCORE
+            # SCORE
             # =================================================
 
-            score = (
-                0.0
-            )
+            score = 0.0
 
 
             # FoodKindl partner
@@ -1553,26 +1716,20 @@ class FoodWalkRestaurantRecommendationView(
                 .is_foodkindl_partner
             ):
 
-                score += (
-                    40
-                )
+                score += 40
 
 
-            # FoodKindl booking
+            # Booking
 
             if (
                 restaurant
                 .accepts_foodkindl_booking
             ):
 
-                score += (
-                    20
-                )
+                score += 20
 
 
-            # =================================================
-            # ROUTE DISTANCE SCORE
-            # =================================================
+            # Distance
 
             if (
                 distance_from_route
@@ -1580,9 +1737,7 @@ class FoodWalkRestaurantRecommendationView(
                 0.5
             ):
 
-                score += (
-                    30
-                )
+                score += 30
 
 
             elif (
@@ -1591,9 +1746,7 @@ class FoodWalkRestaurantRecommendationView(
                 1.0
             ):
 
-                score += (
-                    20
-                )
+                score += 20
 
 
             elif (
@@ -1602,25 +1755,17 @@ class FoodWalkRestaurantRecommendationView(
                 2.0
             ):
 
-                score += (
-                    10
-                )
+                score += 10
 
 
-            # =================================================
-            # CUISINE SCORE
-            # =================================================
+            # Cuisine
 
             if cuisine_match:
 
-                score += (
-                    25
-                )
+                score += 25
 
 
-            # =================================================
-            # RATING SCORE
-            # =================================================
+            # Rating
 
             if restaurant.rating:
 
@@ -1630,13 +1775,10 @@ class FoodWalkRestaurantRecommendationView(
                         restaurant.rating
                     )
 
-
                     score += (
-                        rating
-                        *
+                        rating *
                         3
                     )
-
 
                 except (
                     ValueError,
@@ -1645,10 +1787,6 @@ class FoodWalkRestaurantRecommendationView(
 
                     pass
 
-
-            # =================================================
-            # STORE
-            # =================================================
 
             restaurants.append(
                 {
@@ -1680,17 +1818,10 @@ class FoodWalkRestaurantRecommendationView(
 
 
         # ====================================================
-        # ORDER BY POSITION ALONG ROUTE
+        # SORT
         #
-        # Example:
-        #
-        # Nagasandra
-        # ↓
-        # Rajajinagar
-        # ↓
-        # MG Road
-        # ↓
-        # Indiranagar
+        # First position along route,
+        # then strongest recommendation.
         # ====================================================
 
         restaurants.sort(
@@ -1778,12 +1909,15 @@ class FoodWalkRestaurantRecommendationView(
         # ROUTE TYPE
         # ====================================================
 
-        if route_distance_km <= 5:
+        if (
+            route_distance_km
+            <=
+            5
+        ):
 
             route_type = (
                 "food_walk"
             )
-
 
         else:
 
@@ -1813,7 +1947,7 @@ class FoodWalkRestaurantRecommendationView(
                     "matched_location":
                         start_location.get(
                             "display_name",
-                            "",
+                            start,
                         ),
                 },
 
@@ -1832,7 +1966,7 @@ class FoodWalkRestaurantRecommendationView(
                     "matched_location":
                         destination_location.get(
                             "display_name",
-                            "",
+                            destination,
                         ),
                 },
 
@@ -1865,8 +1999,7 @@ class FoodWalkRestaurantRecommendationView(
             status=
                 status.HTTP_200_OK,
         )
-
-
+        
 # ============================================================
 # RECOMMENDED FOODKINDL RESTAURANTS
 # ============================================================
@@ -2746,4 +2879,402 @@ class RestaurantBookingStatusView(
 
             status=
                 status.HTTP_200_OK,
+        )
+        
+# ============================================================
+# LOCATION AUTOCOMPLETE
+# ============================================================
+
+# ============================================================
+# LOCATION AUTOCOMPLETE
+# ============================================================
+
+class LocationAutocompleteView(APIView):
+
+    permission_classes = [
+        permissions.AllowAny,
+    ]
+
+
+    def get(
+        self,
+        request,
+    ):
+
+        query = (
+            request.query_params
+            .get(
+                "q",
+                "",
+            )
+            .strip()
+        )
+
+
+        if len(query) < 2:
+
+            return Response(
+                {
+                    "results": [],
+                },
+                status=status.HTTP_200_OK,
+            )
+
+
+        api_key = os.getenv(
+            "ORS_API_KEY"
+        )
+
+
+        if not api_key:
+
+            return Response(
+                {
+                    "results": [],
+                    "detail":
+                        "ORS_API_KEY is not configured.",
+                },
+                status=
+                    status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
+
+        try:
+
+            response = requests.get(
+                "https://api.openrouteservice.org/geocode/autocomplete",
+                params={
+                    "api_key":
+                        api_key,
+
+                    "text":
+                        query,
+
+                    "size":
+                        8,
+
+                    # Bias towards Bengaluru
+                    "focus.point.lat":
+                        12.9716,
+
+                    "focus.point.lon":
+                        77.5946,
+
+                    # India
+                    "boundary.country":
+                        "IND",
+                },
+                timeout=10,
+            )
+
+
+            print(
+                "ORS AUTOCOMPLETE STATUS:",
+                response.status_code,
+            )
+
+            print(
+                "ORS AUTOCOMPLETE URL:",
+                response.url,
+            )
+
+
+            response.raise_for_status()
+
+
+            data = (
+                response.json()
+                or {}
+            )
+
+
+            features = (
+                data.get(
+                    "features",
+                    [],
+                )
+                or []
+            )
+
+
+            results = []
+
+
+            for feature in features:
+
+                properties = (
+                    feature.get(
+                        "properties",
+                        {},
+                    )
+                    or {}
+                )
+
+
+                geometry = (
+                    feature.get(
+                        "geometry",
+                        {},
+                    )
+                    or {}
+                )
+
+
+                coordinates = (
+                    geometry.get(
+                        "coordinates",
+                        [],
+                    )
+                    or []
+                )
+
+
+                if len(coordinates) < 2:
+                    continue
+
+
+                longitude = (
+                    coordinates[0]
+                )
+
+                latitude = (
+                    coordinates[1]
+                )
+
+
+                name = (
+                    properties.get(
+                        "name"
+                    )
+                    or
+                    properties.get(
+                        "label"
+                    )
+                    or
+                    ""
+                )
+
+
+                label = (
+                    properties.get(
+                        "label"
+                    )
+                    or
+                    name
+                )
+
+
+                locality = (
+                    properties.get(
+                        "locality"
+                    )
+                    or
+                    properties.get(
+                        "neighbourhood"
+                    )
+                    or
+                    properties.get(
+                        "borough"
+                    )
+                    or
+                    ""
+                )
+
+
+                city = (
+                    properties.get(
+                        "localadmin"
+                    )
+                    or
+                    properties.get(
+                        "county"
+                    )
+                    or
+                    ""
+                )
+
+
+                state_name = (
+                    properties.get(
+                        "region"
+                    )
+                    or
+                    ""
+                )
+
+
+                country = (
+                    properties.get(
+                        "country"
+                    )
+                    or
+                    ""
+                )
+
+
+                results.append(
+                    {
+                        "id":
+                            (
+                                properties.get(
+                                    "id"
+                                )
+                                or
+                                properties.get(
+                                    "gid"
+                                )
+                                or
+                                f"{latitude}-{longitude}"
+                            ),
+
+                        "name":
+                            name,
+
+                        "display_name":
+                            label,
+
+                        "locality":
+                            locality,
+
+                        "city":
+                            city,
+
+                        "state":
+                            state_name,
+
+                        "country":
+                            country,
+
+                        "postcode":
+                            properties.get(
+                                "postalcode",
+                                "",
+                            ),
+
+                        "latitude":
+                            latitude,
+
+                        "longitude":
+                            longitude,
+
+                        "type":
+                            properties.get(
+                                "layer",
+                                "",
+                            ),
+                    }
+                )
+
+
+            return Response(
+                {
+                    "results":
+                        results,
+                },
+                status=
+                    status.HTTP_200_OK,
+            )
+
+
+        except requests.RequestException as exc:
+
+            print(
+                "ORS AUTOCOMPLETE ERROR:",
+                repr(exc),
+            )
+
+
+            return Response(
+                {
+                    "results": [],
+
+                    "detail":
+                        "Location suggestions could not be loaded.",
+                },
+                status=
+                    status.HTTP_502_BAD_GATEWAY,
+            )
+            
+# ============================================================
+# RESTAURANT SUBMISSION LIST + CREATE
+# ============================================================
+
+class RestaurantSubmissionListCreateView(
+    generics.ListCreateAPIView
+):
+
+    permission_classes = [
+        permissions.IsAuthenticated,
+    ]
+
+    serializer_class = (
+        RestaurantSubmissionSerializer
+    )
+
+
+    def get_queryset(
+        self,
+    ):
+
+        return (
+            RestaurantSubmission.objects
+            .filter(
+                submitted_by=
+                    self.request.user,
+            )
+            .select_related(
+                "submitted_by",
+                "approved_restaurant",
+            )
+            .order_by(
+                "-created_at"
+            )
+        )
+
+
+    def perform_create(
+        self,
+        serializer,
+    ):
+
+        serializer.save(
+            submitted_by=
+                self.request.user,
+
+            status=
+                "pending",
+        )
+
+
+# ============================================================
+# RESTAURANT SUBMISSION DETAIL
+# ============================================================
+
+class RestaurantSubmissionDetailView(
+    generics.RetrieveAPIView
+):
+
+    permission_classes = [
+        permissions.IsAuthenticated,
+    ]
+
+    serializer_class = (
+        RestaurantSubmissionSerializer
+    )
+
+
+    def get_queryset(
+        self,
+    ):
+
+        return (
+            RestaurantSubmission.objects
+            .filter(
+                submitted_by=
+                    self.request.user,
+            )
+            .select_related(
+                "submitted_by",
+                "approved_restaurant",
+            )
         )

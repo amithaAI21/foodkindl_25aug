@@ -66,3 +66,4 @@ urllib3==2.7.0
 uvicorn==0.52.4
 whitenoise==6.8.2
 zipp==4.1.0
+django-import-export

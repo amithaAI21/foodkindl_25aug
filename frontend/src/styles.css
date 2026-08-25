@@ -20101,3 +20101,101 @@ body.foodkindl-app-light
 
   line-height: 1;
 }
+
+.connect-food-match {
+  margin-top: 12px;
+  padding: 11px;
+  border: 1px solid rgba(255, 96, 31, 0.18);
+  border-radius: 11px;
+  background: rgba(255, 96, 31, 0.035);
+}
+
+.connect-food-match-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.connect-food-match-score {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.connect-food-match-score strong {
+  color: #ff7545;
+  font-size: 20px;
+  font-weight: 900;
+}
+
+.connect-food-match-score span {
+  color: #968e89;
+  font-size: 8px;
+  font-weight: 700;
+}
+
+.connect-food-match-level {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 8px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.04);
+  color: #9c9490;
+  font-size: 7px;
+  font-weight: 800;
+}
+
+.connect-food-match-bar {
+  height: 5px;
+  margin-top: 10px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.connect-food-match-bar span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(
+    90deg,
+    #ff5420,
+    #ff8958
+  );
+}
+
+.connect-food-match-reason {
+  margin: 8px 0 0;
+  color: #817a76;
+  font-size: 8px;
+}
+
+.connect-food-match-score.excellent strong,
+.connect-food-match-level.excellent {
+  color: #6ed99d;
+}
+
+.connect-food-match-score.great strong,
+.connect-food-match-level.great {
+  color: #ff8751;
+}
+
+.connect-food-match-score.good strong,
+.connect-food-match-level.good {
+  color: #ffc066;
+}
+
+.connect-food-match-score.potential strong,
+.connect-food-match-level.potential {
+  color: #aaa29e;
+}
+
+.connect-food-match-unavailable {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: #77706c;
+  font-size: 8px;
+}

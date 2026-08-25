@@ -1,0 +1,734 @@
+/* ==========================================================
+   FOODKINDL AI KITCHEN
+========================================================== */
+
+.ai-kitchen-page {
+  --ai-orange: #ff5c22;
+  --ai-orange-soft: #ff7849;
+  --ai-border: rgba(255, 96, 31, 0.18);
+
+  position: relative;
+
+  width: min(
+    1120px,
+    calc(100% - 48px)
+  );
+
+  min-height: 100vh;
+
+  margin: 0 auto;
+
+  padding: 30px 0 80px;
+
+  overflow: hidden;
+}
+
+
+/* ==========================================================
+   GLOWS
+========================================================== */
+
+.ai-kitchen-glow {
+  position: absolute;
+
+  width: 360px;
+  height: 360px;
+
+  border-radius: 50%;
+
+  filter: blur(110px);
+
+  opacity: 0.10;
+
+  pointer-events: none;
+}
+
+
+.ai-kitchen-glow-one {
+  top: 70px;
+  right: -120px;
+
+  background: #ff4d14;
+}
+
+
+.ai-kitchen-glow-two {
+  top: 430px;
+  left: -170px;
+
+  background: #c23b13;
+}
+
+
+/* ==========================================================
+   TOP BAR
+========================================================== */
+
+.ai-kitchen-topbar {
+  position: relative;
+
+  z-index: 2;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  gap: 16px;
+
+  margin-bottom: 34px;
+}
+
+
+.ai-kitchen-back-button {
+  display: inline-flex;
+  align-items: center;
+
+  gap: 8px;
+
+  min-height: 40px;
+
+  padding: 0 14px;
+
+  border:
+    1px solid
+    rgba(255, 255, 255, 0.07);
+
+  border-radius: 10px;
+
+  background:
+    rgba(255, 255, 255, 0.02);
+
+  color: #9e9692;
+
+  font-size: 13px;
+  font-weight: 700;
+
+  cursor: pointer;
+
+  transition:
+    color 0.2s ease,
+    border-color 0.2s ease,
+    background 0.2s ease;
+}
+
+
+.ai-kitchen-back-button:hover {
+  color: #fff;
+
+  border-color:
+    rgba(255, 96, 31, 0.22);
+
+  background:
+    rgba(255, 96, 31, 0.04);
+}
+
+
+.ai-kitchen-brand-pill {
+  display: inline-flex;
+  align-items: center;
+
+  gap: 7px;
+
+  padding: 8px 12px;
+
+  border:
+    1px solid
+    rgba(255, 96, 31, 0.22);
+
+  border-radius: 999px;
+
+  background:
+    rgba(255, 96, 31, 0.055);
+
+  color: #ff7748;
+
+  font-size: 11px;
+  font-weight: 900;
+
+  letter-spacing: 0.10em;
+}
+
+
+/* ==========================================================
+   HERO
+========================================================== */
+
+.ai-kitchen-hero {
+  position: relative;
+
+  z-index: 2;
+
+  display: grid;
+
+  grid-template-columns:
+    minmax(0, 1.15fr)
+    minmax(300px, 0.65fr);
+
+  gap: 50px;
+
+  align-items: center;
+
+  padding: 20px 0 34px;
+}
+
+
+.ai-kitchen-hero-copy {
+  max-width: 700px;
+}
+
+
+.ai-kitchen-hero-icon {
+  display: grid;
+  place-items: center;
+
+  width: 54px;
+  height: 54px;
+
+  margin-bottom: 17px;
+
+  border:
+    1px solid
+    rgba(255, 96, 31, 0.28);
+
+  border-radius: 15px;
+
+  background:
+    rgba(255, 96, 31, 0.07);
+
+  color: var(--ai-orange);
+}
+
+
+.ai-kitchen-eyebrow {
+  color: var(--ai-orange-soft);
+
+  font-size: 12px;
+  font-weight: 900;
+
+  letter-spacing: 0.13em;
+}
+
+
+.ai-kitchen-hero-copy h1 {
+  margin: 10px 0 0;
+
+  max-width: 680px;
+
+  font-size:
+    clamp(
+      48px,
+      5.3vw,
+      72px
+    );
+
+  line-height: 0.98;
+
+  letter-spacing: -0.05em;
+}
+
+
+.ai-kitchen-hero-copy h1 span {
+  color: var(--ai-orange);
+}
+
+
+.ai-kitchen-hero-copy p {
+  max-width: 590px;
+
+  margin: 20px 0 0;
+
+  color: #a49b96;
+
+  font-size: 16px;
+  font-weight: 400;
+
+  line-height: 1.7;
+}
+
+
+/* ==========================================================
+   TIPS
+========================================================== */
+
+.ai-kitchen-tips-card {
+  padding: 21px;
+
+  border:
+    1px solid
+    var(--ai-border);
+
+  border-radius: 18px;
+
+  background:
+    linear-gradient(
+      145deg,
+      rgba(23, 12, 8, 0.86),
+      rgba(255, 255, 255, 0.012)
+    );
+}
+
+
+.ai-kitchen-tips-header {
+  display: flex;
+  align-items: center;
+
+  gap: 9px;
+
+  padding-bottom: 14px;
+
+  border-bottom:
+    1px solid
+    rgba(255, 255, 255, 0.05);
+
+  color: #ff7545;
+}
+
+
+.ai-kitchen-tips-header strong {
+  color: #fff;
+
+  font-size: 14px;
+  font-weight: 800;
+}
+
+
+.ai-kitchen-tip-list {
+  display: grid;
+
+  gap: 12px;
+
+  margin-top: 15px;
+}
+
+
+.ai-kitchen-tip-list span {
+  display: flex;
+  align-items: flex-start;
+
+  gap: 9px;
+
+  color: #9a918c;
+
+  font-size: 12px;
+  font-weight: 400;
+
+  line-height: 1.6;
+}
+
+
+.ai-kitchen-tip-list svg {
+  flex-shrink: 0;
+
+  margin-top: 2px;
+
+  color: #ff7242;
+}
+
+
+/* ==========================================================
+   LANGUAGE NOTE
+========================================================== */
+
+.ai-kitchen-language-card {
+  position: relative;
+
+  z-index: 2;
+
+  display: grid;
+
+  grid-template-columns:
+    auto 1fr;
+
+  gap: 13px;
+
+  max-width: 820px;
+
+  margin: 2px 0 24px;
+
+  padding: 15px 17px;
+
+  border:
+    1px solid
+    rgba(255, 166, 66, 0.20);
+
+  border-radius: 12px;
+
+  background:
+    rgba(255, 166, 66, 0.045);
+}
+
+
+.ai-kitchen-language-icon {
+  display: grid;
+  place-items: center;
+
+  width: 38px;
+  height: 38px;
+
+  border-radius: 10px;
+
+  background:
+    rgba(255, 166, 66, 0.07);
+
+  color: #f6a54b;
+}
+
+
+.ai-kitchen-language-card strong {
+  display: block;
+
+  color: #e7dfdb;
+
+  font-size: 13px;
+  font-weight: 800;
+}
+
+
+.ai-kitchen-language-card p {
+  margin: 5px 0 0;
+
+  color: #99908b;
+
+  font-size: 12px;
+
+  line-height: 1.6;
+}
+
+
+.ai-kitchen-language-card span {
+  display: inline-block;
+
+  margin-top: 6px;
+
+  color: #f2a74d;
+
+  font-size: 11px;
+  font-weight: 800;
+
+  line-height: 1.5;
+}
+
+
+/* ==========================================================
+   WORKSPACE
+========================================================== */
+
+.ai-kitchen-workspace {
+  position: relative;
+
+  z-index: 2;
+
+  padding: 24px;
+
+  border:
+    1px solid
+    rgba(255, 96, 31, 0.19);
+
+  border-radius: 20px;
+
+  background:
+    linear-gradient(
+      145deg,
+      rgba(20, 10, 7, 0.90),
+      rgba(8, 8, 8, 0.96)
+    );
+
+  box-shadow:
+    0 24px 55px
+    rgba(0, 0, 0, 0.22);
+}
+
+
+.ai-kitchen-workspace-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+
+  gap: 20px;
+
+  padding-bottom: 20px;
+
+  border-bottom:
+    1px solid
+    rgba(255, 255, 255, 0.05);
+}
+
+
+.ai-kitchen-workspace-header span {
+  color: #ff7040;
+
+  font-size: 11px;
+  font-weight: 900;
+
+  letter-spacing: 0.12em;
+}
+
+
+.ai-kitchen-workspace-header h2 {
+  margin: 6px 0 0;
+
+  font-size: 24px;
+  font-weight: 800;
+
+  line-height: 1.2;
+}
+
+
+.ai-kitchen-powered {
+  display: inline-flex;
+  align-items: center;
+
+  gap: 6px;
+
+  padding: 7px 10px;
+
+  border:
+    1px solid
+    rgba(255, 96, 31, 0.16);
+
+  border-radius: 999px;
+
+  background:
+    rgba(255, 96, 31, 0.04);
+
+  color: #ff7545;
+
+  font-size: 10px;
+  font-weight: 800;
+
+  white-space: nowrap;
+}
+
+
+.ai-kitchen-search-shell {
+  margin-top: 22px;
+}
+
+
+/* ==========================================================
+   TABLET
+========================================================== */
+
+@media (max-width: 900px) {
+
+  .ai-kitchen-hero {
+    grid-template-columns: 1fr;
+
+    gap: 28px;
+  }
+
+
+  .ai-kitchen-tips-card {
+    max-width: 600px;
+  }
+
+
+  .ai-kitchen-hero-copy p {
+    font-size: 15px;
+  }
+
+
+  .ai-kitchen-workspace-header h2 {
+    font-size: 22px;
+  }
+
+}
+
+
+/* ==========================================================
+   MOBILE
+========================================================== */
+
+@media (max-width: 700px) {
+
+  .ai-kitchen-page {
+    width:
+      calc(
+        100% - 28px
+      );
+
+    padding-top: 20px;
+  }
+
+
+  .ai-kitchen-topbar {
+    margin-bottom: 26px;
+  }
+
+
+  .ai-kitchen-hero {
+    padding-top: 10px;
+  }
+
+
+  .ai-kitchen-eyebrow {
+    font-size: 11px;
+  }
+
+
+  .ai-kitchen-hero-copy h1 {
+    font-size:
+      clamp(
+        40px,
+        12vw,
+        58px
+      );
+  }
+
+
+  .ai-kitchen-hero-copy p {
+    font-size: 15px;
+
+    line-height: 1.65;
+  }
+
+
+  .ai-kitchen-tips-header strong {
+    font-size: 14px;
+  }
+
+
+  .ai-kitchen-tip-list span {
+    font-size: 12px;
+  }
+
+
+  .ai-kitchen-language-card strong {
+    font-size: 13px;
+  }
+
+
+  .ai-kitchen-language-card p {
+    font-size: 12px;
+  }
+
+
+  .ai-kitchen-language-card span {
+    font-size: 11px;
+  }
+
+
+  .ai-kitchen-workspace {
+    padding: 18px;
+  }
+
+
+  .ai-kitchen-workspace-header {
+    flex-direction: column;
+
+    gap: 11px;
+  }
+
+
+  .ai-kitchen-workspace-header span {
+    font-size: 10px;
+  }
+
+
+  .ai-kitchen-workspace-header h2 {
+    font-size: 22px;
+  }
+
+
+  .ai-kitchen-powered {
+    font-size: 10px;
+  }
+
+}
+
+
+/* ==========================================================
+   SMALL PHONE
+========================================================== */
+
+@media (max-width: 480px) {
+
+  .ai-kitchen-page {
+    width:
+      calc(
+        100% - 20px
+      );
+  }
+
+
+  .ai-kitchen-back-button {
+    width: 40px;
+
+    padding: 0;
+
+    justify-content: center;
+
+    font-size: 0;
+  }
+
+
+  .ai-kitchen-back-button svg {
+    width: 19px;
+    height: 19px;
+  }
+
+
+  .ai-kitchen-brand-pill {
+    padding: 7px 10px;
+
+    font-size: 10px;
+  }
+
+
+  .ai-kitchen-hero-copy h1 {
+    font-size:
+      clamp(
+        40px,
+        12vw,
+        56px
+      );
+  }
+
+
+  .ai-kitchen-hero-copy p {
+    font-size: 15px;
+  }
+
+
+  .ai-kitchen-tip-list span {
+    font-size: 12px;
+  }
+
+
+  .ai-kitchen-language-card {
+    grid-template-columns: 1fr;
+
+    padding: 14px;
+  }
+
+
+  .ai-kitchen-language-card strong {
+    font-size: 13px;
+  }
+
+
+  .ai-kitchen-language-card p {
+    font-size: 12px;
+  }
+
+
+  .ai-kitchen-language-card span {
+    font-size: 11px;
+  }
+
+
+  .ai-kitchen-workspace {
+    padding: 16px;
+  }
+
+
+  .ai-kitchen-workspace-header h2 {
+    font-size: 21px;
+  }
+
+
+  .ai-kitchen-powered {
+    font-size: 10px;
+  }
+
+}

@@ -468,6 +468,7 @@ class Restaurant(
     RESTAURANT_TYPE_CHOICES = [
         ("restaurant", "Restaurant"),
         ("cafe", "Cafe"),
+        ("hotel", "Hotel"),
     ]
 
 
@@ -1301,3 +1302,416 @@ class RestaurantBooking(
             f"{self.booking_reference} "
             f"- {self.restaurant.name}"
         )
+        
+# ============================================================
+# CUSTOMER PLACE SUBMISSION
+#
+# Restaurants / Cafes / Hotels suggested by FoodKindl members.
+#
+# These records DO NOT appear in the main Restaurant table
+# until an admin approves them.
+# ============================================================
+
+class RestaurantSubmission(
+    models.Model
+):
+
+    # ========================================================
+    # STATUS
+    # ========================================================
+
+    STATUS_CHOICES = [
+
+        (
+            "pending",
+            "Pending Review",
+        ),
+
+        (
+            "approved",
+            "Approved",
+        ),
+
+        (
+            "rejected",
+            "Rejected",
+        ),
+
+    ]
+
+
+    # ========================================================
+    # SUBMITTED BY
+    # ========================================================
+
+    submitted_by = models.ForeignKey(
+
+        settings.AUTH_USER_MODEL,
+
+        on_delete=models.SET_NULL,
+
+        related_name=(
+            "restaurant_submissions"
+        ),
+
+        blank=True,
+
+        null=True,
+    )
+
+
+    # ========================================================
+    # BASIC INFORMATION
+    # ========================================================
+
+    name = models.CharField(
+        max_length=180,
+    )
+
+
+    restaurant_type = models.CharField(
+
+        max_length=20,
+
+        choices=
+            Restaurant.RESTAURANT_TYPE_CHOICES,
+
+        default="restaurant",
+    )
+
+
+    description = models.TextField(
+        blank=True,
+        default="",
+    )
+
+
+    cuisine = models.CharField(
+
+        max_length=50,
+
+        choices=
+            Restaurant.CUISINE_CHOICES,
+
+        blank=True,
+
+        default="",
+    )
+
+
+    # ========================================================
+    # CONTACT
+    # ========================================================
+
+    phone_number = models.CharField(
+        max_length=30,
+        blank=True,
+        default="",
+    )
+
+
+    email = models.EmailField(
+        blank=True,
+        default="",
+    )
+
+
+    website = models.URLField(
+        max_length=500,
+        blank=True,
+        default="",
+    )
+
+
+    # ========================================================
+    # LOCATION
+    # ========================================================
+
+    address = models.TextField(
+        blank=True,
+        default="",
+    )
+
+
+    locality = models.CharField(
+        max_length=180,
+        blank=True,
+        default="",
+        db_index=True,
+    )
+
+
+    city = models.CharField(
+        max_length=120,
+        blank=True,
+        default="",
+        db_index=True,
+    )
+
+
+    pincode = models.CharField(
+        max_length=12,
+        blank=True,
+        default="",
+    )
+
+
+    latitude = models.DecimalField(
+
+        max_digits=9,
+
+        decimal_places=6,
+
+        blank=True,
+
+        null=True,
+    )
+
+
+    longitude = models.DecimalField(
+
+        max_digits=9,
+
+        decimal_places=6,
+
+        blank=True,
+
+        null=True,
+    )
+
+
+    # ========================================================
+    # OPTIONAL DETAILS
+    # ========================================================
+
+    price_range = models.CharField(
+
+        max_length=20,
+
+        choices=
+            Restaurant.PRICE_RANGE_CHOICES,
+
+        blank=True,
+
+        default="",
+    )
+
+
+    average_cost_for_two = (
+        models.PositiveIntegerField(
+            blank=True,
+            null=True,
+        )
+    )
+
+
+    opening_time = models.TimeField(
+        blank=True,
+        null=True,
+    )
+
+
+    closing_time = models.TimeField(
+        blank=True,
+        null=True,
+    )
+
+
+    # ========================================================
+    # FACILITIES
+    # ========================================================
+
+    has_parking = models.BooleanField(
+        default=False,
+    )
+
+
+    has_wifi = models.BooleanField(
+        default=False,
+    )
+
+
+    accepts_cards = models.BooleanField(
+        default=True,
+    )
+
+
+    family_friendly = models.BooleanField(
+        default=True,
+    )
+
+
+    outdoor_seating = models.BooleanField(
+        default=False,
+    )
+
+
+    wheelchair_accessible = (
+        models.BooleanField(
+            default=False,
+        )
+    )
+
+
+    serves_vegetarian = models.BooleanField(
+        default=True,
+    )
+
+
+    serves_non_vegetarian = (
+        models.BooleanField(
+            default=True,
+        )
+    )
+
+
+    # ========================================================
+    # IMAGE
+    #
+    # Customer can provide one image.
+    # Later this can be moved to Netlify Blob.
+    # ========================================================
+
+    image_url = models.URLField(
+
+        max_length=1500,
+
+        blank=True,
+
+        default="",
+    )
+
+
+    image_blob_key = models.CharField(
+
+        max_length=1000,
+
+        blank=True,
+
+        default="",
+    )
+
+
+    image_original_name = models.CharField(
+
+        max_length=500,
+
+        blank=True,
+
+        default="",
+    )
+
+
+    image_content_type = models.CharField(
+
+        max_length=120,
+
+        blank=True,
+
+        default="",
+    )
+
+
+    # ========================================================
+    # ADMIN REVIEW
+    # ========================================================
+
+    status = models.CharField(
+
+        max_length=20,
+
+        choices=
+            STATUS_CHOICES,
+
+        default="pending",
+
+        db_index=True,
+    )
+
+
+    admin_note = models.TextField(
+        blank=True,
+        default="",
+    )
+
+
+    reviewed_by = models.ForeignKey(
+
+        settings.AUTH_USER_MODEL,
+
+        on_delete=models.SET_NULL,
+
+        related_name=(
+            "restaurant_submission_reviews"
+        ),
+
+        blank=True,
+
+        null=True,
+    )
+
+
+    reviewed_at = models.DateTimeField(
+        blank=True,
+        null=True,
+    )
+
+
+    # ========================================================
+    # CREATED RESTAURANT
+    #
+    # Filled when admin approves.
+    # ========================================================
+
+    approved_restaurant = (
+        models.ForeignKey(
+
+            Restaurant,
+
+            on_delete=models.SET_NULL,
+
+            related_name=(
+                "approved_submissions"
+            ),
+
+            blank=True,
+
+            null=True,
+        )
+    )
+
+
+    # ========================================================
+    # TIMESTAMPS
+    # ========================================================
+
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+    )
+
+
+    updated_at = models.DateTimeField(
+        auto_now=True,
+    )
+
+
+    # ========================================================
+    # META
+    # ========================================================
+
+    class Meta:
+
+        ordering = [
+            "-created_at",
+        ]
+
+
+    def __str__(
+        self,
+    ):
+
+        return (
+            f"{self.name} "
+            f"({self.get_status_display()})"
+        )
+        
