@@ -1,0 +1,1297 @@
+/* ============================================================
+   FOODKINDL DINE OUT
+   File: dineout_unique.css
+   Purpose:
+   Complete styling for DineOutInvite.jsx
+
+   Notes:
+   - Designed for FoodKindl's dark UI
+   - Works with the existing DineOutInvite.jsx
+   - Includes responsive/mobile styling
+   - Prevents inherited global form styles from collapsing
+     labels, icons, fields and buttons
+============================================================ */
+
+
+/* ============================================================
+   ROOT VARIABLES
+============================================================ */
+
+:root {
+  --fk-dine-bg:
+    rgba(12, 12, 12, 0.98);
+
+  --fk-dine-bg-soft:
+    rgba(18, 18, 18, 0.96);
+
+  --fk-dine-bg-deep:
+    rgba(8, 8, 8, 0.98);
+
+  --fk-dine-border:
+    rgba(255, 255, 255, 0.08);
+
+  --fk-dine-border-soft:
+    rgba(255, 255, 255, 0.055);
+
+  --fk-dine-text:
+    #f5f5f5;
+
+  --fk-dine-muted:
+    rgba(255, 255, 255, 0.56);
+
+  --fk-dine-muted-2:
+    rgba(255, 255, 255, 0.38);
+
+  --fk-dine-orange:
+    #ff6a23;
+
+  --fk-dine-orange-soft:
+    rgba(255, 106, 35, 0.12);
+
+  --fk-dine-orange-border:
+    rgba(255, 106, 35, 0.36);
+
+  --fk-dine-input-bg:
+    rgba(24, 8, 4, 0.86);
+
+  --fk-dine-radius-xl:
+    24px;
+
+  --fk-dine-radius-lg:
+    18px;
+
+  --fk-dine-radius-md:
+    14px;
+
+  --fk-dine-radius-sm:
+    11px;
+}
+
+
+/* ============================================================
+   BASE RESET FOR THIS COMPONENT ONLY
+============================================================ */
+
+.fk-dineout-discovery,
+.fk-dineout-place-dock,
+.fk-dineout-discovery *,
+.fk-dineout-place-dock * {
+  box-sizing: border-box;
+}
+
+.fk-dineout-discovery button,
+.fk-dineout-place-dock button,
+.fk-dineout-discovery input,
+.fk-dineout-place-dock input,
+.fk-dineout-discovery select,
+.fk-dineout-place-dock select {
+  font: inherit;
+}
+
+.fk-dineout-discovery label,
+.fk-dineout-place-dock label {
+  margin: 0;
+}
+
+.fk-dineout-discovery button,
+.fk-dineout-place-dock button {
+  appearance: none;
+  -webkit-appearance: none;
+}
+
+
+/* ============================================================
+   MAIN CARDS
+============================================================ */
+
+.fk-dineout-discovery,
+.fk-dineout-place-dock {
+  position: relative;
+
+  width: 100%;
+
+  color:
+    var(--fk-dine-text);
+
+  border:
+    1px solid
+    var(--fk-dine-border);
+
+  border-radius:
+    var(--fk-dine-radius-xl);
+
+  background:
+    radial-gradient(
+      circle at 0% 0%,
+      rgba(255, 106, 35, 0.075),
+      transparent 34%
+    ),
+    linear-gradient(
+      145deg,
+      var(--fk-dine-bg-soft),
+      var(--fk-dine-bg-deep)
+    );
+
+  box-shadow:
+    0 14px 38px
+    rgba(0, 0, 0, 0.18);
+
+  overflow: hidden;
+}
+
+.fk-dineout-discovery {
+  padding: 24px;
+}
+
+.fk-dineout-place-dock {
+  margin-top: 14px;
+  padding: 20px;
+}
+
+
+/* ============================================================
+   DECORATIVE RINGS
+============================================================ */
+
+.fk-dineout-discovery::before,
+.fk-dineout-discovery::after {
+  content: "";
+
+  position: absolute;
+
+  border-radius: 50%;
+
+  pointer-events: none;
+}
+
+.fk-dineout-discovery::before {
+  top: -78px;
+  right: -86px;
+
+  width: 210px;
+  height: 210px;
+
+  border:
+    1px solid
+    rgba(255, 106, 35, 0.11);
+}
+
+.fk-dineout-discovery::after {
+  top: -40px;
+  right: -48px;
+
+  width: 126px;
+  height: 126px;
+
+  border:
+    1px solid
+    rgba(255, 106, 35, 0.075);
+}
+
+
+/* ============================================================
+   HEADER
+============================================================ */
+
+.fk-dineout-discovery-head {
+  position: relative;
+  z-index: 2;
+
+  display: grid;
+
+  grid-template-columns:
+    44px
+    minmax(0, 1fr)
+    auto;
+
+  align-items: start;
+
+  gap: 14px;
+
+  padding-bottom: 20px;
+
+  margin-bottom: 20px;
+
+  border-bottom:
+    1px solid
+    var(--fk-dine-border-soft);
+}
+
+.fk-dineout-discovery-symbol {
+  display: grid;
+
+  place-items: center;
+
+  width: 44px;
+  height: 44px;
+
+  flex-shrink: 0;
+
+  border:
+    1px solid
+    var(--fk-dine-orange-border);
+
+  border-radius:
+    14px;
+
+  color:
+    var(--fk-dine-orange);
+
+  background:
+    var(--fk-dine-orange-soft);
+
+  box-shadow:
+    inset 0 0 0 1px
+    rgba(255, 255, 255, 0.015);
+}
+
+.fk-dineout-discovery-copy {
+  min-width: 0;
+}
+
+.fk-dineout-eyebrow {
+  display: block;
+
+  margin: 0 0 6px;
+
+  color:
+    rgba(255, 255, 255, 0.5);
+
+  font-size: 10px;
+
+  font-weight: 900;
+
+  line-height: 1;
+
+  letter-spacing: 0.16em;
+
+  text-transform: uppercase;
+}
+
+.fk-dineout-discovery-copy h3,
+.fk-dineout-place-dock-head h4 {
+  margin: 0;
+
+  color:
+    var(--fk-dine-text);
+
+  font-size: 19px;
+
+  font-weight: 800;
+
+  line-height: 1.2;
+}
+
+.fk-dineout-discovery-copy p {
+  max-width: 600px;
+
+  margin: 7px 0 0;
+
+  color:
+    var(--fk-dine-muted);
+
+  font-size: 12px;
+
+  line-height: 1.55;
+}
+
+
+/* ============================================================
+   CITY STATUS
+============================================================ */
+
+.fk-dineout-status {
+  display: inline-flex;
+
+  align-items: center;
+
+  gap: 7px;
+
+  min-height: 30px;
+
+  padding: 0 11px;
+
+  border:
+    1px solid
+    rgba(255, 255, 255, 0.08);
+
+  border-radius: 999px;
+
+  color:
+    rgba(255, 255, 255, 0.68);
+
+  background:
+    rgba(255, 255, 255, 0.025);
+
+  font-size: 10px;
+
+  font-weight: 800;
+
+  white-space: nowrap;
+}
+
+.fk-dineout-status > span {
+  width: 6px;
+  height: 6px;
+
+  flex-shrink: 0;
+
+  border-radius: 50%;
+
+  background:
+    rgba(255, 255, 255, 0.35);
+}
+
+.fk-dineout-status.ready {
+  color:
+    #ffb38d;
+
+  border-color:
+    rgba(255, 106, 35, 0.24);
+
+  background:
+    rgba(255, 106, 35, 0.07);
+}
+
+.fk-dineout-status.ready > span {
+  background:
+    var(--fk-dine-orange);
+
+  box-shadow:
+    0 0 0 5px
+    rgba(255, 106, 35, 0.08);
+}
+
+
+/* ============================================================
+   STANDARD FIELD
+============================================================ */
+
+.fk-dineout-field,
+.fk-dineout-place-fields label {
+  display: flex;
+
+  flex-direction: column;
+
+  gap: 0;
+
+  width: 100%;
+}
+
+.fk-dineout-title-field {
+  margin-bottom: 14px;
+}
+
+.fk-dineout-field-label,
+.fk-dineout-place-fields label > span {
+  display: block;
+
+  margin: 0 0 8px;
+
+  color:
+    rgba(255, 255, 255, 0.82);
+
+  font-size: 12px;
+
+  font-weight: 800;
+
+  line-height: 1.3;
+}
+
+
+/* ============================================================
+   ALL INPUTS / SELECTS
+============================================================ */
+
+.fk-dineout-discovery input,
+.fk-dineout-discovery select,
+.fk-dineout-place-dock input,
+.fk-dineout-place-dock select {
+  display: block;
+
+  width: 100%;
+
+  min-width: 0;
+
+  height: 46px;
+
+  min-height: 46px;
+
+  padding: 0 14px;
+
+  margin: 0;
+
+  border:
+    1px solid
+    rgba(255, 106, 35, 0.26);
+
+  border-radius:
+    12px;
+
+  outline: none;
+
+  color:
+    #f7f7f7;
+
+  background:
+    var(--fk-dine-input-bg);
+
+  box-shadow: none;
+
+  font-size: 13px;
+
+  font-weight: 600;
+
+  line-height: normal;
+
+  transition:
+    border-color 160ms ease,
+    background 160ms ease,
+    box-shadow 160ms ease;
+}
+
+.fk-dineout-discovery input::placeholder,
+.fk-dineout-place-dock input::placeholder {
+  color:
+    rgba(255, 255, 255, 0.34);
+
+  opacity: 1;
+}
+
+.fk-dineout-discovery input:hover,
+.fk-dineout-discovery select:hover,
+.fk-dineout-place-dock input:hover {
+  border-color:
+    rgba(255, 106, 35, 0.42);
+}
+
+.fk-dineout-discovery input:focus,
+.fk-dineout-discovery select:focus,
+.fk-dineout-place-dock input:focus {
+  border-color:
+    rgba(255, 106, 35, 0.82);
+
+  background:
+    rgba(27, 9, 4, 0.92);
+
+  box-shadow:
+    0 0 0 3px
+    rgba(255, 106, 35, 0.08);
+}
+
+.fk-dineout-discovery select {
+  cursor: pointer;
+
+  padding-right: 38px;
+
+  color-scheme: dark;
+}
+
+.fk-dineout-discovery select option {
+  color: #ffffff;
+
+  background: #151515;
+}
+
+
+/* ============================================================
+   CRAVING + CITY SIGNAL GRID
+============================================================ */
+
+.fk-dineout-signal-grid {
+  display: grid;
+
+  grid-template-columns:
+    repeat(
+      2,
+      minmax(0, 1fr)
+    );
+
+  gap: 12px;
+
+  width: 100%;
+}
+
+.fk-dineout-signal-card {
+  position: relative;
+
+  display: grid;
+
+  grid-template-columns:
+    38px
+    minmax(0, 1fr)
+    8px;
+
+  align-items: start;
+
+  gap: 11px;
+
+  width: 100%;
+
+  min-width: 0;
+
+  padding: 14px;
+
+  margin: 0;
+
+  border:
+    1px solid
+    rgba(255, 255, 255, 0.065);
+
+  border-radius:
+    16px;
+
+  background:
+    rgba(255, 255, 255, 0.018);
+}
+
+.fk-dineout-signal-icon {
+  display: grid;
+
+  place-items: center;
+
+  width: 38px;
+  height: 38px;
+
+  flex-shrink: 0;
+
+  margin-top: 1px;
+
+  border-radius:
+    12px;
+
+  color:
+    #ff9b68;
+
+  background:
+    rgba(255, 106, 35, 0.085);
+}
+
+.fk-dineout-signal-content {
+  display: block;
+
+  min-width: 0;
+}
+
+.fk-dineout-signal-content .fk-dineout-field-label {
+  margin-bottom: 4px;
+}
+
+.fk-dineout-signal-content > small {
+  display: block;
+
+  margin: 0 0 10px;
+
+  color:
+    var(--fk-dine-muted-2);
+
+  font-size: 10.5px;
+
+  font-weight: 500;
+
+  line-height: 1.4;
+}
+
+.fk-dineout-signal-content input {
+  width: 100%;
+
+  min-width: 0;
+
+  height: 42px;
+
+  min-height: 42px;
+}
+
+.fk-dineout-signal-dot {
+  width: 7px;
+  height: 7px;
+
+  margin-top: 7px;
+
+  flex-shrink: 0;
+
+  border-radius: 50%;
+
+  background:
+    rgba(255, 255, 255, 0.18);
+}
+
+.fk-dineout-signal-dot.active {
+  background:
+    var(--fk-dine-orange);
+
+  box-shadow:
+    0 0 0 5px
+    rgba(255, 106, 35, 0.08);
+}
+
+
+/* ============================================================
+   CUISINE LENS
+============================================================ */
+
+.fk-dineout-lens-row {
+  display: grid;
+
+  grid-template-columns:
+    minmax(0, 1fr)
+    minmax(210px, 260px);
+
+  align-items: center;
+
+  gap: 18px;
+
+  width: 100%;
+
+  margin-top: 12px;
+
+  padding: 14px;
+
+  border:
+    1px dashed
+    rgba(255, 255, 255, 0.08);
+
+  border-radius:
+    15px;
+
+  background:
+    rgba(255, 255, 255, 0.01);
+}
+
+.fk-dineout-lens-copy {
+  min-width: 0;
+}
+
+.fk-dineout-lens-copy > span,
+.fk-dineout-mode-heading > span {
+  display: block;
+
+  margin: 0;
+
+  color:
+    rgba(255, 255, 255, 0.82);
+
+  font-size: 11px;
+
+  font-weight: 850;
+
+  line-height: 1.3;
+}
+
+.fk-dineout-lens-copy > small,
+.fk-dineout-mode-heading > small {
+  display: block;
+
+  margin-top: 4px;
+
+  color:
+    var(--fk-dine-muted-2);
+
+  font-size: 10px;
+
+  line-height: 1.4;
+}
+
+.fk-dineout-lens-select {
+  width: 100%;
+
+  height: 42px !important;
+
+  min-height: 42px !important;
+
+  padding-left: 12px !important;
+}
+
+
+/* ============================================================
+   PLACE MOOD
+============================================================ */
+
+.fk-dineout-venue-mode {
+  display: grid;
+
+  grid-template-columns:
+    minmax(0, 1fr)
+    auto;
+
+  align-items: center;
+
+  gap: 18px;
+
+  width: 100%;
+
+  margin-top: 12px;
+
+  padding: 14px;
+
+  border:
+    1px solid
+    rgba(255, 255, 255, 0.055);
+
+  border-radius:
+    15px;
+
+  background:
+    rgba(255, 255, 255, 0.012);
+}
+
+.fk-dineout-mode-heading {
+  min-width: 0;
+}
+
+.fk-dineout-mode-switch {
+  display: grid;
+
+  grid-template-columns:
+    repeat(
+      2,
+      minmax(
+        120px,
+        1fr
+      )
+    );
+
+  gap: 5px;
+
+  padding: 4px;
+
+  border:
+    1px solid
+    rgba(255, 255, 255, 0.07);
+
+  border-radius:
+    13px;
+
+  background:
+    rgba(255, 255, 255, 0.025);
+}
+
+.fk-dineout-mode-switch button {
+  display: inline-flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  gap: 7px;
+
+  width: 100%;
+
+  height: 38px;
+
+  min-height: 38px;
+
+  padding: 0 14px;
+
+  margin: 0;
+
+  border: 0;
+
+  border-radius:
+    9px;
+
+  outline: none;
+
+  color:
+    rgba(255, 255, 255, 0.58);
+
+  background:
+    transparent;
+
+  box-shadow: none;
+
+  font-size: 11px;
+
+  font-weight: 800;
+
+  line-height: 1;
+
+  cursor: pointer;
+
+  transition:
+    background 160ms ease,
+    color 160ms ease,
+    box-shadow 160ms ease;
+}
+
+.fk-dineout-mode-switch button:hover {
+  color:
+    rgba(255, 255, 255, 0.88);
+
+  background:
+    rgba(255, 255, 255, 0.035);
+}
+
+.fk-dineout-mode-switch button.active {
+  color:
+    #fff;
+
+  background:
+    rgba(255, 106, 35, 0.14);
+
+  box-shadow:
+    inset 0 0 0 1px
+    rgba(255, 106, 35, 0.34);
+}
+
+
+/* ============================================================
+   REVEAL FOOD MAP BUTTON
+============================================================ */
+
+.fk-dineout-discover-button {
+  display: grid;
+
+  grid-template-columns:
+    42px
+    minmax(0, 1fr)
+    auto;
+
+  align-items: center;
+
+  gap: 12px;
+
+  width: 100%;
+
+  min-height: 62px;
+
+  margin: 14px 0 0;
+
+  padding: 10px 14px;
+
+  border:
+    1px solid
+    rgba(255, 106, 35, 0.48);
+
+  border-radius:
+    16px;
+
+  outline: none;
+
+  color:
+    #ffffff;
+
+  background:
+    linear-gradient(
+      90deg,
+      rgba(255, 106, 35, 0.18),
+      rgba(255, 106, 35, 0.07)
+    );
+
+  box-shadow:
+    inset 0 1px 0
+    rgba(255, 255, 255, 0.025);
+
+  text-align: left;
+
+  cursor: pointer;
+
+  transition:
+    transform 160ms ease,
+    border-color 160ms ease,
+    background 160ms ease;
+}
+
+.fk-dineout-discover-button:hover:not(:disabled) {
+  transform:
+    translateY(-1px);
+
+  border-color:
+    rgba(255, 106, 35, 0.88);
+
+  background:
+    linear-gradient(
+      90deg,
+      rgba(255, 106, 35, 0.24),
+      rgba(255, 106, 35, 0.09)
+    );
+}
+
+.fk-dineout-discover-button:active:not(:disabled) {
+  transform:
+    translateY(0);
+}
+
+.fk-dineout-discover-button:disabled {
+  color:
+    rgba(255, 255, 255, 0.34);
+
+  border-color:
+    rgba(255, 255, 255, 0.08);
+
+  background:
+    rgba(255, 255, 255, 0.035);
+
+  cursor:
+    not-allowed;
+}
+
+.fk-dineout-discover-icon {
+  display: grid;
+
+  place-items: center;
+
+  width: 42px;
+  height: 42px;
+
+  flex-shrink: 0;
+
+  border-radius:
+    13px;
+
+  color:
+    #ff9f70;
+
+  background:
+    rgba(255, 106, 35, 0.13);
+}
+
+.fk-dineout-discover-button:disabled
+.fk-dineout-discover-icon {
+  color:
+    rgba(255, 255, 255, 0.3);
+
+  background:
+    rgba(255, 255, 255, 0.04);
+}
+
+.fk-dineout-discover-copy {
+  min-width: 0;
+}
+
+.fk-dineout-discover-copy > strong {
+  display: block;
+
+  margin: 0;
+
+  color:
+    inherit;
+
+  font-size: 12px;
+
+  font-weight: 900;
+
+  line-height: 1.25;
+}
+
+.fk-dineout-discover-copy > small {
+  display: block;
+
+  margin-top: 3px;
+
+  color:
+    rgba(255, 255, 255, 0.48);
+
+  font-size: 10px;
+
+  font-weight: 500;
+
+  line-height: 1.35;
+}
+
+.fk-dineout-discover-button:disabled
+.fk-dineout-discover-copy > small {
+  color:
+    rgba(255, 255, 255, 0.28);
+}
+
+.fk-dineout-enter-hint {
+  display: block;
+
+  width: 100%;
+
+  margin-top: 9px;
+
+  color:
+    rgba(255, 255, 255, 0.31);
+
+  font-size: 9.5px;
+
+  font-weight: 500;
+
+  line-height: 1.4;
+
+  text-align: center;
+}
+
+
+/* ============================================================
+   YOUR PICK / SELECTED PLACE
+============================================================ */
+
+.fk-dineout-place-dock {
+  position: relative;
+}
+
+.fk-dineout-place-dock-head {
+  display: flex;
+
+  align-items: center;
+
+  justify-content: space-between;
+
+  gap: 15px;
+
+  margin-bottom: 14px;
+}
+
+.fk-dineout-place-dock-head > div:first-child {
+  min-width: 0;
+}
+
+.fk-dineout-place-dock-marker {
+  display: grid;
+
+  place-items: center;
+
+  width: 38px;
+  height: 38px;
+
+  flex-shrink: 0;
+
+  border:
+    1px solid
+    rgba(255, 106, 35, 0.18);
+
+  border-radius:
+    12px;
+
+  color:
+    #ff9c6b;
+
+  background:
+    rgba(255, 106, 35, 0.075);
+}
+
+.fk-dineout-place-fields {
+  display: grid;
+
+  grid-template-columns:
+    minmax(0, 1.2fr)
+    minmax(0, 0.8fr);
+
+  gap: 11px;
+}
+
+.fk-dineout-place-fields label {
+  min-width: 0;
+}
+
+.fk-dineout-place-fields input {
+  height: 43px;
+
+  min-height: 43px;
+}
+
+
+/* ============================================================
+   SAFETY AGAINST GLOBAL BUTTON STYLES
+============================================================ */
+
+.fk-dineout-mode-switch button,
+.fk-dineout-discover-button {
+  text-transform: none;
+  letter-spacing: normal;
+}
+
+.fk-dineout-mode-switch button svg,
+.fk-dineout-discover-button svg,
+.fk-dineout-discovery-symbol svg,
+.fk-dineout-signal-icon svg,
+.fk-dineout-place-dock-marker svg {
+  display: block;
+
+  flex-shrink: 0;
+}
+
+
+/* ============================================================
+   TABLET
+============================================================ */
+
+@media (
+  max-width: 980px
+) {
+
+  .fk-dineout-signal-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .fk-dineout-lens-row {
+    grid-template-columns:
+      minmax(0, 1fr)
+      220px;
+  }
+
+  .fk-dineout-place-fields {
+    grid-template-columns: 1fr;
+  }
+}
+
+
+/* ============================================================
+   MOBILE
+============================================================ */
+
+@media (
+  max-width: 760px
+) {
+
+  .fk-dineout-discovery {
+    padding: 17px;
+
+    border-radius:
+      19px;
+  }
+
+  .fk-dineout-place-dock {
+    padding: 17px;
+
+    border-radius:
+      19px;
+  }
+
+  .fk-dineout-discovery-head {
+    grid-template-columns:
+      40px
+      minmax(0, 1fr);
+
+    gap: 11px;
+  }
+
+  .fk-dineout-discovery-symbol {
+    width: 40px;
+    height: 40px;
+  }
+
+  .fk-dineout-status {
+    grid-column:
+      1 / -1;
+
+    justify-self:
+      start;
+  }
+
+  .fk-dineout-discovery-copy h3 {
+    font-size: 17px;
+  }
+
+  .fk-dineout-signal-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .fk-dineout-signal-card {
+    grid-template-columns:
+      36px
+      minmax(0, 1fr)
+      7px;
+
+    padding: 12px;
+  }
+
+  .fk-dineout-signal-icon {
+    width: 36px;
+    height: 36px;
+  }
+
+  .fk-dineout-lens-row {
+    grid-template-columns: 1fr;
+
+    gap: 10px;
+  }
+
+  .fk-dineout-venue-mode {
+    grid-template-columns: 1fr;
+
+    gap: 10px;
+  }
+
+  .fk-dineout-mode-switch {
+    width: 100%;
+
+    grid-template-columns:
+      1fr
+      1fr;
+  }
+
+  .fk-dineout-mode-switch button {
+    min-width: 0;
+
+    padding:
+      0 8px;
+  }
+
+  .fk-dineout-discover-button {
+    grid-template-columns:
+      38px
+      minmax(0, 1fr)
+      auto;
+
+    min-height: 58px;
+
+    padding:
+      9px 11px;
+  }
+
+  .fk-dineout-discover-icon {
+    width: 38px;
+    height: 38px;
+  }
+
+  .fk-dineout-place-fields {
+    grid-template-columns: 1fr;
+  }
+}
+
+
+/* ============================================================
+   SMALL MOBILE
+============================================================ */
+
+@media (
+  max-width: 480px
+) {
+
+  .fk-dineout-discovery {
+    padding: 14px;
+  }
+
+  .fk-dineout-place-dock {
+    padding: 14px;
+  }
+
+  .fk-dineout-signal-card {
+    grid-template-columns:
+      1fr;
+
+    gap: 9px;
+  }
+
+  .fk-dineout-signal-icon {
+    width: 34px;
+    height: 34px;
+  }
+
+  .fk-dineout-signal-dot {
+    position: absolute;
+
+    top: 14px;
+    right: 14px;
+  }
+
+  .fk-dineout-mode-switch {
+    grid-template-columns: 1fr;
+  }
+
+  .fk-dineout-discover-button {
+    grid-template-columns:
+      36px
+      minmax(0, 1fr);
+
+    gap: 10px;
+  }
+
+  .fk-dineout-discover-button > svg:last-child {
+    display: none;
+  }
+}

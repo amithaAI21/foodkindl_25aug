@@ -1,5 +1,6 @@
 import {
   ArrowRight,
+  Bot,
   Check,
   ChefHat,
   Heart,
@@ -14,6 +15,7 @@ import {
   UsersRound,
   Utensils,
   Footprints,
+  X,
 } from "lucide-react";
 
 import {
@@ -52,10 +54,88 @@ export default function ConnectDashboard() {
   ] = useState("");
 
 
+  // =========================================================
+  // VERIFICATION NOTIFICATION DETAILS
+  // =========================================================
+
+  const [
+    verificationDetails,
+    setVerificationDetails,
+  ] = useState(null);
+
+
+  const [
+    showVerificationToast,
+    setShowVerificationToast,
+  ] = useState(false);
+
+
+  // =========================================================
+  // KINDLI — FOODKINDL SUPPORT ASSISTANT
+  // =========================================================
+
+  const [
+    showKindli,
+    setShowKindli,
+  ] = useState(false);
+
+
+  const [
+    kindliMessages,
+    setKindliMessages,
+  ] = useState([]);
+
+
+  const [
+    kindliInput,
+    setKindliInput,
+  ] = useState("");
+
+
+  const [
+    kindliTyping,
+    setKindliTyping,
+  ] = useState(false);
+
+
   const [
     activeJourneyStep,
     setActiveJourneyStep,
   ] = useState(1);
+
+
+  // =========================================================
+  // OUTLOOK-STYLE HOME TOUR
+  // =========================================================
+
+  const [
+    showHomeTour,
+    setShowHomeTour,
+  ] = useState(false);
+
+  const [
+    tourStep,
+    setTourStep,
+  ] = useState(0);
+
+  const [
+    tourReady,
+    setTourReady,
+  ] = useState(false);
+
+  const [
+    tourTargetRect,
+    setTourTargetRect,
+  ] = useState(null);
+
+  const [
+    tourCardPosition,
+    setTourCardPosition,
+  ] = useState({
+    top: 150,
+    left: 24,
+    placement: "center",
+  });
 
 
   const profile =
@@ -138,15 +218,454 @@ export default function ConnectDashboard() {
   // VERIFICATION
   // =========================================================
 
+  // Use the dedicated verification endpoint as the final source of truth
+  // whenever it is available. Fall back to the profile only while the
+  // endpoint is loading or unavailable.
+  const verificationData =
+    verificationDetails ||
+    profile;
+
+
   const verificationStatus =
-    profile.verification_status ||
-    "not_submitted";
+    String(
+      verificationData?.verification_status ||
+      profile.verification_status ||
+      "not_submitted"
+    )
+      .trim()
+      .toLowerCase();
 
 
+  const resolvedVerificationStatus =
+    verificationStatus;
+
+
+  // IMPORTANT: a member is verified only when BOTH values agree.
+  // This prevents a stale profile.is_verified=true value from showing
+  // “Verified member” after the verification status changes.
   const isVerified =
-    profile.is_verified === true &&
-    verificationStatus ===
-      "approved";
+    verificationData?.is_verified === true &&
+    resolvedVerificationStatus === "approved";
+
+
+  const governmentIdUploaded =
+    verificationData?.government_id_uploaded === true ||
+    Boolean(
+      verificationData?.government_id_blob_key ||
+      verificationData?.government_id_url ||
+      verificationData?.government_id
+    );
+
+
+  function getVerificationNotification() {
+
+    if (
+      verificationData?.is_verified === true &&
+      resolvedVerificationStatus === "approved"
+    ) {
+      return null;
+    }
+
+
+    // Keep the language calm and supportive.
+    // Never tell the member that their profile/account was "rejected".
+    if (
+      resolvedVerificationStatus === "rejected" ||
+      resolvedVerificationStatus === "failed" ||
+      resolvedVerificationStatus === "needs_attention"
+    ) {
+
+      return {
+        severity: "attention",
+        title: "A little more information is needed",
+        message:
+          verificationData?.rejection_reason ||
+          "We could not complete identity verification with the information provided. Please review your Government ID and submit it again.",
+        helper:
+          "You can update your document and resubmit it. If anything is unclear, our support option is available to help.",
+        primaryActionText: "Review & Resubmit",
+        primaryActionUrl: "/profile",
+        showSupport: true,
+      };
+    }
+
+
+    if (
+      governmentIdUploaded ||
+      [
+        "pending",
+        "submitted",
+        "under_review",
+        "in_review",
+      ].includes(
+        resolvedVerificationStatus
+      )
+    ) {
+
+      return {
+        severity: "info",
+        title: "Identity verification is in progress",
+        message:
+          "Your Government ID has been submitted successfully. We are reviewing the information and will update your verification status once the review is complete.",
+        helper: null,
+        primaryActionText: null,
+        primaryActionUrl: null,
+        showSupport: true,
+      };
+    }
+
+
+    return {
+      severity: "warning",
+      title: "Complete your identity verification",
+      message:
+        "Please upload a valid Government ID to complete your FoodKindl verification and access verified-member features.",
+      helper: null,
+      primaryActionText: "Upload Government ID",
+      primaryActionUrl: "/profile",
+      showSupport: true,
+    };
+  }
+
+
+  const verificationNotification =
+    getVerificationNotification();
+
+
+  // =========================================================
+  // KINDLI — FOODKINDL SUPPORT ASSISTANT
+  // =========================================================
+
+  function getKindliWelcomeMessage() {
+
+    if (isVerified) {
+      return (
+        `Hi ${displayName}! I'm Kindli, your FoodKindl assistant. ` +
+        "Your identity verification is complete. How can I help you?"
+      );
+    }
+
+
+    if (
+      [
+        "rejected",
+        "failed",
+        "needs_attention",
+      ].includes(
+        resolvedVerificationStatus
+      )
+    ) {
+
+      const reviewNote =
+        verificationData?.rejection_reason
+          ? ` The review note says: "${verificationData.rejection_reason}".`
+          : "";
+
+      return (
+        `Hi ${displayName}! I'm Kindli, your FoodKindl verification assistant. ` +
+        "We need a little more information to complete your verification." +
+        reviewNote +
+        " I can guide you through what to do next."
+      );
+    }
+
+
+    if (
+      governmentIdUploaded ||
+      [
+        "pending",
+        "submitted",
+        "under_review",
+        "in_review",
+      ].includes(
+        resolvedVerificationStatus
+      )
+    ) {
+
+      return (
+        `Hi ${displayName}! I'm Kindli, your FoodKindl verification assistant. ` +
+        "Your Government ID is being reviewed. I can explain the process or help with any questions."
+      );
+    }
+
+
+    return (
+      `Hi ${displayName}! I'm Kindli, your FoodKindl verification assistant. ` +
+      "Your identity verification is not complete yet. I can guide you through uploading your Government ID."
+    );
+  }
+
+
+  function openKindli() {
+
+    setShowVerificationToast(false);
+    setShowKindli(true);
+
+    setKindliMessages(
+      current => {
+
+        if (current.length > 0) {
+          return current;
+        }
+
+        return [
+          {
+            id: `kindli-${Date.now()}`,
+            role: "assistant",
+            text: getKindliWelcomeMessage(),
+          },
+        ];
+      }
+    );
+  }
+
+
+  function closeKindli() {
+    setShowKindli(false);
+  }
+
+
+  function getKindliReply(question) {
+
+    const normalized =
+      String(question || "")
+        .trim()
+        .toLowerCase();
+
+
+    if (
+      normalized.includes("why") ||
+      normalized.includes("reason") ||
+      normalized.includes("resubmit") ||
+      normalized.includes("wrong")
+    ) {
+
+      if (
+        verificationData?.rejection_reason
+      ) {
+
+        return (
+          "We need a little more information before verification can be completed. " +
+          `The review note says: "${verificationData.rejection_reason}". ` +
+          "Please review your document and submit it again from My Profile."
+        );
+      }
+
+      return (
+        "We could not fully confirm the information submitted. " +
+        "Please make sure your Government ID is clear, readable, valid, and matches the details in your FoodKindl profile."
+      );
+    }
+
+
+    if (
+      normalized.includes("upload") ||
+      normalized.includes("submit")
+    ) {
+
+      return (
+        "Open My Profile, go to the Government ID section, choose your document, upload a clear copy, and submit it for verification."
+      );
+    }
+
+
+    if (
+      normalized.includes("document") ||
+      normalized.includes("id") ||
+      normalized.includes("proof")
+    ) {
+
+      return (
+        "Use one of the Government ID types available in the FoodKindl upload screen. " +
+        "Make sure the document is valid, clear, and the details match your profile."
+      );
+    }
+
+
+    if (
+      normalized.includes("status") ||
+      normalized.includes("pending") ||
+      normalized.includes("review")
+    ) {
+
+      if (isVerified) {
+        return "Your FoodKindl identity verification is complete.";
+      }
+
+      if (
+        governmentIdUploaded &&
+        ![
+          "rejected",
+          "failed",
+          "needs_attention",
+        ].includes(
+          resolvedVerificationStatus
+        )
+      ) {
+        return (
+          "Your Government ID is being reviewed. You do not need to upload it again unless FoodKindl asks for more information."
+        );
+      }
+
+      return (
+        "Your verification is not complete yet. I can help you upload or resubmit your Government ID."
+      );
+    }
+
+
+    if (
+      normalized.includes("support") ||
+      normalized.includes("help") ||
+      normalized.includes("human") ||
+      normalized.includes("person")
+    ) {
+
+      return (
+        "I can guide you here first. If you still need assistance, please use the Review & Resubmit option or contact FoodKindl support from your profile."
+      );
+    }
+
+
+    return (
+      "I can help with identity verification, Government ID uploads, resubmission, verification status, and next steps. " +
+      "Choose a suggestion below or ask me a question."
+    );
+  }
+
+
+  function askKindli(question) {
+
+    const cleanQuestion =
+      String(question || "")
+        .trim();
+
+    if (!cleanQuestion) {
+      return;
+    }
+
+
+    setKindliMessages(
+      current => [
+        ...current,
+        {
+          id: `user-${Date.now()}`,
+          role: "user",
+          text: cleanQuestion,
+        },
+      ]
+    );
+
+    setKindliInput("");
+    setKindliTyping(true);
+
+
+    window.setTimeout(() => {
+
+      setKindliMessages(
+        current => [
+          ...current,
+          {
+            id: `kindli-${Date.now()}`,
+            role: "assistant",
+            text: getKindliReply(
+              cleanQuestion
+            ),
+          },
+        ]
+      );
+
+      setKindliTyping(false);
+
+    }, 500);
+  }
+
+
+  function handleKindliSubmit(event) {
+
+    event.preventDefault();
+
+    askKindli(
+      kindliInput
+    );
+  }
+
+
+  // =========================================================
+  // REPEATING VERIFICATION TOAST
+  //
+  // Behaviour:
+  // 1. Show immediately when verification is incomplete.
+  // 2. Hide after 6.5 seconds.
+  // 3. Reappear 3 minutes later.
+  // 4. Repeat until verification is approved.
+  // =========================================================
+
+  useEffect(() => {
+
+    const shouldShow =
+      !isVerified &&
+      resolvedVerificationStatus !== "approved";
+
+    if (!shouldShow) {
+      setShowVerificationToast(false);
+      return undefined;
+    }
+
+    let hideTimer = null;
+    let reappearTimer = null;
+    let cancelled = false;
+
+    const DISPLAY_DURATION = 6500;
+    const REAPPEAR_AFTER = 3 * 60 * 1000;
+
+    function showToastCycle() {
+
+      if (cancelled) {
+        return;
+      }
+
+      setShowVerificationToast(true);
+
+      hideTimer =
+        window.setTimeout(() => {
+
+          if (cancelled) {
+            return;
+          }
+
+          setShowVerificationToast(false);
+
+          reappearTimer =
+            window.setTimeout(() => {
+              showToastCycle();
+            }, REAPPEAR_AFTER);
+
+        }, DISPLAY_DURATION);
+    }
+
+    // Show once as soon as the user opens Connect.
+    showToastCycle();
+
+    return () => {
+
+      cancelled = true;
+
+      if (hideTimer) {
+        window.clearTimeout(hideTimer);
+      }
+
+      if (reappearTimer) {
+        window.clearTimeout(reappearTimer);
+      }
+
+    };
+
+  }, [
+    isVerified,
+    resolvedVerificationStatus,
+    governmentIdUploaded,
+    verificationData?.rejection_reason,
+  ]);
 
 
   // =========================================================
@@ -255,15 +774,766 @@ export default function ConnectDashboard() {
   );
 
 
-  function goToStep(
-    stepNumber
-  ) {
+  // =========================================================
+  // LOAD VERIFICATION DETAILS
+  // =========================================================
 
-    setActiveJourneyStep(
-      stepNumber
+  useEffect(
+    () => {
+
+      let cancelled =
+        false;
+
+
+      async function loadVerificationDetails() {
+
+        const token =
+          localStorage.getItem("access") ||
+          localStorage.getItem("access_token") ||
+          localStorage.getItem("accessToken") ||
+          localStorage.getItem("token");
+
+
+        if (!token) {
+          return;
+        }
+
+
+        try {
+
+          const response =
+            await fetch(
+              `${API_BASE}/api/accounts/verification-status/`,
+              {
+                method: "GET",
+                headers: {
+                  Authorization:
+                    `Bearer ${token}`,
+                  Accept:
+                    "application/json",
+                },
+              }
+            );
+
+
+          if (!response.ok) {
+
+            console.warn(
+              "Verification status request returned:",
+              response.status
+            );
+
+            return;
+          }
+
+
+          const data =
+            await response.json();
+
+
+          if (!cancelled) {
+            setVerificationDetails(
+              data
+            );
+          }
+
+        } catch (error) {
+
+          // The dashboard still uses profile data as a fallback.
+          console.warn(
+            "Unable to load verification details:",
+            error
+          );
+
+        }
+      }
+
+
+      // Load once immediately.
+      loadVerificationDetails();
+
+
+      // Re-check verification every 60 seconds while the user
+      // remains on this dashboard. This means that once an admin
+      // approves the account, the repeating reminder stops without
+      // requiring a manual page refresh.
+      const verificationPoll =
+        window.setInterval(() => {
+          loadVerificationDetails();
+        }, 60 * 1000);
+
+
+      return () => {
+
+        cancelled = true;
+
+        window.clearInterval(
+          verificationPoll
+        );
+      };
+
+    },
+    [
+      API_BASE,
+      user?.id,
+      profile?.verification_status,
+      profile?.is_verified,
+    ]
+  );
+
+
+  function goToStep(stepNumber) {
+
+    const safeStep = Math.max(
+      1,
+      Math.min(
+        6,
+        Number(stepNumber) || 1
+      )
     );
 
+    setActiveJourneyStep(
+      safeStep
+    );
+
+    /*
+     * React needs to render the newly-visible card first.
+     * Two animation frames are more reliable here than a fixed
+     * timeout, especially because hidden journey cards use
+     * visibility / opacity / transforms.
+     */
+    window.requestAnimationFrame(() => {
+
+      window.requestAnimationFrame(() => {
+
+        const targetStep =
+          document.getElementById(
+            `connect-journey-step-${safeStep}`
+          ) ||
+          document.querySelector(
+            `.connect-step-0${safeStep}`
+          );
+
+        if (!targetStep) {
+          console.warn(
+            "FoodKindl journey step not found:",
+            safeStep
+          );
+          return;
+        }
+
+        const rect =
+          targetStep.getBoundingClientRect();
+
+        const absoluteTop =
+          window.scrollY +
+          rect.top;
+
+        /*
+         * Keep the active card comfortably inside the viewport.
+         * Using window.scrollTo is more predictable than
+         * scrollIntoView with absolutely-positioned journey cards.
+         */
+        const targetTop =
+          Math.max(
+            0,
+            absoluteTop -
+            Math.max(
+              90,
+              (window.innerHeight - rect.height) / 2
+            )
+          );
+
+        window.scrollTo({
+          top: targetTop,
+          behavior: "smooth",
+        });
+
+      });
+
+    });
   }
+
+
+  function goToNextJourneyStep() {
+
+    setActiveJourneyStep(
+      currentStep => {
+
+        const nextStep =
+          Math.min(
+            6,
+            currentStep + 1
+          );
+
+        window.requestAnimationFrame(() => {
+
+          window.requestAnimationFrame(() => {
+
+            const targetStep =
+              document.getElementById(
+                `connect-journey-step-${nextStep}`
+              );
+
+            if (!targetStep) {
+              return;
+            }
+
+            const rect =
+              targetStep.getBoundingClientRect();
+
+            const targetTop =
+              Math.max(
+                0,
+                window.scrollY +
+                rect.top -
+                Math.max(
+                  90,
+                  (
+                    window.innerHeight -
+                    rect.height
+                  ) / 2
+                )
+              );
+
+            window.scrollTo({
+              top: targetTop,
+              behavior: "smooth",
+            });
+
+          });
+
+        });
+
+        return nextStep;
+      }
+    );
+  }
+
+  // =========================================================
+  // HOME TOUR STORAGE
+  // =========================================================
+
+  useEffect(
+    () => {
+
+      const completed =
+        localStorage.getItem(
+          "foodkindl_home_tour_completed"
+        );
+
+      if (completed !== "true") {
+        setShowHomeTour(true);
+        setTourStep(0);
+      }
+
+      setTourReady(true);
+
+    },
+    []
+  );
+
+
+  // =========================================================
+  // HOME TOUR STEPS
+  //
+  // This behaves like the Outlook / Microsoft product tours:
+  // the page stays visible, one real UI control is highlighted,
+  // and a small guide card explains what to click next.
+  // =========================================================
+
+  const homeTourSteps = [
+    {
+      key: "account",
+      eyebrow: "STEP 1",
+      title: "Open your account menu",
+      description:
+        "Click the profile circle in the top-right corner. This menu gives you access to your profile, settings and security options.",
+      target: "account",
+      actionLabel: "Open profile menu",
+    },
+    {
+      key: "profile",
+      eyebrow: "STEP 2",
+      title: "Start with My Profile",
+      description:
+        "Choose My Profile first. Add your photo, location, dietary preference, favourite cuisines, interests and Government ID for verification.",
+      target: "profile",
+      actionLabel: "Show My Profile",
+    },
+    {
+      key: "settings",
+      eyebrow: "STEP 3",
+      title: "Then review Settings",
+      description:
+        "Use Settings to manage your current FoodKindl account and app preferences. You can return here whenever you want to change them.",
+      target: "settings",
+      actionLabel: "Show Settings",
+    },
+    {
+      key: "security",
+      eyebrow: "STEP 4",
+      title: "Next, open Security",
+      description:
+        "Security contains your meetup safety tools. Add a trusted emergency contact before using SOS.",
+      target: "security",
+      actionLabel: "Show Security",
+    },
+    {
+      key: "sos",
+      eyebrow: "STEP 5",
+      title: "Set up SOS before a meetup",
+      description:
+        "Inside Security, add a trusted contact. In an emergency, press and hold the SOS button for 3 seconds to trigger your configured emergency alert flow, including WhatsApp where enabled.",
+      target: "security",
+      actionLabel: "Got it",
+    },
+  ];
+
+
+  function startHomeTour() {
+    setTourStep(0);
+    setShowHomeTour(true);
+  }
+
+
+  function completeHomeTour() {
+
+    localStorage.setItem(
+      "foodkindl_home_tour_completed",
+      "true"
+    );
+
+    setShowHomeTour(false);
+    setTourTargetRect(null);
+  }
+
+
+  function skipHomeTour() {
+    completeHomeTour();
+  }
+
+
+  function nextHomeTourStep() {
+
+    if (
+      tourStep >=
+      homeTourSteps.length - 1
+    ) {
+      completeHomeTour();
+      return;
+    }
+
+    setTourStep(
+      current =>
+        current + 1
+    );
+  }
+
+
+  function previousHomeTourStep() {
+
+    setTourStep(
+      current =>
+        Math.max(
+          0,
+          current - 1
+        )
+    );
+  }
+
+
+  // =========================================================
+  // FIND REAL NAVBAR ELEMENTS
+  //
+  // The navbar is outside ConnectDashboard, so the tour finds
+  // it from the rendered DOM. Several selectors are supported
+  // so this keeps working even if the navbar class names change.
+  // =========================================================
+
+  function findVisibleElement(
+    selectors
+  ) {
+
+    for (
+      const selector
+      of selectors
+    ) {
+
+      const elements =
+        Array.from(
+          document.querySelectorAll(
+            selector
+          )
+        );
+
+      const visible =
+        elements.find(
+          element => {
+
+            const rect =
+              element.getBoundingClientRect();
+
+            const style =
+              window.getComputedStyle(
+                element
+              );
+
+            return (
+              rect.width > 0 &&
+              rect.height > 0 &&
+              style.display !== "none" &&
+              style.visibility !== "hidden"
+            );
+          }
+        );
+
+      if (visible) {
+        return visible;
+      }
+    }
+
+    return null;
+  }
+
+
+  function findAccountMenuButton() {
+
+    const directMatch =
+      findVisibleElement([
+        '[data-tour="account-menu"]',
+        '[data-tour="profile-menu"]',
+        '[aria-label*="profile" i]',
+        '[aria-label*="account" i]',
+        '[title*="profile" i]',
+        '[title*="account" i]',
+        'nav a[href="/profile"]',
+        'header a[href="/profile"]',
+      ]);
+
+    if (directMatch) {
+      return directMatch;
+    }
+
+
+    const navButtons =
+      Array.from(
+        document.querySelectorAll(
+          "nav button, header button"
+        )
+      ).filter(
+        element => {
+
+          const rect =
+            element.getBoundingClientRect();
+
+          return (
+            rect.width >= 30 &&
+            rect.height >= 30 &&
+            rect.top < 130 &&
+            rect.right >
+              window.innerWidth * 0.72
+          );
+        }
+      );
+
+
+    return (
+      navButtons[
+        navButtons.length - 1
+      ] ||
+      null
+    );
+  }
+
+
+  function findTourTarget(
+    targetName
+  ) {
+
+    if (targetName === "account") {
+      return findAccountMenuButton();
+    }
+
+    if (targetName === "profile") {
+
+      return findVisibleElement([
+        '[data-tour="my-profile"]',
+        'a[href="/profile"]',
+        '[role="menu"] a[href*="/profile"]',
+      ]);
+    }
+
+    if (targetName === "settings") {
+
+      return findVisibleElement([
+        '[data-tour="settings"]',
+        'a[href="/settings"]',
+        '[role="menu"] a[href*="/settings"]',
+      ]);
+    }
+
+    if (
+      targetName === "security"
+    ) {
+
+      return findVisibleElement([
+        '[data-tour="security"]',
+        'a[href="/security"]',
+        '[role="menu"] a[href*="/security"]',
+        'a[href*="safety"]',
+        'a[href*="security"]',
+      ]);
+    }
+
+    return null;
+  }
+
+
+  function openAccountMenu() {
+
+    const button =
+      findAccountMenuButton();
+
+    if (button) {
+      button.click();
+    }
+  }
+
+
+  // =========================================================
+  // KEEP THE SPOTLIGHT ON THE CURRENT ELEMENT
+  // =========================================================
+
+  useEffect(
+    () => {
+
+      if (!showHomeTour) {
+        return undefined;
+      }
+
+
+      let frameId = null;
+
+
+      function updateTourPosition() {
+
+        const currentStep =
+          homeTourSteps[tourStep];
+
+        let target =
+          findTourTarget(
+            currentStep.target
+          );
+
+
+        // The dropdown needs to be open before its menu items
+        // can be highlighted. Open it automatically from Step 2.
+        if (
+          currentStep.target !== "account" &&
+          !target
+        ) {
+
+          openAccountMenu();
+
+          target =
+            findTourTarget(
+              currentStep.target
+            );
+        }
+
+
+        if (!target) {
+
+          setTourTargetRect(null);
+
+          setTourCardPosition({
+            top: 150,
+            left: Math.max(
+              16,
+              (
+                window.innerWidth -
+                Math.min(
+                  390,
+                  window.innerWidth - 32
+                )
+              ) / 2
+            ),
+            placement: "center",
+          });
+
+          return;
+        }
+
+
+        const rect =
+          target.getBoundingClientRect();
+
+        const padding = 8;
+
+        const highlightedRect = {
+          top:
+            Math.max(
+              8,
+              rect.top - padding
+            ),
+          left:
+            Math.max(
+              8,
+              rect.left - padding
+            ),
+          width:
+            rect.width +
+            padding * 2,
+          height:
+            rect.height +
+            padding * 2,
+        };
+
+
+        setTourTargetRect(
+          highlightedRect
+        );
+
+
+        const cardWidth =
+          Math.min(
+            390,
+            window.innerWidth - 32
+          );
+
+        const estimatedCardHeight =
+          260;
+
+        const gap =
+          18;
+
+
+        let top =
+          rect.bottom + gap;
+
+        let left =
+          rect.right - cardWidth;
+
+        let placement =
+          "below";
+
+
+        if (
+          top +
+          estimatedCardHeight >
+          window.innerHeight - 18
+        ) {
+
+          top =
+            Math.max(
+              18,
+              rect.top -
+              estimatedCardHeight -
+              gap
+            );
+
+          placement =
+            "above";
+        }
+
+
+        left =
+          Math.min(
+            window.innerWidth -
+              cardWidth -
+              16,
+            Math.max(
+              16,
+              left
+            )
+          );
+
+
+        setTourCardPosition({
+          top,
+          left,
+          placement,
+        });
+      }
+
+
+      function scheduleUpdate() {
+
+        if (frameId) {
+          cancelAnimationFrame(
+            frameId
+          );
+        }
+
+        frameId =
+          requestAnimationFrame(
+            updateTourPosition
+          );
+      }
+
+
+      // Give dropdown animations a brief moment to render.
+      const firstTimer =
+        window.setTimeout(
+          scheduleUpdate,
+          80
+        );
+
+
+      const secondTimer =
+        window.setTimeout(
+          scheduleUpdate,
+          320
+        );
+
+
+      window.addEventListener(
+        "resize",
+        scheduleUpdate
+      );
+
+      window.addEventListener(
+        "scroll",
+        scheduleUpdate,
+        true
+      );
+
+
+      return () => {
+
+        window.clearTimeout(
+          firstTimer
+        );
+
+        window.clearTimeout(
+          secondTimer
+        );
+
+        if (frameId) {
+          cancelAnimationFrame(
+            frameId
+          );
+        }
+
+        window.removeEventListener(
+          "resize",
+          scheduleUpdate
+        );
+
+        window.removeEventListener(
+          "scroll",
+          scheduleUpdate,
+          true
+        );
+      };
+
+    },
+    [
+      showHomeTour,
+      tourStep,
+    ]
+  );
 
 
   // =========================================================
@@ -468,6 +1738,419 @@ export default function ConnectDashboard() {
       </section>
 
 
+      {/* =====================================================
+          FLOATING VERIFICATION IN-APP NOTIFICATION
+      ====================================================== */}
+
+      {
+        verificationNotification &&
+        showVerificationToast &&
+        !showHomeTour &&
+        (
+
+          <div
+            className={
+              `fk-verification-toast ${
+                verificationNotification.severity || "warning"
+              }`
+            }
+            role="status"
+            aria-live="polite"
+          >
+
+            <div className="fk-toast-accent" />
+
+
+            <div className="fk-toast-icon">
+              <ShieldCheck size={20} />
+            </div>
+
+
+            <div className="fk-toast-body">
+
+              <div className="fk-toast-label">
+                FOODKINDL SECURITY
+              </div>
+
+
+              <strong className="fk-toast-title">
+                {verificationNotification.title}
+              </strong>
+
+
+              <p className="fk-toast-message">
+                {verificationNotification.message}
+              </p>
+
+
+              <div className="fk-toast-actions">
+
+                {
+                  verificationNotification.primaryActionUrl &&
+                  (
+                    <Link
+                      to={verificationNotification.primaryActionUrl}
+                      className="fk-toast-primary"
+                    >
+                      {verificationNotification.primaryActionText}
+                      <ArrowRight size={13} />
+                    </Link>
+                  )
+                }
+
+              </div>
+
+            </div>
+
+
+            <button
+              type="button"
+              className="fk-toast-close"
+              onClick={() =>
+                setShowVerificationToast(false)
+              }
+              aria-label="Close verification notification"
+            >
+              <X size={15} />
+            </button>
+
+
+            <div
+              className="fk-toast-progress"
+              aria-hidden="true"
+            >
+              <span />
+            </div>
+
+          </div>
+
+        )
+      }
+{/* =====================================================
+    KINDLI — FLOATING AI ASSISTANT
+====================================================== */}
+
+{
+  !showKindli &&
+  !showHomeTour &&
+  (
+    <button
+      type="button"
+      className="kindli-floating-launcher"
+      onClick={openKindli}
+      aria-label="Ask Kindli"
+      title="Ask Kindli"
+    >
+      <span className="kindli-floating-glow" />
+
+      <span className="kindli-floating-avatar">
+        <Bot size={23} />
+      </span>
+
+      <span className="kindli-floating-copy">
+        <strong>Kindli</strong>
+        <small>Ask me anything</small>
+      </span>
+
+      <span className="kindli-floating-online" />
+    </button>
+  )
+}
+
+      {/* =====================================================
+          KINDLI — FOODKINDL AI ASSISTANT
+      ====================================================== */}
+
+      {
+        showKindli &&
+        (
+
+          <div
+            className="kindli-overlay"
+            onMouseDown={
+              event => {
+
+                if (
+                  event.target ===
+                  event.currentTarget
+                ) {
+                  closeKindli();
+                }
+              }
+            }
+          >
+
+            <section
+              className="kindli-panel"
+              role="dialog"
+              aria-modal="true"
+              aria-label="Kindli FoodKindl assistant"
+            >
+
+              <header className="kindli-header">
+
+                <div className="kindli-brand">
+
+                  <div className="kindli-avatar">
+                    <Bot size={21} />
+                    <span />
+                  </div>
+
+
+                  <div>
+
+                    <div className="kindli-name-row">
+
+                      <h2>
+                        Kindli
+                      </h2>
+
+                      <span className="kindli-ai-pill">
+                        FOODKINDL AI
+                      </span>
+
+                    </div>
+
+
+                    <p>
+                      Verification & account assistant
+                    </p>
+
+                  </div>
+
+                </div>
+
+
+                <button
+                  type="button"
+                  className="kindli-close"
+                  onClick={closeKindli}
+                  aria-label="Close Kindli"
+                >
+                  <X size={17} />
+                </button>
+
+              </header>
+
+
+              <div className="kindli-status-strip">
+
+                <ShieldCheck size={14} />
+
+                <span>
+                  {
+                    isVerified
+                      ? "Verification complete"
+                      : [
+                          "rejected",
+                          "failed",
+                          "needs_attention",
+                        ].includes(
+                          resolvedVerificationStatus
+                        )
+                        ? "Let's complete your verification"
+                        : governmentIdUploaded
+                          ? "Verification review in progress"
+                          : "Verification setup"
+                  }
+                </span>
+
+              </div>
+
+
+              <div className="kindli-chat">
+
+                {
+                  kindliMessages.map(
+                    message => (
+
+                      <div
+                        key={message.id}
+                        className={
+                          `kindli-message ${
+                            message.role
+                          }`
+                        }
+                      >
+
+                        {
+                          message.role ===
+                            "assistant" &&
+                          (
+                            <div className="kindli-message-avatar">
+                              <Sparkles size={13} />
+                            </div>
+                          )
+                        }
+
+
+                        <div className="kindli-message-bubble">
+                          {message.text}
+                        </div>
+
+                      </div>
+
+                    )
+                  )
+                }
+
+
+                {
+                  kindliTyping &&
+                  (
+
+                    <div className="kindli-message assistant">
+
+                      <div className="kindli-message-avatar">
+                        <Sparkles size={13} />
+                      </div>
+
+                      <div className="kindli-typing">
+                        <span />
+                        <span />
+                        <span />
+                      </div>
+
+                    </div>
+
+                  )
+                }
+
+              </div>
+
+
+              <div className="kindli-quick-actions">
+
+                {
+                  [
+                    "Why do I need to resubmit?",
+                    "How do I upload again?",
+                    "What ID can I use?",
+                    "What is my status?",
+                  ].map(
+                    question => (
+
+                      <button
+                        key={question}
+                        type="button"
+                        onClick={() =>
+                          askKindli(question)
+                        }
+                      >
+                        {question}
+                      </button>
+
+                    )
+                  )
+                }
+
+              </div>
+
+
+              {
+                !isVerified &&
+                (
+
+                  <div className="kindli-context-actions">
+
+                    <Link
+                      to="/profile"
+                      className="kindli-profile-action"
+                      onClick={closeKindli}
+                    >
+
+                      {
+                        [
+                          "rejected",
+                          "failed",
+                          "needs_attention",
+                        ].includes(
+                          resolvedVerificationStatus
+                        )
+                          ? "Review & Resubmit"
+                          : governmentIdUploaded
+                            ? "View My Profile"
+                            : "Upload Government ID"
+                      }
+
+                      <ArrowRight size={14} />
+
+                    </Link>
+
+                  </div>
+
+                )
+              }
+
+
+              <form
+                className="kindli-composer"
+                onSubmit={
+                  handleKindliSubmit
+                }
+              >
+
+                <input
+                  type="text"
+                  value={kindliInput}
+                  onChange={
+                    event =>
+                      setKindliInput(
+                        event.target.value
+                      )
+                  }
+                  placeholder="Ask Kindli about verification..."
+                />
+
+
+                <button
+                  type="submit"
+                  disabled={
+                    !kindliInput.trim() ||
+                    kindliTyping
+                  }
+                  aria-label="Send message"
+                >
+                  <Send size={16} />
+                </button>
+
+              </form>
+
+
+              <div className="kindli-footer">
+
+                <Sparkles size={11} />
+
+                Kindli helps with FoodKindl verification and account guidance.
+
+              </div>
+
+            </section>
+
+          </div>
+
+        )
+      }
+
+
+      {/* =====================================================
+          HOME TOUR REPLAY
+      ====================================================== */}
+
+      <div className="connect-tour-replay-wrap">
+
+        <button
+          type="button"
+          className="connect-tour-replay-button connect-tour-replay-highlight"
+          onClick={startHomeTour}
+        >
+          <Sparkles size={14} />
+          Show me around
+        </button>
+
+      </div>
+
+
       {
         refreshError &&
         (
@@ -616,7 +2299,10 @@ export default function ConnectDashboard() {
             through the social journey.
         ==================================================== */}
 
-        <article className="connect-step connect-step-01">
+        <article
+          id="connect-journey-step-1"
+          className="connect-step connect-step-01"
+        >
 
           <button
             type="button"
@@ -817,9 +2503,7 @@ export default function ConnectDashboard() {
             <button
               type="button"
               className="journey-next-stop"
-              onClick={() =>
-                goToStep(2)
-              }
+              onClick={goToNextJourneyStep}
             >
               Next stop
 
@@ -838,7 +2522,10 @@ export default function ConnectDashboard() {
             review the match, and send a connection request.
         ==================================================== */}
 
-        <article className="connect-step connect-step-02">
+        <article
+          id="connect-journey-step-2"
+          className="connect-step connect-step-02"
+        >
 
           <button
             type="button"
@@ -959,9 +2646,7 @@ export default function ConnectDashboard() {
             <button
               type="button"
               className="journey-next-stop"
-              onClick={() =>
-                goToStep(3)
-              }
+              onClick={goToNextJourneyStep}
             >
               Next stop
 
@@ -977,7 +2662,10 @@ export default function ConnectDashboard() {
             STEP 03
         ==================================================== */}
 
-        <article className="connect-step connect-step-03">
+        <article
+          id="connect-journey-step-3"
+          className="connect-step connect-step-03"
+        >
 
           <button
             type="button"
@@ -1047,9 +2735,7 @@ export default function ConnectDashboard() {
             <button
               type="button"
               className="journey-next-stop"
-              onClick={() =>
-                goToStep(4)
-              }
+              onClick={goToNextJourneyStep}
             >
               Next stop
 
@@ -1065,7 +2751,10 @@ export default function ConnectDashboard() {
             STEP 04
         ==================================================== */}
 
-        <article className="connect-step connect-step-04">
+        <article
+          id="connect-journey-step-4"
+          className="connect-step connect-step-04"
+        >
 
           <button
             type="button"
@@ -1178,9 +2867,7 @@ export default function ConnectDashboard() {
             <button
               type="button"
               className="journey-next-stop"
-              onClick={() =>
-                goToStep(5)
-              }
+              onClick={goToNextJourneyStep}
             >
               Next stop
 
@@ -1196,7 +2883,10 @@ export default function ConnectDashboard() {
             STEP 05
         ==================================================== */}
 
-        <article className="connect-step connect-step-05">
+        <article
+          id="connect-journey-step-5"
+          className="connect-step connect-step-05"
+        >
 
           <button
             type="button"
@@ -1271,9 +2961,7 @@ export default function ConnectDashboard() {
             <button
               type="button"
               className="journey-next-stop"
-              onClick={() =>
-                goToStep(6)
-              }
+              onClick={goToNextJourneyStep}
             >
               Next stop
 
@@ -1289,7 +2977,10 @@ export default function ConnectDashboard() {
             STEP 06
         ==================================================== */}
 
-        <article className="connect-step connect-step-06">
+        <article
+          id="connect-journey-step-6"
+          className="connect-step connect-step-06"
+        >
 
           <button
             type="button"
@@ -1444,6 +3135,232 @@ export default function ConnectDashboard() {
 
 
       </section>
+
+
+
+      {/* =====================================================
+          OUTLOOK-STYLE HOME TOUR
+      ====================================================== */}
+
+      {
+        tourReady &&
+        showHomeTour &&
+        (
+
+          <div className="connect-guided-tour">
+
+            <div
+              className="connect-guided-tour-dim"
+              aria-hidden="true"
+            />
+
+
+            {
+              tourTargetRect &&
+              (
+
+                <div
+                  className="connect-guided-tour-spotlight"
+                  style={{
+                    top:
+                      `${tourTargetRect.top}px`,
+                    left:
+                      `${tourTargetRect.left}px`,
+                    width:
+                      `${tourTargetRect.width}px`,
+                    height:
+                      `${tourTargetRect.height}px`,
+                  }}
+                  aria-hidden="true"
+                />
+
+              )
+            }
+
+
+            <section
+              className={
+                `connect-guided-tour-card ${
+                  tourCardPosition.placement
+                }`
+              }
+              style={{
+                top:
+                  `${tourCardPosition.top}px`,
+                left:
+                  `${tourCardPosition.left}px`,
+              }}
+              role="dialog"
+              aria-modal="true"
+              aria-label="FoodKindl guided tour"
+            >
+
+              <div className="connect-guided-tour-head">
+
+                <span>
+                  {
+                    homeTourSteps[
+                      tourStep
+                    ].eyebrow
+                  }
+                </span>
+
+                <button
+                  type="button"
+                  onClick={skipHomeTour}
+                  aria-label="Close tour"
+                >
+                  ×
+                </button>
+
+              </div>
+
+
+              <div className="connect-guided-tour-progress">
+
+                {
+                  homeTourSteps.map(
+                    (
+                      step,
+                      index
+                    ) => (
+
+                      <span
+                        key={step.key}
+                        className={
+                          index <= tourStep
+                            ? "active"
+                            : ""
+                        }
+                      />
+
+                    )
+                  )
+                }
+
+              </div>
+
+
+              <h2>
+                {
+                  homeTourSteps[
+                    tourStep
+                  ].title
+                }
+              </h2>
+
+
+              <p>
+                {
+                  homeTourSteps[
+                    tourStep
+                  ].description
+                }
+              </p>
+
+
+              {
+                homeTourSteps[
+                  tourStep
+                ].key === "sos"
+                &&
+                (
+
+                  <div className="connect-guided-tour-sos">
+
+                    <div>
+                      <span>1</span>
+                      Add trusted contact
+                    </div>
+
+                    <div>
+                      <span>2</span>
+                      Hold SOS for 3 seconds
+                    </div>
+
+                    <div>
+                      <span>3</span>
+                      Emergency alert / WhatsApp
+                    </div>
+
+                  </div>
+
+                )
+              }
+
+
+              <div className="connect-guided-tour-actions">
+
+                <button
+                  type="button"
+                  className="connect-guided-tour-skip"
+                  onClick={skipHomeTour}
+                >
+                  Skip tour
+                </button>
+
+
+                <div>
+
+                  {
+                    tourStep > 0 &&
+                    (
+
+                      <button
+                        type="button"
+                        className="connect-guided-tour-back"
+                        onClick={
+                          previousHomeTourStep
+                        }
+                      >
+                        Back
+                      </button>
+
+                    )
+                  }
+
+
+                  <button
+                    type="button"
+                    className="connect-guided-tour-next"
+                    onClick={
+                      () => {
+
+                        if (
+                          tourStep === 0
+                        ) {
+                          openAccountMenu();
+                        }
+
+                        nextHomeTourStep();
+                      }
+                    }
+                  >
+
+                    {
+                      tourStep ===
+                      homeTourSteps.length - 1
+                        ? "Finish"
+                        : homeTourSteps[
+                            tourStep
+                          ].actionLabel
+                    }
+
+                    <ArrowRight size={14} />
+
+                  </button>
+
+                </div>
+
+              </div>
+
+            </section>
+
+          </div>
+
+        )
+      }
+
 
     </main>
   );

@@ -42,6 +42,7 @@ class ProfileSerializer(
             "postcode",
             "college_workplace",
             "role",
+            "profile_visibility",
 
             # =================================================
             # FOOD MATCH
@@ -887,6 +888,14 @@ class FoodMatchMemberSerializer(
         )
     )
 
+    profile_visibility = serializers.CharField(
+        source="profile.profile_visibility",
+        read_only=True,
+    )
+
+    is_private = serializers.SerializerMethodField()
+
+
     verification_status = (
         serializers.CharField(
             source=
@@ -929,6 +938,17 @@ class FoodMatchMemberSerializer(
             "is_verified",
 
             "verification_status",
+
+            "profile_visibility",
+            "is_private",
+        )
+
+
+    def get_is_private(self, obj):
+        profile = getattr(obj, "profile", None)
+        return bool(
+            profile
+            and profile.profile_visibility == "private"
         )
 
 

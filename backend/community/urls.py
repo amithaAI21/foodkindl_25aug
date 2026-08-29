@@ -9,11 +9,13 @@ from .views import (
     MemberDetailView,
     MemberListView,
     PostViewSet,
+    ai_ingredient_recipe_book,
     stats,
 )
 
 from .ai_views import (
     AIRecipeGenerateView,
+    AIRecipeVideoGenerateView,
 )
 
 
@@ -69,10 +71,26 @@ urlpatterns = [
         name="stats",
     ),
 
+    # Normal dish-name recipe search.
     path(
         "ai/recipe/",
         AIRecipeGenerateView.as_view(),
         name="ai-recipe",
+    ),
+
+    # Ingredient mode:
+    # user supplies ingredients and FoodKindl chooses the dish.
+    path(
+        "ai/ingredient-recipe-book/",
+        ai_ingredient_recipe_book,
+        name="ai-ingredient-recipe-book",
+    ),
+
+    # 30-second AI cooking video.
+    path(
+        "ai/recipe-video/",
+        AIRecipeVideoGenerateView.as_view(),
+        name="ai-recipe-video",
     ),
 ]
 

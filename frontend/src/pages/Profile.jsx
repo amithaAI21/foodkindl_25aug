@@ -12,10 +12,13 @@ import {
   RefreshCw,
   ShieldCheck,
   UserRound,
+  Globe2,
+  LockKeyhole,
 } from "lucide-react";
 
 import {
   Link,
+  useLocation,
 } from "react-router-dom";
 
 import api from "../api";
@@ -24,6 +27,7 @@ import {
   useAuth,
 } from "../context/AuthContext";
 
+import "../styles/profile.css";
 
 const initialFiles = {
   profile_image_1: null,
@@ -304,6 +308,10 @@ async function uploadMediaToNetlify(
 
 export default function Profile() {
 
+  const location =
+    useLocation();
+
+
   const {
     user,
     reloadUser,
@@ -422,6 +430,10 @@ export default function Profile() {
     women_only_mode:
       profile.women_only_mode ||
       false,
+
+    profile_visibility:
+      profile.profile_visibility ||
+      "public",
 
     government_id_type:
       profile.government_id_type ||
@@ -564,6 +576,10 @@ export default function Profile() {
           profile.women_only_mode ||
           false,
 
+        profile_visibility:
+          profile.profile_visibility ||
+          "public",
+
         government_id_type:
           profile.government_id_type ||
           "",
@@ -593,6 +609,88 @@ export default function Profile() {
 
     },
     [user]
+  );
+
+
+  // ==========================================================
+  // GOVERNMENT ID DEEP LINK
+  //
+  // Kindli can navigate to:
+  // /profile#government-id-section
+  //
+  // The page then automatically scrolls to the Trust & Identity
+  // section and briefly highlights it.
+  // ==========================================================
+
+  useEffect(
+    () => {
+
+      if (
+        location.hash !==
+        "#government-id-section"
+      ) {
+        return;
+      }
+
+
+      const timer =
+        window.setTimeout(
+          () => {
+
+            const section =
+              document.getElementById(
+                "government-id-section"
+              );
+
+
+            if (!section) {
+              return;
+            }
+
+
+            section.scrollIntoView({
+              behavior: "smooth",
+              block: "center",
+            });
+
+
+            section.classList.add(
+              "government-id-highlight"
+            );
+
+
+            const highlightTimer =
+              window.setTimeout(
+                () => {
+
+                  section.classList.remove(
+                    "government-id-highlight"
+                  );
+
+                },
+                2600
+              );
+
+
+            return () =>
+              window.clearTimeout(
+                highlightTimer
+              );
+
+          },
+          350
+        );
+
+
+      return () =>
+        window.clearTimeout(
+          timer
+        );
+
+    },
+    [
+      location.hash,
+    ]
   );
 
 
@@ -1039,6 +1137,9 @@ export default function Profile() {
         ?.dietary_preference?.[0] ||
 
       data
+        ?.profile_visibility?.[0] ||
+
+      data
         ?.detail ||
 
       JSON.stringify(
@@ -1174,6 +1275,11 @@ export default function Profile() {
         form.women_only_mode
           ? "true"
           : "false"
+      );
+
+      formData.append(
+        "profile_visibility",
+        form.profile_visibility
       );
 
 
@@ -2171,6 +2277,98 @@ export default function Profile() {
 
 
             {/* ================================================
+                PROFILE PRIVACY
+            ================================================ */}
+
+            <div className="profile-privacy-setting">
+
+              <div className="food-match-field-heading">
+
+                <strong>
+                  Profile Privacy
+                </strong>
+
+                <span>
+                  Choose who can see the details on your FoodKindl profile.
+                </span>
+
+              </div>
+
+              <div className="profile-privacy-options">
+
+                <button
+                  type="button"
+                  className={
+                    form.profile_visibility === "public"
+                      ? "profile-privacy-option selected"
+                      : "profile-privacy-option"
+                  }
+                  onClick={() =>
+                    setForm((previousForm) => ({
+                      ...previousForm,
+                      profile_visibility: "public",
+                    }))
+                  }
+                >
+
+                  <Globe2 size={20} />
+
+                  <span>
+                    <strong>Public Profile</strong>
+                    <small>
+                      FoodKindl members can discover your profile and food interests.
+                    </small>
+                  </span>
+
+                  <span className="profile-privacy-radio">
+                    {form.profile_visibility === "public" ? "✓" : ""}
+                  </span>
+
+                </button>
+
+
+                <button
+                  type="button"
+                  className={
+                    form.profile_visibility === "private"
+                      ? "profile-privacy-option selected"
+                      : "profile-privacy-option"
+                  }
+                  onClick={() =>
+                    setForm((previousForm) => ({
+                      ...previousForm,
+                      profile_visibility: "private",
+                    }))
+                  }
+                >
+
+                  <LockKeyhole size={20} />
+
+                  <span>
+                    <strong>Private Profile</strong>
+                    <small>
+                      Only connected members can see your full profile details.
+                    </small>
+                  </span>
+
+                  <span className="profile-privacy-radio">
+                    {form.profile_visibility === "private" ? "✓" : ""}
+                  </span>
+
+                </button>
+
+              </div>
+
+              <p className="profile-privacy-note">
+                {form.profile_visibility === "private"
+                  ? "Your profile is private. People who are not connected with you will see only limited profile information."
+                  : "Your profile is public. FoodKindl members can see the profile information you choose to share."}
+              </p>
+
+            </div>
+
+
+            {/* ================================================
                 WOMEN ONLY SAFETY
             ================================================ */}
 
@@ -2346,7 +2544,10 @@ export default function Profile() {
             TRUST & IDENTITY
         ==================================================== */}
 
-        <section className="profile-wide-card trust-card">
+        <section
+          id="government-id-section"
+          className="profile-wide-card trust-card"
+        >
 
           <div className="profile-section-heading">
 

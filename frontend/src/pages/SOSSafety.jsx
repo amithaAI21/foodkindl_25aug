@@ -751,6 +751,66 @@ export default function SOSSafety() {
   }
 
 
+
+  // =========================================================
+  // MANUAL SMS FALLBACK — NO FOODKINDL SMS API COST
+  //
+  // Opens the user's native SMS app with the SOS message
+  // pre-filled. The user must tap Send.
+  // Carrier charges may still apply according to their plan.
+  // =========================================================
+
+  function sendSMSSOS(
+    contact
+  ) {
+
+    const phone =
+      String(
+        contact?.phone_number || ""
+      )
+        .replace(/\s+/g, "")
+        .replace(/-/g, "")
+        .replace(/\(/g, "")
+        .replace(/\)/g, "");
+
+
+    if (!phone) {
+
+      window.alert(
+        "Trusted contact phone number is unavailable."
+      );
+
+      return;
+    }
+
+
+    const message =
+      createSOSMessage();
+
+
+    const isIOS =
+      /iPad|iPhone|iPod/i.test(
+        navigator.userAgent
+      );
+
+
+    const separator =
+      isIOS
+        ? "&"
+        : "?";
+
+
+    const smsUrl =
+      `sms:${phone}${separator}body=${encodeURIComponent(
+        message
+      )}`;
+
+
+    window.location.href =
+      smsUrl;
+  }
+
+
   // =========================================================
   // ACTIVATE SOS
   //
@@ -1869,7 +1929,7 @@ export default function SOSSafety() {
               <div className="sos-contact-actions-list">
 
                 <span className="sos-contact-actions-title">
-                  WhatsApp backup
+                  Emergency message backup
                 </span>
 
 
@@ -1904,25 +1964,50 @@ export default function SOSSafety() {
                         </div>
 
 
-                        <button
-                          type="button"
+                        <div className="sos-contact-action-buttons">
 
-                          className="sos-action-whatsapp"
+                          <button
+                            type="button"
 
-                          onClick={() =>
-                            sendWhatsAppSOS(
-                              contact
-                            )
-                          }
-                        >
+                            className="sos-action-sms"
 
-                          <MessageCircle
-                            size={15}
-                          />
+                            onClick={() =>
+                              sendSMSSOS(
+                                contact
+                              )
+                            }
+                          >
 
-                          WhatsApp
+                            <Phone
+                              size={15}
+                            />
 
-                        </button>
+                            SMS
+
+                          </button>
+
+
+                          <button
+                            type="button"
+
+                            className="sos-action-whatsapp"
+
+                            onClick={() =>
+                              sendWhatsAppSOS(
+                                contact
+                              )
+                            }
+                          >
+
+                            <MessageCircle
+                              size={15}
+                            />
+
+                            WhatsApp
+
+                          </button>
+
+                        </div>
 
                       </div>
 

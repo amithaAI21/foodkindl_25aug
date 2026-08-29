@@ -18,6 +18,7 @@ import {
   UserCheck,
   Users,
   Utensils,
+  X,
 } from "lucide-react";
 
 import {
@@ -272,6 +273,267 @@ export default function LandingPage() {
 
 
   /* =========================================================
+     KINDLI — FOODKINDL AI ASSISTANT
+  ========================================================= */
+
+  const [kindliOpen, setKindliOpen] =
+    useState(false);
+
+  const [kindliMessages, setKindliMessages] =
+    useState([
+      {
+        id: "kindli-welcome",
+        role: "assistant",
+        text:
+          "Hi! I'm Kindli 👋 Your FoodKindl AI assistant. Ask me anything about FoodKindl, Connect, Food Invites, Food Walk, AI Kitchen, safety, profiles, verification, community, Share, Products, or how to use the platform.",
+      },
+    ]);
+
+  const [kindliInput, setKindliInput] =
+    useState("");
+
+  const [kindliThinking, setKindliThinking] =
+    useState(false);
+
+  const kindliChatRef =
+    useRef(null);
+
+  const KINDLI_API_URL = (
+    import.meta.env.VITE_KINDLI_API_URL ||
+    (
+      import.meta.env.VITE_BACKEND_URL
+        ? `${import.meta.env.VITE_BACKEND_URL.replace(/\/+$/, "")}/api/kindli/chat/`
+        : "/api/kindli/chat/"
+    )
+  );
+
+
+  function getKindliFallbackReply(question) {
+
+    const q =
+      String(question || "")
+        .trim()
+        .toLowerCase();
+
+    if (q.includes("food walk")) {
+      return "Food Walk lets you choose a starting point and destination, then discover food stops along the route and create a multi-stop experience.";
+    }
+
+    if (q.includes("invite")) {
+      return "Food Invites help you turn a conversation into a real food moment such as Cook Together, Dine Out, or Food Walk.";
+    }
+
+    if (
+      q.includes("ai kitchen") ||
+      q.includes("recipe")
+    ) {
+      return "AI Kitchen helps you discover recipe ideas from your available ingredients and food preferences.";
+    }
+
+    if (
+      q.includes("verify") ||
+      q.includes("government id") ||
+      q.includes("govt id")
+    ) {
+      return "FoodKindl uses private identity verification to support safer interactions. Government ID information is used for verification and is not shown publicly.";
+    }
+
+    if (
+      q.includes("safe") ||
+      q.includes("safety")
+    ) {
+      return "FoodKindl includes safety-focused features such as verified profiles and women-only preferences for applicable gatherings.";
+    }
+
+    if (
+      q.includes("connect") ||
+      q.includes("people")
+    ) {
+      return "FoodKindl Connect helps you discover people nearby through shared food interests, connect with them, chat, and plan food experiences together.";
+    }
+
+    if (
+      q.includes("share") ||
+      q.includes("video") ||
+      q.includes("post")
+    ) {
+      return "FoodKindl Share is designed for food moments, recipes, photos, videos and stories from your connections and creators.";
+    }
+
+    if (
+      q.includes("product") ||
+      q.includes("spice") ||
+      q.includes("buy")
+    ) {
+      return "FoodKindl Products will expand the platform into food-related products and commerce experiences.";
+    }
+
+    if (
+      q.includes("what is foodkindl") ||
+      q.includes("about foodkindl")
+    ) {
+      return "FoodKindl is a food-first platform designed to help people connect through shared meals, cooking, dining, Food Walks, community content and food-focused experiences.";
+    }
+
+    return (
+      "I can help with FoodKindl features, navigation, safety, community and support. For fully open-ended answers, Kindli uses the FoodKindl AI service."
+    );
+  }
+
+
+  async function askKindli(question) {
+
+    const cleanQuestion =
+      String(question || "").trim();
+
+    if (
+      !cleanQuestion ||
+      kindliThinking
+    ) {
+      return;
+    }
+
+    setKindliMessages(
+      current => [
+        ...current,
+        {
+          id: `kindli-user-${Date.now()}`,
+          role: "user",
+          text: cleanQuestion,
+        },
+      ]
+    );
+
+    setKindliInput("");
+    setKindliThinking(true);
+
+    try {
+
+      const response =
+        await fetch(
+          KINDLI_API_URL,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Accept: "application/json",
+            },
+            body: JSON.stringify({
+              message: cleanQuestion,
+              page: "landing",
+              user: user
+                ? {
+                    id: user.id,
+                    email: user.email,
+                    first_name: user.first_name,
+                  }
+                : null,
+              context: {
+                product: "FoodKindl",
+                assistant: "Kindli",
+                known_features: [
+                  "Connect",
+                  "Food Invites",
+                  "Food Walk",
+                  "AI Kitchen",
+                  "Community",
+                  "Profiles",
+                  "Verification",
+                  "Safety",
+                  "Share",
+                  "Products",
+                ],
+              },
+            }),
+          }
+        );
+
+      if (!response.ok) {
+        throw new Error(
+          `Kindli request failed with status ${response.status}`
+        );
+      }
+
+      const data =
+        await response.json();
+
+      setKindliMessages(
+        current => [
+          ...current,
+          {
+            id: `kindli-assistant-${Date.now()}`,
+            role: "assistant",
+            text:
+              data?.reply ||
+              data?.message ||
+              data?.answer ||
+              getKindliFallbackReply(cleanQuestion),
+          },
+        ]
+      );
+
+    } catch (error) {
+
+      console.warn(
+        "Kindli AI service unavailable:",
+        error
+      );
+
+      setKindliMessages(
+        current => [
+          ...current,
+          {
+            id: `kindli-fallback-${Date.now()}`,
+            role: "assistant",
+            text:
+              getKindliFallbackReply(
+                cleanQuestion
+              ),
+          },
+        ]
+      );
+
+    } finally {
+
+      setKindliThinking(false);
+
+    }
+  }
+
+
+  function submitKindli(event) {
+    event.preventDefault();
+    askKindli(kindliInput);
+  }
+
+
+  useEffect(
+    () => {
+
+      if (
+        !kindliOpen ||
+        !kindliChatRef.current
+      ) {
+        return;
+      }
+
+      kindliChatRef.current.scrollTo({
+        top:
+          kindliChatRef.current.scrollHeight,
+        behavior:
+          "smooth",
+      });
+
+    },
+    [
+      kindliOpen,
+      kindliMessages,
+      kindliThinking,
+    ]
+  );
+
+
+  /* =========================================================
      HERO ROTATION
   ========================================================= */
 
@@ -322,6 +584,155 @@ export default function LandingPage() {
 
 
   /* =========================================================
+     HOMEPAGE VIDEO — LOADED FROM DJANGO / NETLIFY BLOB
+  ========================================================= */
+
+  const [
+    storyVideo,
+    setStoryVideo,
+  ] = useState(null);
+
+
+  const [
+    storyVideoLoading,
+    setStoryVideoLoading,
+  ] = useState(true);
+
+
+  useEffect(
+    () => {
+
+      let cancelled = false;
+
+
+      async function loadStoryVideo() {
+
+        try {
+
+          setStoryVideoLoading(
+            true
+          );
+
+
+          const configuredBackend =
+            import.meta.env
+              .VITE_BACKEND_URL ||
+            import.meta.env
+              .VITE_API_BASE_URL ||
+            "";
+
+
+          const backend =
+            configuredBackend.replace(
+              /\/+$/,
+              ""
+            );
+
+
+          const endpoint =
+            backend
+              ? `${backend}/api/website/homepage-video/`
+              : "/api/website/homepage-video/";
+
+
+          const response =
+            await fetch(
+              endpoint,
+              {
+                method: "GET",
+                headers: {
+                  Accept:
+                    "application/json",
+                },
+              }
+            );
+
+
+          if (!response.ok) {
+
+            throw new Error(
+              `Homepage video request failed with status ${response.status}`
+            );
+          }
+
+
+          const data =
+            await response.json();
+
+
+          if (cancelled) {
+            return;
+          }
+
+
+          if (
+            data?.available &&
+            data?.video_url
+          ) {
+
+            setStoryVideo(
+              {
+                title:
+                  data.title ||
+                  "FoodKindl Story",
+
+                video_url:
+                  data.video_url,
+
+                poster_url:
+                  data.poster_url ||
+                  "",
+              }
+            );
+
+          } else {
+
+            setStoryVideo(
+              null
+            );
+          }
+
+        } catch (error) {
+
+          if (!cancelled) {
+
+            console.error(
+              "Unable to load FoodKindl homepage video:",
+              error
+            );
+
+            setStoryVideo(
+              null
+            );
+          }
+
+        } finally {
+
+          if (!cancelled) {
+
+            setStoryVideoLoading(
+              false
+            );
+          }
+        }
+      }
+
+
+      loadStoryVideo();
+
+
+      return () => {
+
+        cancelled = true;
+
+      };
+
+    },
+    []
+  );
+
+
+  /* =========================================================
      STORY VIDEO
   ========================================================= */
 
@@ -335,7 +746,40 @@ export default function LandingPage() {
   ] = useState(false);
 
 
+  useEffect(
+    () => {
+
+      setVideoStarted(
+        false
+      );
+
+
+      if (
+        videoRef.current
+      ) {
+
+        videoRef.current.pause();
+
+        videoRef.current.load();
+
+      }
+
+    },
+    [
+      storyVideo?.video_url,
+    ]
+  );
+
+
   function playStoryVideo() {
+
+    if (
+      !storyVideo?.video_url ||
+      !videoRef.current
+    ) {
+      return;
+    }
+
 
     setVideoStarted(
       true
@@ -345,10 +789,30 @@ export default function LandingPage() {
     requestAnimationFrame(
       () => {
 
+        const playPromise =
+          videoRef.current?.play();
+
+
         if (
-          videoRef.current
+          playPromise &&
+          typeof playPromise.catch ===
+            "function"
         ) {
-          videoRef.current.play();
+
+          playPromise.catch(
+            error => {
+
+              console.error(
+                "Unable to play FoodKindl story video:",
+                error
+              );
+
+              setVideoStarted(
+                false
+              );
+
+            }
+          );
         }
 
       }
@@ -1460,16 +1924,31 @@ export default function LandingPage() {
             ref={videoRef}
             className="fk-story-video"
             preload="metadata"
-            poster="/images/video-thumbnail.jpg"
+            poster={
+              storyVideo?.poster_url ||
+              "/images/video-thumbnail.jpg"
+            }
             controls={
-              videoStarted
+              videoStarted &&
+              Boolean(
+                storyVideo?.video_url
+              )
             }
           >
 
-            <source
-              src="/videos/video1.mp4"
-              type="video/mp4"
-            />
+            {
+              storyVideo?.video_url &&
+              (
+
+                <source
+                  src={
+                    storyVideo.video_url
+                  }
+                  type="video/mp4"
+                />
+
+              )
+            }
 
             Your browser does not support the video tag.
 
@@ -1487,6 +1966,10 @@ export default function LandingPage() {
                   playStoryVideo
                 }
                 aria-label="Play FoodKindl story"
+                disabled={
+                  storyVideoLoading ||
+                  !storyVideo?.video_url
+                }
               >
 
                 <span className="fk-story-play">
@@ -1505,14 +1988,27 @@ export default function LandingPage() {
 
 
                 <strong>
-                  See How FoodKindl Brings
-                  People Together
+
+                  {
+                    storyVideoLoading
+                      ? "Loading FoodKindl Story..."
+                      : storyVideo?.title ||
+                        "See How FoodKindl Brings People Together"
+                  }
+
                 </strong>
 
 
                 <small>
-                  A short story about food,
-                  connection and belonging.
+
+                  {
+                    storyVideoLoading
+                      ? "Please wait while the latest video loads."
+                      : storyVideo?.video_url
+                        ? "A short story about food, connection and belonging."
+                        : "FoodKindl story video is currently unavailable."
+                  }
+
                 </small>
 
               </button>
@@ -1879,6 +2375,230 @@ export default function LandingPage() {
   </div>
 
 </footer>
+
+
+      {/* =====================================================
+          KINDLI — GLOBAL LANDING PAGE AI ASSISTANT
+      ====================================================== */}
+
+      <div className="kindli-global">
+
+        {
+          !kindliOpen &&
+          (
+
+            <button
+              type="button"
+              className="kindli-launcher"
+              onClick={() =>
+                setKindliOpen(true)
+              }
+              aria-label="Open Kindli AI assistant"
+            >
+
+              <span className="kindli-launcher-halo" />
+
+              <img
+                src="/images/kindliicon.png"
+                alt="Kindli"
+              />
+
+              <span className="kindli-launcher-online" />
+
+              <span className="kindli-launcher-label">
+                Ask Kindli
+              </span>
+
+            </button>
+
+          )
+        }
+
+
+        {
+          kindliOpen &&
+          (
+
+            <section
+              className="kindli-chat-panel"
+              role="dialog"
+              aria-label="Kindli FoodKindl AI assistant"
+            >
+
+              <header className="kindli-chat-header">
+
+                <div className="kindli-chat-brand">
+
+                  <img
+                    src="/images/kindliicon.png"
+                    alt="Kindli"
+                  />
+
+                  <div>
+
+                    <div className="kindli-chat-title-row">
+                      <strong>Kindli</strong>
+                      <span>AI ASSISTANT</span>
+                    </div>
+
+                    <small>
+                      Ask me anything about FoodKindl
+                    </small>
+
+                  </div>
+
+                </div>
+
+
+                <button
+                  type="button"
+                  className="kindli-chat-close"
+                  onClick={() =>
+                    setKindliOpen(false)
+                  }
+                  aria-label="Close Kindli"
+                >
+                  <X size={17} />
+                </button>
+
+              </header>
+
+
+              <div
+                ref={kindliChatRef}
+                className="kindli-chat-messages"
+              >
+
+                {
+                  kindliMessages.map(
+                    message => (
+
+                      <div
+                        key={message.id}
+                        className={
+                          `kindli-chat-message ${message.role}`
+                        }
+                      >
+
+                        {
+                          message.role === "assistant" &&
+                          (
+                            <img
+                              src="/images/kindliicon.png"
+                              alt=""
+                              aria-hidden="true"
+                            />
+                          )
+                        }
+
+                        <div>
+                          {message.text}
+                        </div>
+
+                      </div>
+
+                    )
+                  )
+                }
+
+
+                {
+                  kindliThinking &&
+                  (
+
+                    <div className="kindli-chat-message assistant">
+
+                      <img
+                        src="/images/kindli-icon.png"
+                        alt=""
+                        aria-hidden="true"
+                      />
+
+                      <div className="kindli-thinking">
+                        <span />
+                        <span />
+                        <span />
+                      </div>
+
+                    </div>
+
+                  )
+                }
+
+              </div>
+
+
+              <div className="kindli-chat-suggestions">
+
+                {
+                  [
+                    "What is FoodKindl?",
+                    "How does Food Walk work?",
+                    "What can AI Kitchen do?",
+                  ].map(
+                    question => (
+
+                      <button
+                        key={question}
+                        type="button"
+                        onClick={() =>
+                          askKindli(question)
+                        }
+                      >
+                        {question}
+                      </button>
+
+                    )
+                  )
+                }
+
+              </div>
+
+
+              <form
+                className="kindli-chat-composer"
+                onSubmit={submitKindli}
+              >
+
+                <input
+                  type="text"
+                  value={kindliInput}
+                  onChange={
+                    event =>
+                      setKindliInput(
+                        event.target.value
+                      )
+                  }
+                  placeholder="Ask Kindli anything..."
+                  aria-label="Ask Kindli anything"
+                />
+
+                <button
+                  type="submit"
+                  disabled={
+                    !kindliInput.trim() ||
+                    kindliThinking
+                  }
+                  aria-label="Send message to Kindli"
+                >
+                  <Send size={17} />
+                </button>
+
+              </form>
+
+
+              <div className="kindli-chat-disclaimer">
+                <Sparkles size={10} />
+                Kindli can help with FoodKindl features, navigation and support.
+              </div>
+
+            </section>
+
+          )
+        }
+
+      </div>
+
 
     </main>
 

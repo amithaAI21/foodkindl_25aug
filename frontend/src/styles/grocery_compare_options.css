@@ -1,0 +1,302 @@
+/* =========================================================
+   FOODKINDL — GROCERY COMPARE OPTIONS
+========================================================= */
+
+.grocery-compare-shell {
+  margin-top: 26px;
+}
+
+.grocery-compare-intro {
+  display: grid;
+  grid-template-columns: 48px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 14px;
+  padding: 18px;
+  border: 1px solid rgba(255, 111, 55, 0.16);
+  border-radius: 20px;
+  background:
+    radial-gradient(
+      circle at 0% 50%,
+      rgba(255, 107, 50, 0.1),
+      transparent 38%
+    ),
+    rgba(255, 255, 255, 0.025);
+}
+
+.grocery-compare-icon {
+  width: 48px;
+  height: 48px;
+  display: grid;
+  place-items: center;
+  border-radius: 15px;
+  color: #ff7743;
+  background: rgba(255, 111, 55, 0.08);
+  border: 1px solid rgba(255, 111, 55, 0.16);
+}
+
+.grocery-compare-copy > span,
+.grocery-compare-head > div > span,
+.grocery-partner-heading > span {
+  color: #ff7542;
+  font-size: 8px;
+  font-weight: 850;
+  letter-spacing: 0.12em;
+}
+
+.grocery-compare-copy h3 {
+  margin: 4px 0 5px;
+  color: #fff;
+  font-size: 15px;
+}
+
+.grocery-compare-copy p {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.48);
+  font-size: 10px;
+  line-height: 1.5;
+}
+
+.grocery-compare-copy p strong {
+  color: rgba(255, 255, 255, 0.82);
+}
+
+.grocery-compare-open {
+  min-height: 40px;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 0 13px;
+  border: 1px solid rgba(255, 122, 73, 0.25);
+  border-radius: 11px;
+  cursor: pointer;
+  color: #fff;
+  background:
+    linear-gradient(
+      135deg,
+      #ff743d,
+      #df4b1c
+    );
+  font-family: inherit;
+  font-size: 9.5px;
+  font-weight: 760;
+}
+
+.grocery-compare-panel {
+  margin-top: 12px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.075);
+  border-radius: 20px;
+  background:
+    linear-gradient(
+      155deg,
+      rgba(19, 14, 11, 0.97),
+      rgba(8, 8, 8, 0.99)
+    );
+}
+
+.grocery-compare-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 17px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.055);
+}
+
+.grocery-compare-head h3 {
+  margin: 4px 0 0;
+  color: #fff;
+  font-size: 14px;
+}
+
+.grocery-compare-close {
+  width: 31px;
+  height: 31px;
+  flex: 0 0 31px;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(255, 255, 255, 0.055);
+  border-radius: 9px;
+  cursor: pointer;
+  color: rgba(255, 255, 255, 0.45);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.grocery-compare-list {
+  display: grid;
+  gap: 7px;
+  padding: 13px 15px;
+}
+
+.grocery-compare-item {
+  width: 100%;
+  min-height: 48px;
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 8px 10px;
+  text-align: left;
+  border: 1px solid rgba(255, 255, 255, 0.055);
+  border-radius: 12px;
+  cursor: pointer;
+  color: #fff;
+  background: rgba(255, 255, 255, 0.025);
+  font-family: inherit;
+}
+
+.grocery-compare-item.checked {
+  opacity: 0.58;
+  border-color: rgba(64, 205, 134, 0.12);
+  background: rgba(64, 205, 134, 0.04);
+}
+
+.grocery-item-check {
+  width: 25px;
+  height: 25px;
+  display: grid;
+  place-items: center;
+  flex: 0 0 25px;
+  color: #4bd68d;
+}
+
+.grocery-item-check > span {
+  width: 16px;
+  height: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 5px;
+}
+
+.grocery-item-name {
+  flex: 1;
+  font-size: 10.5px;
+  font-weight: 700;
+}
+
+.grocery-compare-item small {
+  color: rgba(255, 255, 255, 0.34);
+  font-size: 8px;
+}
+
+.grocery-compare-selection {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 0 15px 14px;
+  color: rgba(255, 255, 255, 0.42);
+  font-size: 9px;
+}
+
+.grocery-partner-heading {
+  padding: 15px;
+  border-top: 1px solid rgba(255, 255, 255, 0.055);
+}
+
+.grocery-partner-heading h4 {
+  margin: 5px 0 4px;
+  color: #fff;
+  font-size: 13px;
+}
+
+.grocery-partner-heading p {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.34);
+  font-size: 8.5px;
+}
+
+.grocery-partner-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  padding: 0 15px 15px;
+}
+
+.grocery-partner-card {
+  min-height: 72px;
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr) 16px;
+  align-items: center;
+  gap: 8px;
+  padding: 10px;
+  text-align: left;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 13px;
+  cursor: pointer;
+  color: #fff;
+  background: rgba(255, 255, 255, 0.025);
+  font-family: inherit;
+  transition:
+    transform 0.18s ease,
+    border-color 0.18s ease,
+    background 0.18s ease;
+}
+
+.grocery-partner-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(255, 111, 55, 0.22);
+  background: rgba(255, 111, 55, 0.035);
+}
+
+.grocery-partner-logo {
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  border-radius: 10px;
+  color: #fff;
+  background: rgba(255, 255, 255, 0.06);
+  font-size: 13px;
+  font-weight: 850;
+}
+
+.grocery-partner-copy {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.grocery-partner-copy strong {
+  font-size: 9.5px;
+}
+
+.grocery-partner-copy span {
+  color: rgba(255, 255, 255, 0.34);
+  font-size: 7.5px;
+  line-height: 1.3;
+}
+
+.grocery-partner-card.blinkit .grocery-partner-logo {
+  color: #1c1c1c;
+  background: #f5d547;
+}
+
+.grocery-partner-card.swiggy .grocery-partner-logo {
+  background: #fc8019;
+}
+
+.grocery-partner-card.amazon .grocery-partner-logo {
+  color: #111;
+  background: #ffca28;
+}
+
+.grocery-compare-note {
+  padding: 0 15px 15px;
+  color: rgba(255, 255, 255, 0.22);
+  font-size: 7.5px;
+  line-height: 1.45;
+}
+
+@media (max-width: 760px) {
+  .grocery-compare-intro {
+    grid-template-columns: 44px minmax(0, 1fr);
+  }
+
+  .grocery-compare-open {
+    grid-column: 1 / -1;
+    justify-content: center;
+  }
+
+  .grocery-partner-grid {
+    grid-template-columns: 1fr;
+  }
+}

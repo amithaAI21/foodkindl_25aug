@@ -151,6 +151,59 @@ else:
 
 
 # ============================================================
+# NETLIFY HOMEPAGE VIDEO
+# ============================================================
+
+# Django Admin sends the selected homepage video to this
+# Netlify Function. The actual MP4 is not stored permanently
+# in Django/Render.
+#
+# Development .env example:
+# NETLIFY_HOMEPAGE_VIDEO_UPLOAD_URL=http://localhost:8888/upload-homepage-video
+# NETLIFY_VIDEO_UPLOAD_SECRET=<your-generated-secret>
+#
+# If you want local Django to upload to the deployed Netlify
+# function instead, set:
+# NETLIFY_HOMEPAGE_VIDEO_UPLOAD_URL=https://foodkindl.org/upload-homepage-video
+
+NETLIFY_HOMEPAGE_VIDEO_UPLOAD_URL = (
+    os.environ.get(
+        "NETLIFY_HOMEPAGE_VIDEO_UPLOAD_URL",
+        (
+            "http://localhost:8888/"
+            "upload-homepage-video"
+            if DEBUG
+            else ""
+        ),
+    )
+    .strip()
+)
+
+
+NETLIFY_VIDEO_UPLOAD_SECRET = (
+    os.environ.get(
+        "NETLIFY_VIDEO_UPLOAD_SECRET",
+        "",
+    )
+    .strip()
+)
+
+
+if not DEBUG:
+    if not NETLIFY_HOMEPAGE_VIDEO_UPLOAD_URL:
+        raise RuntimeError(
+            "NETLIFY_HOMEPAGE_VIDEO_UPLOAD_URL "
+            "must be configured in production."
+        )
+
+    if not NETLIFY_VIDEO_UPLOAD_SECRET:
+        raise RuntimeError(
+            "NETLIFY_VIDEO_UPLOAD_SECRET "
+            "must be configured in production."
+        )
+
+
+# ============================================================
 # APPLICATIONS
 # ============================================================
 
@@ -174,6 +227,8 @@ INSTALLED_APPS = [
     "website",
     "safety",
     "invites",
+    "commerce",
+    "restaurant_discovery",
 ]
 
 
@@ -575,6 +630,14 @@ if DEBUG:
     print(
         "NETLIFY BLOB SECRET LOADED:",
         bool(NETLIFY_BLOB_UPLOAD_SECRET),
+    )
+    print(
+        "HOMEPAGE VIDEO UPLOAD URL:",
+        NETLIFY_HOMEPAGE_VIDEO_UPLOAD_URL,
+    )
+    print(
+        "HOMEPAGE VIDEO SECRET LOADED:",
+        bool(NETLIFY_VIDEO_UPLOAD_SECRET),
     )
     print(
         "ORS API KEY LOADED:",

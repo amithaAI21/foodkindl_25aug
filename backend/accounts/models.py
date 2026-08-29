@@ -110,6 +110,24 @@ class Profile(models.Model):
     ]
 
 
+    PROFILE_VISIBILITY_CHOICES = [
+        ("public", "Public"),
+        ("private", "Private"),
+    ]
+
+
+    # ========================================================
+    # PROFILE PRIVACY
+    # ========================================================
+
+    profile_visibility = models.CharField(
+        max_length=10,
+        choices=PROFILE_VISIBILITY_CHOICES,
+        default="public",
+        db_index=True,
+    )
+
+
     # ========================================================
     # USER
     # ========================================================

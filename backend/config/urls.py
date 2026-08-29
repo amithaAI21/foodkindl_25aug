@@ -48,6 +48,20 @@ urlpatterns = [
             "invites.urls"
         ),
     ),
+    
+     path(
+        "api/commerce/",
+        include(
+            "commerce.urls"
+        ),
+    ),
+     
+     path(
+    "api/restaurant-discovery/",
+    include(
+        "restaurant_discovery.urls"
+    ),
+),
 ]
 
 

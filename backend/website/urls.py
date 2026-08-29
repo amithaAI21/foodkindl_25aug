@@ -1,7 +1,16 @@
 from django.urls import path
-from .views import ContactCreateView, WaitlistCreateView
+
+from .views import (
+    homepage_video,
+)
+
 
 urlpatterns = [
-    path("waitlist/", WaitlistCreateView.as_view()),
-    path("contact/", ContactCreateView.as_view()),
+
+    path(
+        "homepage-video/",
+        homepage_video,
+        name="homepage-video",
+    ),
+
 ]

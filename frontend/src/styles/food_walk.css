@@ -7147,3 +7147,884 @@ button {
     width: 100%;
   }
 }
+
+/* ============================================================
+   FOODKINDL — FOOD WALK
+   Concept: FOOD TRAIL
+============================================================ */
+
+.fk-foodwalk,
+.fk-foodwalk * {
+  box-sizing: border-box;
+}
+
+.fk-foodwalk {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  width: 100%;
+  padding: 22px;
+  border: 1px solid rgba(255, 255, 255, 0.075);
+  border-radius: 22px;
+  background:
+    radial-gradient(circle at 0% 0%, rgba(255, 106, 35, 0.075), transparent 34%),
+    linear-gradient(145deg, rgba(16, 16, 16, 0.98), rgba(9, 9, 9, 0.98));
+}
+
+.fk-foodwalk-intro {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 13px;
+  padding-bottom: 17px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.fk-foodwalk-intro-icon {
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  border: 1px solid rgba(255, 106, 35, 0.25);
+  border-radius: 14px;
+  color: #ff925c;
+  background: rgba(255, 106, 35, 0.08);
+}
+
+.fk-foodwalk-eyebrow {
+  display: block;
+  margin-bottom: 5px;
+  color: rgba(255, 255, 255, 0.42);
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: 0.15em;
+}
+
+.fk-foodwalk-intro-copy h3,
+.fk-foodwalk-discovery-head h4 {
+  margin: 0;
+  font-size: 18px;
+  line-height: 1.2;
+}
+
+.fk-foodwalk-intro-copy p,
+.fk-foodwalk-discovery-head p {
+  margin: 6px 0 0;
+  color: rgba(255, 255, 255, 0.48);
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.fk-foodwalk-ready {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 9px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 999px;
+  color: rgba(255, 255, 255, 0.44);
+  font-size: 9px;
+  font-weight: 800;
+}
+
+.fk-foodwalk-ready > span {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.25);
+}
+
+.fk-foodwalk-ready.ready {
+  color: #ffae85;
+  border-color: rgba(255, 106, 35, 0.26);
+  background: rgba(255, 106, 35, 0.06);
+}
+
+.fk-foodwalk-ready.ready > span {
+  background: #ff6a23;
+}
+
+.fk-foodwalk input {
+  width: 100%;
+  min-height: 44px;
+  padding: 0 13px;
+  border: 1px solid rgba(255, 106, 35, 0.25);
+  border-radius: 11px;
+  outline: none;
+  color: #fff;
+  background: rgba(22, 7, 3, 0.82);
+  font: inherit;
+  font-size: 12px;
+}
+
+.fk-foodwalk input:focus {
+  border-color: rgba(255, 106, 35, 0.78);
+  box-shadow: 0 0 0 3px rgba(255, 106, 35, 0.08);
+}
+
+.fk-foodwalk-title {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.fk-foodwalk-title > span {
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.fk-foodwalk-journey {
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr);
+  gap: 10px;
+  padding: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 17px;
+  background: rgba(255, 255, 255, 0.015);
+}
+
+.fk-foodwalk-journey-line {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 14px 0;
+}
+
+.fk-foodwalk-journey-line .start,
+.fk-foodwalk-journey-line .finish {
+  width: 10px;
+  height: 10px;
+  flex-shrink: 0;
+  border: 2px solid #ff6a23;
+  border-radius: 50%;
+}
+
+.fk-foodwalk-journey-line .finish {
+  background: #ff6a23;
+}
+
+.fk-foodwalk-journey-line .path {
+  width: 1px;
+  min-height: 76px;
+  flex: 1;
+  margin: 5px 0;
+  border-left: 1px dashed rgba(255, 106, 35, 0.35);
+}
+
+.fk-foodwalk-journey-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.fk-foodwalk-point-card {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: start;
+  gap: 10px;
+  padding: 11px;
+  border: 1px solid rgba(255, 255, 255, 0.055);
+  border-radius: 13px;
+  background: rgba(255, 255, 255, 0.012);
+}
+
+.fk-foodwalk-point-icon {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  color: #ff9b6c;
+  background: rgba(255, 106, 35, 0.08);
+}
+
+.fk-foodwalk-point-copy > span {
+  display: block;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.fk-foodwalk-point-copy > small {
+  display: block;
+  margin: 2px 0 7px;
+  color: rgba(255, 255, 255, 0.38);
+  font-size: 9px;
+}
+
+.fk-foodwalk-mode-card,
+.fk-foodwalk-food-signal {
+  padding: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 15px;
+  background: rgba(255, 255, 255, 0.012);
+}
+
+.fk-foodwalk-section-copy > strong,
+.fk-foodwalk-section-copy > small {
+  display: block;
+}
+
+.fk-foodwalk-section-copy > strong {
+  font-size: 11px;
+}
+
+.fk-foodwalk-section-copy > small {
+  margin-top: 3px;
+  color: rgba(255, 255, 255, 0.4);
+  font-size: 9.5px;
+}
+
+.fk-foodwalk-mode-switch {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+  margin-top: 11px;
+}
+
+.fk-foodwalk-mode-switch button,
+.fk-foodwalk-moods button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 38px;
+  padding: 0 10px;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 10px;
+  color: rgba(255, 255, 255, 0.55);
+  background: rgba(255, 255, 255, 0.018);
+  font: inherit;
+  font-size: 10px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.fk-foodwalk-mode-switch button.active,
+.fk-foodwalk-moods button.active {
+  color: #fff;
+  border-color: rgba(255, 106, 35, 0.55);
+  background: rgba(255, 106, 35, 0.11);
+}
+
+.fk-foodwalk-moods {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.fk-foodwalk-moods button {
+  min-height: 34px;
+}
+
+.fk-foodwalk-search {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+  padding-left: 11px;
+  border: 1px solid rgba(255, 106, 35, 0.2);
+  border-radius: 11px;
+  color: rgba(255, 255, 255, 0.4);
+  background: rgba(22, 7, 3, 0.72);
+}
+
+.fk-foodwalk-search input {
+  min-height: 42px;
+  padding-left: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.fk-foodwalk-discovery {
+  padding-top: 3px;
+}
+
+.fk-foodwalk-discovery-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 15px;
+  margin-bottom: 10px;
+}
+
+.fk-foodwalk-route-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+  padding: 7px 9px;
+  border: 1px solid rgba(255, 106, 35, 0.2);
+  border-radius: 999px;
+  color: #ffad84;
+  background: rgba(255, 106, 35, 0.06);
+  font-size: 9px;
+  font-weight: 800;
+}
+
+@media (max-width: 700px) {
+  .fk-foodwalk {
+    padding: 16px;
+  }
+
+  .fk-foodwalk-intro {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .fk-foodwalk-ready {
+    grid-column: 1 / -1;
+    justify-self: start;
+  }
+
+  .fk-foodwalk-mode-switch {
+    grid-template-columns: 1fr;
+  }
+
+  .fk-foodwalk-discovery-head {
+    flex-direction: column;
+  }
+}
+
+/* ============================================================
+   FOODKINDL — MULTI STOP FOOD WALK MAP
+============================================================ */
+
+.fk-foodwalk-planner-card,
+.fk-foodwalk-planner-card * {
+  box-sizing: border-box;
+}
+
+.fk-foodwalk-planner-card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+
+  width: 100%;
+
+  padding: 15px;
+
+  border: 1px solid rgba(255, 106, 35, 0.18);
+  border-radius: 18px;
+
+  background:
+    radial-gradient(
+      circle at 0 0,
+      rgba(255, 106, 35, 0.06),
+      transparent 30%
+    ),
+    #0d0d0d;
+}
+
+.fk-foodwalk-planner-top {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: start;
+}
+
+.fk-foodwalk-planner-top > div:first-child {
+  min-width: 0;
+}
+
+.fk-foodwalk-planner-top span {
+  color: #ff7d49;
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+}
+
+.fk-foodwalk-planner-top h3 {
+  margin: 4px 0 0;
+
+  color: #f7f3f0;
+
+  font-size: 17px;
+}
+
+.fk-foodwalk-planner-top p {
+  max-width: 620px;
+
+  margin: 5px 0 0;
+
+  color: rgba(255,255,255,0.43);
+
+  font-size: 10px;
+  line-height: 1.5;
+}
+
+.fk-foodwalk-stop-count {
+  display: grid;
+  place-items: center;
+
+  min-width: 64px;
+
+  padding: 9px;
+
+  border: 1px solid rgba(255, 106, 35, 0.18);
+  border-radius: 12px;
+
+  background: rgba(255, 106, 35, 0.055);
+}
+
+.fk-foodwalk-stop-count strong {
+  color: #ff7a42;
+  font-size: 20px;
+}
+
+.fk-foodwalk-stop-count span {
+  margin-top: 1px;
+
+  color: rgba(255,255,255,0.37);
+
+  font-size: 8px;
+  letter-spacing: 0;
+}
+
+
+/* ============================================================
+   JOURNEY SUMMARY
+============================================================ */
+
+.fk-foodwalk-journey-summary {
+  display: grid;
+  grid-template-columns:
+    minmax(0, 1fr)
+    auto
+    minmax(110px, .55fr)
+    auto
+    minmax(0, 1fr);
+
+  align-items: center;
+  gap: 8px;
+
+  padding: 10px;
+
+  border: 1px solid rgba(255,255,255,0.055);
+  border-radius: 13px;
+
+  background: rgba(255,255,255,0.012);
+}
+
+.fk-foodwalk-journey-summary > div:not(.fk-foodwalk-summary-arrow) {
+  min-width: 0;
+}
+
+.fk-foodwalk-journey-summary svg {
+  color: #ff8650;
+}
+
+.fk-foodwalk-journey-summary span,
+.fk-foodwalk-journey-summary strong {
+  display: block;
+}
+
+.fk-foodwalk-journey-summary span {
+  margin-top: 3px;
+
+  color: rgba(255,255,255,0.35);
+
+  font-size: 8px;
+}
+
+.fk-foodwalk-journey-summary strong {
+  margin-top: 2px;
+
+  overflow: hidden;
+
+  color: #eee9e6;
+
+  font-size: 10px;
+
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.fk-foodwalk-summary-arrow {
+  color: rgba(255,106,35,0.48);
+
+  font-size: 15px;
+}
+
+
+/* ============================================================
+   STOPS
+============================================================ */
+
+.fk-foodwalk-selected-heading {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 10px;
+
+  margin-bottom: 7px;
+}
+
+.fk-foodwalk-selected-heading strong {
+  color: #eee9e6;
+
+  font-size: 11px;
+}
+
+.fk-foodwalk-selected-heading small {
+  color: rgba(255,255,255,0.34);
+
+  font-size: 8px;
+}
+
+.fk-foodwalk-stop-list {
+  display: grid;
+  gap: 6px;
+}
+
+.fk-foodwalk-stop-card {
+  display: grid;
+  grid-template-columns: 30px minmax(0, 1fr) 30px;
+  align-items: center;
+  gap: 9px;
+
+  padding: 9px;
+
+  border: 1px solid rgba(255,255,255,0.055);
+  border-radius: 11px;
+
+  background: rgba(255,255,255,0.012);
+}
+
+.fk-foodwalk-stop-card.invalid {
+  border-color: rgba(255,90,90,0.18);
+}
+
+.fk-foodwalk-stop-number {
+  display: grid;
+  place-items: center;
+
+  width: 30px;
+  height: 30px;
+
+  border-radius: 9px;
+
+  color: #fff;
+
+  background: rgba(255,106,35,0.14);
+
+  font-size: 10px;
+  font-weight: 900;
+}
+
+.fk-foodwalk-stop-copy {
+  min-width: 0;
+}
+
+.fk-foodwalk-stop-copy strong,
+.fk-foodwalk-stop-copy span,
+.fk-foodwalk-stop-copy small {
+  display: block;
+}
+
+.fk-foodwalk-stop-copy strong {
+  overflow: hidden;
+
+  color: #f2eeeb;
+
+  font-size: 10.5px;
+
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.fk-foodwalk-stop-copy span {
+  margin-top: 2px;
+
+  color: rgba(255,255,255,0.36);
+
+  font-size: 8.5px;
+}
+
+.fk-foodwalk-stop-copy small {
+  margin-top: 3px;
+
+  color: #ff9c9c;
+
+  font-size: 8px;
+}
+
+.fk-foodwalk-remove-stop {
+  display: grid;
+  place-items: center;
+
+  width: 30px;
+  height: 30px;
+
+  padding: 0;
+
+  border: 1px solid rgba(255,255,255,0.05);
+  border-radius: 9px;
+
+  color: rgba(255,255,255,0.44);
+
+  background: rgba(255,255,255,0.015);
+
+  cursor: pointer;
+}
+
+.fk-foodwalk-empty-stops {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  padding: 12px;
+
+  border: 1px dashed rgba(255,255,255,0.08);
+  border-radius: 11px;
+
+  color: rgba(255,255,255,0.38);
+
+  font-size: 9px;
+}
+
+
+/* ============================================================
+   STATS + BUTTON
+============================================================ */
+
+.fk-foodwalk-route-stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+
+  border: 1px solid rgba(255,255,255,0.055);
+  border-radius: 11px;
+
+  overflow: hidden;
+}
+
+.fk-foodwalk-route-stats > div {
+  padding: 9px 10px;
+
+  background: rgba(255,255,255,0.01);
+}
+
+.fk-foodwalk-route-stats > div + div {
+  border-left: 1px solid rgba(255,255,255,0.05);
+}
+
+.fk-foodwalk-route-stats span,
+.fk-foodwalk-route-stats strong {
+  display: block;
+}
+
+.fk-foodwalk-route-stats span {
+  color: rgba(255,255,255,0.32);
+
+  font-size: 8px;
+  font-weight: 800;
+
+  text-transform: uppercase;
+}
+
+.fk-foodwalk-route-stats strong {
+  margin-top: 3px;
+
+  color: #f4efec;
+
+  font-size: 11px;
+}
+
+.fk-foodwalk-build-route {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+
+  width: 100%;
+  min-height: 43px;
+
+  border: 1px solid rgba(255,106,35,0.56);
+  border-radius: 11px;
+
+  color: #fff;
+
+  background: rgba(255,106,35,0.13);
+
+  font: inherit;
+  font-size: 10.5px;
+  font-weight: 850;
+
+  cursor: pointer;
+}
+
+.fk-foodwalk-build-route:disabled {
+  opacity: 0.43;
+  cursor: not-allowed;
+}
+
+.fk-foodwalk-route-error {
+  padding: 9px 10px;
+
+  border: 1px solid rgba(255,90,90,0.2);
+  border-radius: 10px;
+
+  color: #ffb1b1;
+
+  background: rgba(255,90,90,0.05);
+
+  font-size: 9px;
+}
+
+
+/* ============================================================
+   MAP
+============================================================ */
+
+.fk-foodwalk-map-shell {
+  position: relative;
+
+  width: 100%;
+  height: 420px;
+
+  overflow: hidden;
+
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 16px;
+
+  background: #151515;
+}
+
+.fk-foodwalk-map {
+  position: absolute;
+  inset: 0;
+
+  width: 100%;
+  height: 100%;
+}
+
+.fk-foodwalk-map-guide {
+  position: absolute;
+  inset: 0;
+
+  z-index: 4;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+
+  padding: 20px;
+
+  text-align: center;
+
+  background: rgba(8,8,8,0.52);
+
+  backdrop-filter: blur(1.5px);
+
+  pointer-events: none;
+}
+
+.fk-foodwalk-map-guide > div {
+  display: grid;
+  place-items: center;
+
+  width: 40px;
+  height: 40px;
+
+  margin-bottom: 8px;
+
+  border-radius: 12px;
+
+  color: #ff8c56;
+
+  background: rgba(255,106,35,0.11);
+}
+
+.fk-foodwalk-map-guide strong {
+  color: #f5f1ee;
+
+  font-size: 12px;
+}
+
+.fk-foodwalk-map-guide span {
+  margin-top: 4px;
+
+  color: rgba(255,255,255,0.42);
+
+  font-size: 9px;
+}
+
+
+/* ============================================================
+   CUSTOM MAP MARKERS
+============================================================ */
+
+.fk-foodwalk-map-marker {
+  display: grid;
+  place-items: center;
+
+  width: 30px;
+  height: 30px;
+
+  border: 3px solid #fff;
+  border-radius: 50%;
+
+  color: #fff;
+
+  box-shadow:
+    0 4px 14px rgba(0,0,0,0.28);
+
+  font-size: 9px;
+  font-weight: 900;
+}
+
+.fk-foodwalk-map-marker.start {
+  background: #1677ff;
+}
+
+.fk-foodwalk-map-marker.restaurant {
+  background: #ff6a23;
+}
+
+.fk-foodwalk-map-marker.destination {
+  background: #202020;
+}
+
+
+/* ============================================================
+   MOBILE
+============================================================ */
+
+@media (max-width: 700px) {
+
+  .fk-foodwalk-planner-card {
+    padding: 12px;
+  }
+
+  .fk-foodwalk-planner-top {
+    grid-template-columns: 1fr;
+  }
+
+  .fk-foodwalk-stop-count {
+    justify-self: start;
+  }
+
+  .fk-foodwalk-journey-summary {
+    grid-template-columns: 1fr;
+  }
+
+  .fk-foodwalk-summary-arrow {
+    transform: rotate(90deg);
+  }
+
+  .fk-foodwalk-route-stats {
+    grid-template-columns: 1fr;
+  }
+
+  .fk-foodwalk-route-stats > div + div {
+    border-top: 1px solid rgba(255,255,255,0.05);
+    border-left: 0;
+  }
+
+  .fk-foodwalk-map-shell {
+    height: 330px;
+  }
+
+}

@@ -4589,3 +4589,1228 @@
     font-size: 25px;
   }
 }
+
+/* ============================================================
+   FOOD INVITE — DISH SEARCH / CUISINE HELPERS
+============================================================ */
+
+.food-invite-food-search-field,
+.food-invite-cuisine-field {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.food-invite-field-label {
+  display: block;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.food-invite-field-helper {
+  display: block;
+  font-size: 12.5px;
+  font-weight: 400;
+  line-height: 1.5;
+  opacity: 0.62;
+}
+
+.food-invite-cuisine-examples {
+  display: block;
+  font-size: 11.5px;
+  line-height: 1.5;
+  opacity: 0.5;
+}
+
+.food-invite-recommendation-reason {
+  display: block;
+  margin-top: 4px;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.4;
+  opacity: 0.82;
+}
+
+
+/* ============================================================
+   DINE OUT — DISH SEARCH + CITY / LOCALITY
+============================================================ */
+
+.food-invite-food-search-field,
+.food-invite-cuisine-field {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.food-invite-field-label {
+  display: block;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.food-invite-field-helper {
+  display: block;
+  font-size: 12.5px;
+  line-height: 1.5;
+  opacity: 0.62;
+}
+
+.food-invite-cuisine-examples {
+  display: block;
+  font-size: 11.5px;
+  line-height: 1.5;
+  opacity: 0.5;
+}
+
+.food-invite-location-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+.food-invite-recommendation-reason {
+  display: block;
+  margin-top: 4px;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.4;
+  opacity: 0.82;
+}
+
+@media (max-width: 700px) {
+  .food-invite-location-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ============================================================
+   SPLIT INVITE COMPONENTS / DINE OUT SEARCH
+============================================================ */
+
+.food-invite-search-places-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  min-height: 46px;
+  width: 100%;
+  margin-top: 4px;
+  border: 1px solid rgba(255, 106, 35, 0.45);
+  border-radius: 13px;
+  background: rgba(255, 106, 35, 0.12);
+  color: inherit;
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.food-invite-search-places-button:hover:not(:disabled) {
+  border-color: rgba(255, 106, 35, 0.8);
+  background: rgba(255, 106, 35, 0.2);
+}
+
+.food-invite-search-places-button:disabled {
+  opacity: 0.48;
+  cursor: not-allowed;
+}
+
+
+
+.food-invite-route-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+
+  margin: 12px 0;
+
+  padding: 12px;
+
+  border: 1px solid rgba(255, 106, 35, 0.2);
+  border-radius: 14px;
+
+  background:
+    linear-gradient(
+      145deg,
+      rgba(255, 106, 35, 0.065),
+      rgba(255, 255, 255, 0.018)
+    );
+}
+
+.food-invite-route-heading {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.food-invite-route-heading-icon {
+  display: grid;
+  place-items: center;
+
+  width: 32px;
+  height: 32px;
+
+  flex-shrink: 0;
+
+  border-radius: 10px;
+
+  color: #ff8e58;
+
+  background: rgba(255, 106, 35, 0.1);
+}
+
+.food-invite-route-heading > div:last-child {
+  min-width: 0;
+}
+
+.food-invite-route-heading strong,
+.food-invite-route-heading span {
+  display: block;
+}
+
+.food-invite-route-heading strong {
+  font-size: 11px;
+}
+
+.food-invite-route-heading span {
+  margin-top: 2px;
+
+  overflow: hidden;
+
+  color: rgba(255, 255, 255, 0.46);
+
+  font-size: 9px;
+
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.food-invite-route-modes {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 5px;
+}
+
+.food-invite-route-modes button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+
+  min-height: 35px;
+
+  padding: 0 7px;
+
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 10px;
+
+  color: rgba(255, 255, 255, 0.56);
+
+  background: rgba(255, 255, 255, 0.02);
+
+  font: inherit;
+  font-size: 9.5px;
+  font-weight: 800;
+
+  cursor: pointer;
+}
+
+.food-invite-route-modes button.active {
+  border-color: rgba(255, 106, 35, 0.5);
+
+  color: #ffffff;
+
+  background: rgba(255, 106, 35, 0.13);
+}
+
+.food-invite-route-modes button:disabled {
+  opacity: 0.5;
+  cursor: wait;
+}
+
+.food-invite-route-stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 10px;
+
+  overflow: hidden;
+}
+
+.food-invite-route-stats > div {
+  padding: 8px 10px;
+
+  background: rgba(255, 255, 255, 0.014);
+}
+
+.food-invite-route-stats > div + div {
+  border-left: 1px solid rgba(255, 255, 255, 0.055);
+}
+
+.food-invite-route-stats span,
+.food-invite-route-stats strong {
+  display: block;
+}
+
+.food-invite-route-stats span {
+  margin-bottom: 2px;
+
+  color: rgba(255, 255, 255, 0.38);
+
+  font-size: 8px;
+  font-weight: 800;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.food-invite-route-stats strong {
+  font-size: 11px;
+}
+
+.food-invite-show-route-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+
+  min-height: 37px;
+
+  width: 100%;
+
+  padding: 0 10px;
+
+  border: 1px solid rgba(255, 106, 35, 0.42);
+  border-radius: 10px;
+
+  color: #ffffff;
+
+  background: rgba(255, 106, 35, 0.13);
+
+  font: inherit;
+  font-size: 10px;
+  font-weight: 850;
+
+  cursor: pointer;
+}
+
+.food-invite-show-route-button:hover:not(:disabled) {
+  background: rgba(255, 106, 35, 0.2);
+}
+
+.food-invite-show-route-button:disabled {
+  opacity: 0.55;
+  cursor: wait;
+}
+
+.food-invite-route-error {
+  padding: 8px 9px;
+
+  border: 1px solid rgba(255, 90, 90, 0.19);
+  border-radius: 9px;
+
+  color: #ffb3b3;
+
+  background: rgba(255, 90, 90, 0.05);
+
+  font-size: 9px;
+  line-height: 1.45;
+}
+
+.food-invite-route-location-found {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+
+  color: rgba(255, 255, 255, 0.4);
+
+  font-size: 8.5px;
+}
+
+.food-invite-user-location-marker {
+  position: relative;
+
+  display: grid;
+  place-items: center;
+
+  width: 24px;
+  height: 24px;
+
+  border: 3px solid #ffffff;
+  border-radius: 50%;
+
+  background: rgba(25, 118, 255, 0.24);
+
+  box-shadow:
+    0 0 0 5px rgba(25, 118, 255, 0.15),
+    0 5px 16px rgba(0, 0, 0, 0.25);
+}
+
+.food-invite-user-location-dot {
+  width: 9px;
+  height: 9px;
+
+  border-radius: 50%;
+
+  background: #1976ff;
+}
+
+@media (max-width: 700px) {
+
+  .food-invite-route-modes {
+    grid-template-columns: 1fr;
+  }
+
+  .food-invite-route-stats {
+    grid-template-columns: 1fr;
+  }
+
+  .food-invite-route-stats > div + div {
+    border-top: 1px solid rgba(255, 255, 255, 0.055);
+    border-left: 0;
+  }
+}
+
+/* ============================================================
+   FOODKINDL — FOOD WALK / FOOD TRAIL
+   New concept used by FoodWalkInvite.jsx
+   Keep this block at the END of food_invites.css so it overrides
+   older Food Walk styles safely.
+============================================================ */
+
+.fk-foodwalk,
+.fk-foodwalk * {
+  box-sizing: border-box;
+}
+
+.fk-foodwalk {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+
+  width: 100%;
+
+  margin: 0;
+  padding: 20px;
+
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 20px;
+
+  background:
+    radial-gradient(
+      circle at 0% 0%,
+      rgba(255, 107, 37, 0.075),
+      transparent 34%
+    ),
+    linear-gradient(
+      145deg,
+      rgba(16, 16, 16, 0.985),
+      rgba(9, 9, 9, 0.985)
+    );
+
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.015);
+}
+
+
+/* ------------------------------------------------------------
+   INTRO
+------------------------------------------------------------ */
+
+.fk-foodwalk-intro {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: start;
+
+  gap: 13px;
+
+  padding-bottom: 16px;
+
+  border-bottom: 1px solid rgba(255, 255, 255, 0.055);
+}
+
+.fk-foodwalk-intro-icon {
+  display: grid;
+  place-items: center;
+
+  width: 42px;
+  height: 42px;
+
+  flex-shrink: 0;
+
+  border: 1px solid rgba(255, 106, 35, 0.22);
+  border-radius: 13px;
+
+  color: #ff8b52;
+
+  background:
+    linear-gradient(
+      145deg,
+      rgba(255, 106, 35, 0.11),
+      rgba(255, 106, 35, 0.035)
+    );
+}
+
+.fk-foodwalk-intro-copy {
+  min-width: 0;
+}
+
+.fk-foodwalk-eyebrow {
+  display: block;
+
+  margin: 0 0 4px;
+
+  color: #ff7f4d;
+
+  font-size: 10px;
+  font-weight: 900;
+
+  letter-spacing: 0.12em;
+
+  text-transform: uppercase;
+}
+
+.fk-foodwalk-intro-copy h3 {
+  margin: 0;
+
+  color: #f8f4f1;
+
+  font-size: 19px;
+  font-weight: 800;
+
+  line-height: 1.2;
+
+  letter-spacing: -0.025em;
+}
+
+.fk-foodwalk-intro-copy p {
+  max-width: 660px;
+
+  margin: 6px 0 0;
+
+  color: rgba(255, 255, 255, 0.48);
+
+  font-size: 12px;
+  line-height: 1.55;
+}
+
+.fk-foodwalk-ready {
+  display: inline-flex;
+  align-items: center;
+
+  gap: 6px;
+
+  min-height: 30px;
+
+  padding: 0 10px;
+
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 999px;
+
+  color: rgba(255, 255, 255, 0.44);
+
+  background: rgba(255, 255, 255, 0.018);
+
+  font-size: 10px;
+  font-weight: 800;
+
+  white-space: nowrap;
+}
+
+.fk-foodwalk-ready > span {
+  width: 7px;
+  height: 7px;
+
+  flex-shrink: 0;
+
+  border-radius: 50%;
+
+  background: rgba(255, 255, 255, 0.24);
+}
+
+.fk-foodwalk-ready.ready {
+  border-color: rgba(255, 106, 35, 0.25);
+
+  color: #ffb18c;
+
+  background: rgba(255, 106, 35, 0.065);
+}
+
+.fk-foodwalk-ready.ready > span {
+  background: #ff6a23;
+
+  box-shadow:
+    0 0 0 4px rgba(255, 106, 35, 0.1);
+}
+
+
+/* ------------------------------------------------------------
+   TITLE
+------------------------------------------------------------ */
+
+.fk-foodwalk-title {
+  display: flex !important;
+  flex-direction: column !important;
+
+  gap: 7px !important;
+
+  margin: 0 !important;
+
+  color: #d9d2ce !important;
+
+  font-size: 13px !important;
+  font-weight: 750 !important;
+}
+
+.fk-foodwalk-title > span {
+  display: block;
+
+  color: #d9d2ce;
+
+  font-size: 13px;
+  font-weight: 750;
+}
+
+
+/* ------------------------------------------------------------
+   INPUT BASE
+------------------------------------------------------------ */
+
+.fk-foodwalk input {
+  width: 100% !important;
+
+  min-height: 46px !important;
+
+  padding: 0 13px !important;
+
+  margin: 0 !important;
+
+  border: 1px solid rgba(255, 106, 35, 0.22) !important;
+  border-radius: 11px !important;
+
+  outline: none !important;
+
+  color: #ffffff !important;
+
+  background:
+    linear-gradient(
+      180deg,
+      rgba(21, 9, 5, 0.96),
+      rgba(15, 8, 6, 0.96)
+    ) !important;
+
+  font: inherit !important;
+  font-size: 13px !important;
+
+  transition:
+    border-color 160ms ease,
+    background 160ms ease,
+    box-shadow 160ms ease !important;
+}
+
+.fk-foodwalk input::placeholder {
+  color: rgba(255, 255, 255, 0.27) !important;
+}
+
+.fk-foodwalk input:focus {
+  border-color: rgba(255, 106, 35, 0.66) !important;
+
+  background:
+    linear-gradient(
+      180deg,
+      rgba(26, 10, 5, 0.98),
+      rgba(16, 8, 5, 0.98)
+    ) !important;
+
+  box-shadow:
+    0 0 0 3px rgba(255, 106, 35, 0.07) !important;
+}
+
+
+/* ------------------------------------------------------------
+   JOURNEY BUILDER
+------------------------------------------------------------ */
+
+.fk-foodwalk-journey {
+  display: grid;
+  grid-template-columns: 30px minmax(0, 1fr);
+
+  gap: 11px;
+
+  padding: 15px;
+
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 16px;
+
+  background:
+    linear-gradient(
+      145deg,
+      rgba(255, 255, 255, 0.017),
+      rgba(255, 106, 35, 0.012)
+    );
+}
+
+.fk-foodwalk-journey-line {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+
+  padding: 18px 0;
+}
+
+.fk-foodwalk-journey-line .start,
+.fk-foodwalk-journey-line .finish {
+  width: 11px;
+  height: 11px;
+
+  flex-shrink: 0;
+
+  border: 2px solid #ff6a23;
+  border-radius: 50%;
+}
+
+.fk-foodwalk-journey-line .start {
+  background: #111111;
+}
+
+.fk-foodwalk-journey-line .finish {
+  background: #ff6a23;
+
+  box-shadow:
+    0 0 0 4px rgba(255, 106, 35, 0.08);
+}
+
+.fk-foodwalk-journey-line .path {
+  width: 1px;
+
+  flex: 1;
+
+  min-height: 86px;
+
+  margin: 6px 0;
+
+  border-left: 1px dashed rgba(255, 106, 35, 0.35);
+}
+
+.fk-foodwalk-journey-fields {
+  display: grid;
+
+  gap: 10px;
+}
+
+.fk-foodwalk-point-card {
+  display: grid !important;
+  grid-template-columns: auto minmax(0, 1fr) !important;
+  align-items: start !important;
+
+  gap: 10px !important;
+
+  margin: 0 !important;
+  padding: 11px !important;
+
+  border: 1px solid rgba(255, 255, 255, 0.055);
+  border-radius: 13px;
+
+  background: rgba(255, 255, 255, 0.012);
+}
+
+.fk-foodwalk-point-card:hover {
+  border-color: rgba(255, 106, 35, 0.16);
+
+  background: rgba(255, 106, 35, 0.02);
+}
+
+.fk-foodwalk-point-icon {
+  display: grid;
+  place-items: center;
+
+  width: 35px;
+  height: 35px;
+
+  flex-shrink: 0;
+
+  border: 1px solid rgba(255, 106, 35, 0.17);
+  border-radius: 10px;
+
+  color: #ff9260;
+
+  background: rgba(255, 106, 35, 0.07);
+}
+
+.fk-foodwalk-point-icon.finish {
+  color: #ff6a23;
+
+  background: rgba(255, 106, 35, 0.1);
+}
+
+.fk-foodwalk-point-copy {
+  min-width: 0;
+}
+
+.fk-foodwalk-point-copy > span {
+  display: block;
+
+  color: #f1ece9;
+
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.fk-foodwalk-point-copy > small {
+  display: block;
+
+  margin: 3px 0 8px;
+
+  color: rgba(255, 255, 255, 0.38);
+
+  font-size: 10px;
+  line-height: 1.4;
+}
+
+
+/* ------------------------------------------------------------
+   MODE / FOOD SIGNAL CARDS
+------------------------------------------------------------ */
+
+.fk-foodwalk-mode-card,
+.fk-foodwalk-food-signal {
+  padding: 14px;
+
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 15px;
+
+  background:
+    linear-gradient(
+      145deg,
+      rgba(255, 255, 255, 0.014),
+      rgba(255, 106, 35, 0.01)
+    );
+}
+
+.fk-foodwalk-section-copy > strong,
+.fk-foodwalk-section-copy > small {
+  display: block;
+}
+
+.fk-foodwalk-section-copy > strong {
+  color: #f2eeeb;
+
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.fk-foodwalk-section-copy > small {
+  margin-top: 3px;
+
+  color: rgba(255, 255, 255, 0.4);
+
+  font-size: 10px;
+  line-height: 1.45;
+}
+
+
+/* ------------------------------------------------------------
+   MODE SWITCH
+------------------------------------------------------------ */
+
+.fk-foodwalk-mode-switch {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+
+  gap: 7px;
+
+  margin-top: 11px;
+}
+
+.fk-foodwalk-mode-switch button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  gap: 7px;
+
+  min-width: 0;
+  min-height: 42px;
+
+  padding: 0 11px;
+
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 11px;
+
+  color: rgba(255, 255, 255, 0.56);
+
+  background: rgba(255, 255, 255, 0.015);
+
+  font: inherit;
+  font-size: 11px;
+  font-weight: 800;
+
+  cursor: pointer;
+
+  transition:
+    transform 160ms ease,
+    border-color 160ms ease,
+    background 160ms ease,
+    color 160ms ease;
+}
+
+.fk-foodwalk-mode-switch button:hover {
+  transform: translateY(-1px);
+
+  border-color: rgba(255, 106, 35, 0.24);
+
+  color: #f4efec;
+
+  background: rgba(255, 106, 35, 0.045);
+}
+
+.fk-foodwalk-mode-switch button.active {
+  border-color: rgba(255, 106, 35, 0.58);
+
+  color: #ffffff;
+
+  background:
+    linear-gradient(
+      180deg,
+      rgba(255, 106, 35, 0.16),
+      rgba(255, 106, 35, 0.08)
+    );
+
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 106, 35, 0.04);
+}
+
+
+/* ------------------------------------------------------------
+   FOOD MOODS
+------------------------------------------------------------ */
+
+.fk-foodwalk-moods {
+  display: flex;
+  flex-wrap: wrap;
+
+  gap: 7px;
+
+  margin-top: 11px;
+}
+
+.fk-foodwalk-moods button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  gap: 6px;
+
+  min-height: 35px;
+
+  padding: 0 10px;
+
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 999px;
+
+  color: rgba(255, 255, 255, 0.54);
+
+  background: rgba(255, 255, 255, 0.014);
+
+  font: inherit;
+  font-size: 10px;
+  font-weight: 750;
+
+  cursor: pointer;
+
+  transition:
+    border-color 160ms ease,
+    background 160ms ease,
+    color 160ms ease;
+}
+
+.fk-foodwalk-moods button:hover {
+  border-color: rgba(255, 106, 35, 0.22);
+
+  color: #f3ece8;
+
+  background: rgba(255, 106, 35, 0.04);
+}
+
+.fk-foodwalk-moods button.active {
+  border-color: rgba(255, 106, 35, 0.5);
+
+  color: #ffffff;
+
+  background: rgba(255, 106, 35, 0.1);
+}
+
+
+/* ------------------------------------------------------------
+   FOOD SEARCH
+------------------------------------------------------------ */
+
+.fk-foodwalk-search {
+  display: grid !important;
+  grid-template-columns: auto minmax(0, 1fr) !important;
+  align-items: center !important;
+
+  gap: 8px !important;
+
+  margin: 11px 0 0 !important;
+  padding: 0 0 0 12px !important;
+
+  border: 1px solid rgba(255, 106, 35, 0.2);
+  border-radius: 11px;
+
+  color: rgba(255, 255, 255, 0.38);
+
+  background:
+    linear-gradient(
+      180deg,
+      rgba(21, 9, 5, 0.9),
+      rgba(15, 8, 6, 0.92)
+    );
+}
+
+.fk-foodwalk-search:focus-within {
+  border-color: rgba(255, 106, 35, 0.55);
+
+  box-shadow:
+    0 0 0 3px rgba(255, 106, 35, 0.06);
+}
+
+.fk-foodwalk-search svg {
+  flex-shrink: 0;
+
+  color: #ff8e58;
+}
+
+.fk-foodwalk-search input {
+  min-height: 44px !important;
+
+  padding-left: 0 !important;
+
+  border: 0 !important;
+  border-radius: 0 !important;
+
+  background: transparent !important;
+
+  box-shadow: none !important;
+}
+
+
+/* ------------------------------------------------------------
+   DISCOVERY HEADER
+------------------------------------------------------------ */
+
+.fk-foodwalk-discovery {
+  padding-top: 2px;
+}
+
+.fk-foodwalk-discovery-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+
+  gap: 14px;
+
+  margin-bottom: 11px;
+}
+
+.fk-foodwalk-discovery-head > div:first-child {
+  min-width: 0;
+}
+
+.fk-foodwalk-discovery-head h4 {
+  margin: 0;
+
+  color: #f6f2ef;
+
+  font-size: 16px;
+  font-weight: 800;
+
+  line-height: 1.25;
+}
+
+.fk-foodwalk-discovery-head p {
+  margin: 4px 0 0;
+
+  color: rgba(255, 255, 255, 0.42);
+
+  font-size: 10px;
+  line-height: 1.5;
+}
+
+.fk-foodwalk-route-pill {
+  display: inline-flex;
+  align-items: center;
+
+  gap: 6px;
+
+  flex-shrink: 0;
+
+  min-height: 30px;
+
+  padding: 0 9px;
+
+  border: 1px solid rgba(255, 106, 35, 0.19);
+  border-radius: 999px;
+
+  color: #ffab83;
+
+  background: rgba(255, 106, 35, 0.055);
+
+  font-size: 9px;
+  font-weight: 800;
+
+  white-space: nowrap;
+}
+
+
+/* ------------------------------------------------------------
+   IMPORTANT:
+   Prevent old .food-invite-form label/input rules from distorting
+   the new Food Walk layout.
+------------------------------------------------------------ */
+
+.food-invite-form .fk-foodwalk label {
+  margin-top: 0 !important;
+}
+
+.food-invite-form .fk-foodwalk button {
+  font-size: inherit;
+}
+
+.food-invite-form .fk-foodwalk .fk-foodwalk-mode-switch button {
+  font-size: 11px !important;
+}
+
+.food-invite-form .fk-foodwalk .fk-foodwalk-moods button {
+  font-size: 10px !important;
+}
+
+
+/* ------------------------------------------------------------
+   MODAL WIDTH FOR FOOD WALK
+   New Food Walk no longer relies on the old
+   ".food-walk-workspace" :has() selector.
+------------------------------------------------------------ */
+
+.food-invite-create-shell:has(.fk-foodwalk) {
+  width: min(920px, calc(100vw - 36px)) !important;
+  max-width: 920px !important;
+}
+
+.food-invite-create-shell:has(.fk-foodwalk)
+.food-invite-create-modal {
+  width: 100% !important;
+  max-width: none !important;
+}
+
+.food-invite-create-shell:has(.fk-foodwalk)
+.food-invite-form {
+  display: grid !important;
+  gap: 13px !important;
+}
+
+
+/* ------------------------------------------------------------
+   MOBILE
+------------------------------------------------------------ */
+
+@media (max-width: 720px) {
+
+  .fk-foodwalk {
+    gap: 13px;
+
+    padding: 15px;
+
+    border-radius: 17px;
+  }
+
+  .fk-foodwalk-intro {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .fk-foodwalk-ready {
+    grid-column: 1 / -1;
+
+    justify-self: start;
+  }
+
+  .fk-foodwalk-intro-copy h3 {
+    font-size: 17px;
+  }
+
+  .fk-foodwalk-intro-copy p {
+    font-size: 11px;
+  }
+
+  .fk-foodwalk-journey {
+    grid-template-columns: 24px minmax(0, 1fr);
+
+    padding: 12px;
+  }
+
+  .fk-foodwalk-point-card {
+    grid-template-columns: 1fr !important;
+  }
+
+  .fk-foodwalk-point-icon {
+    width: 32px;
+    height: 32px;
+  }
+
+  .fk-foodwalk-mode-switch {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .fk-foodwalk-mode-switch button {
+    min-height: 40px;
+
+    padding: 0 7px;
+
+    font-size: 10px !important;
+  }
+
+  .fk-foodwalk-discovery-head {
+    flex-direction: column;
+  }
+
+  .fk-foodwalk-route-pill {
+    align-self: flex-start;
+  }
+
+  .food-invite-create-shell:has(.fk-foodwalk) {
+    width: 100% !important;
+    max-width: none !important;
+  }
+}
+
+
+/* ------------------------------------------------------------
+   VERY SMALL MOBILE
+------------------------------------------------------------ */
+
+@media (max-width: 460px) {
+
+  .fk-foodwalk-mode-switch {
+    grid-template-columns: 1fr;
+  }
+
+  .fk-foodwalk-moods {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .fk-foodwalk-moods button {
+    border-radius: 10px;
+  }
+
+  .fk-foodwalk-journey {
+    grid-template-columns: 1fr;
+  }
+
+  .fk-foodwalk-journey-line {
+    display: none;
+  }
+
+}

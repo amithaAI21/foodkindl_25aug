@@ -1,12 +1,11 @@
 import {
-  ArrowRight,
-  Check,
   Eye,
   EyeOff,
   LockKeyhole,
 } from "lucide-react";
 
 import {
+  useMemo,
   useState,
 } from "react";
 
@@ -17,371 +16,272 @@ import {
 
 import api from "../api";
 
-import "../styles/forgot_password.css";
-
-
 export default function ResetPassword() {
-
   const {
     uid,
     token,
   } = useParams();
-
 
   const [
     password,
     setPassword,
   ] = useState("");
 
-
   const [
     confirmPassword,
     setConfirmPassword,
   ] = useState("");
-
 
   const [
     showPassword,
     setShowPassword,
   ] = useState(false);
 
-
   const [
     submitting,
     setSubmitting,
   ] = useState(false);
-
 
   const [
     error,
     setError,
   ] = useState("");
 
-
   const [
     success,
     setSuccess,
   ] = useState(false);
 
+  const passwordValid =
+    useMemo(() => {
+      return (
+        password.length >= 8
+      );
+    }, [password]);
 
-  async function submit(
-    event
-  ) {
-
+  async function submit(event) {
     event.preventDefault();
 
+    setError("");
 
-    setError(
-      ""
-    );
-
-
-    if (
-      password !==
-      confirmPassword
-    ) {
-
+    if (!uid || !token) {
       setError(
-        "Passwords do not match."
+        "Password reset link is invalid."
       );
-
       return;
     }
 
+    if (!password) {
+      setError(
+        "Enter your new password."
+      );
+      return;
+    }
+
+    if (!passwordValid) {
+      setError(
+        "Password must be at least 8 characters."
+      );
+      return;
+    }
+
+    if (
+      password !== confirmPassword
+    ) {
+      setError(
+        "Passwords do not match."
+      );
+      return;
+    }
 
     try {
-
-      setSubmitting(
-        true
-      );
-
+      setSubmitting(true);
 
       await api.post(
         "/auth/reset-password/",
         {
           uid,
           token,
-
-          password,
-
-          confirm_password:
-            confirmPassword,
+          new_password: password,
         }
       );
 
-
-      setSuccess(
-        true
-      );
-
-
+      setSuccess(true);
     } catch (requestError) {
-
       console.error(
-        "Reset password error:",
-        requestError.response?.data ||
-        requestError
+        "Password reset error:",
+        requestError.response?.data
       );
-
 
       const data =
-        requestError
-          ?.response
-          ?.data;
-
+        requestError.response?.data;
 
       setError(
-        data?.detail
-        ||
-        data?.password?.[0]
-        ||
-        data?.confirm_password?.[0]
-        ||
-        "Unable to reset password."
+        data?.detail ||
+        data?.message ||
+        data?.token?.[0] ||
+        data?.new_password?.[0] ||
+        "Password reset link is invalid or has expired."
       );
-
-
     } finally {
-
-      setSubmitting(
-        false
-      );
-
+      setSubmitting(false);
     }
   }
 
-
-  return (
-
-    <main className="forgot-password-page">
-
-      <div className="forgot-password-glow" />
-
-
-      <section className="forgot-password-shell">
-
-
-        <div className="forgot-password-card">
-
-
-          <div className="forgot-password-icon">
-
-            {
-              success
-                ? (
-                  <Check size={25} />
-                )
-                : (
-                  <LockKeyhole size={25} />
-                )
-            }
-
+  if (success) {
+    return (
+      <main className="reset-password-page">
+        <section className="reset-password-card">
+          <div className="reset-password-success">
+            ✓
           </div>
 
+          <h1>
+            Password updated
+          </h1>
 
-          {
-            success
-              ? (
-                <>
+          <p>
+            Your FoodKindl password
+            has been changed
+            successfully.
+          </p>
 
-                  <span className="forgot-password-eyebrow">
-                    PASSWORD UPDATED
-                  </span>
+          <Link
+            to="/login"
+            className="reset-password-primary"
+          >
+            Continue to login
+          </Link>
+        </section>
+      </main>
+    );
+  }
 
+  return (
+    <main className="reset-password-page">
+      <section className="reset-password-card">
 
-                  <h1>
-                    You're ready to return.
-                  </h1>
-
-
-                  <p>
-                    Your FoodKindl password has
-                    been changed successfully.
-                  </p>
-
-
-                  <Link
-                    to="/login"
-                    className="forgot-password-primary"
-                  >
-
-                    Login to FoodKindl
-
-                    <ArrowRight size={16} />
-
-                  </Link>
-
-                </>
-              )
-              : (
-                <>
-
-                  <span className="forgot-password-eyebrow">
-                    CREATE NEW PASSWORD
-                  </span>
-
-
-                  <h1>
-                    Reset your password.
-                  </h1>
-
-
-                  <p>
-                    Choose a strong new password
-                    for your FoodKindl account.
-                  </p>
-
-
-                  <form
-                    onSubmit={
-                      submit
-                    }
-                  >
-
-
-                    <label>
-
-                      New password
-
-                      <div className="forgot-password-input">
-
-                        <LockKeyhole size={16} />
-
-                        <input
-                          type={
-                            showPassword
-                              ? "text"
-                              : "password"
-                          }
-                          required
-                          minLength={8}
-                          autoComplete="new-password"
-                          value={
-                            password
-                          }
-                          onChange={
-                            event =>
-                              setPassword(
-                                event.target.value
-                              )
-                          }
-                        />
-
-
-                        <button
-                          type="button"
-                          onClick={() =>
-                            setShowPassword(
-                              current =>
-                                !current
-                            )
-                          }
-                          aria-label={
-                            showPassword
-                              ? "Hide password"
-                              : "Show password"
-                          }
-                        >
-
-                          {
-                            showPassword
-                              ? (
-                                <EyeOff size={16} />
-                              )
-                              : (
-                                <Eye size={16} />
-                              )
-                          }
-
-                        </button>
-
-                      </div>
-
-                    </label>
-
-
-                    <label>
-
-                      Confirm new password
-
-                      <div className="forgot-password-input">
-
-                        <LockKeyhole size={16} />
-
-                        <input
-                          type={
-                            showPassword
-                              ? "text"
-                              : "password"
-                          }
-                          required
-                          minLength={8}
-                          autoComplete="new-password"
-                          value={
-                            confirmPassword
-                          }
-                          onChange={
-                            event =>
-                              setConfirmPassword(
-                                event.target.value
-                              )
-                          }
-                        />
-
-                      </div>
-
-                    </label>
-
-
-                    {
-                      error &&
-                      (
-
-                        <div className="forgot-password-error">
-
-                          {error}
-
-                        </div>
-
-                      )
-                    }
-
-
-                    <button
-                      type="submit"
-                      className="forgot-password-primary"
-                      disabled={
-                        submitting
-                      }
-                    >
-
-                      {
-                        submitting
-                          ? "Updating..."
-                          : (
-                            <>
-
-                              Reset password
-
-                              <ArrowRight size={16} />
-
-                            </>
-                          )
-                      }
-
-                    </button>
-
-                  </form>
-
-                </>
-              )
-          }
-
+        <div className="reset-password-icon">
+          <LockKeyhole size={28} />
         </div>
 
+        <span className="reset-password-eyebrow">
+          FOODKINDL ACCOUNT
+        </span>
+
+        <h1>
+          Create a new password
+        </h1>
+
+        <p>
+          Choose a new password for
+          your FoodKindl account.
+        </p>
+
+        <form onSubmit={submit}>
+
+          <label>
+            New password
+
+            <div className="reset-password-input">
+              <LockKeyhole
+                size={17}
+              />
+
+              <input
+                type={
+                  showPassword
+                    ? "text"
+                    : "password"
+                }
+                value={password}
+                onChange={(event) => {
+                  setPassword(
+                    event.target.value
+                  );
+
+                  if (error) {
+                    setError("");
+                  }
+                }}
+                autoComplete="new-password"
+                placeholder="Enter new password"
+                required
+              />
+
+              <button
+                type="button"
+                onClick={() =>
+                  setShowPassword(
+                    (current) =>
+                      !current
+                  )
+                }
+                aria-label={
+                  showPassword
+                    ? "Hide password"
+                    : "Show password"
+                }
+              >
+                {showPassword ? (
+                  <EyeOff size={17} />
+                ) : (
+                  <Eye size={17} />
+                )}
+              </button>
+            </div>
+          </label>
+
+          <label>
+            Confirm new password
+
+            <div className="reset-password-input">
+              <LockKeyhole
+                size={17}
+              />
+
+              <input
+                type={
+                  showPassword
+                    ? "text"
+                    : "password"
+                }
+                value={
+                  confirmPassword
+                }
+                onChange={(event) => {
+                  setConfirmPassword(
+                    event.target.value
+                  );
+
+                  if (error) {
+                    setError("");
+                  }
+                }}
+                autoComplete="new-password"
+                placeholder="Confirm new password"
+                required
+              />
+            </div>
+          </label>
+
+          {error && (
+            <div className="reset-password-error">
+              {error}
+            </div>
+          )}
+
+          <button
+            type="submit"
+            className="reset-password-primary"
+            disabled={submitting}
+          >
+            {submitting
+              ? "Updating password..."
+              : "Save new password"}
+          </button>
+        </form>
       </section>
-
     </main>
-
   );
 }

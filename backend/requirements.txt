@@ -67,3 +67,5 @@ uvicorn==0.52.4
 whitenoise==6.8.2
 zipp==4.1.0
 django-import-export
+huggingface_hub>=0.34.0
+requests>=2.31.0

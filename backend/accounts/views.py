@@ -1,4 +1,6 @@
 from django.contrib.auth.models import User
+from django.apps import apps
+from django.db.models import Q
 
 from rest_framework import (
     generics,
@@ -29,6 +31,115 @@ from .serializers import (
 from .utils import (
     users_are_blocked,
 )
+
+
+# ============================================================
+# PROFILE PRIVACY HELPERS
+# ============================================================
+
+def users_are_connected(first_user, second_user):
+    """
+    Return True when an accepted connection exists.
+
+    FoodKindl deployments have used slightly different names for the
+    connection model/fields. This helper checks common model and field
+    names without weakening privacy when no compatible model is found.
+    """
+    if not first_user or not second_user:
+        return False
+
+    if first_user.id == second_user.id:
+        return True
+
+    candidate_models = (
+        ("community", "Connection"),
+        ("community", "ConnectionRequest"),
+        ("accounts", "Connection"),
+        ("accounts", "ConnectionRequest"),
+    )
+
+    pair_fields = (
+        ("sender", "receiver"),
+        ("from_user", "to_user"),
+        ("requester", "recipient"),
+        ("user", "connected_user"),
+    )
+
+    for app_label, model_name in candidate_models:
+        try:
+            model = apps.get_model(app_label, model_name)
+        except LookupError:
+            model = None
+
+        if model is None:
+            continue
+
+        field_names = {field.name for field in model._meta.fields}
+
+        for left, right in pair_fields:
+            if left not in field_names or right not in field_names:
+                continue
+
+            query = (
+                Q(**{left: first_user, right: second_user})
+                | Q(**{left: second_user, right: first_user})
+            )
+
+            queryset = model.objects.filter(query)
+
+            if "status" in field_names:
+                queryset = queryset.filter(status__iexact="accepted")
+            elif "is_accepted" in field_names:
+                queryset = queryset.filter(is_accepted=True)
+            elif "accepted" in field_names:
+                queryset = queryset.filter(accepted=True)
+
+            if queryset.exists():
+                return True
+
+    return False
+
+
+def can_view_full_profile(viewer, owner):
+    if not owner:
+        return False
+
+    if viewer and viewer.is_authenticated and viewer.id == owner.id:
+        return True
+
+    profile = getattr(owner, "profile", None)
+
+    if not profile:
+        return False
+
+    if profile.profile_visibility == "public":
+        return True
+
+    return users_are_connected(viewer, owner)
+
+
+def apply_profile_privacy(member_data, viewer, member):
+    """Hide private profile details from non-connections."""
+    full_access = can_view_full_profile(viewer, member)
+
+    member_data["profile_visibility"] = getattr(
+        member.profile, "profile_visibility", "public"
+    )
+    member_data["is_private"] = (
+        member_data["profile_visibility"] == "private"
+    )
+    member_data["can_view_full_profile"] = full_access
+
+    if full_access:
+        return member_data
+
+    # Keep only discovery-safe information.
+    member_data["dietary_preference"] = ""
+    member_data["interests"] = ""
+    member_data["favorite_cuisines"] = ""
+    member_data["food_connection_preferences"] = ""
+
+    return member_data
 
 
 # ============================================================
@@ -1002,6 +1113,12 @@ class FoodMatchView(
                 .data
             )
 
+            member_data = apply_profile_privacy(
+                member_data,
+                request.user,
+                member,
+            )
+
 
             # =================================================
             # ADD FOOD MATCH DATA
@@ -1108,19 +1225,22 @@ class FoodMatchView(
 # VERIFICATION STATUS
 # ============================================================
 
-class VerificationStatusView(
-    APIView
-):
+# ============================================================
+# VERIFICATION STATUS
+# ============================================================
+
+# ============================================================
+# VERIFICATION STATUS
+# ============================================================
+
+class VerificationStatusView(APIView):
 
     permission_classes = [
         permissions.IsAuthenticated,
     ]
 
 
-    def get(
-        self,
-        request,
-    ):
+    def get(self, request):
 
         profile, _ = (
             Profile.objects.get_or_create(
@@ -1128,13 +1248,253 @@ class VerificationStatusView(
             )
         )
 
-        government_id_uploaded = bool(
-            profile.government_id_blob_key
-            or
-            profile.government_id_url
-            or
-            profile.government_id
+
+        # ====================================================
+        # NORMALIZE VERIFICATION STATUS
+        # ====================================================
+
+        verification_status = (
+            str(
+                profile.verification_status
+                or
+                "not_submitted"
+            )
+            .strip()
+            .lower()
         )
+
+
+        # ====================================================
+        # KEEP is_verified IN SYNC
+        #
+        # APPROVED     -> TRUE
+        # EVERYTHING ELSE -> FALSE
+        # ====================================================
+
+        should_be_verified = (
+            verification_status
+            ==
+            "approved"
+        )
+
+
+        if (
+            profile.is_verified
+            !=
+            should_be_verified
+        ):
+
+            profile.is_verified = (
+                should_be_verified
+            )
+
+
+            # ----------------------------------------------
+            # If verification is no longer approved,
+            # remove the old verified timestamp.
+            # ----------------------------------------------
+
+            if not should_be_verified:
+
+                profile.verified_at = None
+
+
+            profile.save(
+                update_fields=[
+                    "is_verified",
+                    "verified_at",
+                ]
+            )
+
+
+        # ====================================================
+        # CHECK WHETHER GOVERNMENT ID EXISTS
+        # ====================================================
+
+        government_id_uploaded = bool(
+
+            profile.government_id_blob_key
+
+            or
+
+            profile.government_id_url
+
+            or
+
+            profile.government_id
+
+        )
+
+
+        # ====================================================
+        # USER-FACING NOTIFICATION
+        #
+        # IMPORTANT:
+        # We do NOT show the word "Rejected" to the user.
+        # ====================================================
+
+        notification = None
+
+
+        # ====================================================
+        # APPROVED
+        # ====================================================
+
+        if (
+            verification_status
+            ==
+            "approved"
+            and
+            profile.is_verified
+        ):
+
+            notification = None
+
+
+        # ====================================================
+        # NEEDS CORRECTION
+        #
+        # Internal DB status may be "rejected",
+        # but the user gets softer wording.
+        # ====================================================
+
+        elif (
+            verification_status
+            ==
+            "rejected"
+        ):
+
+            notification = {
+
+                "show": True,
+
+                "type":
+                    "verification_attention",
+
+                "severity":
+                    "attention",
+
+                "title":
+                    "A little more information is needed",
+
+                "message":
+                    (
+                        profile.rejection_reason
+
+                        or
+
+                        "We need a little more information "
+                        "to complete your identity verification. "
+                        "Please review your Government ID "
+                        "and submit it again."
+                    ),
+
+                "primary_action_text":
+                    "Review & Resubmit",
+
+                "primary_action_url":
+                    "/profile",
+
+                "support_action_text":
+                    "Need Help?",
+
+                "support_action_url":
+                    "/profile?verification_support=1",
+            }
+
+
+        # ====================================================
+        # GOVERNMENT ID UPLOADED / PENDING REVIEW
+        # ====================================================
+
+        elif (
+            government_id_uploaded
+            and
+            verification_status
+            in [
+                "pending",
+                "submitted",
+                "under_review",
+                "in_review",
+            ]
+        ):
+
+            notification = {
+
+                "show": True,
+
+                "type":
+                    "verification_pending",
+
+                "severity":
+                    "info",
+
+                "title":
+                    "Identity verification is in progress",
+
+                "message":
+                    (
+                        "Your Government ID has been "
+                        "submitted successfully. "
+                        "Our team is reviewing your verification."
+                    ),
+
+                "primary_action_text":
+                    None,
+
+                "primary_action_url":
+                    None,
+
+                "support_action_text":
+                    "Need Help?",
+
+                "support_action_url":
+                    "/profile?verification_support=1",
+            }
+
+
+        # ====================================================
+        # NOT SUBMITTED / NO GOVERNMENT ID
+        # ====================================================
+
+        else:
+
+            notification = {
+
+                "show": True,
+
+                "type":
+                    "verification_required",
+
+                "severity":
+                    "warning",
+
+                "title":
+                    "Complete your identity verification",
+
+                "message":
+                    (
+                        "Please upload a valid Government ID "
+                        "to complete your FoodKindl verification."
+                    ),
+
+                "primary_action_text":
+                    "Upload Government ID",
+
+                "primary_action_url":
+                    "/profile",
+
+                "support_action_text":
+                    "Need Help?",
+
+                "support_action_url":
+                    "/profile?verification_support=1",
+            }
+
+
+        # ====================================================
+        # RESPONSE
+        # ====================================================
 
         return Response(
             {
@@ -1146,7 +1506,7 @@ class VerificationStatusView(
                     profile.government_id_type,
 
                 "verification_status":
-                    profile.verification_status,
+                    verification_status,
 
                 "is_verified":
                     profile.is_verified,
@@ -1156,12 +1516,15 @@ class VerificationStatusView(
 
                 "verified_at":
                     profile.verified_at,
+
+                "notification":
+                    notification,
+
             },
 
             status=
                 status.HTTP_200_OK,
         )
-
 
 # ============================================================
 # BLOCKED MEMBERS

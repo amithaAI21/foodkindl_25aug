@@ -6,16 +6,22 @@ import {
 
 import {
   ArrowRight,
+  Bike,
   CalendarDays,
+  Car,
   Check,
   ChevronRight,
   Clock3,
   ConciergeBell,
   Footprints,
   Home,
+  LocateFixed,
   MapPin,
   Navigation,
+  PersonStanding,
   Phone,
+  Route,
+
   Plus,
   Star,
   UserPlus,
@@ -52,7 +58,9 @@ import {
 
 import "../styles/food_invites.css";
 
-import FoodWalkPlanner from "./FoodWalkPlanner";
+import CookTogetherInvite from "./CookTogetherInvite";
+import DineOutInvite from "./DineOutInvite";
+import FoodWalkInvite from "./FoodWalkInvite";
 import RestaurantSubmissionModal from "../components/RestaurantSubmissionModal";
 
 
@@ -150,6 +158,7 @@ function getDefaultForm() {
 
     title: "",
     description: "",
+    food_query: "",
     cuisine: "",
 
     invite_date: "",
@@ -162,6 +171,7 @@ function getDefaultForm() {
 
     venue_name: "",
     location_label: "",
+    city: "",
     food_walk_destination: "",
     private_address: "",
 
@@ -286,20 +296,875 @@ function DineOutMapPanel({
   onOpenRestaurant,
   onSuggestPlace,
 }) {
-  const mapContainerRef = useRef(null);
-  const mapRef = useRef(null);
-  const markerRefs = useRef([]);
 
-  const validRestaurants = restaurants.filter(
-    restaurant =>
-      getRestaurantCoordinates(
-        restaurant
-      )
+  const mapContainerRef =
+    useRef(null);
+
+  const mapRef =
+    useRef(null);
+
+  const markerRefs =
+    useRef([]);
+
+  const userLocationMarkerRef =
+    useRef(null);
+
+
+  const [
+    travelMode,
+    setTravelMode,
+  ] = useState(
+    "drive"
   );
 
 
+  const [
+    userLocation,
+    setUserLocation,
+  ] = useState(null);
+
+
+  const [
+    routeSummary,
+    setRouteSummary,
+  ] = useState(null);
+
+
+  const [
+    routeLoading,
+    setRouteLoading,
+  ] = useState(false);
+
+
+  const [
+    routeError,
+    setRouteError,
+  ] = useState("");
+
+
+  const validRestaurants =
+    restaurants.filter(
+      restaurant =>
+        getRestaurantCoordinates(
+          restaurant
+        )
+    );
+
+
+  const selectedRestaurant =
+    validRestaurants.find(
+      restaurant =>
+        restaurant.name ===
+        selectedVenueName
+    ) ||
+    null;
+
+
+  // =========================================================
+  // ROUTE HELPERS
+  // =========================================================
+
+  function formatRouteDistance(
+    metres
+  ) {
+
+    const value =
+      Number(
+        metres
+      );
+
+
+    if (
+      !Number.isFinite(
+        value
+      )
+    ) {
+      return "—";
+    }
+
+
+    if (
+      value < 1000
+    ) {
+
+      return (
+        `${Math.round(
+          value
+        )} m`
+      );
+
+    }
+
+
+    return (
+      `${(
+        value /
+        1000
+      ).toFixed(1)} km`
+    );
+  }
+
+
+  function formatRouteDuration(
+    seconds
+  ) {
+
+    const value =
+      Number(
+        seconds
+      );
+
+
+    if (
+      !Number.isFinite(
+        value
+      )
+    ) {
+      return "—";
+    }
+
+
+    const minutes =
+      Math.max(
+        1,
+        Math.round(
+          value /
+          60
+        )
+      );
+
+
+    if (
+      minutes < 60
+    ) {
+
+      return (
+        `${minutes} min`
+      );
+
+    }
+
+
+    const hours =
+      Math.floor(
+        minutes /
+        60
+      );
+
+
+    const remainingMinutes =
+      minutes %
+      60;
+
+
+    return (
+      remainingMinutes
+        ? `${hours} hr ${remainingMinutes} min`
+        : `${hours} hr`
+    );
+  }
+
+
+  function getTravelProfile(
+    mode
+  ) {
+
+    if (
+      mode ===
+      "walk"
+    ) {
+      return "foot-walking";
+    }
+
+
+    /*
+      "Ride" currently uses the road-driving profile.
+      This is suitable as an approximation for cab/auto/
+      two-wheeler road travel until a dedicated motorcycle
+      routing provider is integrated.
+    */
+    return "driving-car";
+  }
+
+
+  function clearRouteFromMap() {
+
+    const map =
+      mapRef.current;
+
+
+    if (!map) {
+      return;
+    }
+
+
+    if (
+      map.getLayer(
+        "foodkindl-route-line"
+      )
+    ) {
+
+      map.removeLayer(
+        "foodkindl-route-line"
+      );
+    }
+
+
+    if (
+      map.getLayer(
+        "foodkindl-route-outline"
+      )
+    ) {
+
+      map.removeLayer(
+        "foodkindl-route-outline"
+      );
+    }
+
+
+    if (
+      map.getSource(
+        "foodkindl-route"
+      )
+    ) {
+
+      map.removeSource(
+        "foodkindl-route"
+      );
+    }
+  }
+
+
+  function drawRouteOnMap(
+    routeGeoJson
+  ) {
+
+    const map =
+      mapRef.current;
+
+
+    if (
+      !map ||
+      !routeGeoJson
+    ) {
+      return;
+    }
+
+
+    const draw =
+      () => {
+
+        const existingSource =
+          map.getSource(
+            "foodkindl-route"
+          );
+
+
+        if (
+          existingSource
+        ) {
+
+          existingSource.setData(
+            routeGeoJson
+          );
+
+        } else {
+
+          map.addSource(
+            "foodkindl-route",
+            {
+              type:
+                "geojson",
+
+              data:
+                routeGeoJson,
+            }
+          );
+
+
+          map.addLayer({
+            id:
+              "foodkindl-route-outline",
+
+            type:
+              "line",
+
+            source:
+              "foodkindl-route",
+
+            layout: {
+              "line-join":
+                "round",
+
+              "line-cap":
+                "round",
+            },
+
+            paint: {
+              "line-color":
+                "#111111",
+
+              "line-width":
+                9,
+
+              "line-opacity":
+                0.28,
+            },
+          });
+
+
+          map.addLayer({
+            id:
+              "foodkindl-route-line",
+
+            type:
+              "line",
+
+            source:
+              "foodkindl-route",
+
+            layout: {
+              "line-join":
+                "round",
+
+              "line-cap":
+                "round",
+            },
+
+            paint: {
+              "line-color":
+                "#ff6a23",
+
+              "line-width":
+                5.5,
+
+              "line-opacity":
+                0.96,
+            },
+          });
+        }
+
+
+        const coordinates =
+          routeGeoJson
+            ?.features?.[0]
+            ?.geometry
+            ?.coordinates;
+
+
+        if (
+          Array.isArray(
+            coordinates
+          ) &&
+          coordinates.length >
+            0
+        ) {
+
+          const bounds =
+            new LngLatBounds(
+              coordinates[0],
+              coordinates[0]
+            );
+
+
+          coordinates.forEach(
+            coordinate =>
+              bounds.extend(
+                coordinate
+              )
+          );
+
+
+          map.fitBounds(
+            bounds,
+            {
+              padding: {
+                top:
+                  75,
+
+                right:
+                  55,
+
+                bottom:
+                  85,
+
+                left:
+                  55,
+              },
+
+              maxZoom:
+                16,
+
+              duration:
+                900,
+            }
+          );
+        }
+      };
+
+
+    if (
+      map.isStyleLoaded()
+    ) {
+
+      draw();
+
+    } else {
+
+      map.once(
+        "load",
+        draw
+      );
+    }
+  }
+
+
+  function addOrUpdateUserMarker(
+    location
+  ) {
+
+    const map =
+      mapRef.current;
+
+
+    if (
+      !map ||
+      !location
+    ) {
+      return;
+    }
+
+
+    if (
+      userLocationMarkerRef.current
+    ) {
+
+      userLocationMarkerRef.current
+        .setLngLat([
+          location.longitude,
+          location.latitude,
+        ]);
+
+      return;
+    }
+
+
+    const userElement =
+      document.createElement(
+        "div"
+      );
+
+
+    userElement.className =
+      "food-invite-user-location-marker";
+
+
+    userElement.innerHTML =
+      `
+        <span class="food-invite-user-location-dot"></span>
+      `;
+
+
+    userLocationMarkerRef.current =
+      new Marker({
+        element:
+          userElement,
+
+        anchor:
+          "center",
+      })
+        .setLngLat([
+          location.longitude,
+          location.latitude,
+        ])
+        .setPopup(
+          new Popup({
+            offset:
+              18,
+          })
+            .setHTML(
+              "<strong>Your current location</strong>"
+            )
+        )
+        .addTo(
+          map
+        );
+  }
+
+
+  function getCurrentLocation() {
+
+    return new Promise(
+      (
+        resolve,
+        reject
+      ) => {
+
+        if (
+          !navigator.geolocation
+        ) {
+
+          reject(
+            new Error(
+              "Your browser does not support current location."
+            )
+          );
+
+          return;
+        }
+
+
+        navigator.geolocation
+          .getCurrentPosition(
+            position => {
+
+              resolve({
+                latitude:
+                  position.coords.latitude,
+
+                longitude:
+                  position.coords.longitude,
+
+                accuracy:
+                  position.coords.accuracy,
+              });
+            },
+
+            locationError => {
+
+              if (
+                locationError?.code ===
+                1
+              ) {
+
+                reject(
+                  new Error(
+                    "Location permission was denied. Allow location access and try again."
+                  )
+                );
+
+                return;
+              }
+
+
+              if (
+                locationError?.code ===
+                2
+              ) {
+
+                reject(
+                  new Error(
+                    "Your current location is unavailable."
+                  )
+                );
+
+                return;
+              }
+
+
+              if (
+                locationError?.code ===
+                3
+              ) {
+
+                reject(
+                  new Error(
+                    "Getting your current location took too long."
+                  )
+                );
+
+                return;
+              }
+
+
+              reject(
+                new Error(
+                  "FoodKindl could not get your current location."
+                )
+              );
+            },
+
+            {
+              enableHighAccuracy:
+                true,
+
+              timeout:
+                15000,
+
+              maximumAge:
+                30000,
+            }
+          );
+      }
+    );
+  }
+
+
+  async function requestRoute({
+    mode,
+    startLocation,
+    destinationRestaurant,
+  }) {
+
+    const apiKey =
+      import.meta.env
+        .VITE_ORS_KEY;
+
+
+    if (!apiKey) {
+
+      throw new Error(
+        "VITE_ORS_KEY is missing. Add your openrouteservice key and restart Vite."
+      );
+    }
+
+
+    const destination =
+      getRestaurantCoordinates(
+        destinationRestaurant
+      );
+
+
+    if (!destination) {
+
+      throw new Error(
+        "This restaurant does not have valid latitude and longitude."
+      );
+    }
+
+
+    const profile =
+      getTravelProfile(
+        mode
+      );
+
+
+    const response =
+      await fetch(
+        `https://api.openrouteservice.org/v2/directions/${profile}/geojson`,
+        {
+          method:
+            "POST",
+
+          headers: {
+            Authorization:
+              apiKey,
+
+            "Content-Type":
+              "application/json",
+
+            Accept:
+              "application/json, application/geo+json",
+          },
+
+          body:
+            JSON.stringify({
+              coordinates: [
+                [
+                  startLocation.longitude,
+                  startLocation.latitude,
+                ],
+
+                [
+                  destination.longitude,
+                  destination.latitude,
+                ],
+              ],
+            }),
+        }
+      );
+
+
+    if (
+      !response.ok
+    ) {
+
+      let message =
+        `Route could not be created (${response.status}).`;
+
+
+      try {
+
+        const data =
+          await response.json();
+
+
+        message =
+          data?.error?.message ||
+          data?.error ||
+          data?.message ||
+          message;
+
+      } catch {
+        // Keep fallback.
+      }
+
+
+      throw new Error(
+        String(
+          message
+        )
+      );
+    }
+
+
+    const routeGeoJson =
+      await response.json();
+
+
+    const feature =
+      routeGeoJson
+        ?.features?.[0];
+
+
+    if (
+      !feature?.geometry?.coordinates?.length
+    ) {
+
+      throw new Error(
+        "No route was found between your current location and this place."
+      );
+    }
+
+
+    return routeGeoJson;
+  }
+
+
+  async function showRoute(
+    mode =
+      travelMode
+  ) {
+
+    if (
+      !selectedRestaurant
+    ) {
+
+      setRouteError(
+        "Select a restaurant or cafe on the map first."
+      );
+
+      return;
+    }
+
+
+    try {
+
+      setRouteLoading(
+        true
+      );
+
+      setRouteError("");
+
+
+      let location =
+        userLocation;
+
+
+      if (!location) {
+
+        location =
+          await getCurrentLocation();
+
+
+        setUserLocation(
+          location
+        );
+      }
+
+
+      addOrUpdateUserMarker(
+        location
+      );
+
+
+      const routeGeoJson =
+        await requestRoute({
+          mode,
+
+          startLocation:
+            location,
+
+          destinationRestaurant:
+            selectedRestaurant,
+        });
+
+
+      const summary =
+        routeGeoJson
+          ?.features?.[0]
+          ?.properties?.summary;
+
+
+      setRouteSummary({
+        distance:
+          summary?.distance ??
+          null,
+
+        duration:
+          summary?.duration ??
+          null,
+      });
+
+
+      drawRouteOnMap(
+        routeGeoJson
+      );
+
+    } catch (
+      routeRequestError
+    ) {
+
+      setRouteSummary(
+        null
+      );
+
+
+      clearRouteFromMap();
+
+
+      setRouteError(
+        routeRequestError?.message ||
+        "FoodKindl could not create this route."
+      );
+
+    } finally {
+
+      setRouteLoading(
+        false
+      );
+    }
+  }
+
+
+  async function changeTravelMode(
+    mode
+  ) {
+
+    setTravelMode(
+      mode
+    );
+
+
+    if (
+      selectedRestaurant &&
+      userLocation
+    ) {
+
+      await showRoute(
+        mode
+      );
+    }
+  }
+
+
+  // =========================================================
+  // MAP CREATE
+  // =========================================================
+
   useEffect(
     () => {
+
       if (
         !mapContainerRef.current ||
         mapRef.current
@@ -307,168 +1172,232 @@ function DineOutMapPanel({
         return undefined;
       }
 
+
       const firstRestaurant =
         validRestaurants[0];
+
 
       const firstCoords =
         getRestaurantCoordinates(
           firstRestaurant
         );
 
-      const initialCenter = firstCoords
-        ? [
-            firstCoords.longitude,
-            firstCoords.latitude,
-          ]
-        : [
-            77.5946,
-            12.9716,
-          ];
 
-      const map = new Map({
-        container:
-          mapContainerRef.current,
+      const initialCenter =
+        firstCoords
+          ? [
+              firstCoords.longitude,
+              firstCoords.latitude,
+            ]
+          : [
+              77.5946,
+              12.9716,
+            ];
 
-        style:
-          DINE_OUT_MAP_STYLE,
 
-        center:
-          initialCenter,
+      const map =
+        new Map({
+          container:
+            mapContainerRef.current,
 
-        zoom:
-          firstCoords
-            ? 13
-            : 11,
+          style:
+            DINE_OUT_MAP_STYLE,
 
-        attributionControl:
-          true,
-      });
+          center:
+            initialCenter,
+
+          zoom:
+            firstCoords
+              ? 13
+              : 11,
+
+          attributionControl:
+            true,
+        });
+
 
       map.addControl(
         new NavigationControl(),
         "top-right"
       );
 
-      mapRef.current = map;
 
-      let resizeObserver = null;
+      mapRef.current =
+        map;
+
+
+      let resizeObserver =
+        null;
+
 
       if (
         typeof ResizeObserver !==
         "undefined"
       ) {
+
         resizeObserver =
           new ResizeObserver(
             () => {
+
               map.resize();
+
             }
           );
+
 
         resizeObserver.observe(
           mapContainerRef.current
         );
       }
 
+
       map.on(
         "load",
         () => {
+
           map.resize();
+
         }
       );
 
+
       return () => {
+
         markerRefs.current.forEach(
           marker =>
             marker.remove()
         );
 
-        markerRefs.current = [];
 
-        resizeObserver?.disconnect();
+        markerRefs.current =
+          [];
+
+
+        userLocationMarkerRef.current
+          ?.remove();
+
+
+        userLocationMarkerRef.current =
+          null;
+
+
+        resizeObserver
+          ?.disconnect();
+
 
         map.remove();
 
-        mapRef.current = null;
+
+        mapRef.current =
+          null;
       };
     },
     []
   );
 
 
+  // =========================================================
+  // RESTAURANT MARKERS
+  // =========================================================
+
   useEffect(
     () => {
+
       const map =
         mapRef.current;
+
 
       if (!map) {
         return;
       }
+
 
       markerRefs.current.forEach(
         marker =>
           marker.remove()
       );
 
-      markerRefs.current = [];
 
-      const boundsPoints = [];
+      markerRefs.current =
+        [];
+
+
+      const boundsPoints =
+        [];
+
 
       validRestaurants.forEach(
         restaurant => {
+
           const coordinates =
             getRestaurantCoordinates(
               restaurant
             );
 
+
           if (!coordinates) {
             return;
           }
 
+
           const isSelected =
             selectedVenueName ===
             restaurant.name;
+
 
           const element =
             createRestaurantMarkerElement(
               isSelected
             );
 
+
           const popupContent =
             document.createElement(
               "div"
             );
 
+
           popupContent.className =
             "food-invite-map-popup";
+
 
           const popupName =
             document.createElement(
               "strong"
             );
 
+
           popupName.textContent =
             restaurant.name ||
             "Restaurant";
+
 
           const popupCuisine =
             document.createElement(
               "span"
             );
 
+
           popupCuisine.textContent =
             restaurant.cuisine ||
             restaurant.restaurant_type ||
             "Restaurant";
+
 
           const popupLocation =
             document.createElement(
               "small"
             );
 
+
           popupLocation.textContent =
-            restaurant.locality ||
-            restaurant.city ||
-            "";
+            [
+              restaurant.locality,
+              restaurant.city,
+            ]
+              .filter(Boolean)
+              .join(", ");
+
 
           popupContent.append(
             popupName,
@@ -476,10 +1405,13 @@ function DineOutMapPanel({
             popupLocation
           );
 
+
           element.addEventListener(
             "click",
             event => {
+
               event.stopPropagation();
+
 
               onSelectRestaurant?.(
                 restaurant
@@ -487,10 +1419,13 @@ function DineOutMapPanel({
             }
           );
 
+
           element.addEventListener(
             "dblclick",
             event => {
+
               event.preventDefault();
+
 
               onOpenRestaurant?.(
                 restaurant
@@ -498,9 +1433,11 @@ function DineOutMapPanel({
             }
           );
 
+
           const marker =
             new Marker({
               element,
+
               anchor:
                 "bottom",
             })
@@ -511,20 +1448,21 @@ function DineOutMapPanel({
               .setPopup(
                 new Popup({
                   offset:
-                    18,
-                  closeButton:
-                    false,
-                }).setDOMContent(
-                  popupContent
-                )
+                    24,
+                })
+                  .setDOMContent(
+                    popupContent
+                  )
               )
               .addTo(
                 map
               );
 
+
           markerRefs.current.push(
             marker
           );
+
 
           boundsPoints.push([
             coordinates.longitude,
@@ -533,132 +1471,379 @@ function DineOutMapPanel({
         }
       );
 
+
       if (
         boundsPoints.length ===
         1
       ) {
+
         map.easeTo({
           center:
             boundsPoints[0],
+
           zoom:
             14,
+
           duration:
-            450,
+            650,
         });
+
       } else if (
         boundsPoints.length >
         1
       ) {
+
         const bounds =
-          boundsPoints.reduce(
-            (
-              current,
-              point
-            ) =>
-              current.extend(
-                point
-              ),
-            new LngLatBounds(
-              boundsPoints[0],
-              boundsPoints[0]
-            )
+          new LngLatBounds(
+            boundsPoints[0],
+            boundsPoints[0]
           );
+
+
+        boundsPoints.forEach(
+          point =>
+            bounds.extend(
+              point
+            )
+        );
+
 
         map.fitBounds(
           bounds,
           {
             padding:
-              52,
+              55,
+
             maxZoom:
               14,
+
             duration:
-              500,
+              700,
           }
         );
       }
-
-      window.setTimeout(
-        () => {
-          map.resize();
-        },
-        50
-      );
     },
     [
       restaurants,
       selectedVenueName,
-      onSelectRestaurant,
-      onOpenRestaurant,
+    ]
+  );
+
+
+  // Clear old route if another restaurant is selected.
+  useEffect(
+    () => {
+
+      setRouteSummary(
+        null
+      );
+
+      setRouteError("");
+
+      clearRouteFromMap();
+
+    },
+    [
+      selectedVenueName,
     ]
   );
 
 
   return (
-    <aside className="food-invite-dine-map-panel">
+    <aside className="food-invite-map-panel">
 
-      <div className="food-invite-dine-map-head">
+      <div className="food-invite-map-panel-head">
 
         <div>
-
-          <span>
-            FOODKINDL PLACES
-          </span>
 
           <h3>
             Choose on map
           </h3>
 
-          <p>
-            Select a blue restaurant marker or choose from the list below.
-          </p>
+          <span>
+            Select a restaurant marker or choose from the list below.
+          </span>
 
         </div>
 
       </div>
 
 
+      {/* =====================================================
+          WALK / DRIVE / RIDE
+      ====================================================== */}
+
+      {
+        selectedRestaurant &&
+        (
+          <section className="food-invite-route-panel">
+
+            <div className="food-invite-route-heading">
+
+              <div className="food-invite-route-heading-icon">
+                <Route size={16} />
+              </div>
+
+              <div>
+
+                <strong>
+                  Route from your location
+                </strong>
+
+                <span>
+                  {selectedRestaurant.name}
+                </span>
+
+              </div>
+
+            </div>
+
+
+            <div className="food-invite-route-modes">
+
+              <button
+                type="button"
+                className={
+                  travelMode ===
+                    "walk"
+                    ? "active"
+                    : ""
+                }
+                onClick={() =>
+                  changeTravelMode(
+                    "walk"
+                  )
+                }
+                disabled={
+                  routeLoading
+                }
+              >
+                <PersonStanding
+                  size={15}
+                />
+                Walk
+              </button>
+
+
+              <button
+                type="button"
+                className={
+                  travelMode ===
+                    "drive"
+                    ? "active"
+                    : ""
+                }
+                onClick={() =>
+                  changeTravelMode(
+                    "drive"
+                  )
+                }
+                disabled={
+                  routeLoading
+                }
+              >
+                <Car
+                  size={15}
+                />
+                Drive
+              </button>
+
+
+              <button
+                type="button"
+                className={
+                  travelMode ===
+                    "ride"
+                    ? "active"
+                    : ""
+                }
+                onClick={() =>
+                  changeTravelMode(
+                    "ride"
+                  )
+                }
+                disabled={
+                  routeLoading
+                }
+              >
+                <Bike
+                  size={15}
+                />
+                Ride
+              </button>
+
+            </div>
+
+
+            <div className="food-invite-route-stats">
+
+              <div>
+                <span>
+                  Distance
+                </span>
+
+                <strong>
+                  {
+                    routeSummary
+                      ? formatRouteDistance(
+                          routeSummary.distance
+                        )
+                      : "—"
+                  }
+                </strong>
+              </div>
+
+
+              <div>
+                <span>
+                  ETA
+                </span>
+
+                <strong>
+                  {
+                    routeSummary
+                      ? formatRouteDuration(
+                          routeSummary.duration
+                        )
+                      : "—"
+                  }
+                </strong>
+              </div>
+
+            </div>
+
+
+            <button
+              type="button"
+              className="food-invite-show-route-button"
+              onClick={() =>
+                showRoute(
+                  travelMode
+                )
+              }
+              disabled={
+                routeLoading
+              }
+            >
+              {
+                routeLoading
+                  ? (
+                      <>
+                        <LocateFixed
+                          size={15}
+                        />
+                        Finding route...
+                      </>
+                    )
+                  : (
+                      <>
+                        <Navigation
+                          size={15}
+                        />
+                        Show route
+                      </>
+                    )
+              }
+            </button>
+
+
+            {
+              routeError &&
+              (
+                <div className="food-invite-route-error">
+                  {routeError}
+                </div>
+              )
+            }
+
+
+            {
+              userLocation &&
+              (
+                <div className="food-invite-route-location-found">
+
+                  <LocateFixed
+                    size={12}
+                  />
+
+                  Current location found
+
+                  {
+                    Number.isFinite(
+                      userLocation.accuracy
+                    )
+                      ? ` • ±${Math.round(
+                          userLocation.accuracy
+                        )} m`
+                      : ""
+                  }
+
+                </div>
+              )
+            }
+
+          </section>
+        )
+      }
+
+
       <div
-        ref={mapContainerRef}
+        ref={
+          mapContainerRef
+        }
         className="food-invite-dine-map"
       />
 
 
-      <div className="food-invite-dine-map-list">
+      <div className="food-invite-map-list">
 
         {
-          restaurants.length === 0
+          validRestaurants.length ===
+          0
             ? (
                 <div className="food-invite-restaurant-state compact">
 
-                  <Utensils size={22} />
+                  <Utensils
+                    size={18}
+                  />
 
                   <strong>
-                    No partner restaurants found
+                    No matching places
                   </strong>
 
                   <span>
-                    Try a different cuisine or locality.
+                    Try a different dish, cuisine or locality.
                   </span>
 
                 </div>
               )
-            : restaurants.map(
+            : validRestaurants.map(
                 restaurant => {
+
                   const selected =
                     selectedVenueName ===
                     restaurant.name;
 
+
                   return (
                     <button
-                      key={restaurant.id}
+                      key={
+                        restaurant.id ||
+                        restaurant.name
+                      }
                       type="button"
                       className={
                         selected
-                          ? "food-invite-map-list-card selected"
-                          : "food-invite-map-list-card"
+                          ? "food-invite-map-list-item selected"
+                          : "food-invite-map-list-item"
                       }
                       onClick={() =>
                         onSelectRestaurant?.(
+                          restaurant
+                        )
+                      }
+                      onDoubleClick={() =>
+                        onOpenRestaurant?.(
                           restaurant
                         )
                       }
@@ -692,6 +1877,15 @@ function DineOutMapPanel({
                               .join(", ")
                           }
                         </small>
+
+                        {
+                          restaurant.recommendation_reason &&
+                          (
+                            <small className="food-invite-recommendation-reason">
+                              {restaurant.recommendation_reason}
+                            </small>
+                          )
+                        }
 
                       </div>
 
@@ -734,14 +1928,19 @@ function DineOutMapPanel({
         <button
           type="button"
           onClick={event => {
+
             event.preventDefault();
+
             event.stopPropagation();
+
 
             if (
               typeof onSuggestPlace ===
               "function"
             ) {
+
               onSuggestPlace();
+
             }
           }}
         >
@@ -754,7 +1953,6 @@ function DineOutMapPanel({
     </aside>
   );
 }
-
 
 // ============================================================
 // COMPONENT
@@ -910,51 +2108,146 @@ export default function FoodInvites() {
     fallback
   ) {
 
+    const status =
+      requestError?.response?.status;
+
+    const contentType =
+      String(
+        requestError?.response?.headers?.[
+          "content-type"
+        ] ||
+        ""
+      ).toLowerCase();
+
     const data =
       requestError?.response?.data;
 
 
+    // Django DEBUG=True returns an entire HTML traceback
+    // for a 500 error. Never render that raw HTML/string
+    // inside the Food Invite UI.
+    if (
+      typeof data === "string"
+    ) {
+
+      const normalized =
+        data.trim().toLowerCase();
+
+      const looksLikeHtml =
+        contentType.includes(
+          "text/html"
+        ) ||
+        normalized.startsWith(
+          "<!doctype html"
+        ) ||
+        normalized.startsWith(
+          "<html"
+        ) ||
+        normalized.includes(
+          "<head"
+        ) ||
+        normalized.includes(
+          "traceback"
+        );
+
+
+      if (looksLikeHtml) {
+
+        if (status === 500) {
+          return (
+            "Restaurant search could not be completed because the server returned an error. " +
+            "Please check the restaurant_discovery backend."
+          );
+        }
+
+        return fallback;
+      }
+
+
+      return (
+        data.trim() ||
+        fallback
+      );
+    }
+
+
     if (!data) {
+
+      if (status === 500) {
+        return (
+          "The FoodKindl server returned an error while loading restaurant recommendations."
+        );
+      }
+
       return fallback;
     }
 
 
     if (
-      typeof data === "string"
+      typeof data?.detail ===
+      "string"
     ) {
-      return data;
-    }
-
-
-    if (data.detail) {
       return data.detail;
     }
 
 
-    const firstKey =
-      Object.keys(data)[0];
+    if (
+      typeof data?.message ===
+      "string"
+    ) {
+      return data.message;
+    }
 
 
-    if (firstKey) {
-
-      const value =
-        data[firstKey];
-
-
-      if (Array.isArray(value)) {
-        return value[0];
-      }
+    if (
+      typeof data?.error ===
+      "string"
+    ) {
+      return data.error;
+    }
 
 
-      if (typeof value === "string") {
-        return value;
+    if (
+      typeof data ===
+      "object"
+    ) {
+
+      const firstKey =
+        Object.keys(
+          data
+        )[0];
+
+
+      if (firstKey) {
+
+        const value =
+          data[firstKey];
+
+
+        if (
+          Array.isArray(
+            value
+          )
+        ) {
+          return (
+            value[0] ||
+            fallback
+          );
+        }
+
+
+        if (
+          typeof value ===
+          "string"
+        ) {
+          return value;
+        }
       }
     }
 
 
     return fallback;
   }
-
 
   // =========================================================
   // CONNECTION MEMBER
@@ -1492,6 +2785,22 @@ export default function FoodInvites() {
     }
 
 
+    // City is required before restaurant discovery.
+    // This prevents restaurants from unrelated cities
+    // appearing on the map.
+    if (
+      !String(
+        form.city ||
+        ""
+      ).trim()
+    ) {
+
+      setRecommendedRestaurants([]);
+
+      return;
+    }
+
+
     try {
 
       setRestaurantsLoading(true);
@@ -1500,6 +2809,14 @@ export default function FoodInvites() {
 
 
       const params = {
+
+        query:
+          form.food_query?.trim() ||
+          "",
+
+        city:
+          form.city?.trim() ||
+          "",
 
         locality:
           form.location_label?.trim() ||
@@ -1524,7 +2841,7 @@ export default function FoodInvites() {
 
       const response =
         await api.get(
-          "/restaurants/recommended/",
+          "/restaurant-discovery/recommendations/",
           {
             params,
           }
@@ -1568,11 +2885,14 @@ export default function FoodInvites() {
       setRecommendedRestaurants([]);
 
 
-      setError(
+      const discoveryError =
         getApiErrorMessage(
           requestError,
           "Restaurant recommendations could not be loaded."
-        )
+        );
+
+      setError(
+        discoveryError
       );
 
     } finally {
@@ -1692,6 +3012,8 @@ export default function FoodInvites() {
       showCreate,
       form.invite_type,
       form.dine_venue_type,
+      form.food_query,
+      form.city,
       form.location_label,
       form.cuisine,
     ]
@@ -1802,13 +3124,14 @@ export default function FoodInvites() {
           "",
 
         location_label:
-          [
-            restaurant.locality,
-            restaurant.city,
-          ]
-            .filter(Boolean)
-            .join(", ") ||
-          previous.location_label,
+          restaurant.locality ||
+          previous.location_label ||
+          "",
+
+        city:
+          restaurant.city ||
+          previous.city ||
+          "",
 
         cuisine:
           previous.cuisine ||
@@ -2052,7 +3375,10 @@ export default function FoodInvites() {
 
 
               {
-                restaurant.locality &&
+                (
+                  restaurant.locality ||
+                  restaurant.city
+                ) &&
                 (
                   <span>
 
@@ -2060,7 +3386,14 @@ export default function FoodInvites() {
                       size={11}
                     />
 
-                    {restaurant.locality}
+                    {
+                      [
+                        restaurant.locality,
+                        restaurant.city,
+                      ]
+                        .filter(Boolean)
+                        .join(", ")
+                    }
 
                   </span>
                 )
@@ -2068,6 +3401,15 @@ export default function FoodInvites() {
 
             </div>
 
+
+            {
+              restaurant.recommendation_reason &&
+              (
+                <small className="food-invite-recommendation-reason">
+                  {restaurant.recommendation_reason}
+                </small>
+              )
+            }
 
             <small>
               View restaurant
@@ -2424,6 +3766,22 @@ export default function FoodInvites() {
           "dine_out"
         &&
         !String(
+          form.city ||
+          ""
+        ).trim()
+      ) {
+
+        throw new Error(
+          "Please enter a city to find restaurants or cafes."
+        );
+      }
+
+
+      if (
+        form.invite_type ===
+          "dine_out"
+        &&
+        !String(
           form.venue_name ||
           ""
         ).trim()
@@ -2608,10 +3966,25 @@ export default function FoodInvites() {
               ]
                 .filter(Boolean)
                 .join(" → ")
-            : String(
-                form.location_label ||
-                ""
-              ).trim(),
+            : form.invite_type ===
+                "dine_out"
+              ? [
+                  String(
+                    form.location_label ||
+                    ""
+                  ).trim(),
+
+                  String(
+                    form.city ||
+                    ""
+                  ).trim(),
+                ]
+                  .filter(Boolean)
+                  .join(", ")
+              : String(
+                  form.location_label ||
+                  ""
+                ).trim(),
 
 
         private_address:
@@ -3964,93 +5337,114 @@ async function respondToInvite(
                       FOOD DETAILS
                   ================================================= */}
 
-                  <div className="food-invite-form-section">
+                  {
+                    form.invite_type ===
+                      "dine_out"
+                      ? (
+                          <DineOutInvite
+                            form={
+                              form
+                            }
+                            updateField={
+                              updateField
+                            }
+                            cuisineOptions={
+                              CUISINE_OPTIONS
+                            }
+                            restaurantsLoading={
+                              restaurantsLoading
+                            }
+                            onSearchRestaurants={
+                              loadRecommendedRestaurants
+                            }
+                          />
+                        )
+                      : (
+                          <div className="food-invite-form-section">
 
-                    <div className="food-invite-form-section-heading">
+                            <div className="food-invite-form-section-heading">
 
-                      <span>
-                        02
-                      </span>
+                              <span>
+                                02
+                              </span>
 
+                              <div>
+                                <strong>
+                                  Food details
+                                </strong>
 
-                      <div>
+                                <small>
+                                  Tell your invitees what you're planning.
+                                </small>
+                              </div>
 
-                        <strong>
-                          Food details
-                        </strong>
-
-
-                        <small>
-                          Tell your invitees what you're planning.
-                        </small>
-
-                      </div>
-
-                    </div>
-
-
-                    <label>
-
-                      Invite title
-
-                      <input
-                        type="text"
-                        value={
-                          form.title
-                        }
-                        onChange={event =>
-                          updateField(
-                            "title",
-                            event.target.value
-                          )
-                        }
-                        placeholder="Saturday Kerala dinner"
-                      />
-
-                    </label>
+                            </div>
 
 
-                    <label>
+                            <label>
+                              Invite title
 
-                      Cuisine
-
-                      <select
-                        value={
-                          form.cuisine
-                        }
-                        onChange={event =>
-                          updateField(
-                            "cuisine",
-                            event.target.value
-                          )
-                        }
-                      >
-
-                        {
-                          CUISINE_OPTIONS.map(
-                            option => (
-                              <option
-                                key={
-                                  option.value ||
-                                  "select-cuisine"
-                                }
+                              <input
+                                type="text"
                                 value={
-                                  option.value
+                                  form.title
+                                }
+                                onChange={event =>
+                                  updateField(
+                                    "title",
+                                    event.target.value
+                                  )
+                                }
+                                placeholder="Saturday Kerala dinner"
+                              />
+                            </label>
+
+
+                            <label className="food-invite-cuisine-field">
+
+                              <span className="food-invite-field-label">
+                                Cuisine
+                              </span>
+
+                              <small className="food-invite-field-helper">
+                                Choose the cuisine you'd like to cook, eat, or explore together.
+                              </small>
+
+                              <select
+                                value={
+                                  form.cuisine
+                                }
+                                onChange={event =>
+                                  updateField(
+                                    "cuisine",
+                                    event.target.value
+                                  )
                                 }
                               >
                                 {
-                                  option.label
+                                  CUISINE_OPTIONS.map(
+                                    option => (
+                                      <option
+                                        key={
+                                          option.value ||
+                                          "select-cuisine"
+                                        }
+                                        value={
+                                          option.value
+                                        }
+                                      >
+                                        {option.label}
+                                      </option>
+                                    )
+                                  )
                                 }
-                              </option>
-                            )
-                          )
-                        }
+                              </select>
 
-                      </select>
+                            </label>
 
-                    </label>
-
-                  </div>
+                          </div>
+                        )
+                  }
 
 
                   {/* =================================================
@@ -4434,426 +5828,37 @@ async function respondToInvite(
 
 
                   {/* =================================================
-    COOK TOGETHER
-================================================= */}
-
-{
-  form.invite_type === "cook_together" && (
-    <div className="food-invite-form-section">
-
-      <div className="food-invite-form-section-heading">
-
-        <span>
-          05
-        </span>
-
-        <div>
-          <strong>
-            Cooking venue
-          </strong>
-
-          <small>
-            Choose the place and contribution.
-          </small>
-        </div>
-
-      </div>
-
-
-      {/* ============================================
-          VENUE TYPE
-      ============================================ */}
-
-      <div className="food-invite-venue-selector">
-
-        <button
-          type="button"
-          className={
-            form.cook_venue_type === "home"
-              ? "active"
-              : ""
-          }
-          onClick={() =>
-            updateField(
-              "cook_venue_type",
-              "home"
-            )
-          }
-        >
-          <Home size={17} />
-
-          Home
-        </button>
-
-
-        <button
-          type="button"
-          className={
-            form.cook_venue_type === "clubhouse"
-              ? "active"
-              : ""
-          }
-          onClick={() =>
-            updateField(
-              "cook_venue_type",
-              "clubhouse"
-            )
-          }
-        >
-          <UsersRound size={17} />
-
-          Clubhouse
-        </button>
-
-
-        <button
-          type="button"
-          className={
-            form.cook_venue_type === "other"
-              ? "active"
-              : ""
-          }
-          onClick={() =>
-            updateField(
-              "cook_venue_type",
-              "other"
-            )
-          }
-        >
-          <MapPin size={17} />
-
-          Other Venue
-        </button>
-
-      </div>
-
-
-      {/* ============================================
-          KITCHEN CONTRIBUTION
-      ============================================ */}
-
-      <div className="food-invite-kitchen-contribution">
-
-        <div className="food-invite-kitchen-copy">
-
-          <div className="food-invite-kitchen-icon">
-            ₹
-          </div>
-
-          <div>
-            <strong>
-              Kitchen contribution
-            </strong>
-
-            <small>
-              Optional contribution per person for ingredients,
-              gas or kitchen use.
-            </small>
-          </div>
-
-        </div>
-
-
-        <div className="food-invite-kitchen-input">
-
-          <span>
-            ₹
-          </span>
-
-          <input
-            type="number"
-            min="0"
-            step="1"
-            value={
-              form.kitchen_contribution
-            }
-            onChange={event =>
-              updateField(
-                "kitchen_contribution",
-                event.target.value
-              )
-            }
-            placeholder="0"
-          />
-
-          <small>
-            per person
-          </small>
-
-        </div>
-
-      </div>
-
-
-      {/* ============================================
-          AREA
-      ============================================ */}
-
-      <label>
-
-        Area / locality
-
-        <input
-          type="text"
-          value={
-            form.location_label
-          }
-          onChange={event =>
-            updateField(
-              "location_label",
-              event.target.value
-            )
-          }
-          placeholder="Indiranagar, Bengaluru"
-        />
-
-      </label>
-
-
-      {/* ============================================
-          ADDRESS
-      ============================================ */}
-
-      <label>
-
-        Exact address
-
-        <textarea
-          rows="3"
-          value={
-            form.private_address
-          }
-          onChange={event =>
-            updateField(
-              "private_address",
-              event.target.value
-            )
-          }
-          placeholder="Apartment, building, street..."
-        />
-
-      </label>
-
-    </div>
-  )
-}
-                  {/* =================================================
-                      DINE OUT
+                      EXPERIENCE-SPECIFIC DETAILS
                   ================================================= */}
 
                   {
                     form.invite_type ===
-                      "dine_out" &&
+                      "cook_together" &&
                     (
-
-                      <div className="food-invite-form-section">
-
-                        <div className="food-invite-form-section-heading">
-
-                          <span>
-                            04
-                          </span>
-
-
-                          <div>
-
-                            <strong>
-                              Choose where to dine
-                            </strong>
-
-
-                            <small>
-                              Choose a FoodKindl partner restaurant.
-                            </small>
-
-                          </div>
-
-                        </div>
-
-
-                        <div className="food-invite-venue-selector">
-
-                          <button
-                            type="button"
-                            className={
-                              form.dine_venue_type ===
-                                "restaurant"
-                                ? "active"
-                                : ""
-                            }
-                            onClick={() =>
-                              updateField(
-                                "dine_venue_type",
-                                "restaurant"
-                              )
-                            }
-                          >
-
-                            <Utensils size={18} />
-
-                            Restaurant
-
-                          </button>
-
-
-                          <button
-                            type="button"
-                            className={
-                              form.dine_venue_type ===
-                                "cafe"
-                                ? "active"
-                                : ""
-                            }
-                            onClick={() =>
-                              updateField(
-                                "dine_venue_type",
-                                "cafe"
-                              )
-                            }
-                          >
-
-                            <ConciergeBell size={18} />
-
-                            Cafe
-
-                          </button>
-
-                        </div>
-
-
-                        <label>
-
-                          Selected place
-
-                          <input
-                            type="text"
-                            value={
-                              form.venue_name
-                            }
-                            onChange={event =>
-                              updateField(
-                                "venue_name",
-                                event.target.value
-                              )
-                            }
-                            placeholder="Choose a recommendation"
-                          />
-
-                        </label>
-
-
-                        <label>
-
-                          Area / locality
-
-                          <input
-                            type="text"
-                            value={
-                              form.location_label
-                            }
-                            onChange={event =>
-                              updateField(
-                                "location_label",
-                                event.target.value
-                              )
-                            }
-                            placeholder="Koramangala, Bengaluru"
-                          />
-
-                        </label>
-
-                      </div>
-
+                      <CookTogetherInvite
+                        form={
+                          form
+                        }
+                        updateField={
+                          updateField
+                        }
+                      />
                     )
                   }
 
-
-                  {/* =================================================
-                      FOOD WALK
-                  ================================================= */}
 
                   {
                     form.invite_type ===
                       "food_walk" &&
                     (
-
-                      <div className="food-invite-form-section food-walk-host-section">
-
-                        <div className="food-invite-form-section-heading">
-
-                          <span>
-                            04
-                          </span>
-
-
-                          <div>
-
-                            <strong>
-                              Build your Food Walk
-                            </strong>
-
-
-                            <small>
-                              Choose 2–5 stops and arrange the route.
-                            </small>
-
-                          </div>
-
-                        </div>
-
-
-                        <FoodWalkPlanner
-                          locationLabel={
-                            form.location_label
-                          }
-
-                          destination={
-                            form.food_walk_destination ||
-                            ""
-                          }
-
-                          cuisine={
-                            form.cuisine
-                          }
-
-                          stops={
-                            form.food_walk_stops
-                          }
-
-                          onLocationChange={
-                            value =>
-                              updateField(
-                                "location_label",
-                                value
-                              )
-                          }
-
-                          onDestinationChange={
-                            value =>
-                              updateField(
-                                "food_walk_destination",
-                                value
-                              )
-                          }
-
-                          onCuisineChange={
-                            value =>
-                              updateField(
-                                "cuisine",
-                                value
-                              )
-                          }
-
-                          onStopsChange={
-                            value =>
-                              updateField(
-                                "food_walk_stops",
-                                value
-                              )
-                          }
-                        />
-                      </div>
-
+                      <FoodWalkInvite
+                        form={
+                          form
+                        }
+                        updateField={
+                          updateField
+                        }
+                      />
                     )
                   }
 
@@ -6667,7 +7672,9 @@ async function respondToInvite(
         initialLocation={
           form.location_label || ""
         }
-        initialCity=""
+        initialCity={
+          form.city || ""
+        }
         initialType={
           form.dine_venue_type ===
           "cafe"

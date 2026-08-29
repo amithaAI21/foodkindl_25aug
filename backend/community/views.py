@@ -1,3 +1,10 @@
+import json
+import os
+import re
+import traceback
+
+import requests
+
 from django.contrib.auth.models import User
 from django.db.models import F, Prefetch, Q, Sum
 from rest_framework import generics, permissions, status, viewsets
@@ -1793,4 +1800,1121 @@ class ConversationViewSet(viewsets.ModelViewSet):
         return Response(
             {"unread_count": unread_total},
             status=status.HTTP_200_OK,
+        )
+
+# ============================================================
+# FOODKINDL AI — INGREDIENT RECIPE BOOK
+#
+# This endpoint is different from the normal "dish name" recipe
+# generator. The user sends ingredients only, for example:
+#
+#     ["garlic", "tomato", "onion"]
+#
+# FoodKindl AI decides the best realistic dish first and then
+# returns the complete recipe. The user does NOT need to type
+# "tomato curry" separately.
+# ============================================================
+
+
+HF_TOKEN = os.environ.get(
+    "HF_TOKEN",
+    "",
+).strip()
+
+
+HF_MODEL = os.environ.get(
+    "FOODKINDL_AI_MODEL",
+    "openai/gpt-oss-20b",
+).strip()
+
+
+HF_API_URL = (
+    "https://router.huggingface.co/v1/chat/completions"
+)
+
+
+# ============================================================
+# AI HELPERS
+# ============================================================
+
+
+def _normalize_ai_ingredients(value):
+    """
+    Accept either:
+      ["tomato", "onion", "garlic"]
+
+    or:
+      "tomato, onion, garlic"
+
+    and return a clean unique list.
+    """
+
+    if isinstance(value, str):
+        raw_items = value.split(",")
+
+    elif isinstance(value, list):
+        raw_items = value
+
+    else:
+        return []
+
+
+    cleaned = []
+
+    seen = set()
+
+
+    for item in raw_items:
+
+        ingredient = (
+            str(item)
+            .strip()
+        )
+
+
+        if not ingredient:
+            continue
+
+
+        key = ingredient.lower()
+
+
+        if key in seen:
+            continue
+
+
+        seen.add(key)
+
+        cleaned.append(
+            ingredient
+        )
+
+
+    return cleaned
+
+
+def _clean_ai_json_text(content):
+    """
+    Remove Markdown code fences if the provider returns them.
+    """
+
+    content = (
+        str(content or "")
+        .strip()
+    )
+
+
+    if content.startswith("```"):
+
+        content = re.sub(
+            r"^```(?:json)?\s*",
+            "",
+            content,
+            flags=re.IGNORECASE,
+        )
+
+        content = re.sub(
+            r"\s*```$",
+            "",
+            content,
+        )
+
+
+    return content.strip()
+
+
+def _get_ai_provider_error(response):
+    """
+    Try to extract a useful provider error without exposing
+    credentials.
+    """
+
+    try:
+
+        data = response.json()
+
+        value = (
+            data.get("error")
+            or data.get("message")
+            or data.get("detail")
+            or response.text
+        )
+
+
+        if isinstance(
+            value,
+            dict,
+        ):
+            return (
+                value.get("message")
+                or str(value)
+            )
+
+
+        return str(value)
+
+
+    except Exception:
+
+        return (
+            response.text
+            or "Unknown AI provider error."
+        )
+
+
+def _build_ingredient_recipe_prompt(
+    ingredients,
+    dietary_preference="",
+    notes="",
+):
+    """
+    The most important part of this feature.
+
+    The AI must choose the dish itself based on the user's
+    available ingredients. It must NOT ask the user for a dish.
+    """
+
+    ingredient_text = ", ".join(
+        ingredients
+    )
+
+
+    dietary_text = (
+        dietary_preference.strip()
+        if dietary_preference
+        else "No special dietary preference provided."
+    )
+
+
+    notes_text = (
+        notes.strip()
+        if notes
+        else "No additional cooking preference provided."
+    )
+
+
+    return f"""
+You are FoodKindl AI, an expert practical home-cooking assistant.
+
+The user has ONLY told you the ingredients currently available.
+
+AVAILABLE INGREDIENTS:
+{ingredient_text}
+
+DIETARY PREFERENCE:
+{dietary_text}
+
+ADDITIONAL NOTES:
+{notes_text}
+
+YOUR JOB:
+
+1. Decide the ONE best realistic dish the user can cook mainly
+   from the available ingredients.
+
+2. Do NOT ask the user what dish they want.
+
+3. Do NOT require the user to type a recipe name.
+
+4. First choose the dish yourself, then create the complete
+   recipe.
+
+5. Prefer dishes that use as many of the supplied ingredients
+   as reasonably possible.
+
+6. Do NOT force every ingredient into the dish. If an ingredient
+   does not fit, put it in "unused_ingredients".
+
+7. Pantry basics such as salt, water, cooking oil, basic spices,
+   chilli powder, turmeric, pepper, cumin, coriander powder,
+   mustard seeds, etc. may be suggested as optional additions
+   when appropriate.
+
+8. Do not invent major ingredients that completely change the
+   dish unless they are clearly marked as optional.
+
+EXAMPLES OF THE DECISION BEHAVIOUR:
+
+garlic + tomato + onion
+-> Tomato Curry / Tomato Masala
+
+chicken + tomato + onion + garlic
+-> Chicken Curry
+
+egg + tomato + onion
+-> Egg Masala / Egg Curry
+
+potato + tomato + onion
+-> Potato Curry
+
+paneer + tomato + onion
+-> Paneer Masala
+
+The examples are guidance only. Always choose what is most
+realistic for the actual ingredients supplied.
+
+Return ONLY valid JSON in exactly this structure:
+
+{{
+  "title": "Name of the selected dish",
+  "reason": "Why this dish fits the user's ingredients",
+  "description": "Short appetising description",
+  "cuisine": "Cuisine or style",
+  "prep_time": "Example: 10 minutes",
+  "cook_time": "Example: 25 minutes",
+  "servings": "Example: 2 servings",
+  "match_percentage": 90,
+  "ingredients_used": [
+    "ingredient from the user's list"
+  ],
+  "unused_ingredients": [
+    "ingredient from the user's list that is not needed"
+  ],
+  "optional_ingredients": [
+    "1 tsp salt",
+    "1 tbsp cooking oil"
+  ],
+  "steps": [
+    "Step 1",
+    "Step 2"
+  ],
+  "tips": [
+    "Useful cooking tip"
+  ],
+  "serving_suggestion": "How to serve the dish",
+  "food_safety": "Relevant food-safety advice"
+}}
+
+RULES:
+
+- title must be the dish YOU selected.
+- ingredients_used must contain only ingredients supplied by
+  the user.
+- unused_ingredients must contain only ingredients supplied by
+  the user.
+- optional_ingredients must clearly represent additions not in
+  the user's supplied ingredient list.
+- match_percentage must be an integer from 0 to 100.
+- provide 4 to 8 practical cooking steps.
+- keep the recipe suitable for normal home cooking.
+- return JSON only.
+""".strip()
+
+
+def _call_foodkindl_ai(
+    prompt,
+):
+    """
+    Send a chat-completion request to Hugging Face.
+    """
+
+    if not HF_TOKEN:
+        raise RuntimeError(
+            "HF_TOKEN is not configured."
+        )
+
+    headers = {
+        "Authorization": f"Bearer {HF_TOKEN}",
+        "Content-Type": "application/json",
+    }
+
+    payload = {
+        "model": HF_MODEL,
+        "messages": [
+            {
+                "role": "system",
+                "content": (
+                    "You are FoodKindl AI. "
+                    "Return only valid JSON. "
+                    "Do not use Markdown."
+                ),
+            },
+            {
+                "role": "user",
+                "content": prompt,
+            },
+        ],
+        "temperature": 0.25,
+        "max_tokens": 1600,
+        "stream": False,
+    }
+
+    # ============================================================
+    # CALL HUGGING FACE
+    # ============================================================
+
+    try:
+        response = requests.post(
+            HF_API_URL,
+            headers=headers,
+            json=payload,
+            timeout=120,
+        )
+
+    except requests.Timeout as error:
+        raise RuntimeError(
+            "FoodKindl AI request timed out."
+        ) from error
+
+    except requests.ConnectionError as error:
+        raise RuntimeError(
+            "FoodKindl could not connect to the AI service."
+        ) from error
+
+    except requests.RequestException as error:
+        raise RuntimeError(
+            f"FoodKindl AI request failed: {str(error)}"
+        ) from error
+
+    # ============================================================
+    # PROVIDER ERROR
+    # ============================================================
+
+    if response.status_code >= 400:
+
+        provider_error = _get_ai_provider_error(
+            response
+        )
+
+        if response.status_code == 401:
+            raise RuntimeError(
+                "AI authentication failed. Check HF_TOKEN."
+            )
+
+        if response.status_code == 403:
+            raise RuntimeError(
+                (
+                    "HF_TOKEN does not have permission "
+                    "to use the configured AI provider."
+                )
+            )
+
+        if response.status_code == 429:
+            raise RuntimeError(
+                (
+                    "FoodKindl AI is temporarily busy "
+                    "or your provider quota has been reached. "
+                    "Please try again shortly."
+                )
+            )
+
+        raise RuntimeError(
+            f"AI provider error: {provider_error}"
+        )
+
+    # ============================================================
+    # PARSE HUGGING FACE RESPONSE
+    # ============================================================
+
+    try:
+        provider_data = response.json()
+
+    except ValueError as error:
+        print("\nINVALID HUGGING FACE RESPONSE:")
+        print(response.text)
+
+        raise RuntimeError(
+            "FoodKindl AI returned an invalid response."
+        ) from error
+
+    # ============================================================
+    # GET MESSAGE
+    # ============================================================
+
+    try:
+        message = (
+            provider_data["choices"][0]["message"]
+        )
+
+    except (
+        KeyError,
+        IndexError,
+        TypeError,
+    ) as error:
+        print("\nUNEXPECTED FOODKINDL AI RESPONSE:")
+        print(provider_data)
+
+        raise RuntimeError(
+            "FoodKindl AI returned an unexpected response."
+        ) from error
+
+    # ============================================================
+    # GET GENERATED CONTENT
+    # ============================================================
+
+    content = (
+        message.get("content")
+        or message.get("reasoning_content")
+        or message.get("reasoning")
+        or ""
+    )
+
+    # Some providers may return content as a structured list.
+    if isinstance(content, list):
+
+        text_parts = []
+
+        for item in content:
+
+            if isinstance(item, dict):
+                text_value = (
+                    item.get("text")
+                    or item.get("content")
+                    or ""
+                )
+
+                if text_value:
+                    text_parts.append(
+                        str(text_value)
+                    )
+
+            elif item:
+                text_parts.append(
+                    str(item)
+                )
+
+        content = "\n".join(
+            text_parts
+        )
+
+    content = str(
+        content or ""
+    ).strip()
+
+    # ============================================================
+    # DEBUG
+    # ============================================================
+
+    print(
+        "\n======================================"
+    )
+    print(
+        "FOODKINDL INGREDIENT AI RESPONSE"
+    )
+    print(
+        "STATUS:",
+        response.status_code,
+    )
+    print(
+        "MODEL:",
+        HF_MODEL,
+    )
+    print(
+        "MESSAGE:",
+        message,
+    )
+    print(
+        "======================================"
+    )
+
+    # ============================================================
+    # EMPTY RESPONSE
+    # ============================================================
+
+    if not content:
+
+        print(
+            "\nFULL PROVIDER RESPONSE:"
+        )
+        print(
+            provider_data
+        )
+
+        raise RuntimeError(
+            (
+                "FoodKindl AI returned empty content. "
+                "Please try again or change the configured AI model."
+            )
+        )
+
+    print(
+        "\nRAW FOODKINDL AI OUTPUT:"
+    )
+    print(
+        content
+    )
+
+    return content
+
+
+def _parse_ingredient_recipe(
+    content,
+    supplied_ingredients,
+):
+    """
+    Validate and normalise the AI JSON so the frontend receives
+    a predictable recipe-book object.
+    """
+
+    cleaned = (
+        _clean_ai_json_text(
+            content
+        )
+    )
+
+
+    try:
+
+        data = json.loads(
+            cleaned
+        )
+
+
+    except json.JSONDecodeError as error:
+
+        raise RuntimeError(
+            (
+                "FoodKindl AI did not return "
+                "valid recipe data."
+            )
+        ) from error
+
+
+    if not isinstance(
+        data,
+        dict,
+    ):
+
+        raise RuntimeError(
+            (
+                "FoodKindl AI returned "
+                "an invalid recipe."
+            )
+        )
+
+
+    title = (
+        str(
+            data.get(
+                "title",
+                "",
+            )
+        )
+        .strip()
+    )
+
+
+    if not title:
+
+        raise RuntimeError(
+            (
+                "FoodKindl AI did not "
+                "choose a dish."
+            )
+        )
+
+
+    supplied_map = {
+        item.lower():
+            item
+        for item in supplied_ingredients
+    }
+
+
+    def keep_supplied_only(
+        values,
+    ):
+
+        if not isinstance(
+            values,
+            list,
+        ):
+            return []
+
+
+        result = []
+
+        seen = set()
+
+
+        for value in values:
+
+            key = (
+                str(value)
+                .strip()
+                .lower()
+            )
+
+
+            if (
+                not key
+                or key not in supplied_map
+                or key in seen
+            ):
+                continue
+
+
+            seen.add(key)
+
+            result.append(
+                supplied_map[key]
+            )
+
+
+        return result
+
+
+    ingredients_used = (
+        keep_supplied_only(
+            data.get(
+                "ingredients_used",
+                [],
+            )
+        )
+    )
+
+
+    unused_ingredients = (
+        keep_supplied_only(
+            data.get(
+                "unused_ingredients",
+                [],
+            )
+        )
+    )
+
+
+    # If the model forgot to classify some supplied ingredients,
+    # put them in unused rather than pretending they were used.
+    classified = {
+        item.lower()
+        for item in (
+            ingredients_used
+            + unused_ingredients
+        )
+    }
+
+
+    for ingredient in supplied_ingredients:
+
+        if (
+            ingredient.lower()
+            not in classified
+        ):
+            unused_ingredients.append(
+                ingredient
+            )
+
+
+    optional_ingredients = (
+        data.get(
+            "optional_ingredients",
+            [],
+        )
+    )
+
+
+    if not isinstance(
+        optional_ingredients,
+        list,
+    ):
+        optional_ingredients = []
+
+
+    steps = (
+        data.get(
+            "steps",
+            [],
+        )
+    )
+
+
+    if not isinstance(
+        steps,
+        list,
+    ):
+        steps = []
+
+
+    steps = [
+        str(step).strip()
+        for step in steps
+        if str(step).strip()
+    ]
+
+
+    if not steps:
+
+        raise RuntimeError(
+            (
+                "FoodKindl AI did not "
+                "generate cooking steps."
+            )
+        )
+
+
+    tips = (
+        data.get(
+            "tips",
+            [],
+        )
+    )
+
+
+    if isinstance(
+        tips,
+        str,
+    ):
+        tips = [
+            tips
+        ]
+
+
+    if not isinstance(
+        tips,
+        list,
+    ):
+        tips = []
+
+
+    tips = [
+        str(tip).strip()
+        for tip in tips
+        if str(tip).strip()
+    ]
+
+
+    try:
+
+        match_percentage = int(
+            data.get(
+                "match_percentage",
+                0,
+            )
+        )
+
+    except (
+        TypeError,
+        ValueError,
+    ):
+
+        match_percentage = 0
+
+
+    match_percentage = max(
+        0,
+        min(
+            100,
+            match_percentage,
+        ),
+    )
+
+
+    # If provider did not give a sensible percentage, calculate
+    # one from how many supplied ingredients are used.
+    if (
+        match_percentage == 0
+        and supplied_ingredients
+    ):
+
+        match_percentage = round(
+            (
+                len(
+                    ingredients_used
+                )
+                /
+                len(
+                    supplied_ingredients
+                )
+            )
+            * 100
+        )
+
+
+    return {
+        "title":
+            title,
+
+        "reason":
+            str(
+                data.get(
+                    "reason",
+                    "",
+                )
+            ).strip(),
+
+        "description":
+            str(
+                data.get(
+                    "description",
+                    "",
+                )
+            ).strip(),
+
+        "cuisine":
+            str(
+                data.get(
+                    "cuisine",
+                    "",
+                )
+            ).strip(),
+
+        "prep_time":
+            str(
+                data.get(
+                    "prep_time",
+                    "",
+                )
+            ).strip(),
+
+        "cook_time":
+            str(
+                data.get(
+                    "cook_time",
+                    "",
+                )
+            ).strip(),
+
+        "servings":
+            str(
+                data.get(
+                    "servings",
+                    "",
+                )
+            ).strip(),
+
+        "match_percentage":
+            match_percentage,
+
+        "ingredients_used":
+            ingredients_used,
+
+        "unused_ingredients":
+            unused_ingredients,
+
+        "optional_ingredients": [
+            str(item).strip()
+            for item in optional_ingredients
+            if str(item).strip()
+        ],
+
+        "steps":
+            steps,
+
+        "tips":
+            tips,
+
+        "serving_suggestion":
+            str(
+                data.get(
+                    "serving_suggestion",
+                    "",
+                )
+            ).strip(),
+
+        "food_safety":
+            str(
+                data.get(
+                    "food_safety",
+                    "",
+                )
+            ).strip(),
+    }
+
+
+# ============================================================
+# INGREDIENT RECIPE BOOK API
+#
+# POST body:
+#
+# {
+#   "ingredients": ["garlic", "tomato", "onion"],
+#   "dietary_preference": "",
+#   "notes": ""
+# }
+#
+# Response:
+#
+# {
+#   "ingredients": [...],
+#   "recipe": {
+#       "title": "Tomato Curry",
+#       ...
+#   }
+# }
+# ============================================================
+
+
+@api_view(["POST"])
+@permission_classes([
+    permissions.IsAuthenticated,
+])
+def ai_ingredient_recipe_book(
+    request,
+):
+    """
+    Generate a full recipe directly from available ingredients.
+
+    IMPORTANT:
+    The user does not provide a dish name. FoodKindl AI chooses
+    the dish itself.
+    """
+
+    ingredients = (
+        _normalize_ai_ingredients(
+            request.data.get(
+                "ingredients",
+                [],
+            )
+        )
+    )
+
+
+    if not ingredients:
+
+        return Response(
+            {
+                "detail":
+                    (
+                        "Please add at least "
+                        "one ingredient."
+                    )
+            },
+            status=(
+                status.HTTP_400_BAD_REQUEST
+            ),
+        )
+
+
+    if len(ingredients) > 30:
+
+        return Response(
+            {
+                "detail":
+                    (
+                        "Please use 30 ingredients "
+                        "or fewer."
+                    )
+            },
+            status=(
+                status.HTTP_400_BAD_REQUEST
+            ),
+        )
+
+
+    for ingredient in ingredients:
+
+        if len(ingredient) > 80:
+
+            return Response(
+                {
+                    "detail":
+                        (
+                            "Each ingredient must be "
+                            "80 characters or fewer."
+                        )
+                },
+                status=(
+                    status.HTTP_400_BAD_REQUEST
+                ),
+            )
+
+
+    dietary_preference = (
+        str(
+            request.data.get(
+                "dietary_preference",
+                "",
+            )
+            or ""
+        )
+        .strip()
+    )
+
+
+    notes = (
+        str(
+            request.data.get(
+                "notes",
+                "",
+            )
+            or ""
+        )
+        .strip()
+    )
+
+
+    if len(notes) > 500:
+
+        return Response(
+            {
+                "detail":
+                    (
+                        "Cooking notes must be "
+                        "500 characters or fewer."
+                    )
+            },
+            status=(
+                status.HTTP_400_BAD_REQUEST
+            ),
+        )
+
+
+    try:
+
+        prompt = (
+            _build_ingredient_recipe_prompt(
+                ingredients=ingredients,
+                dietary_preference=(
+                    dietary_preference
+                ),
+                notes=notes,
+            )
+        )
+
+
+        raw_content = (
+            _call_foodkindl_ai(
+                prompt
+            )
+        )
+
+
+        recipe = (
+            _parse_ingredient_recipe(
+                raw_content,
+                ingredients,
+            )
+        )
+
+
+        return Response(
+            {
+                "mode":
+                    "ingredient_recipe_book",
+
+                "ingredients":
+                    ingredients,
+
+                "selected_dish":
+                    recipe["title"],
+
+                "recipe":
+                    recipe,
+            },
+            status=(
+                status.HTTP_200_OK
+            ),
+        )
+
+
+    except Exception as error:
+
+        traceback.print_exc()
+
+
+        return Response(
+            {
+                "detail":
+                    str(error),
+
+                "error_type":
+                    type(
+                        error
+                    ).__name__,
+            },
+            status=(
+                status
+                .HTTP_500_INTERNAL_SERVER_ERROR
+            ),
         )

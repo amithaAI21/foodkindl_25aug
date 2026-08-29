@@ -3851,3 +3851,2132 @@
   }
 
 }
+/* ============================================================
+   FOODKINDL CONNECT — OUTLOOK-STYLE GUIDED TOUR
+============================================================ */
+
+/* Small replay control only. No Settings / SOS / preference
+   cards are shown on the dashboard. */
+.connect-tour-replay-wrap {
+  position: relative;
+  z-index: 25;
+
+  width: min(1200px, 100%);
+  margin: -28px auto 34px;
+
+  display: flex;
+  justify-content: flex-end;
+}
+
+.connect-tour-replay-button {
+  appearance: none;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+
+  min-height: 36px;
+  padding: 0 12px;
+
+  border: 1px solid rgba(255, 107, 50, 0.2);
+  border-radius: 999px;
+
+  background: rgba(255, 107, 50, 0.055);
+  color: #ff9066;
+
+  font-family: inherit;
+  font-size: 8px;
+  font-weight: 850;
+
+  cursor: pointer;
+
+  transition:
+    transform 0.18s ease,
+    border-color 0.18s ease,
+    background 0.18s ease,
+    color 0.18s ease;
+}
+
+.connect-tour-replay-button:hover {
+  transform: translateY(-1px);
+
+  border-color: rgba(255, 107, 50, 0.38);
+  background: rgba(255, 107, 50, 0.1);
+  color: #fff;
+}
+
+
+/* ------------------------------------------------------------
+   TOUR LAYER
+------------------------------------------------------------ */
+
+.connect-guided-tour {
+  position: fixed;
+  inset: 0;
+  z-index: 100000;
+
+  pointer-events: none;
+}
+
+.connect-guided-tour-dim {
+  position: absolute;
+  inset: 0;
+
+  background: rgba(0, 0, 0, 0.48);
+
+  backdrop-filter: blur(1.5px);
+
+  pointer-events: none;
+
+  animation:
+    fkGuidedTourFadeIn
+    0.2s ease both;
+}
+
+
+/* ------------------------------------------------------------
+   SPOTLIGHT
+
+   The very large box-shadow darkens everything except the
+   current highlighted element, similar to Microsoft tours.
+------------------------------------------------------------ */
+
+.connect-guided-tour-spotlight {
+  position: fixed;
+  z-index: 2;
+
+  border: 2px solid rgba(255, 123, 70, 0.95);
+  border-radius: 14px;
+
+  background: transparent;
+
+  box-shadow:
+    0 0 0 9999px rgba(0, 0, 0, 0.38),
+    0 0 0 6px rgba(255, 107, 50, 0.08),
+    0 0 28px rgba(255, 107, 50, 0.4);
+
+  pointer-events: none;
+
+  transition:
+    top 0.22s ease,
+    left 0.22s ease,
+    width 0.22s ease,
+    height 0.22s ease;
+
+  animation:
+    fkGuidedSpotlightPulse
+    1.8s ease-in-out infinite;
+}
+
+
+/* ------------------------------------------------------------
+   GUIDE CARD
+------------------------------------------------------------ */
+
+.connect-guided-tour-card {
+  position: fixed;
+  z-index: 4;
+
+  width: min(390px, calc(100vw - 32px));
+
+  padding: 18px;
+
+  border: 1px solid rgba(255, 119, 67, 0.26);
+  border-radius: 16px;
+
+  background:
+    radial-gradient(
+      circle at 12% -20%,
+      rgba(255, 107, 50, 0.15),
+      transparent 42%
+    ),
+    #11100f;
+
+  color: #f7f3f0;
+
+  box-shadow:
+    0 24px 72px rgba(0, 0, 0, 0.62),
+    inset 0 1px 0 rgba(255, 255, 255, 0.035);
+
+  pointer-events: auto;
+
+  animation:
+    fkGuidedCardIn
+    0.24s
+    cubic-bezier(.2, .82, .28, 1.08)
+    both;
+}
+
+.connect-guided-tour-card.below::before,
+.connect-guided-tour-card.above::before {
+  content: "";
+
+  position: absolute;
+
+  width: 12px;
+  height: 12px;
+
+  background: #11100f;
+
+  border:
+    1px solid
+    rgba(255, 119, 67, 0.22);
+
+  transform: rotate(45deg);
+}
+
+.connect-guided-tour-card.below::before {
+  top: -7px;
+  right: 26px;
+
+  border-right: 0;
+  border-bottom: 0;
+}
+
+.connect-guided-tour-card.above::before {
+  right: 26px;
+  bottom: -7px;
+
+  border-left: 0;
+  border-top: 0;
+}
+
+.connect-guided-tour-card.center::before {
+  display: none;
+}
+
+.connect-guided-tour-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+
+  margin-bottom: 11px;
+}
+
+.connect-guided-tour-head > span {
+  color: #ff7d4d;
+
+  font-size: 7px;
+  font-weight: 900;
+
+  letter-spacing: 0.17em;
+}
+
+.connect-guided-tour-head > button {
+  appearance: none;
+
+  width: 28px;
+  height: 28px;
+
+  display: grid;
+  place-items: center;
+
+  padding: 0;
+
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 8px;
+
+  background: rgba(255, 255, 255, 0.025);
+  color: #8f8580;
+
+  font-size: 18px;
+  line-height: 1;
+
+  cursor: pointer;
+}
+
+.connect-guided-tour-head > button:hover {
+  color: #fff;
+  border-color: rgba(255, 107, 50, 0.25);
+}
+
+
+/* ------------------------------------------------------------
+   PROGRESS
+------------------------------------------------------------ */
+
+.connect-guided-tour-progress {
+  display: grid;
+  grid-template-columns:
+    repeat(5, minmax(0, 1fr));
+
+  gap: 5px;
+
+  margin-bottom: 16px;
+}
+
+.connect-guided-tour-progress span {
+  height: 2px;
+
+  border-radius: 999px;
+
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.connect-guided-tour-progress span.active {
+  background: #ff6b32;
+
+  box-shadow:
+    0 0 8px
+    rgba(255, 107, 50, 0.32);
+}
+
+
+.connect-guided-tour-card h2 {
+  margin: 0;
+
+  color: #f7f3f0;
+
+  font-size: 21px;
+  line-height: 1.12;
+
+  letter-spacing: -0.035em;
+}
+
+.connect-guided-tour-card > p {
+  margin: 10px 0 0;
+
+  color: #9a8f89;
+
+  font-size: 9px;
+  line-height: 1.65;
+}
+
+
+/* ------------------------------------------------------------
+   SOS WALKTHROUGH
+------------------------------------------------------------ */
+
+.connect-guided-tour-sos {
+  display: grid;
+  gap: 7px;
+
+  margin-top: 14px;
+}
+
+.connect-guided-tour-sos > div {
+  min-height: 38px;
+
+  display: flex;
+  align-items: center;
+  gap: 9px;
+
+  padding: 8px 10px;
+
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 10px;
+
+  background: rgba(255, 255, 255, 0.02);
+
+  color: #c2b7b1;
+
+  font-size: 8px;
+  font-weight: 750;
+}
+
+.connect-guided-tour-sos > div > span {
+  width: 20px;
+  height: 20px;
+
+  flex: 0 0 20px;
+
+  display: grid;
+  place-items: center;
+
+  border-radius: 50%;
+
+  background: rgba(255, 107, 50, 0.1);
+  color: #ff8a5e;
+
+  font-size: 7px;
+  font-weight: 900;
+}
+
+
+/* ------------------------------------------------------------
+   ACTIONS
+------------------------------------------------------------ */
+
+.connect-guided-tour-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+
+  margin-top: 18px;
+  padding-top: 14px;
+
+  border-top: 1px solid rgba(255, 255, 255, 0.055);
+}
+
+.connect-guided-tour-actions > div {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.connect-guided-tour-skip,
+.connect-guided-tour-back,
+.connect-guided-tour-next {
+  appearance: none;
+
+  min-height: 34px;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+
+  padding: 0 11px;
+
+  border-radius: 8px;
+
+  font-family: inherit;
+  font-size: 8px;
+  font-weight: 850;
+
+  cursor: pointer;
+}
+
+.connect-guided-tour-skip {
+  border: 0;
+
+  background: transparent;
+  color: #756c68;
+}
+
+.connect-guided-tour-skip:hover {
+  color: #aaa09a;
+}
+
+.connect-guided-tour-back {
+  border: 1px solid rgba(255, 255, 255, 0.07);
+
+  background: rgba(255, 255, 255, 0.025);
+  color: #aaa09a;
+}
+
+.connect-guided-tour-back:hover {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.connect-guided-tour-next {
+  border: 1px solid rgba(255, 128, 76, 0.3);
+
+  background:
+    linear-gradient(
+      135deg,
+      #ff7743,
+      #ee5722 58%,
+      #c83c13
+    );
+
+  color: #fff;
+
+  box-shadow:
+    0 10px 24px
+    rgba(255, 107, 50, 0.17);
+}
+
+.connect-guided-tour-next:hover {
+  transform: translateY(-1px);
+
+  box-shadow:
+    0 13px 30px
+    rgba(255, 107, 50, 0.24);
+}
+
+
+/* ------------------------------------------------------------
+   RESPONSIVE
+------------------------------------------------------------ */
+
+@media (max-width: 600px) {
+
+  .connect-tour-replay-wrap {
+    margin:
+      -18px auto
+      28px;
+
+    justify-content: flex-start;
+  }
+
+  .connect-guided-tour-card {
+    width:
+      calc(100vw - 24px);
+
+    left:
+      12px !important;
+
+    max-height:
+      calc(100vh - 24px);
+
+    overflow-y: auto;
+
+    padding: 16px;
+  }
+
+  .connect-guided-tour-card h2 {
+    font-size: 19px;
+  }
+
+  .connect-guided-tour-actions {
+    align-items: stretch;
+    flex-direction: column-reverse;
+  }
+
+  .connect-guided-tour-actions > div {
+    width: 100%;
+  }
+
+  .connect-guided-tour-back,
+  .connect-guided-tour-next {
+    flex: 1;
+  }
+
+  .connect-guided-tour-skip {
+    width: 100%;
+  }
+
+}
+
+
+/* ------------------------------------------------------------
+   ANIMATION
+------------------------------------------------------------ */
+
+@keyframes fkGuidedTourFadeIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes fkGuidedCardIn {
+  from {
+    opacity: 0;
+
+    transform:
+      translateY(8px)
+      scale(0.98);
+  }
+
+  to {
+    opacity: 1;
+
+    transform:
+      translateY(0)
+      scale(1);
+  }
+}
+
+@keyframes fkGuidedSpotlightPulse {
+
+  0%,
+  100% {
+    border-color:
+      rgba(255, 123, 70, 0.75);
+  }
+
+  50% {
+    border-color:
+      rgba(255, 151, 105, 1);
+
+    box-shadow:
+      0 0 0 9999px
+      rgba(0, 0, 0, 0.38),
+      0 0 0 8px
+      rgba(255, 107, 50, 0.07),
+      0 0 34px
+      rgba(255, 107, 50, 0.48);
+  }
+
+}
+
+
+/* ------------------------------------------------------------
+   REDUCED MOTION
+------------------------------------------------------------ */
+
+@media (prefers-reduced-motion: reduce) {
+
+  .connect-guided-tour-dim,
+  .connect-guided-tour-spotlight,
+  .connect-guided-tour-card,
+  .connect-tour-replay-button {
+    animation: none !important;
+    transition: none !important;
+  }
+
+}
+/* ============================================================
+   SHOW ME AROUND — PRIMARY HIGHLIGHT
+   Makes the tour entry point clearly visible without adding
+   extra cards or clutter to the dashboard.
+============================================================ */
+
+.connect-tour-replay-highlight {
+  position: relative;
+  isolation: isolate;
+
+  border-color: rgba(255, 123, 70, 0.78);
+
+  background:
+    linear-gradient(
+      135deg,
+      rgba(255, 107, 50, 0.22),
+      rgba(217, 74, 23, 0.12)
+    );
+
+  color: #ffffff;
+
+  box-shadow:
+    0 0 0 1px rgba(255, 107, 50, 0.18),
+    0 0 18px rgba(255, 107, 50, 0.28),
+    0 10px 26px rgba(0, 0, 0, 0.28);
+
+  animation:
+    fkTourReplayGlow
+    1.8s
+    ease-in-out
+    infinite;
+}
+
+.connect-tour-replay-highlight::before {
+  content: "";
+
+  position: absolute;
+  inset: -5px;
+
+  z-index: -1;
+
+  border: 1px solid rgba(255, 107, 50, 0.28);
+  border-radius: 999px;
+
+  opacity: 0;
+
+  animation:
+    fkTourReplayRing
+    1.8s
+    ease-out
+    infinite;
+}
+
+.connect-tour-replay-highlight::after {
+  content: "NEW";
+
+  position: absolute;
+  top: -9px;
+  right: -9px;
+
+  min-width: 24px;
+  height: 15px;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 0 5px;
+
+  border: 1px solid rgba(255, 153, 112, 0.38);
+  border-radius: 999px;
+
+  background: #ff6b32;
+
+  color: #ffffff;
+
+  font-size: 5px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+
+  box-shadow:
+    0 4px 12px rgba(255, 107, 50, 0.34);
+}
+
+.connect-tour-replay-highlight:hover {
+  transform: translateY(-2px) scale(1.015);
+
+  border-color: rgba(255, 151, 105, 0.95);
+
+  background:
+    linear-gradient(
+      135deg,
+      #ff7d4a,
+      #e9521f
+    );
+
+  box-shadow:
+    0 0 0 1px rgba(255, 107, 50, 0.22),
+    0 0 24px rgba(255, 107, 50, 0.42),
+    0 14px 30px rgba(0, 0, 0, 0.34);
+}
+
+.connect-tour-replay-highlight svg {
+  filter:
+    drop-shadow(
+      0 0 5px
+      rgba(255, 170, 130, 0.65)
+    );
+}
+
+@keyframes fkTourReplayGlow {
+
+  0%,
+  100% {
+    box-shadow:
+      0 0 0 1px rgba(255, 107, 50, 0.14),
+      0 0 12px rgba(255, 107, 50, 0.18),
+      0 10px 26px rgba(0, 0, 0, 0.25);
+  }
+
+  50% {
+    box-shadow:
+      0 0 0 1px rgba(255, 107, 50, 0.28),
+      0 0 26px rgba(255, 107, 50, 0.46),
+      0 12px 30px rgba(0, 0, 0, 0.3);
+  }
+
+}
+
+@keyframes fkTourReplayRing {
+
+  0% {
+    transform: scale(0.94);
+    opacity: 0;
+  }
+
+  30% {
+    opacity: 0.65;
+  }
+
+  100% {
+    transform: scale(1.18);
+    opacity: 0;
+  }
+
+}
+
+@media (max-width: 600px) {
+
+  .connect-tour-replay-wrap {
+    justify-content: center;
+  }
+
+  .connect-tour-replay-highlight {
+    min-height: 40px;
+    padding: 0 15px;
+  }
+
+}
+
+@media (prefers-reduced-motion: reduce) {
+
+  .connect-tour-replay-highlight,
+  .connect-tour-replay-highlight::before {
+    animation: none !important;
+  }
+
+}
+
+.fk-toast-help {
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.kindli-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100000;
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-end;
+  padding: 22px;
+  background: rgba(0, 0, 0, 0.32);
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
+  animation: kindliOverlayIn 0.2s ease-out;
+}
+
+.kindli-panel {
+  width: min(430px, calc(100vw - 32px));
+  height: min(680px, calc(100vh - 44px));
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid rgba(255, 120, 65, 0.22);
+  border-radius: 24px;
+  background:
+    radial-gradient(
+      circle at 100% 0%,
+      rgba(255, 104, 45, 0.11),
+      transparent 34%
+    ),
+    linear-gradient(
+      160deg,
+      rgba(20, 15, 12, 0.99),
+      rgba(7, 7, 7, 0.995)
+    );
+  box-shadow:
+    0 34px 90px rgba(0, 0, 0, 0.68),
+    0 0 45px rgba(255, 102, 42, 0.07);
+  animation:
+    kindliPanelIn
+    0.38s
+    cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.kindli-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 18px 18px 15px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.065);
+}
+
+.kindli-brand {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.kindli-avatar {
+  position: relative;
+  width: 43px;
+  height: 43px;
+  flex: 0 0 43px;
+  display: grid;
+  place-items: center;
+  border-radius: 15px;
+  color: #ff7540;
+  background:
+    linear-gradient(
+      145deg,
+      rgba(255, 117, 64, 0.19),
+      rgba(255, 117, 64, 0.045)
+    );
+  border: 1px solid rgba(255, 117, 64, 0.22);
+}
+
+.kindli-avatar span {
+  position: absolute;
+  right: -1px;
+  bottom: -1px;
+  width: 10px;
+  height: 10px;
+  border: 2px solid #0c0a09;
+  border-radius: 50%;
+  background: #36d982;
+}
+
+.kindli-name-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.kindli-name-row h2 {
+  margin: 0;
+  color: #fff;
+  font-size: 18px;
+  line-height: 1.1;
+  font-weight: 760;
+}
+
+.kindli-ai-pill {
+  padding: 4px 6px;
+  border: 1px solid rgba(255, 118, 61, 0.22);
+  border-radius: 999px;
+  color: #ff7b48;
+  background: rgba(255, 105, 45, 0.07);
+  font-size: 8px;
+  font-weight: 850;
+  letter-spacing: 0.11em;
+}
+
+.kindli-brand p {
+  margin: 4px 0 0;
+  color: rgba(255, 255, 255, 0.43);
+  font-size: 10.5px;
+}
+
+.kindli-close {
+  width: 32px;
+  height: 32px;
+  flex: 0 0 32px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 10px;
+  cursor: pointer;
+  color: rgba(255, 255, 255, 0.45);
+  background: rgba(255, 255, 255, 0.035);
+}
+
+.kindli-close:hover {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.075);
+}
+
+.kindli-status-strip {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 9px 18px;
+  color: rgba(255, 185, 153, 0.86);
+  background: rgba(255, 113, 59, 0.045);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.045);
+  font-size: 10.5px;
+  font-weight: 650;
+}
+
+.kindli-chat {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 18px;
+  scrollbar-width: thin;
+  scrollbar-color:
+    rgba(255, 255, 255, 0.12)
+    transparent;
+}
+
+.kindli-message {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  margin-bottom: 13px;
+}
+
+.kindli-message.user {
+  justify-content: flex-end;
+}
+
+.kindli-message-avatar {
+  width: 27px;
+  height: 27px;
+  flex: 0 0 27px;
+  display: grid;
+  place-items: center;
+  border-radius: 9px;
+  color: #ff7540;
+  background: rgba(255, 111, 55, 0.09);
+  border: 1px solid rgba(255, 111, 55, 0.12);
+}
+
+.kindli-message-bubble {
+  max-width: 82%;
+  padding: 10px 12px;
+  border-radius: 15px 15px 15px 5px;
+  color: rgba(255, 255, 255, 0.75);
+  background: rgba(255, 255, 255, 0.055);
+  border: 1px solid rgba(255, 255, 255, 0.055);
+  font-size: 11.5px;
+  line-height: 1.55;
+  white-space: pre-wrap;
+}
+
+.kindli-message.user .kindli-message-bubble {
+  border-radius: 15px 15px 5px 15px;
+  color: #fff;
+  background:
+    linear-gradient(
+      135deg,
+      rgba(255, 115, 61, 0.95),
+      rgba(222, 72, 23, 0.95)
+    );
+  border-color: rgba(255, 129, 78, 0.32);
+}
+
+.kindli-typing {
+  min-width: 52px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 11px 12px;
+  border-radius: 15px 15px 15px 5px;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.kindli-typing span {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.45);
+  animation: kindliTyping 1s infinite ease-in-out;
+}
+
+.kindli-typing span:nth-child(2) {
+  animation-delay: 0.12s;
+}
+
+.kindli-typing span:nth-child(3) {
+  animation-delay: 0.24s;
+}
+
+.kindli-quick-actions {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  padding: 0 18px 12px;
+  scrollbar-width: none;
+}
+
+.kindli-quick-actions::-webkit-scrollbar {
+  display: none;
+}
+
+.kindli-quick-actions button {
+  flex: 0 0 auto;
+  padding: 7px 9px;
+  border: 1px solid rgba(255, 255, 255, 0.075);
+  border-radius: 999px;
+  cursor: pointer;
+  color: rgba(255, 255, 255, 0.62);
+  background: rgba(255, 255, 255, 0.025);
+  font-family: inherit;
+  font-size: 9.5px;
+}
+
+.kindli-quick-actions button:hover {
+  color: #fff;
+  border-color: rgba(255, 119, 66, 0.25);
+  background: rgba(255, 111, 55, 0.06);
+}
+
+.kindli-context-actions {
+  display: flex;
+  gap: 7px;
+  padding: 0 18px 12px;
+}
+
+.kindli-profile-action,
+.kindli-support-action {
+  min-height: 34px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 11px;
+  border-radius: 10px;
+  text-decoration: none;
+  font-family: inherit;
+  font-size: 10px;
+  font-weight: 720;
+}
+
+.kindli-profile-action {
+  color: #fff;
+  background:
+    linear-gradient(
+      135deg,
+      #ff743d,
+      #e55322
+    );
+}
+
+.kindli-profile-action:hover {
+  color: #fff;
+}
+
+.kindli-support-action {
+  border: 1px solid rgba(255, 255, 255, 0.085);
+  cursor: pointer;
+  color: rgba(255, 255, 255, 0.68);
+  background: rgba(255, 255, 255, 0.035);
+}
+
+.kindli-composer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 14px 10px;
+  padding: 6px 6px 6px 12px;
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 15px;
+  background: rgba(255, 255, 255, 0.035);
+}
+
+.kindli-composer:focus-within {
+  border-color: rgba(255, 117, 64, 0.32);
+  box-shadow: 0 0 0 3px rgba(255, 117, 64, 0.045);
+}
+
+.kindli-composer input {
+  min-width: 0;
+  flex: 1;
+  border: 0;
+  outline: none;
+  color: #fff;
+  background: transparent;
+  font-family: inherit;
+  font-size: 11.5px;
+}
+
+.kindli-composer input::placeholder {
+  color: rgba(255, 255, 255, 0.3);
+}
+
+.kindli-composer button {
+  width: 34px;
+  height: 34px;
+  flex: 0 0 34px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 11px;
+  cursor: pointer;
+  color: #fff;
+  background:
+    linear-gradient(
+      135deg,
+      #ff743d,
+      #dc491c
+    );
+}
+
+.kindli-composer button:disabled {
+  cursor: not-allowed;
+  opacity: 0.35;
+}
+
+.kindli-footer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  padding: 0 14px 11px;
+  color: rgba(255, 255, 255, 0.25);
+  font-size: 8.5px;
+}
+
+@keyframes kindliOverlayIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes kindliPanelIn {
+  from {
+    opacity: 0;
+    transform: translateY(24px) scale(0.975);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes kindliTyping {
+  0%, 60%, 100% {
+    opacity: 0.35;
+    transform: translateY(0);
+  }
+  30% {
+    opacity: 1;
+    transform: translateY(-2px);
+  }
+}
+
+@media (max-width: 700px) {
+  .kindli-overlay {
+    padding: 0;
+    align-items: flex-end;
+  }
+
+  .kindli-panel {
+    width: 100%;
+    height: min(78vh, 700px);
+    border-radius: 24px 24px 0 0;
+    border-left: 0;
+    border-right: 0;
+    border-bottom: 0;
+  }
+
+  .kindli-message-bubble {
+    max-width: 86%;
+  }
+
+  .kindli-context-actions {
+    flex-wrap: wrap;
+  }
+
+  .kindli-profile-action,
+  .kindli-support-action {
+    flex: 1;
+  }
+}
+
+/* ============================================================
+   FOODKINDL — VERIFICATION IN-APP NOTIFICATION
+   Bottom-right notification for Connect Dashboard
+============================================================ */
+
+.fk-verification-toast {
+  position: fixed;
+
+  right: 26px;
+  bottom: 118px;
+
+  z-index: 99997;
+
+  width:
+    min(
+      410px,
+      calc(100vw - 32px)
+    );
+
+  display: grid;
+
+  grid-template-columns:
+    42px minmax(0, 1fr) 28px;
+
+  align-items: start;
+
+  gap: 12px;
+
+  padding:
+    16px 15px 17px;
+
+  overflow: hidden;
+
+  border:
+    1px solid
+    rgba(255, 111, 55, 0.2);
+
+  border-radius:
+    18px;
+
+  background:
+    radial-gradient(
+      circle at 0% 0%,
+      rgba(255, 111, 55, 0.11),
+      transparent 38%
+    ),
+    linear-gradient(
+      145deg,
+      rgba(24, 17, 13, 0.985),
+      rgba(8, 8, 8, 0.99)
+    );
+
+  box-shadow:
+    0 24px 70px
+      rgba(0, 0, 0, 0.55),
+    0 0 40px
+      rgba(255, 95, 35, 0.07);
+
+  backdrop-filter:
+    blur(18px);
+
+  -webkit-backdrop-filter:
+    blur(18px);
+
+  animation:
+    fkVerificationToastIn
+    0.42s
+    cubic-bezier(
+      0.16,
+      1,
+      0.3,
+      1
+    );
+}
+
+
+/* ============================================================
+   LEFT ACCENT
+============================================================ */
+
+.fk-toast-accent {
+  position: absolute;
+
+  left: 0;
+  top: 0;
+  bottom: 0;
+
+  width: 3px;
+
+  background:
+    linear-gradient(
+      180deg,
+      #ff996f,
+      #ff6b32,
+      #d94717
+    );
+
+  box-shadow:
+    0 0 14px
+    rgba(255, 107, 50, 0.5);
+}
+
+
+/* ============================================================
+   ICON
+============================================================ */
+
+.fk-toast-icon {
+  width: 42px;
+  height: 42px;
+
+  display: grid;
+  place-items: center;
+
+  border:
+    1px solid
+    rgba(255, 111, 55, 0.18);
+
+  border-radius:
+    13px;
+
+  background:
+    linear-gradient(
+      145deg,
+      rgba(255, 111, 55, 0.13),
+      rgba(255, 111, 55, 0.035)
+    );
+
+  color:
+    #ff7b49;
+
+  box-shadow:
+    inset 0 1px 0
+    rgba(255, 255, 255, 0.025);
+}
+
+
+/* ============================================================
+   BODY
+============================================================ */
+
+.fk-toast-body {
+  min-width: 0;
+}
+
+
+.fk-toast-label {
+  margin-bottom: 4px;
+
+  color:
+    #ff7643;
+
+  font-size:
+    7px;
+
+  font-weight:
+    900;
+
+  letter-spacing:
+    0.15em;
+}
+
+
+.fk-toast-title {
+  display: block;
+
+  margin:
+    0 0 5px;
+
+  color:
+    #f8f3f0;
+
+  font-size:
+    13px;
+
+  font-weight:
+    820;
+
+  line-height:
+    1.3;
+
+  letter-spacing:
+    -0.018em;
+}
+
+
+.fk-toast-message {
+  margin: 0;
+
+  color:
+    rgba(
+      255,
+      255,
+      255,
+      0.52
+    );
+
+  font-size:
+    9.5px;
+
+  line-height:
+    1.55;
+}
+
+
+/* ============================================================
+   ACTIONS
+============================================================ */
+
+.fk-toast-actions {
+  display: flex;
+
+  align-items: center;
+
+  flex-wrap: wrap;
+
+  gap: 7px;
+
+  margin-top:
+    11px;
+}
+
+
+.fk-toast-primary,
+.fk-toast-help {
+  min-height:
+    32px;
+
+  display:
+    inline-flex;
+
+  align-items:
+    center;
+
+  justify-content:
+    center;
+
+  gap:
+    6px;
+
+  padding:
+    0 10px;
+
+  border-radius:
+    9px;
+
+  font-family:
+    inherit;
+
+  font-size:
+    8px;
+
+  font-weight:
+    820;
+
+  text-decoration:
+    none;
+}
+
+
+.fk-toast-primary {
+  border:
+    1px solid
+    rgba(255, 125, 75, 0.28);
+
+  color:
+    #ffffff;
+
+  background:
+    linear-gradient(
+      135deg,
+      #ff7542,
+      #df4c1d
+    );
+
+  box-shadow:
+    0 9px 20px
+    rgba(226, 74, 24, 0.15);
+
+  transition:
+    transform 0.18s ease,
+    box-shadow 0.18s ease;
+}
+
+
+.fk-toast-primary:hover {
+  transform:
+    translateY(-1px);
+
+  color:
+    #ffffff;
+
+  box-shadow:
+    0 12px 24px
+    rgba(226, 74, 24, 0.24);
+}
+
+
+.fk-toast-help {
+  appearance:
+    none;
+
+  border:
+    1px solid
+    rgba(
+      255,
+      255,
+      255,
+      0.085
+    );
+
+  cursor:
+    pointer;
+
+  color:
+    rgba(
+      255,
+      255,
+      255,
+      0.65
+    );
+
+  background:
+    rgba(
+      255,
+      255,
+      255,
+      0.03
+    );
+
+  transition:
+    color 0.18s ease,
+    border-color 0.18s ease,
+    background 0.18s ease;
+}
+
+
+.fk-toast-help:hover {
+  color:
+    #ffffff;
+
+  border-color:
+    rgba(
+      255,
+      111,
+      55,
+      0.25
+    );
+
+  background:
+    rgba(
+      255,
+      111,
+      55,
+      0.055
+    );
+}
+
+
+/* ============================================================
+   CLOSE
+============================================================ */
+
+.fk-toast-close {
+  width: 27px;
+  height: 27px;
+
+  display: grid;
+  place-items: center;
+
+  padding: 0;
+
+  border:
+    1px solid
+    rgba(
+      255,
+      255,
+      255,
+      0.055
+    );
+
+  border-radius:
+    8px;
+
+  cursor:
+    pointer;
+
+  color:
+    rgba(
+      255,
+      255,
+      255,
+      0.35
+    );
+
+  background:
+    rgba(
+      255,
+      255,
+      255,
+      0.025
+    );
+}
+
+
+.fk-toast-close:hover {
+  color:
+    #ffffff;
+
+  background:
+    rgba(
+      255,
+      255,
+      255,
+      0.06
+    );
+}
+
+
+/* ============================================================
+   PROGRESS BAR
+============================================================ */
+
+.fk-toast-progress {
+  position: absolute;
+
+  left: 0;
+  right: 0;
+  bottom: 0;
+
+  height: 2px;
+
+  overflow: hidden;
+
+  background:
+    rgba(
+      255,
+      255,
+      255,
+      0.025
+    );
+}
+
+
+.fk-toast-progress span {
+  display: block;
+
+  width: 100%;
+  height: 100%;
+
+  transform-origin:
+    left center;
+
+  background:
+    linear-gradient(
+      90deg,
+      #ff6b32,
+      #ff9a70
+    );
+
+  animation:
+    fkToastProgress
+    6.5s
+    linear
+    forwards;
+}
+
+
+/* ============================================================
+   STATUS VARIANTS
+============================================================ */
+
+.fk-verification-toast.info {
+  border-color:
+    rgba(
+      102,
+      177,
+      255,
+      0.18
+    );
+}
+
+
+.fk-verification-toast.info
+.fk-toast-icon {
+  color:
+    #7db9ff;
+
+  border-color:
+    rgba(
+      102,
+      177,
+      255,
+      0.16
+    );
+
+  background:
+    rgba(
+      102,
+      177,
+      255,
+      0.055
+    );
+}
+
+
+.fk-verification-toast.attention {
+  border-color:
+    rgba(
+      255,
+      164,
+      85,
+      0.23
+    );
+}
+
+
+.fk-verification-toast.attention
+.fk-toast-icon {
+  color:
+    #ffab67;
+
+  border-color:
+    rgba(
+      255,
+      164,
+      85,
+      0.18
+    );
+
+  background:
+    rgba(
+      255,
+      164,
+      85,
+      0.055
+    );
+}
+
+
+/* ============================================================
+   ANIMATION
+============================================================ */
+
+@keyframes fkVerificationToastIn {
+
+  from {
+    opacity: 0;
+
+    transform:
+      translateY(22px)
+      scale(0.97);
+  }
+
+  to {
+    opacity: 1;
+
+    transform:
+      translateY(0)
+      scale(1);
+  }
+
+}
+
+
+@keyframes fkToastProgress {
+
+  from {
+    transform:
+      scaleX(1);
+  }
+
+  to {
+    transform:
+      scaleX(0);
+  }
+
+}
+
+
+/* ============================================================
+   MOBILE
+============================================================ */
+
+@media (
+  max-width: 700px
+) {
+
+  .fk-verification-toast {
+    left:
+      14px;
+
+    right:
+      14px;
+
+    bottom:
+      92px;
+
+    width:
+      auto;
+
+    grid-template-columns:
+      38px minmax(0, 1fr) 26px;
+
+    gap:
+      10px;
+
+    padding:
+      14px 13px 15px;
+
+    border-radius:
+      16px;
+  }
+
+
+  .fk-toast-icon {
+    width:
+      38px;
+
+    height:
+      38px;
+
+    border-radius:
+      11px;
+  }
+
+
+  .fk-toast-title {
+    font-size:
+      12px;
+  }
+
+
+  .fk-toast-message {
+    font-size:
+      9px;
+  }
+
+
+  .fk-toast-actions {
+    align-items:
+      stretch;
+
+    flex-direction:
+      column;
+  }
+
+
+  .fk-toast-primary,
+  .fk-toast-help {
+    width:
+      100%;
+
+    min-height:
+      34px;
+  }
+
+}
+
+
+/* ============================================================
+   REDUCED MOTION
+============================================================ */
+
+@media (
+  prefers-reduced-motion:
+  reduce
+) {
+
+  .fk-verification-toast,
+  .fk-toast-progress span {
+    animation:
+      none !important;
+  }
+
+}
+
+/* ============================================================
+   KINDLI — FLOATING AI ASSISTANT
+============================================================ */
+
+.kindli-floating-launcher {
+  position: fixed;
+
+  right: 26px;
+  bottom: 28px;
+
+  z-index: 99990;
+
+  min-width: 154px;
+  height: 58px;
+
+  display: flex;
+  align-items: center;
+
+  gap: 10px;
+
+  padding: 7px 15px 7px 7px;
+
+  border:
+    1px solid
+    rgba(255, 111, 55, 0.28);
+
+  border-radius: 30px;
+
+  cursor: pointer;
+
+  color: #ffffff;
+
+  background:
+    linear-gradient(
+      145deg,
+      rgba(27, 15, 10, 0.98),
+      rgba(8, 8, 8, 0.98)
+    );
+
+  box-shadow:
+    0 18px 45px rgba(0, 0, 0, 0.5),
+    0 0 28px rgba(255, 92, 35, 0.12);
+
+  backdrop-filter: blur(18px);
+
+  transition:
+    transform 0.25s ease,
+    border-color 0.25s ease,
+    box-shadow 0.25s ease;
+
+  animation:
+    kindliFloat 3.2s ease-in-out infinite;
+}
+
+
+.kindli-floating-launcher:hover {
+  transform:
+    translateY(-4px)
+    scale(1.025);
+
+  border-color:
+    rgba(255, 111, 55, 0.6);
+
+  box-shadow:
+    0 22px 55px rgba(0, 0, 0, 0.58),
+    0 0 34px rgba(255, 91, 35, 0.22);
+}
+
+
+/* ============================================================
+   KINDLI ICON
+============================================================ */
+
+.kindli-floating-avatar {
+  position: relative;
+
+  width: 44px;
+  height: 44px;
+
+  flex-shrink: 0;
+
+  display: grid;
+  place-items: center;
+
+  border-radius: 50%;
+
+  color: #ff7542;
+
+  background:
+    radial-gradient(
+      circle at 35% 30%,
+      rgba(255, 142, 92, 0.22),
+      rgba(255, 90, 30, 0.08) 55%,
+      rgba(255, 90, 30, 0.02)
+    );
+
+  border:
+    1px solid
+    rgba(255, 111, 55, 0.35);
+
+  box-shadow:
+    inset 0 0 15px rgba(255, 111, 55, 0.08),
+    0 0 18px rgba(255, 91, 35, 0.12);
+}
+
+
+/* ============================================================
+   GLOW
+============================================================ */
+
+.kindli-floating-glow {
+  position: absolute;
+
+  left: 11px;
+  top: 11px;
+
+  width: 36px;
+  height: 36px;
+
+  border-radius: 50%;
+
+  background:
+    rgba(255, 103, 47, 0.22);
+
+  filter: blur(13px);
+
+  animation:
+    kindliGlow 2s ease-in-out infinite;
+}
+
+
+/* ============================================================
+   TEXT
+============================================================ */
+
+.kindli-floating-copy {
+  display: flex;
+  flex-direction: column;
+
+  align-items: flex-start;
+
+  line-height: 1.1;
+}
+
+
+.kindli-floating-copy strong {
+  color: #fff;
+
+  font-size: 12px;
+  font-weight: 800;
+}
+
+
+.kindli-floating-copy small {
+  margin-top: 4px;
+
+  color:
+    rgba(255, 255, 255, 0.43);
+
+  font-size: 8px;
+}
+
+
+/* ============================================================
+   ONLINE DOT
+============================================================ */
+
+.kindli-floating-online {
+  position: absolute;
+
+  left: 39px;
+  bottom: 8px;
+
+  width: 9px;
+  height: 9px;
+
+  border: 2px solid #0c0908;
+
+  border-radius: 50%;
+
+  background: #42d98b;
+
+  box-shadow:
+    0 0 8px rgba(66, 217, 139, 0.65);
+}
+
+
+/* ============================================================
+   ANIMATION
+============================================================ */
+
+@keyframes kindliFloat {
+
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-5px);
+  }
+}
+
+
+@keyframes kindliGlow {
+
+  0%,
+  100% {
+    opacity: 0.4;
+    transform: scale(0.9);
+  }
+
+  50% {
+    opacity: 0.9;
+    transform: scale(1.18);
+  }
+}
+
+
+/* ============================================================
+   MOBILE
+============================================================ */
+
+@media (max-width: 700px) {
+
+  .kindli-floating-launcher {
+    right: 15px;
+    bottom: 18px;
+
+    min-width: 0;
+    width: 54px;
+    height: 54px;
+
+    padding: 5px;
+
+    justify-content: center;
+  }
+
+
+  .kindli-floating-avatar {
+    width: 42px;
+    height: 42px;
+  }
+
+
+  .kindli-floating-copy {
+    display: none;
+  }
+
+
+  .kindli-floating-online {
+    left: auto;
+    right: 4px;
+    bottom: 5px;
+  }
+
+
+  .kindli-floating-glow {
+    left: 9px;
+    top: 9px;
+  }
+}
+
+.connect-step-card.journey-card-visible {
+  position: relative;
+  z-index: 24;
+}
+
+.journey-next-stop {
+  position: relative;
+  z-index: 35 !important;
+  pointer-events: auto !important;
+  isolation: isolate;
+  touch-action: manipulation;
+  user-select: none;
+}
+
+.journey-next-stop::before,
+.journey-next-stop::after {
+  pointer-events: none !important;
+}
+
+.connect-journey-traveler {
+  pointer-events: none !important;
+}
+
+.connect-step-marker {
+  z-index: 28;
+}
