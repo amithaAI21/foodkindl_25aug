@@ -1,7 +1,11 @@
 import { getStore } from "@netlify/blobs";
 
-const STORE_NAME = "foodkindl-restaurant-images";
-const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MB
+
+const STORE_NAME =
+  "foodkindl-restaurant-images";
+
+const MAX_FILE_SIZE =
+  10 * 1024 * 1024; // 10 MB
 
 const ALLOWED_TYPES = [
   "image/jpeg",
@@ -9,97 +13,206 @@ const ALLOWED_TYPES = [
   "image/webp",
 ];
 
-function jsonResponse(data, status = 200) {
-  return new Response(JSON.stringify(data), {
-    status,
-    headers: {
-      "Content-Type": "application/json",
-      "Cache-Control": "no-store",
-    },
-  });
+
+// ============================================================
+// JSON RESPONSE
+// ============================================================
+
+function jsonResponse(
+  data,
+  status = 200
+) {
+  return new Response(
+    JSON.stringify(data),
+    {
+      status,
+
+      headers: {
+        "Content-Type":
+          "application/json",
+
+        "Cache-Control":
+          "no-store",
+
+        "Access-Control-Allow-Origin":
+          "*",
+      },
+    }
+  );
 }
+
+
+// ============================================================
+// CLEAN CATEGORY
+// ============================================================
 
 function cleanCategory(value) {
-  const cleaned = String(value || "restaurants")
-    .replace(/[^a-zA-Z0-9/_-]/g, "")
-    .replace(/\.\./g, "")
-    .replace(/^\/+|\/+$/g, "");
+  const cleaned =
+    String(
+      value || "restaurants"
+    )
+      .replace(
+        /[^a-zA-Z0-9/_-]/g,
+        ""
+      )
+      .replace(
+        /\.\./g,
+        ""
+      )
+      .replace(
+        /^\/+|\/+$/g,
+        ""
+      );
 
-  return cleaned || "restaurants";
+  return (
+    cleaned ||
+    "restaurants"
+  );
 }
+
+
+// ============================================================
+// CLEAN FILE NAME
+// ============================================================
 
 function cleanFileName(filename) {
-  const cleaned = String(filename || "image.jpg")
-    .toLowerCase()
-    .replace(/[^a-zA-Z0-9._-]/g, "-")
-    .replace(/-+/g, "-")
-    .replace(/^-+|-+$/g, "");
+  const cleaned =
+    String(
+      filename || "image.jpg"
+    )
+      .toLowerCase()
+      .replace(
+        /[^a-zA-Z0-9._-]/g,
+        "-"
+      )
+      .replace(
+        /-+/g,
+        "-"
+      )
+      .replace(
+        /^-+|-+$/g,
+        ""
+      );
 
-  return cleaned || "image.jpg";
+  return (
+    cleaned ||
+    "image.jpg"
+  );
 }
 
-export default async (request) => {
-  // ---------------------------------------------------------
-  // CORS / OPTIONS
-  // ---------------------------------------------------------
 
-  if (request.method === "OPTIONS") {
-    return new Response(null, {
-      status: 204,
-      headers: {
-        "Access-Control-Allow-Origin": "*",
-        "Access-Control-Allow-Methods": "POST, OPTIONS",
-        "Access-Control-Allow-Headers":
-          "Content-Type, X-FoodKindl-Upload-Secret",
-      },
-    });
+// ============================================================
+// FUNCTION
+// ============================================================
+
+export default async (
+  request
+) => {
+
+  // ==========================================================
+  // OPTIONS / CORS
+  // ==========================================================
+
+  if (
+    request.method ===
+    "OPTIONS"
+  ) {
+    return new Response(
+      null,
+      {
+        status: 204,
+
+        headers: {
+          "Access-Control-Allow-Origin":
+            "*",
+
+          "Access-Control-Allow-Methods":
+            "POST, OPTIONS",
+
+          "Access-Control-Allow-Headers":
+            "Content-Type, X-FoodKindl-Upload-Secret",
+
+          "Access-Control-Max-Age":
+            "86400",
+        },
+      }
+    );
   }
 
-  // ---------------------------------------------------------
-  // Only POST is allowed
-  // ---------------------------------------------------------
 
-  if (request.method !== "POST") {
+  // ==========================================================
+  // ONLY POST
+  // ==========================================================
+
+  if (
+    request.method !==
+    "POST"
+  ) {
     return jsonResponse(
       {
         success: false,
-        detail: "Method not allowed. Use POST.",
+
+        detail:
+          "Method not allowed. Use POST.",
       },
       405
     );
   }
 
+
   try {
-    // -------------------------------------------------------
-    // Safe diagnostics
-    // DO NOT log the actual secret
-    // -------------------------------------------------------
+
+    // ========================================================
+    // SAFE DIAGNOSTICS
+    //
+    // Never print the actual secret.
+    // ========================================================
 
     console.log(
       "UPLOAD FUNCTION VERSION:",
-      "2026-08-30-v5"
+      "2026-08-31-v1"
+    );
+
+    console.log(
+      "FUNCTION SITE URL:",
+      process.env.URL ||
+        "missing"
+    );
+
+    console.log(
+      "DEPLOY CONTEXT:",
+      process.env.CONTEXT ||
+        "missing"
     );
 
     console.log(
       "BLOB SECRET EXISTS:",
-      Boolean(process.env.NETLIFY_BLOB_UPLOAD_SECRET)
+      Boolean(
+        process.env
+          .NETLIFY_BLOB_UPLOAD_SECRET
+      )
     );
 
-    // -------------------------------------------------------
-    // Validate Netlify environment secret
-    // -------------------------------------------------------
+
+    // ========================================================
+    // NETLIFY ENVIRONMENT SECRET
+    // ========================================================
 
     const expectedSecret =
-      process.env.NETLIFY_BLOB_UPLOAD_SECRET;
+      process.env
+        .NETLIFY_BLOB_UPLOAD_SECRET;
+
 
     if (!expectedSecret) {
+
       console.error(
-        "NETLIFY_BLOB_UPLOAD_SECRET is missing in Netlify runtime."
+        "NETLIFY_BLOB_UPLOAD_SECRET is missing from the Netlify Function runtime."
       );
 
       return jsonResponse(
         {
           success: false,
+
           detail:
             "NETLIFY_BLOB_UPLOAD_SECRET is not configured.",
         },
@@ -107,15 +220,19 @@ export default async (request) => {
       );
     }
 
-    // -------------------------------------------------------
-    // Validate secret sent by Django
-    // -------------------------------------------------------
 
-    const receivedSecret = request.headers.get(
-      "x-foodkindl-upload-secret"
-    );
+    // ========================================================
+    // DJANGO AUTH HEADER
+    // ========================================================
+
+    const receivedSecret =
+      request.headers.get(
+        "x-foodkindl-upload-secret"
+      );
+
 
     if (!receivedSecret) {
+
       console.warn(
         "Upload rejected: X-FoodKindl-Upload-Secret header missing."
       );
@@ -123,6 +240,7 @@ export default async (request) => {
       return jsonResponse(
         {
           success: false,
+
           detail:
             "Upload authentication header is missing.",
         },
@@ -130,7 +248,12 @@ export default async (request) => {
       );
     }
 
-    if (receivedSecret !== expectedSecret) {
+
+    if (
+      receivedSecret !==
+      expectedSecret
+    ) {
+
       console.warn(
         "Upload rejected: secret mismatch."
       );
@@ -138,21 +261,28 @@ export default async (request) => {
       return jsonResponse(
         {
           success: false,
-          detail: "Unauthorized upload request.",
+
+          detail:
+            "Unauthorized upload request.",
         },
         401
       );
     }
 
-    // -------------------------------------------------------
-    // Read multipart form
-    // -------------------------------------------------------
+
+    // ========================================================
+    // MULTIPART FORM
+    // ========================================================
 
     let formData;
 
     try {
-      formData = await request.formData();
+
+      formData =
+        await request.formData();
+
     } catch (error) {
+
       console.error(
         "Unable to parse multipart form data:",
         error
@@ -161,6 +291,7 @@ export default async (request) => {
       return jsonResponse(
         {
           success: false,
+
           detail:
             "Invalid multipart/form-data request.",
         },
@@ -168,16 +299,23 @@ export default async (request) => {
       );
     }
 
-    const file = formData.get("file");
 
-    // -------------------------------------------------------
-    // Validate file
-    // -------------------------------------------------------
+    // ========================================================
+    // FILE
+    // ========================================================
+
+    const file =
+      formData.get(
+        "file"
+      );
+
 
     if (!file) {
+
       return jsonResponse(
         {
           success: false,
+
           detail:
             'No file received. Expected multipart field "file".',
         },
@@ -185,26 +323,50 @@ export default async (request) => {
       );
     }
 
+
     if (
-      typeof file !== "object" ||
-      typeof file.arrayBuffer !== "function"
+      typeof file !==
+        "object" ||
+      typeof file.arrayBuffer !==
+        "function"
     ) {
+
       return jsonResponse(
         {
           success: false,
-          detail: "Invalid uploaded file.",
+
+          detail:
+            "Invalid uploaded file.",
         },
         400
       );
     }
 
-    const contentType =
-      file.type || "application/octet-stream";
 
-    if (!ALLOWED_TYPES.includes(contentType)) {
+    // ========================================================
+    // CONTENT TYPE
+    // ========================================================
+
+    const contentType =
+      (
+        file.type ||
+        "application/octet-stream"
+      )
+        .split(";")[0]
+        .trim()
+        .toLowerCase();
+
+
+    if (
+      !ALLOWED_TYPES.includes(
+        contentType
+      )
+    ) {
+
       return jsonResponse(
         {
           success: false,
+
           detail:
             "Unsupported image type. Only JPEG, PNG and WebP are allowed.",
         },
@@ -212,20 +374,37 @@ export default async (request) => {
       );
     }
 
-    if (!file.size || file.size <= 0) {
+
+    // ========================================================
+    // FILE SIZE
+    // ========================================================
+
+    if (
+      !file.size ||
+      file.size <= 0
+    ) {
+
       return jsonResponse(
         {
           success: false,
-          detail: "Uploaded image is empty.",
+
+          detail:
+            "Uploaded image is empty.",
         },
         400
       );
     }
 
-    if (file.size > MAX_FILE_SIZE) {
+
+    if (
+      file.size >
+      MAX_FILE_SIZE
+    ) {
+
       return jsonResponse(
         {
           success: false,
+
           detail:
             "Image is too large. Maximum size is 10 MB.",
         },
@@ -233,35 +412,51 @@ export default async (request) => {
       );
     }
 
-    // -------------------------------------------------------
-    // Category
-    // -------------------------------------------------------
 
-    const category = cleanCategory(
-      formData.get("category")
-    );
+    // ========================================================
+    // CATEGORY
+    // ========================================================
 
-    // -------------------------------------------------------
-    // Original filename
-    // -------------------------------------------------------
+    const category =
+      cleanCategory(
+        formData.get(
+          "category"
+        )
+      );
+
+
+    // ========================================================
+    // ORIGINAL FILE NAME
+    // ========================================================
 
     const originalName =
-      formData.get("original_name") ||
+      formData.get(
+        "original_name"
+      ) ||
       file.name ||
       "image.jpg";
 
+
     const safeFileName =
-      cleanFileName(originalName);
+      cleanFileName(
+        originalName
+      );
 
-    // -------------------------------------------------------
-    // Generate unique blob key
-    // -------------------------------------------------------
 
-    const uniqueId = crypto.randomUUID();
+    // ========================================================
+    // UNIQUE BLOB KEY
+    // ========================================================
+
+    const uniqueId =
+      crypto.randomUUID();
+
 
     const key =
       `${category}/` +
-      `${Date.now()}-${uniqueId}-${safeFileName}`;
+      `${Date.now()}-` +
+      `${uniqueId}-` +
+      `${safeFileName}`;
+
 
     console.log(
       "Uploading restaurant image:",
@@ -273,83 +468,118 @@ export default async (request) => {
       }
     );
 
-    // -------------------------------------------------------
-    // Convert file to ArrayBuffer
-    // -------------------------------------------------------
+
+    // ========================================================
+    // ARRAY BUFFER
+    // ========================================================
 
     const arrayBuffer =
       await file.arrayBuffer();
 
-    // -------------------------------------------------------
-    // Store in Netlify Blobs
-    // -------------------------------------------------------
 
-    const store = getStore(STORE_NAME);
+    // ========================================================
+    // NETLIFY BLOB STORE
+    // ========================================================
+
+    const store =
+      getStore(
+        STORE_NAME
+      );
+
 
     await store.set(
       key,
       arrayBuffer,
       {
         metadata: {
-          originalName: String(originalName),
+
+          originalName:
+            String(
+              originalName
+            ),
+
           contentType,
+
           uploadedAt:
-            new Date().toISOString(),
+            new Date()
+              .toISOString(),
         },
       }
     );
 
-    // -------------------------------------------------------
-    // Build public image URL
-    // -------------------------------------------------------
+
+    // ========================================================
+    // PUBLIC IMAGE URL
+    // ========================================================
 
     const origin =
-      new URL(request.url).origin;
+      new URL(
+        request.url
+      ).origin;
+
 
     const imageUrl =
       `${origin}` +
       `/.netlify/functions/restaurant-image` +
       `?key=${encodeURIComponent(key)}`;
 
+
     console.log(
       "Restaurant image uploaded successfully:",
       key
     );
 
-    // -------------------------------------------------------
-    // Success
-    // -------------------------------------------------------
+
+    // ========================================================
+    // SUCCESS
+    // ========================================================
 
     return jsonResponse(
       {
         success: true,
+
         key,
-        url: imageUrl,
+
+        url:
+          imageUrl,
+
         original_name:
-          String(originalName),
+          String(
+            originalName
+          ),
+
         content_type:
           contentType,
+
         size:
           file.size,
       },
       201
     );
+
+
   } catch (error) {
+
     console.error(
       "upload-restaurant-image unexpected error:",
       error
     );
 
+
     return jsonResponse(
       {
         success: false,
+
         detail:
           "Restaurant image upload failed.",
+
         error:
-          process.env.CONTEXT === "production"
+          process.env.CONTEXT ===
+          "production"
             ? undefined
             : String(
-                error?.message || error
+                error?.message ||
+                  error
               ),
       },
       500
