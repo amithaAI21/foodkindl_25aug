@@ -23,10 +23,13 @@ function jsonResponse(
   status = 200
 ) {
   return new Response(
-    JSON.stringify(data),
+    JSON.stringify({
+      ...data,
+      function_version:
+        "FOODKINDL-DEBUG-2026-08-31-V3",
+    }),
     {
       status,
-
       headers: {
         "Content-Type":
           "application/json",
@@ -36,11 +39,13 @@ function jsonResponse(
 
         "Access-Control-Allow-Origin":
           "*",
+
+        "X-FoodKindl-Function-Version":
+          "FOODKINDL-DEBUG-2026-08-31-V3",
       },
     }
   );
 }
-
 
 // ============================================================
 // CLEAN CATEGORY
