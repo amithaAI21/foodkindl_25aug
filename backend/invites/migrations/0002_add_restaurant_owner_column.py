@@ -1,41 +1,52 @@
 from django.db import migrations
 
 
-def repair_owner(apps, schema_editor):
+def add_owner_column(apps, schema_editor):
     Restaurant = apps.get_model("invites", "Restaurant")
+
     table_name = Restaurant._meta.db_table
 
     with schema_editor.connection.cursor() as cursor:
         description = (
             schema_editor.connection.introspection
-            .get_table_description(cursor, table_name)
+            .get_table_description(
+                cursor,
+                table_name,
+            )
         )
 
-    existing_columns = {column.name for column in description}
+    existing_columns = {
+        column.name
+        for column in description
+    }
 
     if "owner_id" in existing_columns:
-        print("owner_id already exists - skipping.")
+        print(
+            "invites_restaurant.owner_id already exists - skipping."
+        )
         return
 
-    field = Restaurant._meta.get_field("owner")
+    owner_field = Restaurant._meta.get_field("owner")
 
-    print("Repairing missing invites_restaurant.owner_id")
+    print(
+        "Adding missing column: invites_restaurant.owner_id"
+    )
 
     schema_editor.add_field(
         Restaurant,
-        field,
+        owner_field,
     )
 
 
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("invites", "0001_add_restaurant_owner_column"),
+        ("invites", "0001_initial"),
     ]
 
     operations = [
         migrations.RunPython(
-            repair_owner,
+            add_owner_column,
             migrations.RunPython.noop,
         ),
     ]
