@@ -110,7 +110,7 @@ export default async (
 ) => {
 
   // ==========================================================
-  // OPTIONS / CORS
+  // CORS / OPTIONS
   // ==========================================================
 
   if (
@@ -164,13 +164,11 @@ export default async (
 
     // ========================================================
     // SAFE DIAGNOSTICS
-    //
-    // Never print the actual secret.
     // ========================================================
 
     console.log(
       "UPLOAD FUNCTION VERSION:",
-      "2026-08-31-v1"
+      "2026-08-31-debug-v1"
     );
 
     console.log(
@@ -186,92 +184,46 @@ export default async (
     );
 
     console.log(
-      "BLOB SECRET EXISTS:",
-      Boolean(
-        process.env
-          .NETLIFY_BLOB_UPLOAD_SECRET
-      )
+      "ENVIRONMENT CHECK:",
+      {
+        hasBlobSecret:
+          Boolean(
+            process.env
+              .NETLIFY_BLOB_UPLOAD_SECRET
+          ),
+
+        hasSiteId:
+          Boolean(
+            process.env.SITE_ID
+          ),
+
+        hasUrl:
+          Boolean(
+            process.env.URL
+          ),
+
+        context:
+          process.env.CONTEXT ||
+          "missing",
+      }
     );
 
 
     // ========================================================
-    // NETLIFY ENVIRONMENT SECRET
+    // TEMPORARY DEBUG
+    //
+    // The upload-secret validation is intentionally disabled.
+    //
+    // DO NOT leave this disabled in production.
     // ========================================================
 
-    const expectedSecret =
-      process.env
-        .NETLIFY_BLOB_UPLOAD_SECRET;
-
-
-    if (!expectedSecret) {
-
-      console.error(
-        "NETLIFY_BLOB_UPLOAD_SECRET is missing from the Netlify Function runtime."
-      );
-
-      return jsonResponse(
-        {
-          success: false,
-
-          detail:
-            "NETLIFY_BLOB_UPLOAD_SECRET is not configured.",
-        },
-        500
-      );
-    }
+    console.warn(
+      "DEBUG MODE: Custom upload-secret validation is disabled."
+    );
 
 
     // ========================================================
-    // DJANGO AUTH HEADER
-    // ========================================================
-
-    const receivedSecret =
-      request.headers.get(
-        "x-foodkindl-upload-secret"
-      );
-
-
-    if (!receivedSecret) {
-
-      console.warn(
-        "Upload rejected: X-FoodKindl-Upload-Secret header missing."
-      );
-
-      return jsonResponse(
-        {
-          success: false,
-
-          detail:
-            "Upload authentication header is missing.",
-        },
-        401
-      );
-    }
-
-
-    if (
-      receivedSecret !==
-      expectedSecret
-    ) {
-
-      console.warn(
-        "Upload rejected: secret mismatch."
-      );
-
-      return jsonResponse(
-        {
-          success: false,
-
-          detail:
-            "Unauthorized upload request.",
-        },
-        401
-      );
-    }
-
-
-    // ========================================================
-    // MULTIPART FORM
+    // MULTIPART FORM DATA
     // ========================================================
 
     let formData;
@@ -464,13 +416,14 @@ export default async (
         key,
         category,
         contentType,
-        size: file.size,
+        size:
+          file.size,
       }
     );
 
 
     // ========================================================
-    // ARRAY BUFFER
+    // FILE BUFFER
     // ========================================================
 
     const arrayBuffer =
@@ -485,6 +438,12 @@ export default async (
       getStore(
         STORE_NAME
       );
+
+
+    console.log(
+      "Netlify Blob store created:",
+      STORE_NAME
+    );
 
 
     await store.set(
@@ -508,6 +467,12 @@ export default async (
     );
 
 
+    console.log(
+      "Blob saved successfully:",
+      key
+    );
+
+
     // ========================================================
     // PUBLIC IMAGE URL
     // ========================================================
@@ -526,7 +491,10 @@ export default async (
 
     console.log(
       "Restaurant image uploaded successfully:",
-      key
+      {
+        key,
+        imageUrl,
+      }
     );
 
 
@@ -553,6 +521,23 @@ export default async (
 
         size:
           file.size,
+
+        debug:
+          {
+            secretVisible:
+              Boolean(
+                process.env
+                  .NETLIFY_BLOB_UPLOAD_SECRET
+              ),
+
+            siteUrl:
+              process.env.URL ||
+              null,
+
+            context:
+              process.env.CONTEXT ||
+              null,
+          },
       },
       201
     );
@@ -574,13 +559,10 @@ export default async (
           "Restaurant image upload failed.",
 
         error:
-          process.env.CONTEXT ===
-          "production"
-            ? undefined
-            : String(
-                error?.message ||
-                  error
-              ),
+          String(
+            error?.message ||
+            error
+          ),
       },
       500
     );
