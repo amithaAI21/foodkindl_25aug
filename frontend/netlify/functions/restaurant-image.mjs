@@ -1,68 +1,182 @@
 import { getStore } from "@netlify/blobs";
 
-const STORE_NAME = "foodkindl-restaurant-images";
 
-export default async (request) => {
-  try {
-    const url = new URL(request.url);
+const STORE_NAME =
+  "foodkindl-restaurant-images";
 
-    const key = url.searchParams.get("key");
 
-    if (!key) {
-      return new Response(
-        "Image key is required.",
-        {
-          status: 400,
-        }
-      );
+function textResponse(
+  message,
+  status
+) {
+  return new Response(
+    message,
+    {
+      status,
+      headers: {
+        "Content-Type":
+          "text/plain; charset=utf-8",
+
+        "Access-Control-Allow-Origin":
+          "*",
+
+        "Cache-Control":
+          "no-store",
+      },
     }
+  );
+}
 
-    const store = getStore(STORE_NAME);
 
-    const entry = await store.getWithMetadata(
-      key,
+export default async (
+  request
+) => {
+
+  // ==========================================================
+  // CORS
+  // ==========================================================
+
+  if (
+    request.method ===
+    "OPTIONS"
+  ) {
+    return new Response(
+      null,
       {
-        type: "arrayBuffer",
+        status: 204,
+
+        headers: {
+          "Access-Control-Allow-Origin":
+            "*",
+
+          "Access-Control-Allow-Methods":
+            "GET, HEAD, OPTIONS",
+
+          "Access-Control-Allow-Headers":
+            "Content-Type",
+        },
       }
     );
+  }
+
+
+  // ==========================================================
+  // ONLY GET / HEAD
+  // ==========================================================
+
+  if (
+    request.method !== "GET" &&
+    request.method !== "HEAD"
+  ) {
+    return textResponse(
+      "Method not allowed.",
+      405
+    );
+  }
+
+
+  try {
+
+    const url =
+      new URL(
+        request.url
+      );
+
+
+    const key =
+      url.searchParams.get(
+        "key"
+      );
+
+
+    if (!key) {
+      return textResponse(
+        "Image key is required.",
+        400
+      );
+    }
+
+
+    const store =
+      getStore(
+        STORE_NAME
+      );
+
+
+    const entry =
+      await store.getWithMetadata(
+        key,
+        {
+          type:
+            "arrayBuffer",
+        }
+      );
+
 
     if (!entry) {
-      return new Response(
+      return textResponse(
         "Image not found.",
+        404
+      );
+    }
+
+
+    const contentType =
+      entry.metadata
+        ?.contentType ||
+      "image/jpeg";
+
+
+    const headers = {
+      "Content-Type":
+        contentType,
+
+      "Cache-Control":
+        "public, max-age=31536000, immutable",
+
+      "X-Content-Type-Options":
+        "nosniff",
+
+      "Access-Control-Allow-Origin":
+        "*",
+    };
+
+
+    // HEAD should return headers only
+    if (
+      request.method ===
+      "HEAD"
+    ) {
+      return new Response(
+        null,
         {
-          status: 404,
+          status: 200,
+          headers,
         }
       );
     }
 
-    const contentType =
-      entry.metadata?.contentType ||
-      "image/jpeg";
 
     return new Response(
       entry.data,
       {
         status: 200,
-        headers: {
-          "Content-Type": contentType,
-          "Cache-Control":
-            "public, max-age=31536000, immutable",
-          "X-Content-Type-Options":
-            "nosniff",
-        },
+        headers,
       }
     );
+
+
   } catch (error) {
+
     console.error(
       "Restaurant image error:",
       error
     );
 
-    return new Response(
+
+    return textResponse(
       "Unable to load image.",
-      {
-        status: 500,
-      }
+      500
     );
   }
 };
