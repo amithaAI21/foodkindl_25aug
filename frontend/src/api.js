@@ -9,7 +9,8 @@ const backendUrl = (
 
 const api = axios.create({
   baseURL: `${backendUrl}/api`,
-  timeout: 60000,
+  timeout: 30000,
+
   headers: {
     Accept: "application/json",
   },
@@ -18,53 +19,103 @@ const api = axios.create({
 
 api.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem(
-      "foodkindl_access"
-    );
+
+    const token =
+      localStorage.getItem(
+        "foodkindl_access"
+      );
+
 
     if (token) {
+
       config.headers.Authorization =
         `Bearer ${token}`;
     }
 
+
     /*
-     * IMPORTANT FOR IMAGE UPLOADS
+     * IMPORTANT:
      *
-     * Never manually force multipart/form-data.
-     * The browser must generate the boundary.
+     * Do not force application/json
+     * when FormData is being sent.
+     *
+     * Browser/Axios must generate:
+     *
+     * multipart/form-data;
+     * boundary=....
      */
-    if (config.data instanceof FormData) {
-      delete config.headers["Content-Type"];
-      delete config.headers["content-type"];
+
+    if (
+      config.data instanceof
+      FormData
+    ) {
+
+      delete config.headers[
+        "Content-Type"
+      ];
+
+      delete config.headers[
+        "content-type"
+      ];
+
     } else {
-      config.headers["Content-Type"] =
+
+      config.headers[
+        "Content-Type"
+      ] =
         "application/json";
     }
+
 
     return config;
   },
 
-  (error) => Promise.reject(error)
+  (error) => {
+    return Promise.reject(
+      error
+    );
+  }
 );
 
 
 api.interceptors.response.use(
-  (response) => response,
+  (response) => {
+
+    return response;
+
+  },
 
   (error) => {
+
     console.error(
       "FOODKINDL API ERROR:",
       {
-        url: error.config?.url,
-        baseURL: error.config?.baseURL,
-        method: error.config?.method,
-        status: error.response?.status,
-        response: error.response?.data,
-        message: error.message,
+        url:
+          error.config?.url,
+
+        method:
+          error.config?.method,
+
+        contentType:
+          error.config
+            ?.headers
+            ?.["Content-Type"],
+
+        status:
+          error.response?.status,
+
+        response:
+          error.response?.data,
+
+        message:
+          error.message,
       }
     );
 
-    return Promise.reject(error);
+
+    return Promise.reject(
+      error
+    );
   }
 );
 
