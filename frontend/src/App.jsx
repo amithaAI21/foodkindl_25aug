@@ -65,6 +65,18 @@ const PUBLIC_DARK_PAGES = [
 ];
 
 
+function isPartnerUser(user) {
+  const profile = user?.profile || {};
+
+  return (
+    user?.account_type === "partner" ||
+    profile?.account_type === "partner" ||
+    user?.preferred_portal === "restaurant" ||
+    profile?.preferred_portal === "restaurant"
+  );
+}
+
+
 // ============================================================
 // SCROLL TO TOP
 // ============================================================
@@ -278,16 +290,37 @@ function Protected({
   }
 
 
-  return user
-    ? children
-    : (
+  if (
+    !user
+  ) {
 
-        <Navigate
-          to="/login"
-          replace
-        />
+    return (
 
-      );
+      <Navigate
+        to="/login"
+        replace
+      />
+
+    );
+  }
+
+
+  if (
+    isPartnerUser(user)
+  ) {
+
+    return (
+
+      <Navigate
+        to="/partner/dashboard"
+        replace
+      />
+
+    );
+  }
+
+
+  return children;
 }
 
 
@@ -336,6 +369,21 @@ function VerifiedOnly({
   }
 
 
+  if (
+    isPartnerUser(user)
+  ) {
+
+    return (
+
+      <Navigate
+        to="/partner/dashboard"
+        replace
+      />
+
+    );
+  }
+
+
   const approved =
 
     user?.profile?.is_verified ===
@@ -357,6 +405,66 @@ function VerifiedOnly({
         />
 
       );
+}
+
+
+function PartnerOnly({
+  children,
+}) {
+
+  const {
+    user,
+    loading,
+  } = useAuth();
+
+
+  if (
+    loading
+  ) {
+
+    return (
+
+      <main className="app-page">
+
+        Loading Restaurant Partner Studio...
+
+      </main>
+
+    );
+  }
+
+
+  if (
+    !user
+  ) {
+
+    return (
+
+      <Navigate
+        to="/login"
+        replace
+      />
+
+    );
+  }
+
+
+  if (
+    !isPartnerUser(user)
+  ) {
+
+    return (
+
+      <Navigate
+        to="/dashboard"
+        replace
+      />
+
+    );
+  }
+
+
+  return children;
 }
 
 
@@ -390,20 +498,28 @@ export default function App() {
   // MESSAGING HIDDEN ON PUBLIC PAGES
   // =========================================================
 
-  const hideMessaging = [
-    "/",
-    "/login",
-    "/register",
-    "/register/restaurant",
-    "/careers",
-    "/contact",
-    "/community-guidelines",
-    "/safety",
-    "/privacy",
-    "/terms",
-  ].includes(
-    location.pathname
-  );
+  const isPartnerRoute =
+    location.pathname.startsWith(
+      "/partner"
+    );
+
+
+  const hideMessaging =
+    isPartnerRoute ||
+    [
+      "/",
+      "/login",
+      "/register",
+      "/register/restaurant",
+      "/careers",
+      "/contact",
+      "/community-guidelines",
+      "/safety",
+      "/privacy",
+      "/terms",
+    ].includes(
+      location.pathname
+    );
 
 
   return (
@@ -423,7 +539,12 @@ export default function App() {
           NAVBAR
       ===================================================== */}
 
-      <Navbar />
+      {
+        !isPartnerRoute &&
+        (
+          <Navbar />
+        )
+      }
 
 
       {/* =====================================================
@@ -445,11 +566,15 @@ export default function App() {
         />
 
         <Route
-  path="/partner/dashboard"
-  element={
-    <PartnerDashboard />
-  }
-/>
+          path="/partner/dashboard"
+          element={
+            <PartnerOnly>
+
+              <PartnerDashboard />
+
+            </PartnerOnly>
+          }
+        />
 
 
         <Route

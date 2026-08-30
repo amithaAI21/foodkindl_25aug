@@ -1,114 +1,90 @@
-import {
-  Building2,
-  Camera,
-  Check,
-  ChevronDown,
-  Clock3,
-  ImagePlus,
-  IndianRupee,
-  LayoutDashboard,
-  LogOut,
-  MapPin,
-  Menu,
-  Pencil,
-  Plus,
-  Save,
-  Store,
-  Trash2,
-  Upload,
-  Utensils,
-  Wifi,
-  X,
-} from "lucide-react";
-
-import {
+import React, {
+  useCallback,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from "react";
 
 import {
-  useNavigate,
-} from "react-router-dom";
+  Camera,
+  Check,
+  ChefHat,
+  ImagePlus,
+  Loader2,
+  MapPin,
+  Plus,
+  Settings,
+  LogOut,
+  Store,
+  Trash2,
+  Upload,
+  Utensils,
+  X,
+} from "lucide-react";
 
 import api from "../api";
-
-import "../styles/partner-dashboard.css";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 
 
 const EMPTY_RESTAURANT = {
-
   name: "",
-
-  restaurant_type:
-    "restaurant",
-
+  restaurant_type: "restaurant",
   description: "",
-
   cuisine: "",
-
   phone_number: "",
   email: "",
   website: "",
-
   address: "",
   locality: "",
   city: "",
   pincode: "",
-
   price_range: "",
   average_cost_for_two: "",
-
   opening_time: "",
   closing_time: "",
-
   seating_capacity: "",
-
   has_parking: false,
   has_wifi: false,
-
   accepts_cards: true,
-
   family_friendly: true,
-
-  outdoor_seating:
-    false,
-
-  wheelchair_accessible:
-    false,
-
-  serves_vegetarian:
-    true,
-
-  serves_non_vegetarian:
-    true,
+  outdoor_seating: false,
+  wheelchair_accessible: false,
+  serves_vegetarian: true,
+  serves_non_vegetarian: true,
+  accepts_foodkindl_booking: false,
 };
 
-
-const EMPTY_MENU_ITEM = {
-
+const EMPTY_MENU_FORM = {
   name: "",
-
   description: "",
-
-  category:
-    "main_course",
-
-  food_type:
-    "vegetarian",
-
+  category: "main_course",
+  food_type: "vegetarian",
   price: "",
-
-  is_popular:
-    false,
-
-  is_available:
-    true,
+  is_popular: false,
+  is_available: true,
 };
 
+const CATEGORY_OPTIONS = [
+  ["starter", "Starter"],
+  ["main_course", "Main Course"],
+  ["bread", "Bread"],
+  ["rice", "Rice"],
+  ["dessert", "Dessert"],
+  ["beverage", "Beverage"],
+  ["snack", "Snack"],
+  ["other", "Other"],
+];
 
-const CUISINES = [
+const FOOD_TYPE_OPTIONS = [
+  ["vegetarian", "Vegetarian"],
+  ["non_vegetarian", "Non Vegetarian"],
+  ["vegan", "Vegan"],
+  ["egg", "Egg"],
+];
 
+const CUISINE_OPTIONS = [
   ["south_indian", "South Indian"],
   ["north_indian", "North Indian"],
   ["kerala", "Kerala"],
@@ -123,7 +99,7 @@ const CUISINES = [
   ["gujarati", "Gujarati"],
   ["maharashtrian", "Maharashtrian"],
   ["goan", "Goan"],
-
+  ["kashmiri", "Kashmiri"],
   ["chinese", "Chinese"],
   ["indo_chinese", "Indo-Chinese"],
   ["italian", "Italian"],
@@ -134,7 +110,8 @@ const CUISINES = [
   ["japanese", "Japanese"],
   ["korean", "Korean"],
   ["arabian", "Arabian"],
-
+  ["middle_eastern", "Middle Eastern"],
+  ["lebanese", "Lebanese"],
   ["biryani", "Biryani"],
   ["seafood", "Seafood"],
   ["street_food", "Street Food"],
@@ -142,392 +119,361 @@ const CUISINES = [
   ["cafe", "Cafe"],
   ["bakery", "Bakery"],
   ["desserts", "Desserts"],
-
+  ["barbecue", "Barbecue / Grill"],
   ["vegetarian", "Vegetarian"],
   ["vegan", "Vegan"],
   ["jain", "Jain"],
-
   ["multi_cuisine", "Multi Cuisine"],
   ["other", "Other"],
 ];
 
+function getErrorMessage(error, fallback = "Something went wrong.") {
+  const data = error?.response?.data;
+
+  if (!data) return error?.message || fallback;
+  if (typeof data === "string") return data;
+  if (data.detail) return String(data.detail);
+  if (data.error) return String(data.error);
+  if (data.message) return String(data.message);
+
+  const parts = [];
+  Object.entries(data).forEach(([key, value]) => {
+    if (Array.isArray(value)) {
+      parts.push(`${key}: ${value.join(", ")}`);
+    } else if (value !== null && value !== undefined) {
+      parts.push(`${key}: ${String(value)}`);
+    }
+  });
+
+  return parts.length ? parts.join(" | ") : fallback;
+}
+
+function Switch({ checked, onChange, label }) {
+  return (
+    <button
+      type="button"
+      className={`fk-switch-wrap ${checked ? "active" : ""}`}
+      onClick={() => onChange(!checked)}
+    >
+      <span className="fk-switch">
+        <span className="fk-switch-knob" />
+      </span>
+      <span>{label}</span>
+    </button>
+  );
+}
 
 export default function PartnerDashboard() {
+  const navigate = useNavigate();
+  const { user, logout } = useAuth();
 
-  const navigate =
-    useNavigate();
+  const [activeTab, setActiveTab] = useState("restaurant");
 
+  const [restaurant, setRestaurant] = useState(null);
+  const [restaurantForm, setRestaurantForm] = useState(EMPTY_RESTAURANT);
+  const [menuItems, setMenuItems] = useState([]);
+  const [gallery, setGallery] = useState([]);
 
-  const [
-    loading,
-    setLoading,
-  ] = useState(true);
+  const [menuForm, setMenuForm] = useState(EMPTY_MENU_FORM);
+  const [menuImage, setMenuImage] = useState(null);
+  const [menuImagePreview, setMenuImagePreview] = useState("");
 
+  const [coverImage, setCoverImage] = useState(null);
+  const [coverPreview, setCoverPreview] = useState("");
 
-  const [
-    saving,
-    setSaving,
-  ] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [savingRestaurant, setSavingRestaurant] = useState(false);
+  const [addingMenu, setAddingMenu] = useState(false);
+  const [uploadingCover, setUploadingCover] = useState(false);
+  const [uploadingGallery, setUploadingGallery] = useState(false);
 
+  const [message, setMessage] = useState("");
+  const [error, setError] = useState("");
 
-  const [
-    restaurants,
-    setRestaurants,
-  ] = useState([]);
+  const menuFileInputRef = useRef(null);
+  const coverFileInputRef = useRef(null);
+  const galleryFileInputRef = useRef(null);
 
+  const restaurantId =
+    restaurant?.id ??
+    restaurant?.pk ??
+    restaurant?.restaurant_id ??
+    null;
 
-  const [
-    selectedId,
-    setSelectedId,
-  ] = useState(null);
-
-
-  const [
-    activeTab,
-    setActiveTab,
-  ] = useState(
-    "overview"
+  const urls = useMemo(
+    () => ({
+      restaurants: "/partner/restaurants/",
+      restaurant: restaurantId
+        ? `/partner/restaurants/${restaurantId}/`
+        : null,
+      cover: restaurantId
+        ? `/partner/restaurants/${restaurantId}/main-photo/`
+        : null,
+      gallery: restaurantId
+        ? `/partner/restaurants/${restaurantId}/photos/`
+        : null,
+      menu: restaurantId
+        ? `/partner/restaurants/${restaurantId}/menu/`
+        : null,
+    }),
+    [restaurantId]
   );
 
+  const clearAlerts = () => {
+    setMessage("");
+    setError("");
+  };
 
-  const [
-    form,
-    setForm,
-  ] = useState(
-    EMPTY_RESTAURANT
-  );
+  const loadRestaurant = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError("");
 
+      const response = await api.get("/partner/restaurants/");
+      const data = response.data;
 
-  const [
-    menuForm,
-    setMenuForm,
-  ] = useState(
-    EMPTY_MENU_ITEM
-  );
+      let firstRestaurant = null;
 
+      if (Array.isArray(data)) {
+        firstRestaurant = data[0] || null;
+      } else if (Array.isArray(data?.results)) {
+        firstRestaurant = data.results[0] || null;
+      } else if (data?.restaurant) {
+        firstRestaurant = data.restaurant;
+      } else if (data?.id || data?.pk || data?.restaurant_id) {
+        firstRestaurant = data;
+      }
 
-  const [
-    message,
-    setMessage,
-  ] = useState("");
-
-
-  const [
-    error,
-    setError,
-  ] = useState("");
-
-
-  const [
-    showCreate,
-    setShowCreate,
-  ] = useState(false);
-
-
-  const selectedRestaurant =
-    useMemo(
-      () =>
-        restaurants.find(
-          restaurant =>
-            restaurant.id ===
-            selectedId
-        ) ||
-        null,
-
-      [
-        restaurants,
-        selectedId,
-      ]
-    );
-
-
-  useEffect(
-    () => {
-
-      loadRestaurants();
-
-    },
-    []
-  );
-
-
-  useEffect(
-    () => {
-
-      if (
-        !selectedRestaurant
-      ) {
+      if (!firstRestaurant) {
+        setRestaurant(null);
+        setRestaurantForm(EMPTY_RESTAURANT);
+        setMenuItems([]);
+        setGallery([]);
+        setActiveTab("restaurant");
         return;
       }
 
-      setForm({
+      setRestaurant(firstRestaurant);
+      setRestaurantForm({
         ...EMPTY_RESTAURANT,
-        ...selectedRestaurant,
+        ...firstRestaurant,
       });
 
-    },
-    [
-      selectedRestaurant,
-    ]
-  );
-
-
-  function showSuccess(
-    text
-  ) {
-
-    setMessage(
-      text
-    );
-
-    setError("");
-
-    window.setTimeout(
-      () => {
-        setMessage("");
-      },
-      3500
-    );
-  }
-
-
-  function showError(
-    err,
-    fallback
-  ) {
-
-    console.error(
-      err
-    );
-
-    const data =
-      err?.response?.data;
-
-    const detail =
-      data?.detail ||
-      fallback;
-
-    setError(
-      detail
-    );
-
-    setMessage("");
-  }
-
-
-  async function loadRestaurants() {
-
-    setLoading(
-      true
-    );
-
-    setError("");
-
-    try {
-
-      const response =
-        await api.get(
-          "/partner/restaurants/"
-        );
-
-      const list =
-        Array.isArray(
-          response.data
-        )
-          ? response.data
-          : [];
-
-      setRestaurants(
-        list
+      setGallery(
+        Array.isArray(firstRestaurant.images)
+          ? firstRestaurant.images
+          : []
       );
 
-      if (
-        list.length > 0
-      ) {
+      setMenuItems(
+        Array.isArray(firstRestaurant.menu_items)
+          ? firstRestaurant.menu_items
+          : []
+      );
+    } catch (err) {
+      console.error("LOAD RESTAURANT ERROR:", err);
+      setError(getErrorMessage(err, "Unable to load restaurant."));
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
-        setSelectedId(
-          previous =>
-            previous ||
-            list[0].id
-        );
+  const loadMenu = useCallback(async () => {
+    if (!restaurantId) return;
+
+    try {
+      const response = await api.get(
+        `/partner/restaurants/${restaurantId}/menu/`
+      );
+
+      const data = response.data;
+
+      if (Array.isArray(data)) {
+        setMenuItems(data);
+      } else if (Array.isArray(data?.results)) {
+        setMenuItems(data.results);
+      }
+    } catch (err) {
+      console.error("Unable to load menu:", err);
+    }
+  }, [restaurantId]);
+
+  const loadGallery = useCallback(async () => {
+    if (!restaurantId) return;
+
+    try {
+      const response = await api.get(
+        `/partner/restaurants/${restaurantId}/photos/`
+      );
+
+      const data = response.data;
+
+      if (Array.isArray(data)) {
+        setGallery(data);
+      } else if (Array.isArray(data?.results)) {
+        setGallery(data.results);
+      }
+    } catch (err) {
+      console.error("Unable to load gallery:", err);
+    }
+  }, [restaurantId]);
+
+  useEffect(() => {
+    loadRestaurant();
+  }, [loadRestaurant]);
+
+  useEffect(() => {
+    if (!restaurantId) return;
+    loadMenu();
+    loadGallery();
+  }, [restaurantId, loadMenu, loadGallery]);
+
+  const updateRestaurantField = (field, value) => {
+    setRestaurantForm((prev) => ({
+      ...prev,
+      [field]: value,
+    }));
+  };
+
+  const saveRestaurant = async (event) => {
+    event.preventDefault();
+    clearAlerts();
+
+    try {
+      setSavingRestaurant(true);
+
+      const response = restaurantId
+        ? await api.patch(urls.restaurant, restaurantForm)
+        : await api.post(urls.restaurants, restaurantForm);
+
+      const saved = response.data;
+
+      setRestaurant(saved);
+      setRestaurantForm({
+        ...EMPTY_RESTAURANT,
+        ...saved,
+      });
+
+      setMessage(
+        restaurantId
+          ? "Restaurant details updated."
+          : "Restaurant created successfully."
+      );
+    } catch (err) {
+      console.error(err);
+      setError(getErrorMessage(err, "Unable to save restaurant."));
+    } finally {
+      setSavingRestaurant(false);
+    }
+  };
+
+  const handleCoverSelection = (event) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    if (coverPreview) URL.revokeObjectURL(coverPreview);
+
+    setCoverImage(file);
+    setCoverPreview(URL.createObjectURL(file));
+  };
+
+  const uploadCoverPhoto = async () => {
+    if (!restaurantId || !coverImage) return;
+
+    clearAlerts();
+
+    try {
+      setUploadingCover(true);
+
+      const formData = new FormData();
+      formData.append("image", coverImage);
+
+      await api.post(urls.cover, formData);
+
+      setMessage("Cover photo uploaded successfully.");
+      setCoverImage(null);
+
+      if (coverPreview) URL.revokeObjectURL(coverPreview);
+      setCoverPreview("");
+
+      if (coverFileInputRef.current) {
+        coverFileInputRef.current.value = "";
       }
 
+      await loadRestaurant();
+      await loadGallery();
     } catch (err) {
-
-      showError(
-        err,
-        "Unable to load your restaurants."
-      );
-
+      console.error(err);
+      setError(getErrorMessage(err, "Cover photo upload failed."));
     } finally {
-
-      setLoading(
-        false
-      );
+      setUploadingCover(false);
     }
-  }
+  };
 
+  const handleGalleryUpload = async (event) => {
+    const selectedFiles = Array.from(event.target.files || []);
 
-  function updateField(
-    field,
-    value
-  ) {
+    if (!restaurantId || selectedFiles.length === 0) return;
 
-    setForm(
-      previous => ({
-        ...previous,
-        [field]: value,
-      })
-    );
-  }
-
-
-  function updateMenuField(
-    field,
-    value
-  ) {
-
-    setMenuForm(
-      previous => ({
-        ...previous,
-        [field]: value,
-      })
-    );
-  }
-
-
-  async function createRestaurant(
-    event
-  ) {
-
-    event.preventDefault();
-
-    if (
-      !form.name.trim()
-    ) {
-
-      setError(
-        "Restaurant name is required."
-      );
-
-      return;
-    }
-
-    setSaving(
-      true
-    );
+    clearAlerts();
 
     try {
+      setUploadingGallery(true);
 
-      const response =
-        await api.post(
-          "/partner/restaurants/",
-          form
-        );
+      const formData = new FormData();
 
-      setRestaurants(
-        previous => [
-          response.data,
-          ...previous,
-        ]
-      );
+      selectedFiles.forEach((file) => {
+        formData.append("images", file);
+      });
 
-      setSelectedId(
-        response.data.id
-      );
+      await api.post(urls.gallery, formData);
 
-      setShowCreate(
-        false
-      );
-
-      showSuccess(
-        "Restaurant created successfully."
-      );
-
+      setMessage("Gallery photos uploaded successfully.");
+      await loadGallery();
     } catch (err) {
-
-      showError(
-        err,
-        "Unable to create restaurant."
-      );
-
+      console.error(err);
+      setError(getErrorMessage(err, "Gallery upload failed."));
     } finally {
+      setUploadingGallery(false);
 
-      setSaving(
-        false
-      );
+      if (galleryFileInputRef.current) {
+        galleryFileInputRef.current.value = "";
+      }
     }
-  }
+  };
 
+  const deleteGalleryImage = async (imageId) => {
+    if (!restaurantId || !imageId) return;
 
-  async function saveRestaurant() {
+    if (!window.confirm("Remove this restaurant photo?")) return;
 
-    if (
-      !selectedRestaurant
-    ) {
-      return;
-    }
-
-    setSaving(
-      true
-    );
+    clearAlerts();
 
     try {
-
-      const response =
-        await api.patch(
-
-          `/partner/restaurants/${selectedRestaurant.id}/`,
-
-          form
-        );
-
-      setRestaurants(
-        previous =>
-          previous.map(
-            restaurant =>
-              restaurant.id ===
-                response.data.id
-                ? response.data
-                : restaurant
-          )
+      await api.delete(
+        `/partner/restaurants/${restaurantId}/photos/${imageId}/`
       );
 
-      showSuccess(
-        "Restaurant details saved."
+      setGallery((prev) =>
+        prev.filter((item) => item.id !== imageId)
       );
 
+      setMessage("Photo removed.");
     } catch (err) {
-
-      showError(
-        err,
-        "Unable to save restaurant."
-      );
-
-    } finally {
-
-      setSaving(
-        false
-      );
+      setError(getErrorMessage(err, "Unable to remove photo."));
     }
-  }
+  };
 
+  const updateMenuField = (field, value) => {
+    setMenuForm((prev) => ({
+      ...prev,
+      [field]: value,
+    }));
+  };
 
-  async function uploadMainPhoto(
-    event
-  ) {
-
-    const file =
-      event.target.files?.[0];
-
-    event.target.value = "";
-
-    if (
-      !file ||
-      !selectedRestaurant
-    ) {
-      return;
-    }
+  const handleMenuImageSelection = (event) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
 
     const allowedTypes = [
       "image/jpeg",
@@ -535,2428 +481,1712 @@ export default function PartnerDashboard() {
       "image/webp",
     ];
 
-    if (
-      !allowedTypes.includes(
-        file.type
-      )
-    ) {
-      setError(
-        "Please upload a JPG, PNG or WebP image."
-      );
+    if (!allowedTypes.includes(file.type)) {
+      setError("Please select a JPG, PNG or WebP image.");
+      event.target.value = "";
       return;
     }
 
-    if (
-      file.size >
-      8 * 1024 * 1024
-    ) {
-      setError(
-        "Image must be smaller than 8 MB."
-      );
+    if (file.size > 10 * 1024 * 1024) {
+      setError("Dish photo is too large. Maximum size is 10 MB.");
+      event.target.value = "";
       return;
     }
 
-    const data =
-      new FormData();
+    clearAlerts();
 
-    data.append(
-      "image",
-      file,
-      file.name
-    );
-
-    setSaving(true);
-    setError("");
-
-    try {
-
-      console.log(
-        "Uploading cover photo:",
-        {
-          restaurantId:
-            selectedRestaurant.id,
-          fileName:
-            file.name,
-          fileType:
-            file.type,
-          fileSize:
-            file.size,
-        }
-      );
-
-      const response =
-        await api.post(
-          `/partner/restaurants/${selectedRestaurant.id}/main-photo/`,
-          data,
-          {
-            headers: {
-              "Content-Type":
-                "multipart/form-data",
-            },
-          }
-        );
-
-      console.log(
-        "PHOTO UPLOAD RESPONSE:",
-        response.data
-      );
-
-      await loadRestaurants();
-
-      showSuccess(
-        "Cover photo uploaded successfully."
-      );
-
-    } catch (err) {
-
-      console.error(
-        "COVER PHOTO UPLOAD FAILED:",
-        {
-          status:
-            err.response?.status,
-          data:
-            err.response?.data,
-          url:
-            err.config?.url,
-          message:
-            err.message,
-        }
-      );
-
-      const responseData =
-        err.response?.data;
-
-      let uploadError =
-        "Photo upload failed.";
-
-      if (
-        typeof responseData?.detail ===
-        "string"
-      ) {
-        uploadError =
-          responseData.detail;
-      } else if (
-        Array.isArray(
-          responseData?.detail
-        )
-      ) {
-        uploadError =
-          responseData.detail[0] ||
-          uploadError;
-      } else if (
-        Array.isArray(
-          responseData?.image
-        )
-      ) {
-        uploadError =
-          responseData.image[0] ||
-          uploadError;
-      } else if (
-        typeof responseData?.error ===
-        "string"
-      ) {
-        uploadError =
-          responseData.error;
-      }
-
-      setError(
-        uploadError
-      );
-
-    } finally {
-      setSaving(false);
-    }
-  }
-
-  async function uploadGalleryPhotos(
-    event
-  ) {
-
-  const files =
-    Array.from(
-      event.target.files || []
-    );
-
-
-  event.target.value = "";
-
-
-  if (
-    !files.length ||
-    !selectedRestaurant
-  ) {
-
-    return;
-  }
-
-
-  const formData =
-    new FormData();
-
-
-  files.forEach(
-    file => {
-
-      formData.append(
-        "images",
-        file,
-        file.name
-      );
-    }
-  );
-
-
-  setSaving(true);
-  setError("");
-
-
-  try {
-
-    await api.post(
-
-      `/partner/restaurants/${selectedRestaurant.id}/photos/`,
-
-      formData,
-
-      {
-        headers: {
-          "Content-Type":
-            "multipart/form-data",
-        },
-      }
-    );
-
-
-    await loadRestaurants();
-
-
-    showSuccess(
-      `${files.length} photo${
-        files.length > 1
-          ? "s"
-          : ""
-      } uploaded.`
-    );
-
-
-  } catch (err) {
-
-    console.error(
-      "GALLERY ERROR:",
-      err.response?.data ||
-      err
-    );
-
-
-    showError(
-      err,
-      "Gallery upload failed."
-    );
-
-
-  } finally {
-
-    setSaving(false);
-  }
-}
-
-  async function deletePhoto(
-    imageId
-  ) {
-
-    if (
-      !selectedRestaurant
-    ) {
-      return;
+    if (menuImagePreview) {
+      URL.revokeObjectURL(menuImagePreview);
     }
 
-    try {
+    setMenuImage(file);
+    setMenuImagePreview(URL.createObjectURL(file));
+  };
 
-      await api.delete(
-
-        `/partner/restaurants/${selectedRestaurant.id}/photos/${imageId}/`
-
-      );
-
-      await loadRestaurants();
-
-      showSuccess(
-        "Photo removed."
-      );
-
-    } catch (err) {
-
-      showError(
-        err,
-        "Unable to remove photo."
-      );
+  const removeSelectedMenuImage = () => {
+    if (menuImagePreview) {
+      URL.revokeObjectURL(menuImagePreview);
     }
-  }
 
+    setMenuImage(null);
+    setMenuImagePreview("");
 
-  async function addMenuItem(
-    event
-  ) {
+    if (menuFileInputRef.current) {
+      menuFileInputRef.current.value = "";
+    }
+  };
 
+  const handleAddMenuItem = async (event) => {
     event.preventDefault();
 
-    if (
-      !selectedRestaurant
-    ) {
+    if (!restaurantId) {
+      setError("Create your restaurant before adding menu items.");
       return;
     }
 
-    if (
-      !menuForm.name.trim()
-    ) {
-
-      setError(
-        "Dish name is required."
-      );
-
+    if (!menuForm.name.trim()) {
+      setError("Please enter the dish name.");
       return;
     }
 
     if (
       menuForm.price === "" ||
-      menuForm.price === null ||
       Number(menuForm.price) < 0
     ) {
-
-      setError(
-        "Please enter a valid dish price."
-      );
-
+      setError("Please enter a valid dish price.");
       return;
     }
 
-    setSaving(
-      true
-    );
+    clearAlerts();
+
+    const selectedImage = menuImage;
 
     try {
+      setAddingMenu(true);
 
-      await api.post(
-
-        `/partner/restaurants/${selectedRestaurant.id}/menu/`,
-
+      const createResponse = await api.post(
+        `/partner/restaurants/${restaurantId}/menu/`,
         {
-          ...menuForm,
-
-          price:
-            menuForm.price ||
-            null,
+          name: menuForm.name.trim(),
+          description: menuForm.description.trim(),
+          category: menuForm.category,
+          food_type: menuForm.food_type,
+          price: menuForm.price,
+          is_popular: menuForm.is_popular,
+          is_available: menuForm.is_available,
         }
       );
 
-      setMenuForm(
-        EMPTY_MENU_ITEM
+      const createdItem = createResponse?.data;
+
+      if (!createdItem?.id) {
+        throw new Error(
+          "Menu item was created but the API did not return its ID."
+        );
+      }
+
+      if (selectedImage) {
+        const photoForm = new FormData();
+        photoForm.append("image", selectedImage);
+
+        await api.post(
+          `/partner/restaurants/${restaurantId}/menu/${createdItem.id}/photo/`,
+          photoForm
+        );
+      }
+
+      setMenuForm({ ...EMPTY_MENU_FORM });
+      removeSelectedMenuImage();
+
+      setMessage(
+        selectedImage
+          ? "Menu item and photo added successfully."
+          : "Menu item added successfully."
       );
 
-      await loadRestaurants();
-
-      showSuccess(
-        "Menu item added."
-      );
-
+      await loadMenu();
     } catch (err) {
-
-      showError(
-        err,
-        "Unable to add menu item."
+      console.error(
+        "MENU ITEM ERROR:",
+        err?.response?.status,
+        err?.response?.data,
+        err
       );
 
+      setError(getErrorMessage(err, "Unable to add menu item."));
     } finally {
-
-      setSaving(
-        false
-      );
+      setAddingMenu(false);
     }
-  }
+  };
 
+  const deleteMenuItem = async (menuId) => {
+    if (!restaurantId || !menuId) return;
+    if (!window.confirm("Delete this menu item?")) return;
 
-  async function deleteMenuItem(
-    id
-  ) {
+    clearAlerts();
 
+    try {
+      await api.delete(
+        `/partner/restaurants/${restaurantId}/menu/${menuId}/`
+      );
+
+      setMenuItems((prev) =>
+        prev.filter((item) => item.id !== menuId)
+      );
+
+      setMessage("Menu item deleted.");
+    } catch (err) {
+      setError(getErrorMessage(err, "Unable to delete menu item."));
+    }
+  };
+
+  const replaceMenuPhoto = async (menuId, file) => {
+    if (!restaurantId || !menuId || !file) return;
+
+    clearAlerts();
+
+    try {
+      const formData = new FormData();
+      formData.append("image", file);
+
+      await api.post(
+        `/partner/restaurants/${restaurantId}/menu/${menuId}/photo/`,
+        formData
+      );
+
+      setMessage("Dish photo updated.");
+      await loadMenu();
+    } catch (err) {
+      setError(getErrorMessage(err, "Dish photo upload failed."));
+    }
+  };
+
+  const openTab = (tab) => {
     if (
-      !selectedRestaurant
+      (tab === "photos" || tab === "menu" || tab === "settings") &&
+      !restaurantId
     ) {
+      setError("Save your restaurant first.");
       return;
     }
 
+    clearAlerts();
+    setActiveTab(tab);
+  };
+
+  const handlePartnerLogout = async () => {
     try {
-
-      await api.delete(
-
-        `/partner/restaurants/${selectedRestaurant.id}/menu/${id}/`
-
-      );
-
-      await loadRestaurants();
-
-      showSuccess(
-        "Menu item removed."
-      );
-
-    } catch (err) {
-
-      showError(
-        err,
-        "Unable to remove menu item."
-      );
+      await logout?.();
+    } catch (logoutError) {
+      console.error("PARTNER LOGOUT ERROR:", logoutError);
+    } finally {
+      navigate("/login", { replace: true });
     }
-  }
+  };
 
-
-  async function uploadMenuPhoto(
-  menuId,
-  file
-) {
-
-  if (
-    !file ||
-    !selectedRestaurant
-  ) {
-
-    return;
-  }
-
-
-  const formData =
-    new FormData();
-
-
-  formData.append(
-    "image",
-    file,
-    file.name
-  );
-
-
-  try {
-
-    await api.post(
-
-      `/partner/restaurants/${selectedRestaurant.id}/menu/${menuId}/photo/`,
-
-      formData,
-
-      {
-        headers: {
-          "Content-Type":
-            "multipart/form-data",
-        },
-      }
-    );
-
-
-    await loadRestaurants();
-
-
-    showSuccess(
-      "Dish photo uploaded."
-    );
-
-
-  } catch (err) {
-
-    console.error(
-      "DISH PHOTO ERROR:",
-      err.response?.data ||
-      err
-    );
-
-
-    showError(
-      err,
-      "Dish photo upload failed."
-    );
-  }
-}
-
-  function startNewRestaurant() {
-
-    setForm(
-      EMPTY_RESTAURANT
-    );
-
-    setShowCreate(
-      true
-    );
-
-    setActiveTab(
-      "restaurant"
-    );
-  }
-
-
-  if (
-    loading
-  ) {
-
+  if (loading) {
     return (
-      <div className="partner-loading">
-
-        <div className="partner-loader" />
-
-        <strong>
-          Opening Partner Studio
-        </strong>
-
+      <div className="fk-loading">
+        <Loader2 size={30} className="fk-spin" />
+        <span>Loading restaurant studio...</span>
       </div>
     );
   }
 
-
   return (
-
-    <div className="partner-shell">
-
-      {/* SIDEBAR */}
-
-      <aside className="partner-sidebar">
-
-        <button
-          type="button"
-          className="partner-brand"
-          onClick={() =>
-            navigate(
-              "/partner/dashboard"
-            )
-          }
-        >
-
-          <div className="partner-brand-icon">
-            FK
-          </div>
-
-          <div>
-
-            <strong>
-              FoodKindl
-            </strong>
-
-            <span>
-              Partner Studio
-            </span>
-
-          </div>
-
-        </button>
-
-
-        <nav>
-
+    <div className="fk-studio">
+      <aside className="fk-sidebar">
+        <div className="fk-sidebar-top">
           <button
-            className={
-              activeTab ===
-              "overview"
-                ? "active"
-                : ""
-            }
-            onClick={() =>
-              setActiveTab(
-                "overview"
-              )
-            }
+            type="button"
+            className={`fk-nav-item ${
+              activeTab === "restaurant" ? "active" : ""
+            }`}
+            onClick={() => openTab("restaurant")}
           >
-            <LayoutDashboard size={18} />
-            Overview
+            <Store size={20} />
+            <span>Restaurant</span>
           </button>
 
-
           <button
-            className={
-              activeTab ===
-              "restaurant"
-                ? "active"
-                : ""
-            }
-            onClick={() =>
-              setActiveTab(
-                "restaurant"
-              )
-            }
+            type="button"
+            className={`fk-nav-item ${
+              activeTab === "photos" ? "active" : ""
+            } ${!restaurantId ? "disabled" : ""}`}
+            onClick={() => openTab("photos")}
           >
-            <Store size={18} />
-            Restaurant
+            <Camera size={20} />
+            <span>Photos</span>
           </button>
 
-
           <button
-            className={
-              activeTab ===
-              "photos"
-                ? "active"
-                : ""
-            }
-            onClick={() =>
-              setActiveTab(
-                "photos"
-              )
-            }
+            type="button"
+            className={`fk-nav-item ${
+              activeTab === "menu" ? "active" : ""
+            } ${!restaurantId ? "disabled" : ""}`}
+            onClick={() => openTab("menu")}
           >
-            <Camera size={18} />
-            Photos
+            <Utensils size={20} />
+            <span>Menu</span>
+          </button>
+        </div>
+
+        <div className="fk-sidebar-bottom">
+          <button
+            type="button"
+            className={`fk-nav-item ${
+              activeTab === "settings" ? "active" : ""
+            } ${!restaurantId ? "disabled" : ""}`}
+            onClick={() => openTab("settings")}
+          >
+            <Settings size={20} />
+            <span>Settings</span>
           </button>
 
-
           <button
-            className={
-              activeTab ===
-              "menu"
-                ? "active"
-                : ""
-            }
-            onClick={() =>
-              setActiveTab(
-                "menu"
-              )
-            }
+            type="button"
+            className="fk-nav-item fk-logout-item"
+            onClick={handlePartnerLogout}
           >
-            <Utensils size={18} />
-            Menu
+            <LogOut size={20} />
+            <span>Logout</span>
           </button>
-
-        </nav>
-
-
-        <button
-          className="partner-logout"
-          type="button"
-          onClick={() => {
-
-            localStorage.removeItem(
-              "foodkindl_access"
-            );
-
-            localStorage.removeItem(
-              "foodkindl_refresh"
-            );
-
-            navigate(
-              "/login"
-            );
-          }}
-        >
-          <LogOut size={17} />
-          Sign out
-        </button>
-
+        </div>
       </aside>
 
-
-      {/* MAIN */}
-
-      <main className="partner-main">
-
-        <header className="partner-topbar">
-
-          <div>
-
-            <span className="partner-eyebrow">
-              FOODKINDL FOR RESTAURANTS
-            </span>
-
-            <h1>
-              Partner Studio
-            </h1>
-
+      <main className="fk-main">
+        {message && (
+          <div className="fk-toast success">
+            <Check size={18} />
+            <span>{message}</span>
+            <button type="button" onClick={() => setMessage("")}>
+              <X size={17} />
+            </button>
           </div>
+        )}
 
+        {error && (
+          <div className="fk-toast error">
+            <X size={18} />
+            <span>{error}</span>
+            <button type="button" onClick={() => setError("")}>
+              <X size={17} />
+            </button>
+          </div>
+        )}
 
-          <div className="partner-top-actions">
+        {activeTab === "restaurant" && (
+          <section className="fk-page-section">
+            <div className="fk-page-heading">
+              <h1>Restaurant details</h1>
+              <p>Keep your restaurant information accurate.</p>
+            </div>
 
-            {
-              restaurants.length >
-                0 &&
-              (
-                <div className="partner-restaurant-switch">
+            <form className="fk-card" onSubmit={saveRestaurant}>
+              <div className="fk-grid two">
+                <label>
+                  Restaurant name
+                  <input
+                    value={restaurantForm.name}
+                    onChange={(e) =>
+                      updateRestaurantField("name", e.target.value)
+                    }
+                    required
+                  />
+                </label>
 
-                  <Store size={16} />
-
+                <label>
+                  Restaurant type
                   <select
-                    value={
-                      selectedId ||
-                      ""
-                    }
-                    onChange={
-                      event =>
-                        setSelectedId(
-                          Number(
-                            event.target.value
-                          )
-                        )
-                    }
-                  >
-
-                    {
-                      restaurants.map(
-                        restaurant => (
-                          <option
-                            key={
-                              restaurant.id
-                            }
-                            value={
-                              restaurant.id
-                            }
-                          >
-                            {
-                              restaurant.name
-                            }
-                          </option>
-                        )
+                    value={restaurantForm.restaurant_type}
+                    onChange={(e) =>
+                      updateRestaurantField(
+                        "restaurant_type",
+                        e.target.value
                       )
                     }
-
+                  >
+                    <option value="restaurant">Restaurant</option>
+                    <option value="cafe">Cafe</option>
+                    <option value="hotel">Hotel</option>
                   </select>
+                </label>
 
-                  <ChevronDown size={15} />
+                <label>
+                  Cuisine
+                  <select
+                    value={restaurantForm.cuisine || ""}
+                    onChange={(e) =>
+                      updateRestaurantField("cuisine", e.target.value)
+                    }
+                  >
+                    <option value="">Select cuisine</option>
+                    {CUISINE_OPTIONS.map(([value, label]) => (
+                      <option key={value} value={value}>
+                        {label}
+                      </option>
+                    ))}
+                  </select>
+                </label>
 
-                </div>
-              )
-            }
+                <label>
+                  Phone
+                  <input
+                    value={restaurantForm.phone_number || ""}
+                    onChange={(e) =>
+                      updateRestaurantField(
+                        "phone_number",
+                        e.target.value
+                      )
+                    }
+                  />
+                </label>
 
+                <label>
+                  Email
+                  <input
+                    type="email"
+                    value={restaurantForm.email || ""}
+                    onChange={(e) =>
+                      updateRestaurantField("email", e.target.value)
+                    }
+                  />
+                </label>
 
-            <button
-              className="partner-primary"
-              type="button"
-              onClick={
-                startNewRestaurant
-              }
-            >
-              <Plus size={18} />
-              Add Restaurant
-            </button>
-
-          </div>
-
-        </header>
-
-
-        {
-          message &&
-          (
-            <div className="partner-toast success">
-              <Check size={18} />
-              {message}
-            </div>
-          )
-        }
-
-
-        {
-          error &&
-          (
-            <div className="partner-toast error">
-              <X size={18} />
-              {error}
-            </div>
-          )
-        }
-
-
-        {/* EMPTY STATE */}
-
-        {
-          restaurants.length ===
-            0 &&
-          !showCreate &&
-          (
-            <section className="partner-empty">
-
-              <div className="partner-empty-icon">
-                <Building2 size={34} />
+                <label>
+                  Website
+                  <input
+                    value={restaurantForm.website || ""}
+                    onChange={(e) =>
+                      updateRestaurantField("website", e.target.value)
+                    }
+                  />
+                </label>
               </div>
 
-              <span>
-                Welcome to FoodKindl Partner
-              </span>
+              <label>
+                Description
+                <textarea
+                  rows={4}
+                  value={restaurantForm.description || ""}
+                  onChange={(e) =>
+                    updateRestaurantField(
+                      "description",
+                      e.target.value
+                    )
+                  }
+                />
+              </label>
 
-              <h2>
-                Bring your restaurant
-                to FoodKindl.
-              </h2>
+              <div className="fk-subheading">
+                <MapPin size={18} />
+                <span>Location</span>
+              </div>
 
-              <p>
-                Create your restaurant,
-                add photos and menus, and
-                make it discoverable to
-                people connecting through
-                food.
-              </p>
+              <label>
+                Address
+                <textarea
+                  rows={3}
+                  value={restaurantForm.address || ""}
+                  onChange={(e) =>
+                    updateRestaurantField("address", e.target.value)
+                  }
+                />
+              </label>
+
+              <div className="fk-grid three">
+                <label>
+                  Locality
+                  <input
+                    value={restaurantForm.locality || ""}
+                    onChange={(e) =>
+                      updateRestaurantField("locality", e.target.value)
+                    }
+                  />
+                </label>
+
+                <label>
+                  City
+                  <input
+                    value={restaurantForm.city || ""}
+                    onChange={(e) =>
+                      updateRestaurantField("city", e.target.value)
+                    }
+                  />
+                </label>
+
+                <label>
+                  Pincode
+                  <input
+                    value={restaurantForm.pincode || ""}
+                    onChange={(e) =>
+                      updateRestaurantField("pincode", e.target.value)
+                    }
+                  />
+                </label>
+              </div>
+
+              {restaurant && (
+                <div className="fk-coordinates">
+                  <span>
+                    Latitude:{" "}
+                    {restaurant.latitude || "Waiting for location"}
+                  </span>
+                  <span>
+                    Longitude:{" "}
+                    {restaurant.longitude || "Waiting for location"}
+                  </span>
+                </div>
+              )}
+
+              <button
+                type="submit"
+                className="fk-save-btn"
+                disabled={savingRestaurant}
+              >
+                {savingRestaurant ? (
+                  <>
+                    <Loader2 size={17} className="fk-spin" />
+                    Saving...
+                  </>
+                ) : (
+                  <>
+                    <Check size={17} />
+                    Save restaurant
+                  </>
+                )}
+              </button>
+            </form>
+          </section>
+        )}
+
+        {activeTab === "photos" && restaurantId && (
+          <section className="fk-page-section">
+            <div className="fk-page-heading">
+              <h1>Restaurant photos</h1>
+              <p>Show the food, ambience, interiors and experience.</p>
+            </div>
+
+            <div className="fk-cover-card">
+              <div className="fk-cover-preview">
+                {coverPreview || restaurant?.image_url ? (
+                  <img
+                    src={coverPreview || restaurant.image_url}
+                    alt="Restaurant cover"
+                  />
+                ) : (
+                  <ImagePlus size={48} />
+                )}
+              </div>
+
+              <div className="fk-cover-copy">
+                <span className="fk-kicker">COVER PHOTO</span>
+                <h2>Your restaurant’s first impression.</h2>
+                <p>
+                  Use a clear landscape image of your restaurant or
+                  signature food.
+                </p>
+
+                <input
+                  ref={coverFileInputRef}
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp"
+                  hidden
+                  onChange={handleCoverSelection}
+                />
+
+                {!coverImage ? (
+                  <button
+                    type="button"
+                    className="fk-dark-btn"
+                    onClick={() =>
+                      coverFileInputRef.current?.click()
+                    }
+                  >
+                    <Upload size={18} />
+                    Upload cover photo
+                  </button>
+                ) : (
+                  <div className="fk-row">
+                    <button
+                      type="button"
+                      className="fk-dark-btn"
+                      onClick={() =>
+                        coverFileInputRef.current?.click()
+                      }
+                    >
+                      <Camera size={18} />
+                      Change
+                    </button>
+
+                    <button
+                      type="button"
+                      className="fk-orange-btn"
+                      onClick={uploadCoverPhoto}
+                      disabled={uploadingCover}
+                    >
+                      {uploadingCover ? (
+                        <Loader2 size={18} className="fk-spin" />
+                      ) : (
+                        <Upload size={18} />
+                      )}
+                      Save cover
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="fk-gallery-head">
+              <div>
+                <h2>Gallery</h2>
+                <p>Add as many restaurant photos as you need.</p>
+              </div>
+
+              <input
+                ref={galleryFileInputRef}
+                type="file"
+                multiple
+                hidden
+                accept="image/jpeg,image/png,image/webp"
+                onChange={handleGalleryUpload}
+              />
 
               <button
                 type="button"
-                className="partner-primary"
-                onClick={
-                  startNewRestaurant
+                className="fk-orange-btn"
+                onClick={() =>
+                  galleryFileInputRef.current?.click()
                 }
+                disabled={uploadingGallery}
               >
-                <Plus size={18} />
-                Create my restaurant
+                {uploadingGallery ? (
+                  <Loader2 size={18} className="fk-spin" />
+                ) : (
+                  <ImagePlus size={18} />
+                )}
+                Add Photos
               </button>
-
-            </section>
-          )
-        }
-
-
-        {/* CREATE */}
-
-        {
-          showCreate &&
-          (
-            <RestaurantForm
-              title="Create restaurant"
-              subtitle="Tell FoodKindl about your place."
-              form={form}
-              updateField={updateField}
-              onSubmit={createRestaurant}
-              saving={saving}
-              submitText="Create Restaurant"
-              onCancel={() =>
-                setShowCreate(
-                  false
-                )
-              }
-            />
-          )
-        }
-
-
-        {
-          !showCreate &&
-          selectedRestaurant &&
-          (
-            <>
-
-              {/* OVERVIEW */}
-
-              {
-                activeTab ===
-                  "overview" &&
-                (
-                  <Overview
-                    restaurant={
-                      selectedRestaurant
-                    }
-                    setActiveTab={
-                      setActiveTab
-                    }
-                  />
-                )
-              }
-
-
-              {/* RESTAURANT DETAILS */}
-
-              {
-                activeTab ===
-                  "restaurant" &&
-                (
-                  <RestaurantForm
-                    title="Restaurant details"
-                    subtitle="Keep your information accurate for FoodKindl members."
-                    form={form}
-                    updateField={
-                      updateField
-                    }
-                    saving={
-                      saving
-                    }
-                    submitText="Save changes"
-                    onSubmit={
-                      event => {
-                        event.preventDefault();
-                        saveRestaurant();
-                      }
-                    }
-                  />
-                )
-              }
-
-
-              {/* PHOTOS */}
-
-              {
-                activeTab ===
-                  "photos" &&
-                (
-                  <PhotosSection
-                    restaurant={
-                      selectedRestaurant
-                    }
-                    uploadMainPhoto={
-                      uploadMainPhoto
-                    }
-                    uploadGalleryPhotos={
-                      uploadGalleryPhotos
-                    }
-                    deletePhoto={
-                      deletePhoto
-                    }
-                  />
-                )
-              }
-
-
-              {/* MENU */}
-
-              {
-                activeTab ===
-                  "menu" &&
-                (
-                  <MenuSection
-
-                    restaurant={
-                      selectedRestaurant
-                    }
-
-                    menuForm={
-                      menuForm
-                    }
-
-                    updateMenuField={
-                      updateMenuField
-                    }
-
-                    addMenuItem={
-                      addMenuItem
-                    }
-
-                    deleteMenuItem={
-                      deleteMenuItem
-                    }
-
-                    uploadMenuPhoto={
-                      uploadMenuPhoto
-                    }
-
-                    saving={
-                      saving
-                    }
-                  />
-                )
-              }
-
-            </>
-          )
-        }
-
-      </main>
-
-    </div>
-  );
-}
-
-
-/* ============================================================
-   OVERVIEW
-============================================================ */
-
-function Overview({
-  restaurant,
-  setActiveTab,
-}) {
-
-  return (
-
-    <div className="partner-overview">
-
-      <section className="partner-hero-card">
-
-        <div>
-
-          <span>
-            YOUR RESTAURANT
-          </span>
-
-          <h2>
-            {restaurant.name}
-          </h2>
-
-          <p>
-            {
-              [
-                restaurant.locality,
-                restaurant.city,
-              ]
-                .filter(Boolean)
-                .join(", ")
-              ||
-              "Add your location"
-            }
-          </p>
-
-        </div>
-
-
-        {
-          restaurant.image_url
-            ? (
-                <img
-                  src={
-                    restaurant.image_url
-                  }
-                  alt={
-                    restaurant.name
-                  }
-                />
-              )
-            : (
-                <div className="partner-hero-placeholder">
-                  <Store size={36} />
-                </div>
-              )
-        }
-
-      </section>
-
-
-      <div className="partner-stat-grid">
-
-        <StatCard
-          icon={
-            <Camera size={21} />
-          }
-          value={
-            restaurant.images
-              ?.length ||
-            0
-          }
-          label="Gallery photos"
-        />
-
-        <StatCard
-          icon={
-            <Utensils size={21} />
-          }
-          value={
-            restaurant.menu_items
-              ?.length ||
-            0
-          }
-          label="Menu items"
-        />
-
-        <StatCard
-          icon={
-            <MapPin size={21} />
-          }
-          value={
-            restaurant.city ||
-            "—"
-          }
-          label="Location"
-        />
-
-        <StatCard
-          icon={
-            <Clock3 size={21} />
-          }
-          value={
-            restaurant.opening_time
-              ? restaurant.opening_time
-                  .slice(0, 5)
-              : "—"
-          }
-          label="Opening time"
-        />
-
-      </div>
-
-
-      <section className="partner-next-steps">
-
-        <div>
-
-          <span>
-            QUICK SETUP
-          </span>
-
-          <h3>
-            Make your page stand out.
-          </h3>
-
-        </div>
-
-
-        <button
-          onClick={() =>
-            setActiveTab(
-              "photos"
-            )
-          }
-        >
-          <Camera size={20} />
-
-          <div>
-            <strong>
-              Add restaurant photos
-            </strong>
-
-            <span>
-              Show people the food,
-              ambience and experience.
-            </span>
-          </div>
-        </button>
-
-
-        <button
-          onClick={() =>
-            setActiveTab(
-              "menu"
-            )
-          }
-        >
-          <Utensils size={20} />
-
-          <div>
-            <strong>
-              Build your menu
-            </strong>
-
-            <span>
-              Add dishes, prices and
-              individual food photos.
-            </span>
-          </div>
-        </button>
-
-      </section>
-
-    </div>
-  );
-}
-
-
-function StatCard({
-  icon,
-  value,
-  label,
-}) {
-
-  return (
-    <article className="partner-stat">
-
-      <div>
-        {icon}
-      </div>
-
-      <strong>
-        {value}
-      </strong>
-
-      <span>
-        {label}
-      </span>
-
-    </article>
-  );
-}
-
-
-/* ============================================================
-   RESTAURANT FORM
-============================================================ */
-
-function RestaurantForm({
-  title,
-  subtitle,
-  form,
-  updateField,
-  onSubmit,
-  saving,
-  submitText,
-  onCancel,
-}) {
-
-  return (
-
-    <form
-      className="partner-editor"
-      onSubmit={
-        onSubmit
-      }
-    >
-
-      <div className="partner-section-heading">
-
-        <div>
-
-          <h2>
-            {title}
-          </h2>
-
-          <p>
-            {subtitle}
-          </p>
-
-        </div>
-
-      </div>
-
-
-      <div className="partner-form-card">
-
-        <h3>
-          Basic information
-        </h3>
-
-
-        <div className="partner-grid two">
-
-          <Field
-            label="Restaurant name"
-          >
-            <input
-              value={
-                form.name ||
-                ""
-              }
-              required
-              onChange={
-                event =>
-                  updateField(
-                    "name",
-                    event.target.value
-                  )
-              }
-              placeholder="Eg. Malabar Table"
-            />
-          </Field>
-
-
-          <Field
-            label="Restaurant type"
-          >
-
-            <select
-              value={
-                form.restaurant_type ||
-                "restaurant"
-              }
-              onChange={
-                event =>
-                  updateField(
-                    "restaurant_type",
-                    event.target.value
-                  )
-              }
-            >
-              <option value="restaurant">
-                Restaurant
-              </option>
-
-              <option value="cafe">
-                Cafe
-              </option>
-
-              <option value="hotel">
-                Hotel
-              </option>
-            </select>
-
-          </Field>
-
-
-          <Field
-            label="Cuisine"
-          >
-
-            <select
-              value={
-                form.cuisine ||
-                ""
-              }
-              onChange={
-                event =>
-                  updateField(
-                    "cuisine",
-                    event.target.value
-                  )
-              }
-            >
-
-              <option value="">
-                Choose cuisine
-              </option>
-
-              {
-                CUISINES.map(
-                  (
-                    [
-                      value,
-                      name,
-                    ]
-                  ) => (
-                    <option
-                      key={value}
-                      value={value}
-                    >
-                      {name}
-                    </option>
-                  )
-                )
-              }
-
-            </select>
-
-          </Field>
-
-
-          <Field
-            label="Price range"
-          >
-
-            <select
-              value={
-                form.price_range ||
-                ""
-              }
-              onChange={
-                event =>
-                  updateField(
-                    "price_range",
-                    event.target.value
-                  )
-              }
-            >
-
-              <option value="">
-                Select
-              </option>
-
-              <option value="budget">
-                Budget
-              </option>
-
-              <option value="moderate">
-                Moderate
-              </option>
-
-              <option value="premium">
-                Premium
-              </option>
-
-            </select>
-
-          </Field>
-
-        </div>
-
-
-        <Field
-          label="Tell people about your restaurant"
-        >
-
-          <textarea
-            rows={5}
-            value={
-              form.description ||
-              ""
-            }
-            onChange={
-              event =>
-                updateField(
-                  "description",
-                  event.target.value
-                )
-            }
-            placeholder="What makes your food or experience special?"
-          />
-
-        </Field>
-
-      </div>
-
-
-      <div className="partner-form-card">
-
-        <h3>
-          Contact
-        </h3>
-
-        <div className="partner-grid three">
-
-          <Field label="Phone">
-            <input
-              value={
-                form.phone_number ||
-                ""
-              }
-              onChange={
-                event =>
-                  updateField(
-                    "phone_number",
-                    event.target.value
-                  )
-              }
-            />
-          </Field>
-
-          <Field label="Email">
-            <input
-              type="email"
-              value={
-                form.email ||
-                ""
-              }
-              onChange={
-                event =>
-                  updateField(
-                    "email",
-                    event.target.value
-                  )
-              }
-            />
-          </Field>
-
-          <Field label="Website">
-            <input
-              value={
-                form.website ||
-                ""
-              }
-              onChange={
-                event =>
-                  updateField(
-                    "website",
-                    event.target.value
-                  )
-              }
-            />
-          </Field>
-
-        </div>
-
-      </div>
-
-
-      <div className="partner-form-card">
-
-        <h3>
-          Location
-        </h3>
-
-        <Field
-          label="Full address"
-        >
-          <textarea
-            rows={3}
-            value={
-              form.address ||
-              ""
-            }
-            onChange={
-              event =>
-                updateField(
-                  "address",
-                  event.target.value
-                )
-            }
-          />
-        </Field>
-
-
-        <div className="partner-grid three">
-
-          <Field label="Locality">
-            <input
-              value={
-                form.locality ||
-                ""
-              }
-              onChange={
-                event =>
-                  updateField(
-                    "locality",
-                    event.target.value
-                  )
-              }
-            />
-          </Field>
-
-          <Field label="City">
-            <input
-              value={
-                form.city ||
-                ""
-              }
-              onChange={
-                event =>
-                  updateField(
-                    "city",
-                    event.target.value
-                  )
-              }
-            />
-          </Field>
-
-          <Field label="Pincode">
-            <input
-              value={
-                form.pincode ||
-                ""
-              }
-              onChange={
-                event =>
-                  updateField(
-                    "pincode",
-                    event.target.value
-                  )
-              }
-            />
-          </Field>
-
-        </div>
-
-      </div>
-
-
-      <div className="partner-form-card">
-
-        <h3>
-          Restaurant details
-        </h3>
-
-        <div className="partner-grid three">
-
-          <Field
-            label="Average cost for two"
-          >
-            <div className="partner-input-icon">
-              <IndianRupee size={16} />
-              <input
-                type="number"
-                min="0"
-                value={
-                  form.average_cost_for_two ||
-                  ""
-                }
-                onChange={
-                  event =>
-                    updateField(
-                      "average_cost_for_two",
-                      event.target.value
-                    )
-                }
-              />
-            </div>
-          </Field>
-
-
-          <Field
-            label="Seating capacity"
-          >
-            <input
-              type="number"
-              min="1"
-              value={
-                form.seating_capacity ||
-                ""
-              }
-              onChange={
-                event =>
-                  updateField(
-                    "seating_capacity",
-                    event.target.value
-                  )
-              }
-            />
-          </Field>
-
-        </div>
-
-
-        <div className="partner-grid two">
-
-          <Field
-            label="Opening time"
-          >
-            <input
-              type="time"
-              value={
-                form.opening_time
-                  ?.slice(
-                    0,
-                    5
-                  ) ||
-                ""
-              }
-              onChange={
-                event =>
-                  updateField(
-                    "opening_time",
-                    event.target.value
-                  )
-              }
-            />
-          </Field>
-
-
-          <Field
-            label="Closing time"
-          >
-            <input
-              type="time"
-              value={
-                form.closing_time
-                  ?.slice(
-                    0,
-                    5
-                  ) ||
-                ""
-              }
-              onChange={
-                event =>
-                  updateField(
-                    "closing_time",
-                    event.target.value
-                  )
-              }
-            />
-          </Field>
-
-        </div>
-
-      </div>
-
-
-      <div className="partner-form-card">
-
-        <h3>
-          Facilities
-        </h3>
-
-        <div className="partner-toggle-grid">
-
-          <Toggle
-            label="Parking"
-            checked={
-              form.has_parking
-            }
-            onChange={
-              value =>
-                updateField(
-                  "has_parking",
-                  value
-                )
-            }
-          />
-
-          <Toggle
-            label="Wi-Fi"
-            checked={
-              form.has_wifi
-            }
-            onChange={
-              value =>
-                updateField(
-                  "has_wifi",
-                  value
-                )
-            }
-          />
-
-          <Toggle
-            label="Accepts cards"
-            checked={
-              form.accepts_cards
-            }
-            onChange={
-              value =>
-                updateField(
-                  "accepts_cards",
-                  value
-                )
-            }
-          />
-
-          <Toggle
-            label="Family friendly"
-            checked={
-              form.family_friendly
-            }
-            onChange={
-              value =>
-                updateField(
-                  "family_friendly",
-                  value
-                )
-            }
-          />
-
-          <Toggle
-            label="Outdoor seating"
-            checked={
-              form.outdoor_seating
-            }
-            onChange={
-              value =>
-                updateField(
-                  "outdoor_seating",
-                  value
-                )
-            }
-          />
-
-          <Toggle
-            label="Wheelchair accessible"
-            checked={
-              form.wheelchair_accessible
-            }
-            onChange={
-              value =>
-                updateField(
-                  "wheelchair_accessible",
-                  value
-                )
-            }
-          />
-
-          <Toggle
-            label="Vegetarian"
-            checked={
-              form.serves_vegetarian
-            }
-            onChange={
-              value =>
-                updateField(
-                  "serves_vegetarian",
-                  value
-                )
-            }
-          />
-
-          <Toggle
-            label="Non vegetarian"
-            checked={
-              form.serves_non_vegetarian
-            }
-            onChange={
-              value =>
-                updateField(
-                  "serves_non_vegetarian",
-                  value
-                )
-            }
-          />
-
-        </div>
-
-      </div>
-
-
-      <div className="partner-save-bar">
-
-        {
-          onCancel &&
-          (
-            <button
-              type="button"
-              className="partner-secondary"
-              onClick={
-                onCancel
-              }
-            >
-              Cancel
-            </button>
-          )
-        }
-
-
-        <button
-          type="submit"
-          disabled={
-            saving
-          }
-          className="partner-primary"
-        >
-
-          <Save size={18} />
-
-          {
-            saving
-              ? "Saving..."
-              : submitText
-          }
-
-        </button>
-
-      </div>
-
-    </form>
-  );
-}
-
-
-function Field({
-  label,
-  children,
-}) {
-
-  return (
-    <label className="partner-field">
-
-      <span>
-        {label}
-      </span>
-
-      {children}
-
-    </label>
-  );
-}
-
-
-function Toggle({
-  label,
-  checked,
-  onChange,
-}) {
-
-  return (
-
-    <label className="partner-toggle">
-
-      <input
-        type="checkbox"
-        checked={
-          Boolean(
-            checked
-          )
-        }
-        onChange={
-          event =>
-            onChange(
-              event.target.checked
-            )
-        }
-      />
-
-      <span className="partner-toggle-ui" />
-
-      <strong>
-        {label}
-      </strong>
-
-    </label>
-  );
-}
-
-
-/* ============================================================
-   PHOTOS
-============================================================ */
-
-function PhotosSection({
-  restaurant,
-  uploadMainPhoto,
-  uploadGalleryPhotos,
-  deletePhoto,
-}) {
-
-  return (
-
-    <section>
-
-      <div className="partner-section-heading">
-
-        <div>
-
-          <h2>
-            Restaurant photos
-          </h2>
-
-          <p>
-            Show the food, ambience,
-            interiors and experience.
-          </p>
-
-        </div>
-
-      </div>
-
-
-      <div className="partner-photo-main-card">
-
-        {
-          restaurant.image_url
-            ? (
-                <img
-                  src={
-                    restaurant.image_url
-                  }
-                  alt="Restaurant"
-                />
-              )
-            : (
-                <div className="partner-photo-main-empty">
-                  <ImagePlus size={34} />
-                </div>
-              )
-        }
-
-
-        <div>
-
-          <span>
-            COVER PHOTO
-          </span>
-
-          <h3>
-            Your restaurant's first impression.
-          </h3>
-
-          <p>
-            Use a clear landscape image
-            of your restaurant or signature food.
-          </p>
-
-
-          <label className="partner-upload-button">
-
-            <Upload size={17} />
-
-            {
-              restaurant.image_url
-                ? "Change cover photo"
-                : "Upload cover photo"
-            }
-
-            <input
-              hidden
-              type="file"
-              accept="image/*"
-              onChange={
-                uploadMainPhoto
-              }
-            />
-
-          </label>
-
-        </div>
-
-      </div>
-
-
-      <div className="partner-gallery-header">
-
-        <div>
-
-          <h3>
-            Gallery
-          </h3>
-
-          <p>
-            Add as many restaurant photos as you need.
-          </p>
-
-        </div>
-
-
-        <label className="partner-primary">
-
-          <ImagePlus size={17} />
-
-          Add Photos
-
-          <input
-            hidden
-            multiple
-            type="file"
-            accept="image/*"
-            onChange={
-              uploadGalleryPhotos
-            }
-          />
-
-        </label>
-
-      </div>
-
-
-      <div className="partner-gallery">
-
-        {
-          (
-            restaurant.images ||
-            []
-          ).map(
-            image => (
-
-              <article
-                key={
-                  image.id
-                }
-                className="partner-gallery-item"
-              >
-
-                <img
-                  src={
-                    image.image_url
-                  }
-                  alt={
-                    image.caption ||
-                    restaurant.name
-                  }
-                />
-
-                <button
-                  type="button"
-                  onClick={() =>
-                    deletePhoto(
-                      image.id
-                    )
-                  }
-                >
-                  <Trash2 size={16} />
-                </button>
-
-              </article>
-            )
-          )
-        }
-
-
-        <label className="partner-add-photo-tile">
-
-          <Plus size={27} />
-
-          <span>
-            Add photos
-          </span>
-
-          <input
-            hidden
-            multiple
-            type="file"
-            accept="image/*"
-            onChange={
-              uploadGalleryPhotos
-            }
-          />
-
-        </label>
-
-      </div>
-
-    </section>
-  );
-}
-
-
-/* ============================================================
-   MENU
-============================================================ */
-
-function MenuSection({
-  restaurant,
-  menuForm,
-  updateMenuField,
-  addMenuItem,
-  deleteMenuItem,
-  uploadMenuPhoto,
-  saving,
-}) {
-
-  return (
-
-    <section>
-
-      <div className="partner-section-heading">
-
-        <div>
-
-          <h2>
-            Your menu
-          </h2>
-
-          <p>
-            Add dishes, prices and photos.
-          </p>
-
-        </div>
-
-        <span className="partner-menu-count">
-          {
-            restaurant.menu_items
-              ?.length ||
-            0
-          } items
-        </span>
-
-      </div>
-
-
-      <form
-        className="partner-menu-create"
-        onSubmit={
-          addMenuItem
-        }
-      >
-
-        <div>
-
-          <span>
-            ADD DISH
-          </span>
-
-          <h3>
-            Create a menu item
-          </h3>
-
-        </div>
-
-
-        <div className="partner-grid two">
-
-          <Field label="Dish name">
-            <input
-              required
-              value={
-                menuForm.name
-              }
-              onChange={
-                event =>
-                  updateMenuField(
-                    "name",
-                    event.target.value
-                  )
-              }
-              placeholder="Eg. Masala Dosa"
-            />
-          </Field>
-
-
-          <Field label="Price">
-
-            <div className="partner-input-icon">
-
-              <IndianRupee size={16} />
-
-              <input
-                type="number"
-                min="0"
-                step="0.01"
-                required
-                value={
-                  menuForm.price
-                }
-                onChange={
-                  event =>
-                    updateMenuField(
-                      "price",
-                      event.target.value
-                    )
-                }
-              />
-
             </div>
 
-          </Field>
+            <div className="fk-gallery-grid">
+              {gallery.map((image) => (
+                <div className="fk-gallery-photo" key={image.id}>
+                  <img
+                    src={image.image_url || image.url}
+                    alt={image.caption || "Restaurant"}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => deleteGalleryImage(image.id)}
+                    aria-label="Delete photo"
+                  >
+                    <Trash2 size={17} />
+                  </button>
+                </div>
+              ))}
 
-
-          <Field label="Category">
-
-            <select
-              value={
-                menuForm.category
-              }
-              onChange={
-                event =>
-                  updateMenuField(
-                    "category",
-                    event.target.value
-                  )
-              }
-            >
-              <option value="starter">
-                Starter
-              </option>
-
-              <option value="main_course">
-                Main Course
-              </option>
-
-              <option value="bread">
-                Bread
-              </option>
-
-              <option value="rice">
-                Rice
-              </option>
-
-              <option value="dessert">
-                Dessert
-              </option>
-
-              <option value="beverage">
-                Beverage
-              </option>
-
-              <option value="snack">
-                Snack
-              </option>
-
-              <option value="other">
-                Other
-              </option>
-
-            </select>
-
-          </Field>
-
-
-          <Field label="Food type">
-
-            <select
-              value={
-                menuForm.food_type
-              }
-              onChange={
-                event =>
-                  updateMenuField(
-                    "food_type",
-                    event.target.value
-                  )
-              }
-            >
-              <option value="vegetarian">
-                Vegetarian
-              </option>
-
-              <option value="non_vegetarian">
-                Non Vegetarian
-              </option>
-
-              <option value="vegan">
-                Vegan
-              </option>
-
-              <option value="egg">
-                Egg
-              </option>
-            </select>
-
-          </Field>
-
-        </div>
-
-
-        <Field label="Description">
-
-          <textarea
-            rows={3}
-            value={
-              menuForm.description
-            }
-            onChange={
-              event =>
-                updateMenuField(
-                  "description",
-                  event.target.value
-                )
-            }
-          />
-
-        </Field>
-
-
-        <div className="partner-menu-flags">
-
-          <Toggle
-            label="Popular dish"
-            checked={
-              menuForm.is_popular
-            }
-            onChange={
-              value =>
-                updateMenuField(
-                  "is_popular",
-                  value
-                )
-            }
-          />
-
-          <Toggle
-            label="Available"
-            checked={
-              menuForm.is_available
-            }
-            onChange={
-              value =>
-                updateMenuField(
-                  "is_available",
-                  value
-                )
-            }
-          />
-
-        </div>
-
-
-        <button
-          className="partner-primary"
-          disabled={
-            saving
-          }
-          type="submit"
-        >
-
-          <Plus size={18} />
-          Add menu item
-
-        </button>
-
-      </form>
-
-
-      <div className="partner-menu-list">
-
-        {
-          (
-            restaurant.menu_items ||
-            []
-          ).map(
-            item => (
-
-              <article
-                className="partner-menu-row"
-                key={
-                  item.id
+              <button
+                type="button"
+                className="fk-add-photo"
+                onClick={() =>
+                  galleryFileInputRef.current?.click()
                 }
               >
+                <Plus size={34} />
+                <span>Add photos</span>
+              </button>
+            </div>
+          </section>
+        )}
 
-                <div className="partner-menu-photo">
+        {activeTab === "menu" && restaurantId && (
+          <section className="fk-page-section">
+            <div className="fk-page-heading">
+              <h1>Your menu</h1>
+              <p>Add dishes, prices and photos.</p>
+            </div>
 
-                  {
-                    item.image_url
-                      ? (
-                          <img
-                            src={
-                              item.image_url
-                            }
-                            alt={
-                              item.name
-                            }
-                          />
-                        )
-                      : (
-                          <Utensils size={22} />
-                        )
-                  }
+            <form className="fk-card fk-menu-form" onSubmit={handleAddMenuItem}>
+              <span className="fk-kicker">ADD DISH</span>
+              <h2>Create a menu item</h2>
 
+              <div className="fk-grid two">
+                <label>
+                  Dish name
+                  <input
+                    placeholder="Eg. Masala Dosa"
+                    value={menuForm.name}
+                    onChange={(e) =>
+                      updateMenuField("name", e.target.value)
+                    }
+                    required
+                  />
+                </label>
 
-                  <label>
-
-                    <Camera size={14} />
-
+                <label>
+                  Price
+                  <div className="fk-price">
+                    <span>₹</span>
                     <input
-                      hidden
-                      type="file"
-                      accept="image/*"
-                      onChange={
-                        event => {
-
-                          const file =
-                            event
-                              .target
-                              .files?.[0];
-
-                          event.target.value =
-                            "";
-
-                          uploadMenuPhoto(
-                            item.id,
-                            file
-                          );
-                        }
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      value={menuForm.price}
+                      onChange={(e) =>
+                        updateMenuField("price", e.target.value)
                       }
+                      required
                     />
+                  </div>
+                </label>
 
-                  </label>
+                <label>
+                  Category
+                  <select
+                    value={menuForm.category}
+                    onChange={(e) =>
+                      updateMenuField("category", e.target.value)
+                    }
+                  >
+                    {CATEGORY_OPTIONS.map(([value, label]) => (
+                      <option key={value} value={value}>
+                        {label}
+                      </option>
+                    ))}
+                  </select>
+                </label>
 
+                <label>
+                  Food type
+                  <select
+                    value={menuForm.food_type}
+                    onChange={(e) =>
+                      updateMenuField("food_type", e.target.value)
+                    }
+                  >
+                    {FOOD_TYPE_OPTIONS.map(([value, label]) => (
+                      <option key={value} value={value}>
+                        {label}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              </div>
+
+              <label>
+                Description
+                <textarea
+                  rows={4}
+                  value={menuForm.description}
+                  onChange={(e) =>
+                    updateMenuField("description", e.target.value)
+                  }
+                />
+              </label>
+
+              <div className="fk-menu-photo-block">
+                <div>
+                  <strong>Dish photo</strong>
+                  <p>JPG, PNG or WebP. Maximum 10 MB.</p>
                 </div>
 
+                <input
+                  ref={menuFileInputRef}
+                  type="file"
+                  hidden
+                  accept="image/jpeg,image/png,image/webp"
+                  onChange={handleMenuImageSelection}
+                />
 
-                <div className="partner-menu-copy">
-
-                  <div>
-
-                    <strong>
-                      {item.name}
-                    </strong>
-
-                    {
-                      item.is_popular &&
-                      (
-                        <span className="partner-popular">
-                          Popular
-                        </span>
-                      )
+                {!menuImagePreview ? (
+                  <button
+                    type="button"
+                    className="fk-menu-photo-picker"
+                    onClick={() =>
+                      menuFileInputRef.current?.click()
                     }
+                  >
+                    <div className="fk-photo-icon">
+                      <Camera size={23} />
+                    </div>
 
+                    <div>
+                      <strong>Upload dish photo</strong>
+                      <span>Choose an image from your device</span>
+                    </div>
+
+                    <Upload size={20} />
+                  </button>
+                ) : (
+                  <div className="fk-selected-photo">
+                    <img src={menuImagePreview} alt="Dish preview" />
+
+                    <div>
+                      <strong>{menuImage?.name}</strong>
+                      <span>Photo ready to upload</span>
+
+                      <div className="fk-row">
+                        <button
+                          type="button"
+                          className="fk-light-btn"
+                          onClick={() =>
+                            menuFileInputRef.current?.click()
+                          }
+                        >
+                          <Camera size={16} />
+                          Change
+                        </button>
+
+                        <button
+                          type="button"
+                          className="fk-remove-btn"
+                          onClick={removeSelectedMenuImage}
+                        >
+                          <Trash2 size={16} />
+                          Remove
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <div className="fk-toggle-row">
+                <Switch
+                  label="Popular dish"
+                  checked={menuForm.is_popular}
+                  onChange={(value) =>
+                    updateMenuField("is_popular", value)
+                  }
+                />
+
+                <Switch
+                  label="Available"
+                  checked={menuForm.is_available}
+                  onChange={(value) =>
+                    updateMenuField("is_available", value)
+                  }
+                />
+              </div>
+
+              <button
+                type="submit"
+                className="fk-full-orange"
+                disabled={addingMenu}
+              >
+                {addingMenu ? (
+                  <>
+                    <Loader2 size={18} className="fk-spin" />
+                    Adding dish...
+                  </>
+                ) : (
+                  <>
+                    <Plus size={18} />
+                    Add menu item
+                  </>
+                )}
+              </button>
+            </form>
+
+            <div className="fk-menu-list">
+              {menuItems.map((item) => (
+                <article key={item.id} className="fk-menu-item">
+                  <div className="fk-menu-thumb">
+                    {item.image_url ? (
+                      <img src={item.image_url} alt={item.name} />
+                    ) : (
+                      <ChefHat size={28} />
+                    )}
+
+                    <label className="fk-camera-over">
+                      <Camera size={15} />
+                      <input
+                        type="file"
+                        hidden
+                        accept="image/jpeg,image/png,image/webp"
+                        onChange={(event) => {
+                          const file = event.target.files?.[0];
+                          if (file) {
+                            replaceMenuPhoto(item.id, file);
+                          }
+                          event.target.value = "";
+                        }}
+                      />
+                    </label>
                   </div>
 
-                  <p>
-                    {
-                      item.description ||
-                      "No description added."
-                    }
-                  </p>
+                  <div className="fk-menu-copy">
+                    <div className="fk-menu-name">
+                      <strong>{item.name}</strong>
+                      {item.is_popular && (
+                        <span>Popular</span>
+                      )}
+                    </div>
 
-                  <small>
-                    {
-                      item.category
-                        ?.replaceAll(
-                          "_",
-                          " "
-                        )
-                    }
-                    {" • "}
-                    {
-                      item.food_type
-                        ?.replaceAll(
-                          "_",
-                          " "
-                        )
-                    }
-                  </small>
+                    {item.description && <p>{item.description}</p>}
 
-                </div>
-
-
-                <div className="partner-menu-price">
-
-                  <strong>
-                    ₹{item.price}
-                  </strong>
+                    <small>
+                      {CATEGORY_OPTIONS.find(
+                        ([value]) => value === item.category
+                      )?.[1] || item.category}
+                      {" • "}
+                      {FOOD_TYPE_OPTIONS.find(
+                        ([value]) => value === item.food_type
+                      )?.[1] || item.food_type}
+                      {" • ₹"}
+                      {item.price}
+                    </small>
+                  </div>
 
                   <button
                     type="button"
-                    onClick={() =>
-                      deleteMenuItem(
-                        item.id
-                      )
-                    }
+                    className="fk-trash"
+                    onClick={() => deleteMenuItem(item.id)}
                   >
-                    <Trash2 size={16} />
+                    <Trash2 size={17} />
                   </button>
+                </article>
+              ))}
+            </div>
+          </section>
+        )}
 
+        {activeTab === "settings" && restaurantId && (
+          <section className="fk-page-section">
+            <div className="fk-page-heading">
+              <h1>Partner settings</h1>
+              <p>Manage restaurant preferences and your partner session.</p>
+            </div>
+
+            <form className="fk-card fk-settings-card" onSubmit={saveRestaurant}>
+              <div className="fk-settings-account">
+                <span className="fk-kicker">PARTNER ACCOUNT</span>
+                <h2>{restaurant?.name || "Restaurant partner"}</h2>
+                <p>
+                  Signed in as{" "}
+                  <strong>
+                    {user?.email ||
+                      user?.username ||
+                      "Restaurant partner"}
+                  </strong>
+                </p>
+              </div>
+
+              <div className="fk-settings-divider" />
+
+              <div className="fk-settings-row">
+                <div>
+                  <strong>FoodKindl bookings</strong>
+                  <p>
+                    Allow FoodKindl members to request bookings at this
+                    restaurant.
+                  </p>
                 </div>
 
-              </article>
-            )
-          )
+                <Switch
+                  label={
+                    restaurantForm.accepts_foodkindl_booking
+                      ? "Enabled"
+                      : "Disabled"
+                  }
+                  checked={Boolean(
+                    restaurantForm.accepts_foodkindl_booking
+                  )}
+                  onChange={(value) =>
+                    updateRestaurantField(
+                      "accepts_foodkindl_booking",
+                      value
+                    )
+                  }
+                />
+              </div>
+
+              <div className="fk-settings-actions">
+                <button
+                  type="submit"
+                  className="fk-save-btn"
+                  disabled={savingRestaurant}
+                >
+                  {savingRestaurant ? (
+                    <>
+                      <Loader2 size={17} className="fk-spin" />
+                      Saving...
+                    </>
+                  ) : (
+                    <>
+                      <Check size={17} />
+                      Save settings
+                    </>
+                  )}
+                </button>
+
+                <button
+                  type="button"
+                  className="fk-settings-logout"
+                  onClick={handlePartnerLogout}
+                >
+                  <LogOut size={17} />
+                  Logout
+                </button>
+              </div>
+            </form>
+          </section>
+        )}
+      </main>
+
+      <style>{`
+        .fk-studio {
+          min-height: calc(100vh - 90px);
+          display: grid;
+          grid-template-columns: 258px minmax(0, 1fr);
+          background: #f7f7f3;
+          color: #0f1f1a;
         }
 
-      </div>
+        .fk-studio * {
+          box-sizing: border-box;
+        }
 
-    </section>
+        .fk-sidebar {
+          background: #122720;
+          padding: 22px 14px;
+          min-height: calc(100vh - 90px);
+          position: sticky;
+          top: 0;
+          align-self: start;
+          display: flex;
+          flex-direction: column;
+        }
+
+        .fk-sidebar-top {
+          display: flex;
+          flex-direction: column;
+        }
+
+        .fk-sidebar-bottom {
+          margin-top: auto;
+          padding-top: 22px;
+          border-top: 1px solid rgba(255,255,255,.08);
+        }
+
+        .fk-nav-item {
+          width: 100%;
+          border: 0;
+          color: #dce6e1;
+          background: transparent;
+          min-height: 50px;
+          border-radius: 13px;
+          padding: 0 15px;
+          display: flex;
+          align-items: center;
+          gap: 13px;
+          font-size: 15px;
+          font-weight: 650;
+          cursor: pointer;
+          margin-bottom: 4px;
+          text-align: left;
+          position: relative;
+        }
+
+        .fk-nav-item:hover {
+          background: rgba(255,255,255,.06);
+        }
+
+        .fk-nav-item.active {
+          background: #273b34;
+          color: #fff;
+        }
+
+        .fk-nav-item.active::before {
+          content: "";
+          position: absolute;
+          left: 0;
+          top: 7px;
+          bottom: 7px;
+          width: 4px;
+          border-radius: 0 6px 6px 0;
+          background: #f36d3b;
+        }
+
+        .fk-nav-item.disabled {
+          opacity: .45;
+        }
+
+        .fk-logout-item {
+          color: #ff9b86;
+        }
+
+        .fk-logout-item:hover {
+          background: rgba(255, 99, 71, .09);
+          color: #fff;
+        }
+
+        .fk-main {
+          min-width: 0;
+          padding: 0 4.1vw 70px;
+          position: relative;
+        }
+
+        .fk-page-section {
+          width: 100%;
+          max-width: 1320px;
+          margin: 0 auto;
+          padding-top: 0;
+        }
+
+        .fk-page-heading {
+          padding: 0 0 22px;
+        }
+
+        .fk-page-heading h1 {
+          margin: 0 0 8px;
+          font-size: clamp(28px, 2.1vw, 36px);
+          letter-spacing: -1.2px;
+          line-height: 1.08;
+        }
+
+        .fk-page-heading p,
+        .fk-gallery-head p {
+          margin: 0;
+          color: #737b77;
+          font-size: 15px;
+        }
+
+        .fk-card {
+          background: #fff;
+          border: 1px solid #deded9;
+          border-radius: 20px;
+          padding: 30px;
+        }
+
+        .fk-card h2 {
+          margin: 6px 0 28px;
+          font-size: 21px;
+        }
+
+        .fk-kicker {
+          color: #f36d3b;
+          font-size: 12px;
+          font-weight: 800;
+          letter-spacing: 1.5px;
+        }
+
+        .fk-grid {
+          display: grid;
+          gap: 18px;
+        }
+
+        .fk-grid.two {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .fk-grid.three {
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+
+        .fk-card label {
+          display: flex;
+          flex-direction: column;
+          gap: 8px;
+          font-size: 13px;
+          font-weight: 600;
+          margin-bottom: 20px;
+        }
+
+        .fk-card input,
+        .fk-card select,
+        .fk-card textarea {
+          width: 100%;
+          border: 1px solid #d6d8d3;
+          border-radius: 12px;
+          padding: 13px 15px;
+          outline: 0;
+          background: #fff;
+          font: inherit;
+          color: #15241f;
+        }
+
+        .fk-card input:focus,
+        .fk-card select:focus,
+        .fk-card textarea:focus {
+          border-color: #f36d3b;
+          box-shadow: 0 0 0 3px rgba(243,109,59,.1);
+        }
+
+        .fk-subheading {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          margin: 10px 0 15px;
+          font-weight: 700;
+        }
+
+        .fk-coordinates {
+          display: flex;
+          gap: 20px;
+          flex-wrap: wrap;
+          padding: 12px 14px;
+          border-radius: 10px;
+          background: #f4f5f2;
+          color: #606965;
+          font-size: 13px;
+          margin-bottom: 20px;
+        }
+
+        .fk-save-btn,
+        .fk-dark-btn,
+        .fk-orange-btn,
+        .fk-light-btn,
+        .fk-full-orange {
+          border: 0;
+          border-radius: 12px;
+          min-height: 48px;
+          padding: 0 20px;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          gap: 8px;
+          font-weight: 750;
+          cursor: pointer;
+        }
+
+        .fk-save-btn,
+        .fk-dark-btn {
+          background: #122720;
+          color: #fff;
+        }
+
+        .fk-orange-btn,
+        .fk-full-orange {
+          background: #f36d3b;
+          color: #fff;
+          box-shadow: 0 12px 26px rgba(243,109,59,.16);
+        }
+
+        .fk-light-btn {
+          background: #fff;
+          border: 1px solid #d9dad5;
+          color: #122720;
+        }
+
+        .fk-cover-card {
+          border: 1px solid #deded9;
+          background: #fff;
+          border-radius: 24px;
+          overflow: hidden;
+          display: grid;
+          grid-template-columns: 45% 55%;
+          min-height: 310px;
+        }
+
+        .fk-cover-preview {
+          background: #efede8;
+          color: #aa9e96;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          min-height: 310px;
+        }
+
+        .fk-cover-preview img {
+          width: 100%;
+          height: 100%;
+          min-height: 310px;
+          object-fit: cover;
+        }
+
+        .fk-cover-copy {
+          padding: 68px 50px;
+          display: flex;
+          flex-direction: column;
+          align-items: flex-start;
+          justify-content: center;
+        }
+
+        .fk-cover-copy h2 {
+          margin: 12px 0 14px;
+          font-size: clamp(26px, 2vw, 34px);
+          letter-spacing: -.7px;
+        }
+
+        .fk-cover-copy p {
+          margin: 0 0 26px;
+          color: #777f7b;
+          font-size: 15px;
+        }
+
+        .fk-row {
+          display: flex;
+          align-items: center;
+          flex-wrap: wrap;
+          gap: 10px;
+        }
+
+        .fk-gallery-head {
+          margin: 35px 0 18px;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 20px;
+        }
+
+        .fk-gallery-head h2 {
+          margin: 0 0 5px;
+          font-size: 25px;
+        }
+
+        .fk-gallery-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+          gap: 18px;
+        }
+
+        .fk-gallery-photo,
+        .fk-add-photo {
+          height: 210px;
+          border-radius: 18px;
+          overflow: hidden;
+          position: relative;
+        }
+
+        .fk-gallery-photo img {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+        }
+
+        .fk-gallery-photo > button {
+          position: absolute;
+          top: 10px;
+          right: 10px;
+          width: 38px;
+          height: 38px;
+          border: 0;
+          border-radius: 50%;
+          background: rgba(16,30,25,.82);
+          color: #fff;
+          display: grid;
+          place-items: center;
+          cursor: pointer;
+        }
+
+        .fk-add-photo {
+          border: 1px dashed #c8cbc5;
+          background: #fff;
+          color: #68716d;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          flex-direction: column;
+          gap: 10px;
+          cursor: pointer;
+          font-size: 16px;
+        }
+
+        .fk-menu-form {
+          margin-bottom: 26px;
+        }
+
+        .fk-price {
+          position: relative;
+        }
+
+        .fk-price > span {
+          position: absolute;
+          top: 50%;
+          left: 15px;
+          transform: translateY(-50%);
+          color: #6e7772;
+          z-index: 2;
+        }
+
+        .fk-price input {
+          padding-left: 36px;
+        }
+
+        .fk-menu-photo-block {
+          border-top: 1px solid #ecece8;
+          padding-top: 18px;
+        }
+
+        .fk-menu-photo-block > div:first-child > p {
+          margin: 4px 0 12px;
+          color: #7a817d;
+          font-size: 13px;
+        }
+
+        .fk-menu-photo-picker {
+          width: 100%;
+          min-height: 104px;
+          border: 1px dashed #c8cbc5;
+          border-radius: 15px;
+          background: #fafaf7;
+          display: grid;
+          grid-template-columns: auto 1fr auto;
+          gap: 14px;
+          align-items: center;
+          padding: 16px;
+          cursor: pointer;
+          text-align: left;
+          color: #15241f;
+        }
+
+        .fk-menu-photo-picker div:nth-child(2) {
+          display: flex;
+          flex-direction: column;
+          gap: 4px;
+        }
+
+        .fk-menu-photo-picker span {
+          color: #7a817d;
+          font-size: 12px;
+        }
+
+        .fk-photo-icon {
+          width: 50px;
+          height: 50px;
+          border-radius: 12px;
+          background: #fff;
+          border: 1px solid #e1e2dd;
+          display: grid;
+          place-items: center;
+          color: #f36d3b;
+        }
+
+        .fk-selected-photo {
+          max-width: 630px;
+          border: 1px solid #deded9;
+          border-radius: 16px;
+          padding: 12px;
+          display: flex;
+          gap: 15px;
+        }
+
+        .fk-selected-photo img {
+          width: 135px;
+          height: 105px;
+          object-fit: cover;
+          border-radius: 12px;
+        }
+
+        .fk-selected-photo > div {
+          display: flex;
+          flex-direction: column;
+          justify-content: center;
+          gap: 7px;
+        }
+
+        .fk-selected-photo > div > span {
+          color: #78807c;
+          font-size: 12px;
+        }
+
+        .fk-remove-btn {
+          border: 0;
+          background: transparent;
+          color: #b53d32;
+          display: inline-flex;
+          align-items: center;
+          gap: 5px;
+          cursor: pointer;
+          font-weight: 650;
+        }
+
+        .fk-toggle-row {
+          display: flex;
+          gap: 13px;
+          margin-top: 26px;
+        }
+
+        .fk-switch-wrap {
+          border: 1px solid #dadbd6;
+          background: #fff;
+          border-radius: 12px;
+          min-height: 48px;
+          padding: 0 12px;
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          font-weight: 650;
+          cursor: pointer;
+        }
+
+        .fk-switch {
+          width: 34px;
+          height: 20px;
+          border-radius: 999px;
+          padding: 3px;
+          background: #d7dad5;
+        }
+
+        .fk-switch-knob {
+          display: block;
+          width: 14px;
+          height: 14px;
+          background: #fff;
+          border-radius: 50%;
+          transition: transform .2s ease;
+        }
+
+        .fk-switch-wrap.active .fk-switch {
+          background: #f36d3b;
+        }
+
+        .fk-switch-wrap.active .fk-switch-knob {
+          transform: translateX(14px);
+        }
+
+        .fk-full-orange {
+          width: 100%;
+          margin-top: 28px;
+        }
+
+        .fk-menu-list {
+          display: flex;
+          flex-direction: column;
+          gap: 12px;
+        }
+
+        .fk-menu-item {
+          background: #fff;
+          border: 1px solid #deded9;
+          border-radius: 17px;
+          padding: 11px;
+          display: grid;
+          grid-template-columns: 90px minmax(0,1fr) auto;
+          gap: 16px;
+          align-items: center;
+        }
+
+        .fk-menu-thumb {
+          width: 90px;
+          height: 90px;
+          border-radius: 13px;
+          overflow: hidden;
+          background: #f0ede8;
+          color: #988f87;
+          display: grid;
+          place-items: center;
+          position: relative;
+        }
+
+        .fk-menu-thumb img {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+        }
+
+        .fk-camera-over {
+          position: absolute;
+          right: 4px;
+          bottom: 4px;
+          width: 31px;
+          height: 31px;
+          border-radius: 8px;
+          background: #27352f;
+          color: #fff;
+          display: grid;
+          place-items: center;
+          cursor: pointer;
+          margin: 0 !important;
+        }
+
+        .fk-menu-copy p {
+          color: #6e7672;
+          margin: 7px 0;
+          font-size: 13px;
+        }
+
+        .fk-menu-copy small {
+          color: #8b918e;
+          font-size: 13px;
+        }
+
+        .fk-menu-name {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+        }
+
+        .fk-menu-name > span {
+          color: #ee6938;
+          background: #fff1ea;
+          border: 1px solid #ffd1bd;
+          border-radius: 999px;
+          padding: 3px 8px;
+          font-size: 10px;
+        }
+
+        .fk-trash {
+          width: 38px;
+          height: 38px;
+          border-radius: 9px;
+          border: 1px solid #eee;
+          background: #fff;
+          color: #b53c33;
+          display: grid;
+          place-items: center;
+          cursor: pointer;
+        }
+
+        .fk-settings-card {
+          max-width: 820px;
+        }
+
+        .fk-settings-account h2 {
+          margin: 8px 0 6px;
+        }
+
+        .fk-settings-account p {
+          margin: 0;
+          color: #747c78;
+          font-size: 14px;
+        }
+
+        .fk-settings-divider {
+          height: 1px;
+          background: #ecece8;
+          margin: 28px 0;
+        }
+
+        .fk-settings-row {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 24px;
+        }
+
+        .fk-settings-row > div:first-child strong {
+          display: block;
+          font-size: 16px;
+        }
+
+        .fk-settings-row > div:first-child p {
+          max-width: 540px;
+          margin: 6px 0 0;
+          color: #747c78;
+          font-size: 13px;
+          line-height: 1.55;
+        }
+
+        .fk-settings-actions {
+          display: flex;
+          gap: 12px;
+          flex-wrap: wrap;
+          margin-top: 32px;
+          padding-top: 24px;
+          border-top: 1px solid #ecece8;
+        }
+
+        .fk-settings-logout {
+          min-height: 48px;
+          padding: 0 20px;
+          border: 1px solid #e7c7c1;
+          border-radius: 12px;
+          background: #fff;
+          color: #a8382f;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          gap: 8px;
+          font-weight: 750;
+          cursor: pointer;
+        }
+
+        .fk-settings-logout:hover {
+          background: #fff6f4;
+        }
+
+        .fk-toast {
+          position: fixed;
+          left: 0;
+          right: 18px;
+          bottom: 0;
+          z-index: 9999;
+          min-height: 48px;
+          padding: 11px 16px;
+          display: flex;
+          align-items: center;
+          gap: 9px;
+          color: #fff;
+          font-size: 13px;
+          font-weight: 700;
+        }
+
+        .fk-toast span {
+          flex: 1;
+        }
+
+        .fk-toast button {
+          border: 0;
+          background: transparent;
+          color: inherit;
+          cursor: pointer;
+        }
+
+        .fk-toast.error {
+          background: #aa2f2b;
+        }
+
+        .fk-toast.success {
+          background: #1f6a43;
+        }
+
+        .fk-loading {
+          min-height: 70vh;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 10px;
+        }
+
+        .fk-spin {
+          animation: fk-spin .8s linear infinite;
+        }
+
+        @keyframes fk-spin {
+          to { transform: rotate(360deg); }
+        }
+
+        @media (max-width: 900px) {
+          .fk-studio {
+            grid-template-columns: 1fr;
+          }
+
+          .fk-sidebar {
+            position: static;
+            min-height: auto;
+            display: flex;
+            flex-direction: row;
+            gap: 7px;
+            padding: 10px;
+            overflow-x: auto;
+          }
+
+          .fk-sidebar-top,
+          .fk-sidebar-bottom {
+            display: flex;
+            flex-direction: row;
+            gap: 7px;
+          }
+
+          .fk-sidebar-bottom {
+            margin-top: 0;
+            padding-top: 0;
+            border-top: 0;
+          }
+
+          .fk-nav-item {
+            min-width: 150px;
+            margin: 0;
+          }
+
+          .fk-settings-row {
+            align-items: flex-start;
+            flex-direction: column;
+          }
+
+          .fk-main {
+            padding: 24px 16px 60px;
+          }
+
+          .fk-cover-card,
+          .fk-grid.two,
+          .fk-grid.three {
+            grid-template-columns: 1fr;
+          }
+
+          .fk-cover-copy {
+            padding: 30px;
+          }
+
+          .fk-gallery-head {
+            align-items: flex-start;
+            flex-direction: column;
+          }
+        }
+      `}</style>
+    </div>
   );
 }

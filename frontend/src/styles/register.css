@@ -1873,3 +1873,885 @@
     min-height: 56px;
   }
 }
+
+/* ============================================================
+   FOODKINDL REGISTER
+   Matches: src/pages/Register.jsx
+============================================================ */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+.register-page {
+  min-height: 100vh;
+  padding: 42px 24px;
+
+  color: #ffffff;
+
+  background:
+    radial-gradient(
+      circle at 12% 16%,
+      rgba(255, 92, 35, 0.10),
+      transparent 34%
+    ),
+    radial-gradient(
+      circle at 88% 82%,
+      rgba(255, 116, 64, 0.06),
+      transparent 30%
+    ),
+    #050505;
+}
+
+
+/* ============================================================
+   MAIN SHELL
+============================================================ */
+
+.register-shell {
+  width: min(1180px, 100%);
+  min-height: calc(100vh - 84px);
+
+  margin: 0 auto;
+
+  display: grid;
+  grid-template-columns:
+    minmax(0, 1.04fr)
+    minmax(430px, 0.86fr);
+
+  overflow: hidden;
+
+  border:
+    1px solid
+    rgba(255, 102, 50, 0.18);
+
+  border-radius: 28px;
+
+  background:
+    linear-gradient(
+      145deg,
+      rgba(17, 10, 8, 0.98),
+      rgba(7, 7, 7, 0.99)
+    );
+
+  box-shadow:
+    0 36px 90px
+    rgba(0, 0, 0, 0.48);
+}
+
+
+/* ============================================================
+   LEFT STORY PANEL
+============================================================ */
+
+.register-story {
+  position: relative;
+
+  min-width: 0;
+
+  padding: 58px 54px;
+
+  display: flex;
+  align-items: center;
+
+  overflow: hidden;
+
+  border-right:
+    1px solid
+    rgba(255, 105, 55, 0.11);
+
+  background:
+    linear-gradient(
+      160deg,
+      rgba(255, 93, 35, 0.08),
+      rgba(255, 255, 255, 0.01)
+    );
+}
+
+.register-story::after {
+  content: "";
+
+  position: absolute;
+
+  right: -100px;
+  bottom: -110px;
+
+  width: 320px;
+  height: 320px;
+
+  border-radius: 50%;
+
+  background:
+    rgba(255, 92, 35, 0.055);
+
+  filter: blur(18px);
+
+  pointer-events: none;
+}
+
+.register-story-content {
+  position: relative;
+  z-index: 1;
+
+  width: 100%;
+  max-width: 610px;
+}
+
+.register-story-pill {
+  display: inline-flex;
+
+  padding: 8px 12px;
+
+  border:
+    1px solid
+    rgba(255, 107, 53, 0.26);
+
+  border-radius: 999px;
+
+  color: #ff7443;
+
+  background:
+    rgba(255, 107, 53, 0.065);
+
+  font-size: 10px;
+  font-weight: 850;
+  letter-spacing: 0.13em;
+}
+
+.register-story h1 {
+  max-width: 590px;
+
+  margin: 22px 0 18px;
+
+  color: #ffffff;
+
+  font-size:
+    clamp(
+      46px,
+      5vw,
+      70px
+    );
+
+  line-height: 1;
+
+  letter-spacing: -0.055em;
+}
+
+.register-story-content > p {
+  max-width: 535px;
+
+  margin: 0;
+
+  color:
+    rgba(255, 255, 255, 0.56);
+
+  font-size: 15px;
+  line-height: 1.75;
+}
+
+
+/* ============================================================
+   STORY POINTS
+============================================================ */
+
+.register-story-points {
+  display: grid;
+
+  gap: 14px;
+
+  margin-top: 34px;
+}
+
+.register-story-points article {
+  display: flex;
+
+  gap: 14px;
+
+  align-items: flex-start;
+
+  padding: 16px;
+
+  border:
+    1px solid
+    rgba(255, 255, 255, 0.055);
+
+  border-radius: 16px;
+
+  background:
+    rgba(255, 255, 255, 0.018);
+}
+
+.register-story-icon {
+  width: 40px;
+  height: 40px;
+
+  flex: 0 0 40px;
+
+  display: inline-flex;
+
+  align-items: center;
+  justify-content: center;
+
+  border:
+    1px solid
+    rgba(255, 107, 53, 0.12);
+
+  border-radius: 12px;
+
+  color: #ff6b35;
+
+  background:
+    rgba(255, 107, 53, 0.09);
+}
+
+.register-story-points strong {
+  display: block;
+
+  margin-bottom: 5px;
+
+  color: #ffffff;
+
+  font-size: 14px;
+}
+
+.register-story-points p {
+  margin: 0;
+
+  color:
+    rgba(255, 255, 255, 0.43);
+
+  font-size: 12px;
+  line-height: 1.55;
+}
+
+
+/* ============================================================
+   RIGHT FORM PANEL
+============================================================ */
+
+.register-form-panel {
+  min-width: 0;
+
+  padding: 44px 38px;
+
+  display: flex;
+
+  align-items: center;
+  justify-content: center;
+}
+
+.register-form-card {
+  width: 100%;
+  max-width: 520px;
+}
+
+
+/* ============================================================
+   FORM HEADER
+============================================================ */
+
+.register-form-header {
+  margin-bottom: 25px;
+}
+
+.register-eyebrow {
+  display: inline-block;
+
+  color: #ff6b35;
+
+  font-size: 11px;
+  font-weight: 850;
+  letter-spacing: 0.13em;
+}
+
+.register-form-header h2 {
+  margin: 9px 0 8px;
+
+  color: #ffffff;
+
+  font-size: 34px;
+  line-height: 1.12;
+
+  letter-spacing: -0.04em;
+}
+
+.register-form-header p {
+  margin: 0;
+
+  color:
+    rgba(255, 255, 255, 0.47);
+
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+
+/* ============================================================
+   ACCOUNT TYPE
+============================================================ */
+
+.register-account-type-section {
+  margin-bottom: 26px;
+}
+
+.register-account-type-heading {
+  display: flex;
+
+  flex-direction: column;
+
+  gap: 5px;
+
+  margin-bottom: 12px;
+}
+
+.register-account-type-heading > span {
+  color: #ff6b35;
+
+  font-size: 11px;
+  font-weight: 850;
+  letter-spacing: 0.12em;
+}
+
+.register-account-type-heading small {
+  color:
+    rgba(255, 255, 255, 0.42);
+
+  font-size: 12px;
+}
+
+.register-account-options {
+  display: grid;
+
+  grid-template-columns:
+    repeat(2, minmax(0, 1fr));
+
+  gap: 12px;
+}
+
+.register-account-card {
+  appearance: none;
+
+  width: 100%;
+  min-height: 124px;
+
+  padding: 16px;
+
+  display: grid;
+
+  grid-template-columns:
+    auto
+    minmax(0, 1fr)
+    auto;
+
+  gap: 12px;
+
+  align-items: center;
+
+  border:
+    1px solid
+    rgba(255, 255, 255, 0.085);
+
+  border-radius: 18px;
+
+  color: #ffffff;
+
+  text-align: left;
+
+  background:
+    linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.025),
+      rgba(255, 255, 255, 0.012)
+    );
+
+  cursor: pointer;
+
+  transition:
+    transform 160ms ease,
+    border-color 160ms ease,
+    background 160ms ease,
+    box-shadow 160ms ease;
+}
+
+.register-account-card:hover {
+  transform:
+    translateY(-1px);
+
+  border-color:
+    rgba(255, 107, 53, 0.32);
+
+  background:
+    rgba(255, 107, 53, 0.035);
+}
+
+.register-account-card.selected {
+  border-color:
+    rgba(255, 107, 53, 0.70);
+
+  background:
+    linear-gradient(
+      180deg,
+      rgba(255, 107, 53, 0.095),
+      rgba(255, 107, 53, 0.035)
+    );
+
+  box-shadow:
+    0 0 0 3px
+    rgba(255, 107, 53, 0.045);
+}
+
+.register-account-card-icon {
+  width: 40px;
+  height: 40px;
+
+  flex: 0 0 40px;
+
+  display: inline-flex;
+
+  align-items: center;
+  justify-content: center;
+
+  border:
+    1px solid
+    rgba(255, 107, 53, 0.12);
+
+  border-radius: 12px;
+
+  color: #ff6b35;
+
+  background:
+    rgba(255, 107, 53, 0.08);
+}
+
+.register-account-card-copy {
+  min-width: 0;
+
+  display: flex;
+
+  flex-direction: column;
+
+  gap: 5px;
+}
+
+.register-account-card-copy strong {
+  color: #ffffff;
+
+  font-size: 14px;
+  line-height: 1.22;
+}
+
+.register-account-card-copy small {
+  color:
+    rgba(255, 255, 255, 0.43);
+
+  font-size: 11px;
+  line-height: 1.45;
+}
+
+.register-account-card-action {
+  width: 30px;
+  height: 30px;
+
+  display: inline-flex;
+
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 999px;
+
+  color: #ff6b35;
+
+  background:
+    rgba(255, 107, 53, 0.075);
+}
+
+
+/* ============================================================
+   FORM
+   Register.jsx uses plain <form>, <label>, and <input>
+============================================================ */
+
+.register-form-card form {
+  display: grid;
+
+  gap: 16px;
+}
+
+.register-form-card form > label {
+  display: grid;
+
+  gap: 8px;
+
+  margin: 0;
+
+  color:
+    rgba(255, 255, 255, 0.75);
+
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.register-form-card form > label > input,
+.register-password-field input {
+  width: 100%;
+  min-height: 52px;
+
+  padding: 0 15px;
+
+  border:
+    1px solid
+    rgba(255, 107, 53, 0.18);
+
+  border-radius: 13px;
+
+  outline: none;
+
+  color: #ffffff;
+
+  background: #110806;
+
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 550;
+
+  transition:
+    border-color 160ms ease,
+    box-shadow 160ms ease,
+    background 160ms ease;
+}
+
+.register-form-card form > label > input::placeholder,
+.register-password-field input::placeholder {
+  color:
+    rgba(255, 255, 255, 0.25);
+}
+
+.register-form-card form > label > input:focus,
+.register-password-field input:focus {
+  border-color:
+    rgba(255, 107, 53, 0.62);
+
+  background: #140906;
+
+  box-shadow:
+    0 0 0 3px
+    rgba(255, 107, 53, 0.07);
+}
+
+
+/* ============================================================
+   PASSWORD
+============================================================ */
+
+.register-password-field {
+  position: relative;
+
+  width: 100%;
+}
+
+.register-password-field input {
+  padding-right: 52px;
+}
+
+.register-password-field > button {
+  appearance: none;
+
+  position: absolute;
+
+  top: 50%;
+  right: 10px;
+
+  width: 34px;
+  height: 34px;
+
+  transform:
+    translateY(-50%);
+
+  display: inline-flex;
+
+  align-items: center;
+  justify-content: center;
+
+  border: 0;
+
+  border-radius: 999px;
+
+  color:
+    rgba(255, 255, 255, 0.52);
+
+  background: transparent;
+
+  cursor: pointer;
+
+  transition:
+    color 160ms ease,
+    background 160ms ease;
+}
+
+.register-password-field > button:hover {
+  color: #ffffff;
+
+  background:
+    rgba(255, 255, 255, 0.055);
+}
+
+
+/* ============================================================
+   ERROR / SUCCESS
+============================================================ */
+
+.register-error,
+.register-success {
+  padding: 12px 14px;
+
+  border-radius: 12px;
+
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.register-error {
+  border:
+    1px solid
+    rgba(255, 93, 82, 0.28);
+
+  color: #ff948c;
+
+  background:
+    rgba(255, 66, 52, 0.07);
+}
+
+.register-success {
+  border:
+    1px solid
+    rgba(70, 210, 135, 0.24);
+
+  color: #72dda0;
+
+  background:
+    rgba(45, 182, 110, 0.07);
+}
+
+
+/* ============================================================
+   SUBMIT BUTTON
+   Register.jsx has no className on this button,
+   so style it by form structure.
+============================================================ */
+
+.register-form-card form
+  > button[type="submit"] {
+
+  appearance: none;
+
+  width: 100%;
+  min-height: 56px;
+
+  margin-top: 2px;
+
+  padding: 0 20px;
+
+  display: inline-flex;
+
+  align-items: center;
+  justify-content: center;
+
+  gap: 9px;
+
+  border: 0;
+
+  border-radius: 14px;
+
+  color: #ffffff;
+
+  background:
+    linear-gradient(
+      135deg,
+      #ff592a 0%,
+      #f23b18 100%
+    );
+
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 800;
+
+  box-shadow:
+    0 15px 32px
+    rgba(242, 56, 24, 0.20);
+
+  cursor: pointer;
+
+  transition:
+    transform 160ms ease,
+    box-shadow 160ms ease,
+    opacity 160ms ease;
+}
+
+.register-form-card form
+  > button[type="submit"]:hover:not(:disabled) {
+
+  transform:
+    translateY(-1px);
+
+  box-shadow:
+    0 19px 38px
+    rgba(242, 56, 24, 0.28);
+}
+
+.register-form-card form
+  > button[type="submit"]:disabled {
+
+  opacity: 0.5;
+
+  cursor: not-allowed;
+}
+
+
+/* ============================================================
+   LOGIN LINK
+============================================================ */
+
+.register-login-link {
+  display: flex;
+
+  align-items: center;
+  justify-content: center;
+
+  flex-wrap: wrap;
+
+  gap: 7px;
+
+  margin-top: 24px;
+
+  padding-top: 20px;
+
+  border-top:
+    1px solid
+    rgba(255, 255, 255, 0.06);
+
+  color:
+    rgba(255, 255, 255, 0.40);
+
+  font-size: 12px;
+}
+
+.register-login-link a {
+  color: #ff6b35;
+
+  font-weight: 800;
+
+  text-decoration: none;
+}
+
+.register-login-link a:hover {
+  text-decoration: underline;
+}
+
+
+/* ============================================================
+   RESPONSIVE
+============================================================ */
+
+@media (max-width: 1000px) {
+
+  .register-shell {
+    grid-template-columns: 1fr;
+  }
+
+  .register-story {
+    border-right: 0;
+
+    border-bottom:
+      1px solid
+      rgba(255, 105, 55, 0.11);
+  }
+
+  .register-form-card {
+    max-width: 620px;
+  }
+}
+
+
+@media (max-width: 700px) {
+
+  .register-page {
+    padding: 18px 12px;
+  }
+
+  .register-shell {
+    min-height: auto;
+
+    border-radius: 22px;
+  }
+
+  .register-story {
+    padding: 36px 25px;
+  }
+
+  .register-form-panel {
+    padding: 32px 22px 38px;
+  }
+
+  .register-account-options {
+    grid-template-columns: 1fr;
+  }
+
+  .register-account-card {
+    min-height: 100px;
+  }
+
+  .register-story h1 {
+    font-size:
+      clamp(
+        40px,
+        12vw,
+        56px
+      );
+  }
+}
+
+
+@media (max-width: 480px) {
+
+  .register-page {
+    padding: 0;
+  }
+
+  .register-shell {
+    border-left: 0;
+    border-right: 0;
+
+    border-radius: 0;
+  }
+
+  .register-story {
+    padding: 29px 18px;
+  }
+
+  .register-form-panel {
+    padding: 29px 16px 34px;
+  }
+
+  .register-form-header h2 {
+    font-size: 28px;
+  }
+
+  .register-account-card {
+    padding: 14px;
+  }
+
+  .register-form-card form
+    > label > input,
+  .register-password-field input {
+
+    min-height: 50px;
+  }
+
+  .register-form-card form
+    > button[type="submit"] {
+
+    min-height: 54px;
+  }
+}
