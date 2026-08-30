@@ -794,6 +794,267 @@ class MeView(
         )
 
 
+
+
+# ============================================================
+# SESSION CONTEXT
+# ============================================================
+
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+from rest_framework.views import APIView
+
+from .models import Profile
+
+
+# ============================================================
+# SESSION CONTEXT
+# ============================================================
+
+class SessionContextView(
+    APIView
+):
+
+    permission_classes = [
+        permissions.IsAuthenticated,
+    ]
+
+
+    def get(
+        self,
+        request,
+    ):
+
+        # ====================================================
+        # PROFILE
+        # ====================================================
+
+        profile, _ = (
+            Profile.objects
+            .get_or_create(
+                user=request.user
+            )
+        )
+
+
+        # ====================================================
+        # NORMALIZE ACCOUNT TYPE
+        # ====================================================
+
+        account_type = (
+            profile.account_type
+            or
+            "member"
+        )
+
+
+        if (
+            account_type
+            not in {
+                "member",
+                "partner",
+            }
+        ):
+
+            account_type = (
+                "member"
+            )
+
+
+        # ====================================================
+        # PARTNER PORTAL
+        # ====================================================
+
+        if (
+            account_type ==
+            "partner"
+        ):
+
+            changed = False
+
+            if (
+                profile.preferred_portal
+                !=
+                "restaurant"
+            ):
+
+                profile.preferred_portal = (
+                    "restaurant"
+                )
+
+                changed = True
+
+
+            if changed:
+
+                profile.save(
+                    update_fields=[
+                        "preferred_portal",
+                        "updated_at",
+                    ]
+                )
+
+
+        # ====================================================
+        # MEMBER PORTAL
+        # ====================================================
+
+        else:
+
+            if (
+                profile.preferred_portal
+                !=
+                "member"
+            ):
+
+                profile.preferred_portal = (
+                    "member"
+                )
+
+                profile.save(
+                    update_fields=[
+                        "preferred_portal",
+                        "updated_at",
+                    ]
+                )
+
+
+        # ====================================================
+        # RESTAURANTS
+        #
+        # IMPORTANT:
+        #
+        # A new partner is allowed to have ZERO restaurants.
+        #
+        # We do NOT return an error.
+        # ====================================================
+
+        restaurants = []
+
+
+        try:
+
+            Restaurant = (
+                apps.get_model(
+                    "invites",
+                    "Restaurant",
+                )
+            )
+
+        except LookupError:
+
+            Restaurant = None
+
+
+        # ====================================================
+        # RESTAURANTS OWNED BY PARTNER
+        # ====================================================
+
+        if (
+            account_type ==
+            "partner"
+            and
+            Restaurant is not None
+        ):
+
+            # Only use owner lookup if Restaurant
+            # actually contains that field.
+
+            field_names = {
+                field.name
+                for field
+                in Restaurant._meta.get_fields()
+            }
+
+
+            if (
+                "owner"
+                in field_names
+            ):
+
+                partner_restaurants = (
+                    Restaurant.objects
+                    .filter(
+                        owner=request.user
+                    )
+                    .order_by(
+                        "name"
+                    )
+                )
+
+
+                for restaurant in (
+                    partner_restaurants
+                ):
+
+                    restaurants.append(
+                        {
+                            "restaurant_id":
+                                restaurant.id,
+
+                            "restaurant_name":
+                                restaurant.name,
+
+                            "is_active":
+                                restaurant.is_active,
+
+                            "is_foodkindl_partner":
+                                getattr(
+                                    restaurant,
+                                    "is_foodkindl_partner",
+                                    False,
+                                ),
+
+                            "accepts_foodkindl_booking":
+                                getattr(
+                                    restaurant,
+                                    "accepts_foodkindl_booking",
+                                    False,
+                                ),
+                        }
+                    )
+
+
+        # ====================================================
+        # RESPONSE
+        # ====================================================
+
+        return Response(
+            {
+                "user_id":
+                    request.user.id,
+
+                "first_name":
+                    request.user.first_name,
+
+                "last_name":
+                    request.user.last_name,
+
+                "email":
+                    request.user.email,
+
+                "account_type":
+                    account_type,
+
+                "member_profile_enabled":
+                    profile.member_profile_enabled,
+
+                "preferred_portal":
+                    profile.preferred_portal,
+
+                "has_restaurant_access":
+                    bool(
+                        restaurants
+                    ),
+
+                "restaurants":
+                    restaurants,
+            },
+
+            status=
+                status.HTTP_200_OK,
+        )
+
 # ============================================================
 # PROFILE UPDATE
 # ============================================================
@@ -999,6 +1260,7 @@ class FoodMatchView(
                 is_staff=False,
                 is_superuser=False,
                 profile__isnull=False,
+                profile__member_profile_enabled=True,
             )
 
             .exclude(

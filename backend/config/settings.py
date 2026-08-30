@@ -17,8 +17,15 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # LOAD ENVIRONMENT
 # ============================================================
 
+# Load backend/.env first.
+# If you keep a second .env one level above backend, load it as a fallback.
 load_dotenv(
     BASE_DIR / ".env",
+    override=False,
+)
+
+load_dotenv(
+    BASE_DIR.parent / ".env",
     override=False,
 )
 
@@ -117,11 +124,28 @@ ORS_API_KEY = (
 # ============================================================
 # NETLIFY BLOB
 # ============================================================
+#
+# Local backend/.env example:
+#
+# NETLIFY_BLOB_UPLOAD_SECRET=your-secret
+# NETLIFY_BLOB_UPLOAD_URL=http://localhost:8888/.netlify/functions/upload-restaurant-image
+#
+# Production (Render) example:
+#
+# NETLIFY_BLOB_UPLOAD_SECRET=your-secret
+# NETLIFY_BLOB_UPLOAD_URL=https://YOUR-NETLIFY-SITE/.netlify/functions/upload-restaurant-image
+#
+# Never hard-code the secret in this file.
+# ============================================================
 
-NETLIFY_BLOB_UPLOAD_SECRET = os.environ.get(
-    "NETLIFY_BLOB_UPLOAD_SECRET",
-    "",
+NETLIFY_BLOB_UPLOAD_SECRET = (
+    os.environ.get(
+        "NETLIFY_BLOB_UPLOAD_SECRET",
+        "",
+    )
+    .strip()
 )
+
 
 if DEBUG:
     NETLIFY_BLOB_UPLOAD_URL = (
@@ -144,9 +168,26 @@ else:
         .strip()
     )
 
+
+NETLIFY_BLOB_UPLOAD_TIMEOUT = int(
+    os.environ.get(
+        "NETLIFY_BLOB_UPLOAD_TIMEOUT",
+        "60",
+    )
+)
+
+
+# Validate the production configuration early.
+if not DEBUG:
+
     if not NETLIFY_BLOB_UPLOAD_URL:
         raise RuntimeError(
             "NETLIFY_BLOB_UPLOAD_URL must be configured in production."
+        )
+
+    if not NETLIFY_BLOB_UPLOAD_SECRET:
+        raise RuntimeError(
+            "NETLIFY_BLOB_UPLOAD_SECRET must be configured in production."
         )
 
 

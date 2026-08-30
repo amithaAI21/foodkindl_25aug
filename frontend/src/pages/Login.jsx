@@ -15,9 +15,7 @@ import {
   Users,
 } from "lucide-react";
 
-import {
-  useState,
-} from "react";
+import { useState } from "react";
 
 import {
   Link,
@@ -28,6 +26,8 @@ import {
   useAuth,
 } from "../context/AuthContext";
 
+import api from "../api";
+
 import "../styles/login.css";
 
 
@@ -36,7 +36,6 @@ export default function Login() {
   const {
     login,
   } = useAuth();
-
 
   const navigate =
     useNavigate();
@@ -69,9 +68,9 @@ export default function Login() {
   ] = useState(false);
 
 
-  /* =========================================================
-     UPDATE FIELD
-  ========================================================= */
+  // =========================================================
+  // UPDATE FIELD
+  // =========================================================
 
   function updateField(
     field,
@@ -81,11 +80,9 @@ export default function Login() {
     setForm(
       previous => ({
         ...previous,
-        [field]:
-          value,
+        [field]: value,
       })
     );
-
 
     if (error) {
       setError("");
@@ -93,9 +90,9 @@ export default function Login() {
   }
 
 
-  /* =========================================================
-     LOGIN
-  ========================================================= */
+  // =========================================================
+  // LOGIN
+  // =========================================================
 
   async function submit(
     event
@@ -103,20 +100,22 @@ export default function Login() {
 
     event.preventDefault();
 
-
     if (submitting) {
       return;
     }
 
-
     setError("");
-
-    setSubmitting(
-      true
-    );
-
+    setSubmitting(true);
 
     try {
+
+      // =====================================================
+      // 1. LOGIN
+      // =====================================================
+
+      console.log(
+        "1. Attempting login..."
+      );
 
       await login(
         form.email
@@ -126,29 +125,230 @@ export default function Login() {
         form.password
       );
 
+      console.log(
+        "2. Login successful."
+      );
+
+
+      // =====================================================
+      // 2. LOAD SESSION CONTEXT
+      // =====================================================
+
+      let session;
+
+      try {
+
+        const contextResponse =
+          await api.get(
+            "/auth/session-context/"
+          );
+
+        session =
+          contextResponse?.data;
+
+        console.log(
+          "3. Session context:",
+          session
+        );
+
+      } catch (sessionError) {
+
+        console.error(
+          "SESSION CONTEXT ERROR:",
+          sessionError?.response?.status,
+          sessionError?.response?.data,
+          sessionError
+        );
+
+        const backendMessage =
+          sessionError?.response?.data?.detail ||
+          sessionError?.response?.data?.error ||
+          sessionError?.response?.data?.message;
+
+        setError(
+          backendMessage ||
+          (
+            sessionError?.response?.status
+              ? `Unable to load account information. Error ${sessionError.response.status}.`
+              : "Unable to load account information."
+          )
+        );
+
+        return;
+      }
+
+
+      // =====================================================
+      // 3. SESSION CHECK
+      // =====================================================
+
+      if (!session) {
+
+        setError(
+          "FoodKindl could not load your account information."
+        );
+
+        return;
+      }
+
+
+      // =====================================================
+      // 4. RESTAURANT PARTNER
+      // =====================================================
+
+      if (
+        session?.account_type ===
+        "partner"
+      ) {
+
+        console.log(
+          "Restaurant Partner detected."
+        );
+
+        navigate(
+          "/partner/dashboard",
+          {
+            replace: true,
+          }
+        );
+
+        return;
+      }
+
+
+      // =====================================================
+      // 5. NORMAL MEMBER
+      // =====================================================
+
+      console.log(
+        "FoodKindl Member detected."
+      );
 
       navigate(
         "/dashboard",
         {
-          replace:
-            true,
+          replace: true,
         }
       );
 
 
-    } catch (err) {
+    } catch (loginError) {
 
       console.error(
-        "Login error:",
-        err.response?.data ||
-        err
+        "LOGIN ERROR:",
+        loginError?.response?.status,
+        loginError?.response?.data,
+        loginError
       );
 
 
+      const data =
+        loginError?.response?.data;
+
+
+      let message =
+        "Unable to log in to FoodKindl.";
+
+
+      if (
+        typeof data?.detail ===
+        "string"
+      ) {
+
+        message =
+          data.detail;
+
+      } else if (
+        typeof data?.error ===
+        "string"
+      ) {
+
+        message =
+          data.error;
+
+      } else if (
+        typeof data?.message ===
+        "string"
+      ) {
+
+        message =
+          data.message;
+
+      } else if (
+        Array.isArray(
+          data?.non_field_errors
+        ) &&
+        data.non_field_errors.length > 0
+      ) {
+
+        message =
+          data.non_field_errors[0];
+
+      } else if (
+        Array.isArray(
+          data?.email
+        ) &&
+        data.email.length > 0
+      ) {
+
+        message =
+          data.email[0];
+
+      } else if (
+        Array.isArray(
+          data?.password
+        ) &&
+        data.password.length > 0
+      ) {
+
+        message =
+          data.password[0];
+
+      } else if (
+        typeof data?.email ===
+        "string"
+      ) {
+
+        message =
+          data.email;
+
+      } else if (
+        typeof data?.password ===
+        "string"
+      ) {
+
+        message =
+          data.password;
+
+      } else if (
+        typeof data ===
+        "string"
+      ) {
+
+        message =
+          data;
+
+      } else if (
+        loginError?.message ===
+        "Network Error"
+      ) {
+
+        message =
+          "Unable to connect to the FoodKindl server.";
+
+      } else if (
+        typeof loginError?.message ===
+        "string" &&
+        loginError.message
+      ) {
+
+        message =
+          loginError.message;
+      }
+
+
       setError(
-        err.response?.data?.detail
-        ||
-        "Invalid email or password."
+        message
       );
 
 
@@ -160,6 +360,10 @@ export default function Login() {
     }
   }
 
+
+  // =========================================================
+  // UI
+  // =========================================================
 
   return (
 
@@ -190,7 +394,6 @@ export default function Login() {
       ====================================================== */}
 
       <header className="login-topbar">
-
 
         <Link
           to="/"
@@ -683,15 +886,15 @@ export default function Login() {
                     {
                       showPassword
                         ? (
-                          <EyeOff
-                            size={17}
-                          />
-                        )
+                            <EyeOff
+                              size={17}
+                            />
+                          )
                         : (
-                          <Eye
-                            size={17}
-                          />
-                        )
+                            <Eye
+                              size={17}
+                            />
+                          )
                     }
 
                   </button>
@@ -701,7 +904,7 @@ export default function Login() {
               </label>
 
 
-              {/* FORGOT */}
+              {/* FORGOT PASSWORD */}
 
               <div className="login-form-options">
 
@@ -724,7 +927,10 @@ export default function Login() {
                 error &&
                 (
 
-                  <div className="login-error">
+                  <div
+                    className="login-error"
+                    role="alert"
+                  >
 
                     {error}
 
@@ -747,19 +953,19 @@ export default function Login() {
                 {
                   submitting
                     ? (
-                      "Logging in..."
-                    )
+                        "Logging in..."
+                      )
                     : (
-                      <>
+                        <>
 
-                        Login to FoodKindl
+                          Login to FoodKindl
 
-                        <ArrowRight
-                          size={17}
-                        />
+                          <ArrowRight
+                            size={17}
+                          />
 
-                      </>
-                    )
+                        </>
+                      )
                 }
 
               </button>
@@ -800,7 +1006,7 @@ export default function Login() {
 
               <span>
                 Your account and personal information
-                are protected using FoodKindl's
+                are protected using FoodKindl&apos;s
                 security controls.
               </span>
 
@@ -813,6 +1019,5 @@ export default function Login() {
       </section>
 
     </main>
-
   );
 }

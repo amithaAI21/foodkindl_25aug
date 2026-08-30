@@ -45,6 +45,14 @@ class ProfileSerializer(
             "profile_visibility",
 
             # =================================================
+            # ACCOUNT EXPERIENCE
+            # =================================================
+
+            "account_type",
+            "member_profile_enabled",
+            "preferred_portal",
+
+            # =================================================
             # FOOD MATCH
             # =================================================
 
@@ -1150,12 +1158,19 @@ class RegisterSerializer(
     serializers.ModelSerializer
 ):
 
-    password = (
-        serializers.CharField(
-            write_only=True,
-            min_length=6,
-            trim_whitespace=False,
-        )
+    password = serializers.CharField(
+        write_only=True,
+        min_length=6,
+        trim_whitespace=False,
+    )
+
+    account_type = serializers.ChoiceField(
+        choices=[
+            "member",
+            "partner",
+        ],
+        write_only=True,
+        default="member",
     )
 
 
@@ -1169,6 +1184,7 @@ class RegisterSerializer(
             "last_name",
             "email",
             "password",
+            "account_type",
         )
 
         read_only_fields = (
@@ -1187,27 +1203,19 @@ class RegisterSerializer(
             .lower()
         )
 
-        if not email:
-
-            raise serializers.ValidationError(
-                "Email is required."
-            )
 
         if (
             User.objects
             .filter(
-                email__iexact=
-                    email
+                email__iexact=email
             )
             .exists()
         ):
 
             raise serializers.ValidationError(
-                (
-                    "An account with this "
-                    "email already exists."
-                )
+                "An account with this email already exists."
             )
+
 
         return email
 
@@ -1218,11 +1226,20 @@ class RegisterSerializer(
         validated_data,
     ):
 
+        account_type = (
+            validated_data.pop(
+                "account_type",
+                "member",
+            )
+        )
+
+
         password = (
             validated_data.pop(
                 "password"
             )
         )
+
 
         email = (
             validated_data[
@@ -1231,6 +1248,7 @@ class RegisterSerializer(
             .strip()
             .lower()
         )
+
 
         user = User(
 
@@ -1255,18 +1273,58 @@ class RegisterSerializer(
             ),
         )
 
+
         user.set_password(
             password
         )
 
         user.save()
 
-        Profile.objects.get_or_create(
-            user=user
+
+        profile, _ = (
+            Profile.objects
+            .get_or_create(
+                user=user
+            )
         )
 
-        return user
 
+        if (
+            account_type ==
+            "partner"
+        ):
+
+            profile.account_type = (
+                "partner"
+            )
+
+            profile.member_profile_enabled = (
+                False
+            )
+
+            profile.preferred_portal = (
+                "restaurant"
+            )
+
+        else:
+
+            profile.account_type = (
+                "member"
+            )
+
+            profile.member_profile_enabled = (
+                True
+            )
+
+            profile.preferred_portal = (
+                "member"
+            )
+
+
+        profile.save()
+
+
+        return user
 
 # ============================================================
 # LOGIN SERIALIZER

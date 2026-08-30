@@ -461,9 +461,7 @@ class FoodInviteParticipant(
 # RESTAURANT
 # ============================================================
 
-class Restaurant(
-    models.Model
-):
+class Restaurant(models.Model):
 
     RESTAURANT_TYPE_CHOICES = [
         ("restaurant", "Restaurant"),
@@ -471,16 +469,13 @@ class Restaurant(
         ("hotel", "Hotel"),
     ]
 
-
     PRICE_RANGE_CHOICES = [
         ("budget", "Budget"),
         ("moderate", "Moderate"),
         ("premium", "Premium"),
     ]
 
-
     CUISINE_CHOICES = [
-        # Indian regional
         ("south_indian", "South Indian"),
         ("north_indian", "North Indian"),
         ("kerala", "Kerala"),
@@ -497,7 +492,6 @@ class Restaurant(
         ("goan", "Goan"),
         ("kashmiri", "Kashmiri"),
 
-        # International
         ("chinese", "Chinese"),
         ("indo_chinese", "Indo-Chinese"),
         ("italian", "Italian"),
@@ -511,7 +505,6 @@ class Restaurant(
         ("middle_eastern", "Middle Eastern"),
         ("lebanese", "Lebanese"),
 
-        # Popular food categories
         ("biryani", "Biryani"),
         ("seafood", "Seafood"),
         ("street_food", "Street Food"),
@@ -521,16 +514,25 @@ class Restaurant(
         ("desserts", "Desserts"),
         ("barbecue", "Barbecue / Grill"),
 
-        # Diet based
         ("vegetarian", "Vegetarian"),
         ("vegan", "Vegan"),
         ("jain", "Jain"),
 
-        # Other
         ("multi_cuisine", "Multi Cuisine"),
         ("other", "Other"),
     ]
 
+    # ========================================================
+    # OWNER
+    # ========================================================
+
+    owner = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        related_name="owned_restaurants",
+        null=True,
+        blank=True,
+    )
 
     # ========================================================
     # BASIC INFORMATION
@@ -559,9 +561,8 @@ class Restaurant(
         db_index=True,
     )
 
-
     # ========================================================
-    # CONTACT INFORMATION
+    # CONTACT
     # ========================================================
 
     phone_number = models.CharField(
@@ -580,7 +581,6 @@ class Restaurant(
         blank=True,
         default="",
     )
-
 
     # ========================================================
     # LOCATION
@@ -630,9 +630,8 @@ class Restaurant(
         editable=False,
     )
 
-
     # ========================================================
-    # RESTAURANT DETAILS
+    # DETAILS
     # ========================================================
 
     rating = models.DecimalField(
@@ -652,7 +651,6 @@ class Restaurant(
     average_cost_for_two = models.PositiveIntegerField(
         blank=True,
         null=True,
-        help_text="Approximate cost for two people in INR.",
     )
 
     opening_time = models.TimeField(
@@ -670,46 +668,21 @@ class Restaurant(
         null=True,
     )
 
-
     # ========================================================
     # FACILITIES
     # ========================================================
 
-    has_parking = models.BooleanField(
-        default=False,
-    )
-
-    has_wifi = models.BooleanField(
-        default=False,
-    )
-
-    accepts_cards = models.BooleanField(
-        default=True,
-    )
-
-    family_friendly = models.BooleanField(
-        default=True,
-    )
-
-    outdoor_seating = models.BooleanField(
-        default=False,
-    )
-
-    wheelchair_accessible = models.BooleanField(
-        default=False,
-    )
-
-    serves_vegetarian = models.BooleanField(
-        default=True,
-    )
-
-    serves_non_vegetarian = models.BooleanField(
-        default=True,
-    )
-
+    has_parking = models.BooleanField(default=False)
+    has_wifi = models.BooleanField(default=False)
+    accepts_cards = models.BooleanField(default=True)
+    family_friendly = models.BooleanField(default=True)
+    outdoor_seating = models.BooleanField(default=False)
+    wheelchair_accessible = models.BooleanField(default=False)
+    serves_vegetarian = models.BooleanField(default=True)
+    serves_non_vegetarian = models.BooleanField(default=True)
 
     # ========================================================
-    # MAIN RESTAURANT IMAGE
+    # MAIN IMAGE
     # ========================================================
 
     image_blob_key = models.CharField(
@@ -736,13 +709,12 @@ class Restaurant(
         default="",
     )
 
-
     # ========================================================
-    # FOODKINDL PARTNERSHIP
+    # FOODKINDL
     # ========================================================
 
     is_foodkindl_partner = models.BooleanField(
-        default=False,
+        default=True,
         db_index=True,
     )
 
@@ -750,11 +722,6 @@ class Restaurant(
         default=False,
         db_index=True,
     )
-
-
-    # ========================================================
-    # STATUS
-    # ========================================================
 
     is_active = models.BooleanField(
         default=True,
@@ -769,38 +736,14 @@ class Restaurant(
         auto_now=True,
     )
 
-
     class Meta:
         ordering = [
             "-rating",
             "name",
         ]
 
-        indexes = [
-            models.Index(
-                fields=[
-                    "latitude",
-                    "longitude",
-                ],
-                name="restaurant_geo_idx",
-            ),
-
-            models.Index(
-                fields=[
-                    "is_active",
-                    "is_foodkindl_partner",
-                    "accepts_foodkindl_booking",
-                ],
-                name="restaurant_partner_idx",
-            ),
-        ]
-
-
-    def __str__(
-        self,
-    ):
+    def __str__(self):
         return self.name
-
 
 # ============================================================
 # RESTAURANT GALLERY IMAGE

@@ -1,0 +1,135 @@
+/* ============================================================
+   FOODKINDL — RESTAURANT PARTNER REGISTRATION
+   File: src/styles/register_partner.css
+============================================================ */
+
+.restaurant-partner-register-page {
+  min-height: 100vh;
+}
+
+.restaurant-partner-register-page .register-story-pill {
+  color: #ff8a56;
+}
+
+.restaurant-partner-story h1 {
+  max-width: 680px;
+}
+
+.restaurant-partner-benefits {
+  display: grid;
+  gap: 10px;
+  margin-top: 24px;
+}
+
+.restaurant-partner-benefits article {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 13px;
+  background: rgba(255, 255, 255, 0.018);
+}
+
+.restaurant-partner-benefits article > svg {
+  flex: 0 0 auto;
+  margin-top: 2px;
+  color: #ff7540;
+}
+
+.restaurant-partner-benefits article > div {
+  min-width: 0;
+}
+
+.restaurant-partner-benefits strong {
+  display: block;
+  margin-bottom: 4px;
+  color: #ffffff;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.restaurant-partner-benefits p {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.42);
+  font-size: 9px;
+  line-height: 1.55;
+}
+
+.restaurant-partner-form-card {
+  border-color: rgba(255, 107, 50, 0.18);
+}
+
+.restaurant-partner-form-card .register-form-icon {
+  color: #ff7540;
+  background: rgba(255, 107, 50, 0.08);
+}
+
+.restaurant-partner-form-card .register-eyebrow {
+  color: #ff7540;
+}
+
+/* Partner form input focus */
+.restaurant-partner-form-card input:focus {
+  border-color: rgba(255, 107, 50, 0.55);
+  box-shadow: 0 0 0 3px rgba(255, 107, 50, 0.06);
+}
+
+/* Partner submit button */
+.restaurant-partner-form-card .register-submit-button {
+  background: linear-gradient(
+    135deg,
+    #ff642b 0%,
+    #f0441d 100%
+  );
+}
+
+.restaurant-partner-form-card .register-submit-button:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 12px 28px rgba(240, 68, 29, 0.18);
+}
+
+/* Login link */
+.restaurant-partner-form-card .register-login a {
+  color: #ff7540;
+}
+
+/* Legal links */
+.restaurant-partner-form-card .register-legal a {
+  color: #ff7540;
+}
+
+/* Back link */
+.restaurant-partner-register-page .register-back-link:hover {
+  color: #ff7540;
+}
+
+/* ============================================================
+   RESPONSIVE
+============================================================ */
+
+@media (max-width: 900px) {
+  .restaurant-partner-benefits {
+    margin-top: 18px;
+  }
+}
+
+@media (max-width: 760px) {
+  .restaurant-partner-benefits article {
+    padding: 12px;
+  }
+
+  .restaurant-partner-story h1 {
+    max-width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .restaurant-partner-benefits {
+    gap: 8px;
+  }
+
+  .restaurant-partner-benefits article {
+    border-radius: 11px;
+  }
+}

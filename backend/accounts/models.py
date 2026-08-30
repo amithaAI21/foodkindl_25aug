@@ -4,6 +4,10 @@ from django.db.models.signals import post_save
 from django.dispatch import receiver
 
 
+# ============================================================
+# PROFILE
+# ============================================================
+
 class Profile(models.Model):
 
     # ========================================================
@@ -111,9 +115,80 @@ class Profile(models.Model):
 
 
     PROFILE_VISIBILITY_CHOICES = [
-        ("public", "Public"),
-        ("private", "Private"),
+        (
+            "public",
+            "Public",
+        ),
+        (
+            "private",
+            "Private",
+        ),
     ]
+
+
+    # ========================================================
+    # ACCOUNT TYPE
+    # ========================================================
+
+    ACCOUNT_TYPE_CHOICES = [
+        (
+            "member",
+            "FoodKindl Member",
+        ),
+        (
+            "partner",
+            "Restaurant Partner",
+        ),
+    ]
+
+
+    PORTAL_CHOICES = [
+        (
+            "member",
+            "FoodKindl Member",
+        ),
+        (
+            "restaurant",
+            "Restaurant Partner",
+        ),
+    ]
+
+
+    # ========================================================
+    # USER
+    # ========================================================
+
+    user = models.OneToOneField(
+        User,
+        on_delete=models.CASCADE,
+        related_name="profile",
+    )
+
+
+    # ========================================================
+    # ACCOUNT SETTINGS
+    # ========================================================
+
+    account_type = models.CharField(
+        max_length=20,
+        choices=ACCOUNT_TYPE_CHOICES,
+        default="member",
+        db_index=True,
+    )
+
+
+    member_profile_enabled = models.BooleanField(
+        default=True,
+        db_index=True,
+    )
+
+
+    preferred_portal = models.CharField(
+        max_length=20,
+        choices=PORTAL_CHOICES,
+        default="member",
+        db_index=True,
+    )
 
 
     # ========================================================
@@ -129,60 +204,52 @@ class Profile(models.Model):
 
 
     # ========================================================
-    # USER
-    # ========================================================
-
-    user = models.OneToOneField(
-        User,
-        on_delete=models.CASCADE,
-        related_name="profile",
-    )
-
-
-    # ========================================================
     # PROFILE INFORMATION
     # ========================================================
 
     bio = models.TextField(
         blank=True,
+        default="",
     )
 
 
     city = models.CharField(
         max_length=120,
         blank=True,
+        default="",
     )
 
 
     locality = models.CharField(
         max_length=120,
         blank=True,
+        default="",
     )
 
 
     postcode = models.CharField(
         max_length=20,
         blank=True,
+        default="",
     )
 
 
     college_workplace = models.CharField(
         max_length=180,
         blank=True,
+        default="",
     )
 
 
     role = models.CharField(
         max_length=120,
         blank=True,
+        default="",
     )
 
 
     # ========================================================
     # FOOD INTERESTS
-    #
-    # Example:
-    # Home Cooking,Baking,Food Exploring
     # ========================================================
 
     interests = models.CharField(
@@ -192,26 +259,12 @@ class Profile(models.Model):
     )
 
 
-    # ========================================================
-    # FOOD MATCH - FAVOURITE CUISINES
-    #
-    # Example:
-    # Kerala,South Indian,Chinese,Italian
-    # ========================================================
-
     favorite_cuisines = models.CharField(
         max_length=1000,
         blank=True,
         default="",
     )
 
-
-    # ========================================================
-    # FOOD MATCH - CONNECTION PREFERENCES
-    #
-    # Example:
-    # Cook Together,Dine Out,Food Gatherings
-    # ========================================================
 
     food_connection_preferences = models.CharField(
         max_length=1000,
@@ -224,6 +277,7 @@ class Profile(models.Model):
         max_length=30,
         choices=GENDER_CHOICES,
         blank=True,
+        default="",
     )
 
 
@@ -353,8 +407,6 @@ class Profile(models.Model):
 
     # ========================================================
     # GOVERNMENT ID HTTPS URL
-    #
-    # Stores the HTTPS URL returned by Netlify.
     # ========================================================
 
     government_id_url = models.URLField(
@@ -382,6 +434,7 @@ class Profile(models.Model):
         max_length=30,
         choices=GOVERNMENT_ID_TYPE_CHOICES,
         blank=True,
+        default="",
     )
 
 
@@ -405,6 +458,7 @@ class Profile(models.Model):
 
     rejection_reason = models.TextField(
         blank=True,
+        default="",
     )
 
 
@@ -438,7 +492,44 @@ class Profile(models.Model):
 
 
     # ========================================================
-    # HELPERS
+    # ACCOUNT HELPERS
+    # ========================================================
+
+    @property
+    def is_partner_account(
+        self,
+    ):
+        return (
+            self.account_type
+            ==
+            "partner"
+        )
+
+
+    @property
+    def is_member_account(
+        self,
+    ):
+        return (
+            self.account_type
+            ==
+            "member"
+        )
+
+
+    @property
+    def should_open_partner_portal(
+        self,
+    ):
+        return (
+            self.account_type
+            ==
+            "partner"
+        )
+
+
+    # ========================================================
+    # BLOCK HELPERS
     # ========================================================
 
     def has_blocked(
@@ -447,6 +538,13 @@ class Profile(models.Model):
     ):
 
         if not user:
+            return False
+
+        if not getattr(
+            user,
+            "id",
+            None,
+        ):
             return False
 
         return (
@@ -462,40 +560,39 @@ class Profile(models.Model):
     # FOOD MATCH HELPERS
     # ========================================================
 
-    def get_food_interests(self):
-        """
-        Return food interests as a clean Python list.
-        """
+    def get_food_interests(
+        self,
+    ):
 
         if not self.interests:
             return []
 
         return [
             item.strip()
-            for item in self.interests.split(",")
+            for item
+            in self.interests.split(",")
             if item.strip()
         ]
 
 
-    def get_favorite_cuisines(self):
-        """
-        Return favourite cuisines as a clean Python list.
-        """
+    def get_favorite_cuisines(
+        self,
+    ):
 
         if not self.favorite_cuisines:
             return []
 
         return [
             item.strip()
-            for item in self.favorite_cuisines.split(",")
+            for item
+            in self.favorite_cuisines.split(",")
             if item.strip()
         ]
 
 
-    def get_food_connection_preferences(self):
-        """
-        Return connection preferences as a clean Python list.
-        """
+    def get_food_connection_preferences(
+        self,
+    ):
 
         if not self.food_connection_preferences:
             return []
@@ -508,13 +605,143 @@ class Profile(models.Model):
         ]
 
 
+    # ========================================================
+    # SAVE
+    # ========================================================
+
+    def save(
+        self,
+        *args,
+        **kwargs,
+    ):
+
+        # ----------------------------------------------------
+        # ACCOUNT TYPE / PORTAL
+        # ----------------------------------------------------
+
+        if (
+            self.account_type
+            ==
+            "partner"
+        ):
+
+            self.preferred_portal = (
+                "restaurant"
+            )
+
+        else:
+
+            self.account_type = (
+                "member"
+            )
+
+            self.preferred_portal = (
+                "member"
+            )
+
+            self.member_profile_enabled = (
+                True
+            )
+
+
+        # ----------------------------------------------------
+        # VERIFICATION
+        # ----------------------------------------------------
+
+        verification_status = (
+            str(
+                self.verification_status
+                or
+                "not_submitted"
+            )
+            .strip()
+            .lower()
+        )
+
+
+        valid_statuses = {
+            "not_submitted",
+            "pending",
+            "approved",
+            "rejected",
+        }
+
+
+        if (
+            verification_status
+            not in
+            valid_statuses
+        ):
+
+            verification_status = (
+                "not_submitted"
+            )
+
+
+        self.verification_status = (
+            verification_status
+        )
+
+
+        # Approved is the ONLY state
+        # where is_verified can be True.
+
+        self.is_verified = (
+            verification_status
+            ==
+            "approved"
+        )
+
+
+        # Not approved = remove
+        # old verification metadata.
+
+        if (
+            verification_status
+            !=
+            "approved"
+        ):
+
+            self.verified_by = None
+
+            self.verified_at = None
+
+
+        # Remove old rejection reason when user
+        # has resubmitted / pending / approved.
+
+        if (
+            verification_status
+            in {
+                "not_submitted",
+                "pending",
+                "approved",
+            }
+        ):
+
+            self.rejection_reason = ""
+
+
+        super().save(
+            *args,
+            **kwargs,
+        )
+
+
+    # ========================================================
+    # STRING
+    # ========================================================
+
     def __str__(
         self,
     ):
 
         return (
             self.user.email
-            or self.user.username
+            or
+            self.user.username
+            or
+            f"Profile {self.pk}"
         )
 
 
@@ -529,18 +756,22 @@ class Profile(models.Model):
 def ensure_user_profile(
     sender,
     instance,
+    created,
     **kwargs,
 ):
 
     Profile.objects.get_or_create(
         user=instance
     )
-    
+
+
 # ============================================================
 # ADMIN NOTIFICATIONS
 # ============================================================
 
-class AdminNotification(models.Model):
+class AdminNotification(
+    models.Model
+):
 
     NOTIFICATION_TYPE_CHOICES = [
         (
@@ -573,7 +804,6 @@ class AdminNotification(models.Model):
     )
 
 
-    # User whose action created the notification
     user = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
@@ -583,7 +813,6 @@ class AdminNotification(models.Model):
     )
 
 
-    # Profile that needs admin review
     profile = models.ForeignKey(
         Profile,
         on_delete=models.CASCADE,
@@ -618,6 +847,8 @@ class AdminNotification(models.Model):
         ]
 
 
-    def __str__(self):
+    def __str__(
+        self,
+    ):
 
         return self.title

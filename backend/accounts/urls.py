@@ -13,6 +13,7 @@ from .views import (
     VerificationStatusView,
     ForgotPasswordView,
     ResetPasswordView,
+    SessionContextView,
 )
 
 
@@ -125,4 +126,10 @@ urlpatterns = [
         BlockStatusView.as_view(),
         name="block-status",
     ),
+    
+    path(
+    "session-context/",
+    SessionContextView.as_view(),
+    name="session-context",
+),
 ]

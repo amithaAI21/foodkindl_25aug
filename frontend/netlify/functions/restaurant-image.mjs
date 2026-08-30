@@ -1,12 +1,12 @@
 import { getStore } from "@netlify/blobs";
 
+const STORE_NAME = "foodkindl-restaurant-images";
+
 export default async (request) => {
   try {
-    const url =
-      new URL(request.url);
+    const url = new URL(request.url);
 
-    const key =
-      url.searchParams.get("key");
+    const key = url.searchParams.get("key");
 
     if (!key) {
       return new Response(
@@ -17,18 +17,14 @@ export default async (request) => {
       );
     }
 
-    const store =
-      getStore(
-        "foodkindl-restaurant-images"
-      );
+    const store = getStore(STORE_NAME);
 
-    const entry =
-      await store.getWithMetadata(
-        key,
-        {
-          type: "arrayBuffer",
-        }
-      );
+    const entry = await store.getWithMetadata(
+      key,
+      {
+        type: "arrayBuffer",
+      }
+    );
 
     if (!entry) {
       return new Response(
@@ -47,13 +43,12 @@ export default async (request) => {
       entry.data,
       {
         status: 200,
-
         headers: {
-          "Content-Type":
-            contentType,
-
+          "Content-Type": contentType,
           "Cache-Control":
             "public, max-age=31536000, immutable",
+          "X-Content-Type-Options":
+            "nosniff",
         },
       }
     );

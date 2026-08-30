@@ -62,6 +62,11 @@ urlpatterns = [
         "restaurant_discovery.urls"
     ),
 ),
+     
+     path(
+    "api/partner/",
+    include("invites.partner_urls"),
+),
 ]
 
 

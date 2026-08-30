@@ -1,17 +1,15 @@
 import {
-  ArrowLeft,
   ArrowRight,
   Check,
-  ChefHat,
-  Footprints,
-  MapPin,
+  Eye,
+  EyeOff,
   ShieldCheck,
-  Sparkles,
-  Utensils,
+  Store,
   Users,
 } from "lucide-react";
 
 import {
+  useMemo,
   useState,
 } from "react";
 
@@ -27,55 +25,45 @@ import {
 import "../styles/register.css";
 
 
-const initialForm = {
-  first_name: "",
-  last_name: "",
-  email: "",
-  password: "",
-};
-
-
-const experiences = [
-  {
-    icon: ChefHat,
-    title: "Cook Together",
-    text:
-      "Meet people nearby and cook something memorable together.",
-  },
-
-  {
-    icon: Utensils,
-    title: "Dine Out",
-    text:
-      "Discover people and FoodKindl partner restaurants around you.",
-  },
-
-  {
-    icon: Footprints,
-    title: "Food Walk",
-    text:
-      "Build multi-stop food journeys and explore places together.",
-  },
-];
-
-
 export default function Register() {
+
+  const navigate =
+    useNavigate();
 
   const {
     register,
   } = useAuth();
 
 
-  const navigate =
-    useNavigate();
+  const [
+    accountType,
+    setAccountType,
+  ] = useState(
+    "member"
+  );
 
 
   const [
     form,
     setForm,
-  ] = useState(
-    initialForm
-  );
+  ] = useState({
+    first_name: "",
+    last_name: "",
+    email: "",
+    password: "",
+  });
+
+
+  const [
+    showPassword,
+    setShowPassword,
+  ] = useState(false);
+
+
+  const [
+    loading,
+    setLoading,
+  ] = useState(false);
 
 
   const [
@@ -85,14 +73,31 @@ export default function Register() {
 
 
   const [
-    submitting,
-    setSubmitting,
-  ] = useState(false);
+    success,
+    setSuccess,
+  ] = useState("");
 
 
-  /* =========================================================
-     CHANGE
-  ========================================================= */
+  const canSubmit =
+    useMemo(
+      () => {
+
+        return Boolean(
+          form.first_name.trim()
+          &&
+          form.last_name.trim()
+          &&
+          form.email.trim()
+          &&
+          form.password.length >= 6
+        );
+
+      },
+      [
+        form,
+      ]
+    );
+
 
   function handleChange(
     event
@@ -105,41 +110,109 @@ export default function Register() {
 
 
     setForm(
-      previousForm => ({
-        ...previousForm,
-        [name]:
-          value,
+      previous => ({
+        ...previous,
+        [name]: value,
       })
+    );
+
+
+    if (error) {
+      setError("");
+    }
+  }
+
+
+  function chooseMember() {
+
+    setAccountType(
+      "member"
+    );
+
+    setError("");
+  }
+
+
+  function chooseRestaurantPartner() {
+
+    /*
+     * IMPORTANT:
+     * use "partner"
+     *
+     * NOT:
+     * restaurant_partner
+     */
+
+    setAccountType(
+      "partner"
+    );
+
+
+    navigate(
+      "/register/restaurant",
+      {
+        state: {
+          accountType:
+            "partner",
+        },
+      }
     );
   }
 
 
-  /* =========================================================
-     SUBMIT
-  ========================================================= */
-
-  async function submit(
+  async function handleSubmit(
     event
   ) {
 
     event.preventDefault();
 
-    setError("");
 
-    setSubmitting(
-      true
-    );
+    if (loading) {
+      return;
+    }
+
+
+    if (
+      accountType ===
+      "partner"
+    ) {
+
+      navigate(
+        "/register/restaurant",
+        {
+          state: {
+            accountType:
+              "partner",
+          },
+        }
+      );
+
+      return;
+    }
+
+
+    if (!canSubmit) {
+
+      setError(
+        "Please complete all required fields. Password must be at least 6 characters."
+      );
+
+      return;
+    }
+
+
+    setLoading(true);
+    setError("");
+    setSuccess("");
 
 
     const payload = {
 
       first_name:
-        form.first_name
-          .trim(),
+        form.first_name.trim(),
 
       last_name:
-        form.last_name
-          .trim(),
+        form.last_name.trim(),
 
       email:
         form.email
@@ -148,6 +221,9 @@ export default function Register() {
 
       password:
         form.password,
+
+      account_type:
+        "member",
     };
 
 
@@ -158,371 +234,182 @@ export default function Register() {
       );
 
 
+      setSuccess(
+        "Your FoodKindl account has been created."
+      );
+
+
       navigate(
-        "/dashboard",
+        "/login",
         {
-          replace:
-            true,
+          replace: true,
+
+          state: {
+            registered: true,
+            accountType:
+              "member",
+          },
         }
       );
 
 
-    } catch (err) {
+    } catch (
+      requestError
+    ) {
 
       console.error(
-        "Registration error:",
-        err.response?.data ||
-        err
+        "Registration failed:",
+        requestError
       );
 
 
-      const data =
-        err.response?.data;
+      const responseData =
+        requestError
+          ?.response
+          ?.data;
+
+
+      let message =
+        "Unable to create your account. Please try again.";
+
+
+      if (
+        typeof responseData?.detail ===
+        "string"
+      ) {
+
+        message =
+          responseData.detail;
+
+      } else if (
+        Array.isArray(
+          responseData?.email
+        )
+      ) {
+
+        message =
+          responseData.email[0];
+
+      } else if (
+        typeof responseData?.email ===
+        "string"
+      ) {
+
+        message =
+          responseData.email;
+
+      } else if (
+        Array.isArray(
+          responseData?.password
+        )
+      ) {
+
+        message =
+          responseData.password[0];
+
+      } else if (
+        typeof responseData?.password ===
+        "string"
+      ) {
+
+        message =
+          responseData.password;
+      }
 
 
       setError(
-
-        data?.email?.[0]
-
-        ||
-
-        data?.password?.[0]
-
-        ||
-
-        data?.first_name?.[0]
-
-        ||
-
-        data?.last_name?.[0]
-
-        ||
-
-        data?.detail
-
-        ||
-
-        (
-          "Registration could not be completed. "
-          +
-          "Please try again."
-        )
+        message
       );
 
 
     } finally {
 
-      setSubmitting(
+      setLoading(
         false
       );
     }
   }
 
 
-  /* =========================================================
-     JSX
-  ========================================================= */
-
   return (
 
-    <main className="foodkindl-register-page">
-
-
-      {/* =====================================================
-          BACKGROUND
-      ====================================================== */}
-
-      <div className="register-glow register-glow-one" />
-
-      <div className="register-glow register-glow-two" />
-
-
-      {/* =====================================================
-          TOP BAR
-      ====================================================== */}
-
-      <header className="register-topbar">
-
-        <Link
-          to="/"
-          className="register-brand"
-        >
-
-          <img
-            src="/images/icon.png"
-            alt="FoodKindl"
-          />
-
-          <div>
-
-            <strong>
-              FoodKindl
-            </strong>
-
-            <span>
-              Meet through food
-            </span>
-
-          </div>
-
-        </Link>
-
-
-        <Link
-          to="/"
-          className="register-back-link"
-        >
-
-          <ArrowLeft
-            size={16}
-          />
-
-          Back to home
-
-        </Link>
-
-      </header>
-
-
-      {/* =====================================================
-          MAIN
-      ====================================================== */}
+    <main className="register-page">
 
       <section className="register-shell">
 
 
-        {/* ===================================================
-            LEFT — STORY
-        ==================================================== */}
-
-        <aside className="register-story-panel">
-
+        <aside className="register-story">
 
           <div className="register-story-content">
 
-            <div className="register-story-pill">
-
-              <Sparkles
-                size={14}
-              />
-
-              FOOD-FIRST SOCIAL CONNECTIONS
-
-            </div>
+            <span className="register-story-pill">
+              FOODKINDL CONNECT
+            </span>
 
 
             <h1>
-              Your next connection
-              could begin{" "}
-              <span>
-                around food.
-              </span>
+              Where food connects
+              people.
             </h1>
 
 
-            <p className="register-story-description">
-              Join a community built around cooking,
-              dining, food discovery and meaningful
-              real-world connections.
+            <p>
+              Discover people nearby,
+              connect over food, cook
+              together, dine out and
+              build real friendships.
             </p>
 
 
-            {/* ===============================================
-                MINI LIVE CARD
-            ================================================ */}
+            <div className="register-story-points">
 
-            <div className="register-live-card">
+              <article>
 
-              <div className="register-live-card-top">
-
-                <span>
-                  <span className="live-dot" />
-
-                  FOODKINDL NEARBY
+                <span className="register-story-icon">
+                  <Users size={18} />
                 </span>
-
-
-                <span>
-
-                  <MapPin
-                    size={12}
-                  />
-
-                  2.3 km away
-
-                </span>
-
-              </div>
-
-
-              <div className="register-live-profile">
-
-                <div className="register-live-avatar">
-                  LN
-                </div>
-
 
                 <div>
 
                   <strong>
-                    Lakshmi Nair
+                    Meet through food
                   </strong>
 
-                  <small>
-                    Indiranagar · Verified member
-                  </small>
+                  <p>
+                    Discover people,
+                    Food Invites and
+                    shared food
+                    experiences.
+                  </p>
 
                 </div>
 
+              </article>
 
-                <span className="register-verified">
 
-                  <Check
-                    size={11}
-                  />
+              <article>
 
-                  Verified
-
+                <span className="register-story-icon">
+                  <ShieldCheck size={18} />
                 </span>
-
-              </div>
-
-
-              <div className="register-live-invite">
-
-                <ChefHat
-                  size={20}
-                />
-
 
                 <div>
 
-                  <span>
-                    COOK TOGETHER
-                  </span>
-
                   <strong>
-                    Kerala Sunday Lunch
+                    Built with safety
+                    in mind
                   </strong>
+
+                  <p>
+                    Profile controls,
+                    verification and
+                    safer connection
+                    features.
+                  </p>
 
                 </div>
 
-              </div>
-
-
-              <div className="register-food-tags">
-
-                <span>
-                  Kerala
-                </span>
-
-                <span>
-                  Home Cooking
-                </span>
-
-                <span>
-                  Weekend
-                </span>
-
-              </div>
-
-            </div>
-
-
-            {/* ===============================================
-                EXPERIENCES
-            ================================================ */}
-
-            <div className="register-experience-grid">
-
-              {
-                experiences.map(
-                  experience => {
-
-                    const Icon =
-                      experience.icon;
-
-
-                    return (
-
-                      <article
-                        key={
-                          experience.title
-                        }
-                      >
-
-                        <span className="register-experience-icon">
-
-                          <Icon
-                            size={18}
-                          />
-
-                        </span>
-
-
-                        <div>
-
-                          <strong>
-                            {
-                              experience.title
-                            }
-                          </strong>
-
-                          <p>
-                            {
-                              experience.text
-                            }
-                          </p>
-
-                        </div>
-
-                      </article>
-
-                    );
-                  }
-                )
-              }
-
-            </div>
-
-
-            {/* ===============================================
-                TRUST LINE
-            ================================================ */}
-
-            <div className="register-trust-row">
-
-              <span>
-
-                <ShieldCheck
-                  size={15}
-                />
-
-                Verified community
-
-              </span>
-
-
-              <span>
-
-                <MapPin
-                  size={15}
-                />
-
-                Nearby discovery
-
-              </span>
-
-
-              <span>
-
-                <Users
-                  size={15}
-                />
-
-                Real connections
-
-              </span>
+              </article>
 
             </div>
 
@@ -531,207 +418,301 @@ export default function Register() {
         </aside>
 
 
-        {/* ===================================================
-            RIGHT — FORM
-        ==================================================== */}
-
         <section className="register-form-panel">
-
 
           <div className="register-form-card">
 
 
-            <div className="register-form-heading">
+            <div className="register-form-header">
 
-              <div className="register-form-icon">
-
-                <ChefHat
-                  size={24}
-                />
-
-              </div>
-
-
-              <div className="register-eyebrow">
-                JOIN FOODKINDL
-              </div>
-
+              <span className="register-eyebrow">
+                CREATE YOUR ACCOUNT
+              </span>
 
               <h2>
-                Create your account
+                Join FoodKindl
               </h2>
 
-
               <p>
-                Start discovering people,
-                food experiences and shared meals
-                in your community.
+                Choose how you want
+                to use FoodKindl.
               </p>
+
+            </div>
+
+
+            <div className="register-account-type-section">
+
+              <div className="register-account-type-heading">
+
+                <span>
+                  REGISTER AS
+                </span>
+
+                <small>
+                  Choose your FoodKindl
+                  account type.
+                </small>
+
+              </div>
+
+
+              <div className="register-account-options">
+
+
+                <button
+                  type="button"
+                  className={
+                    `register-account-card ${
+                      accountType ===
+                      "member"
+                        ? "selected"
+                        : ""
+                    }`
+                  }
+                  onClick={
+                    chooseMember
+                  }
+                >
+
+                  <span className="register-account-card-icon">
+                    <Users size={20} />
+                  </span>
+
+
+                  <span className="register-account-card-copy">
+
+                    <strong>
+                      FoodKindl Member
+                    </strong>
+
+                    <small>
+                      Meet people and
+                      connect through food.
+                    </small>
+
+                  </span>
+
+
+                  <span className="register-account-card-action">
+
+                    {
+                      accountType ===
+                      "member"
+                        ? (
+                          <Check
+                            size={18}
+                          />
+                        )
+                        : null
+                    }
+
+                  </span>
+
+                </button>
+
+
+                <button
+                  type="button"
+                  className="register-account-card restaurant-partner-option"
+                  onClick={
+                    chooseRestaurantPartner
+                  }
+                >
+
+                  <span className="register-account-card-icon">
+                    <Store size={20} />
+                  </span>
+
+
+                  <span className="register-account-card-copy">
+
+                    <strong>
+                      Restaurant Partner
+                    </strong>
+
+                    <small>
+                      Register and manage
+                      your restaurant or
+                      café on FoodKindl.
+                    </small>
+
+                  </span>
+
+
+                  <span className="register-account-card-action">
+
+                    <ArrowRight
+                      size={18}
+                    />
+
+                  </span>
+
+                </button>
+
+              </div>
 
             </div>
 
 
             <form
               onSubmit={
-                submit
+                handleSubmit
               }
             >
 
+              <label>
 
-              {/* =============================================
-                  NAME
-              ============================================== */}
+                First name
 
-              <div className="register-form-row">
+                <input
+                  type="text"
+                  name="first_name"
+                  value={
+                    form.first_name
+                  }
+                  onChange={
+                    handleChange
+                  }
+                  required
+                />
 
-                <label>
+              </label>
 
-                  First name
-
-                  <input
-                    name="first_name"
-                    type="text"
-                    required
-                    autoComplete="given-name"
-                    value={
-                      form.first_name
-                    }
-                    onChange={
-                      handleChange
-                    }
-                    placeholder="First name"
-                  />
-
-                </label>
-
-
-                <label>
-
-                  Last name
-
-                  <input
-                    name="last_name"
-                    type="text"
-                    required
-                    autoComplete="family-name"
-                    value={
-                      form.last_name
-                    }
-                    onChange={
-                      handleChange
-                    }
-                    placeholder="Last name"
-                  />
-
-                </label>
-
-              </div>
-
-
-              {/* =============================================
-                  EMAIL
-              ============================================== */}
 
               <label>
 
-                Email address
+                Last name
 
                 <input
-                  name="email"
-                  type="email"
+                  type="text"
+                  name="last_name"
+                  value={
+                    form.last_name
+                  }
+                  onChange={
+                    handleChange
+                  }
                   required
-                  autoComplete="email"
+                />
+
+              </label>
+
+
+              <label>
+
+                Email
+
+                <input
+                  type="email"
+                  name="email"
                   value={
                     form.email
                   }
                   onChange={
                     handleChange
                   }
-                  placeholder="you@example.com"
+                  required
                 />
 
               </label>
 
-
-              {/* =============================================
-                  PASSWORD
-              ============================================== */}
 
               <label>
 
                 Password
 
-                <input
-                  name="password"
-                  type="password"
-                  minLength={6}
-                  required
-                  autoComplete="new-password"
-                  value={
-                    form.password
-                  }
-                  onChange={
-                    handleChange
-                  }
-                  placeholder="Minimum 6 characters"
-                />
+                <div className="register-password-field">
+
+                  <input
+                    type={
+                      showPassword
+                        ? "text"
+                        : "password"
+                    }
+                    name="password"
+                    value={
+                      form.password
+                    }
+                    onChange={
+                      handleChange
+                    }
+                    required
+                    minLength={6}
+                  />
+
+
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setShowPassword(
+                        previous =>
+                          !previous
+                      )
+                    }
+                  >
+
+                    {
+                      showPassword
+                        ? (
+                          <EyeOff
+                            size={17}
+                          />
+                        )
+                        : (
+                          <Eye
+                            size={17}
+                          />
+                        )
+                    }
+
+                  </button>
+
+                </div>
 
               </label>
 
 
-              <div className="register-password-note">
-
-                <Check
-                  size={13}
-                />
-
-                Use at least 6 characters.
-
-              </div>
-
-
-              {/* =============================================
-                  ERROR
-              ============================================== */}
-
               {
                 error &&
                 (
-
                   <div className="register-error">
                     {error}
                   </div>
-
                 )
               }
 
 
-              {/* =============================================
-                  SUBMIT
-              ============================================== */}
+              {
+                success &&
+                (
+                  <div className="register-success">
+                    {success}
+                  </div>
+                )
+              }
+
 
               <button
                 type="submit"
-                className="register-submit-button"
                 disabled={
-                  submitting
+                  loading
                 }
               >
 
                 {
-                  submitting
-                    ? (
-                      "Creating your FoodKindl account..."
-                    )
-                    : (
-                      <>
-                        Create FoodKindl Account
+                  loading
+                    ? "Creating account..."
+                    : "Create Member Account"
+                }
 
-                        <ArrowRight
-                          size={17}
-                        />
-                      </>
-                    )
+                {
+                  !loading &&
+                  (
+                    <ArrowRight
+                      size={17}
+                    />
+                  )
                 }
 
               </button>
@@ -739,44 +720,15 @@ export default function Register() {
             </form>
 
 
-            {/* ===============================================
-                LOGIN
-            ================================================ */}
+            <div className="register-login-link">
 
-            <div className="register-login">
-
-              <span>
-                Already part of FoodKindl?
-              </span>
-
+              Already have an account?
 
               <Link to="/login">
-                Login
+                Log in
               </Link>
 
             </div>
-
-
-            {/* ===============================================
-                LEGAL
-            ================================================ */}
-
-            <p className="register-legal">
-
-              By creating an account,
-              you agree to FoodKindl's{" "}
-
-              <Link to="/terms">
-                Terms of Use
-              </Link>
-
-              {" "}and{" "}
-
-              <Link to="/privacy">
-                Privacy Policy
-              </Link>.
-
-            </p>
 
           </div>
 
@@ -785,6 +737,5 @@ export default function Register() {
       </section>
 
     </main>
-
   );
 }

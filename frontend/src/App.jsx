@@ -16,6 +16,7 @@ import MessagingDock from "./components/MessagingDock";
 import LandingPage from "./pages/LandingPage";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
+import RestaurantPartnerRegister from "./pages/RestaurantPartnerRegister";
 import Dashboard from "./pages/ConnectDashboard";
 import Community from "./pages/Community";
 import CommunityPostDetail from "./pages/CommunityPostDetail";
@@ -39,6 +40,7 @@ import FoodInvites from "./pages/FoodInvites";
 import SuggestPlace from "./components/SuggestPlace";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
+import PartnerDashboard from "./pages/PartnerDashboard";
 
 import {
   useAuth,
@@ -53,6 +55,7 @@ const PUBLIC_DARK_PAGES = [
   "/",
   "/login",
   "/register",
+  "/register/restaurant",
   "/careers",
   "/contact",
   "/community-guidelines",
@@ -391,6 +394,7 @@ export default function App() {
     "/",
     "/login",
     "/register",
+    "/register/restaurant",
     "/careers",
     "/contact",
     "/community-guidelines",
@@ -439,6 +443,13 @@ export default function App() {
             <LandingPage />
           }
         />
+
+        <Route
+  path="/partner/dashboard"
+  element={
+    <PartnerDashboard />
+  }
+/>
 
 
         <Route
@@ -501,6 +512,14 @@ export default function App() {
           path="/register"
           element={
             <Register />
+          }
+        />
+
+
+        <Route
+          path="/register/restaurant"
+          element={
+            <RestaurantPartnerRegister />
           }
         />
 
