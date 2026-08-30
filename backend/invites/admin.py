@@ -128,7 +128,6 @@ class RestaurantAdminForm(forms.ModelForm):
 
 @admin.register(Restaurant)
 class RestaurantAdmin(admin.ModelAdmin):
-
     form = RestaurantAdminForm
 
     list_display = (
@@ -166,6 +165,8 @@ class RestaurantAdmin(admin.ModelAdmin):
     )
 
     readonly_fields = (
+        "latitude",
+        "longitude",
         "cover_preview",
         "image_blob_key",
         "image_url",
@@ -176,7 +177,6 @@ class RestaurantAdmin(admin.ModelAdmin):
     )
 
     fieldsets = (
-
         (
             "Owner",
             {
@@ -289,24 +289,15 @@ class RestaurantAdmin(admin.ModelAdmin):
         ),
     )
 
-    @admin.display(
-        description="Cover"
-    )
+    @admin.display(description="Cover")
     def cover_thumbnail(self, obj):
-        return image_preview(
-            obj.image_url
-        )
+        return image_preview(obj.image_url)
 
-    @admin.display(
-        description="Current cover photo"
-    )
+    @admin.display(description="Current cover photo")
     def cover_preview(self, obj):
         if not obj or not obj.pk:
             return "-"
-
-        return image_preview(
-            obj.image_url
-        )
+        return image_preview(obj.image_url)
 
 
 # ============================================================
