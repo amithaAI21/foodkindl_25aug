@@ -23,42 +23,61 @@ ALLOWED_EXTENSIONS = {
 }
 
 
+# ============================================================
+# SETTINGS HELPERS
+# ============================================================
+
+
 def _get_setting(name, default=""):
     value = getattr(settings, name, default)
+
     if value is None:
         return ""
+
     return str(value).strip()
 
 
 def _get_upload_url():
-    upload_url = _get_setting("NETLIFY_BLOB_UPLOAD_URL")
+    upload_url = _get_setting(
+        "NETLIFY_BLOB_UPLOAD_URL"
+    )
 
     if not upload_url:
         raise ValidationError(
-            "NETLIFY_BLOB_UPLOAD_URL is not configured in Django settings."
+            "NETLIFY_BLOB_UPLOAD_URL is not configured "
+            "in Django settings."
         )
 
-    if upload_url.startswith(("http://localhost:", "http://127.0.0.1:")):
+    upload_url = upload_url.rstrip("/")
+
+    if upload_url.startswith(
+        ("http://localhost:", "http://127.0.0.1:")
+    ):
         if not settings.DEBUG:
             raise ValidationError(
-                "NETLIFY_BLOB_UPLOAD_URL cannot use localhost in production."
+                "NETLIFY_BLOB_UPLOAD_URL cannot use "
+                "localhost in production."
             )
-        return upload_url.rstrip("/")
+
+        return upload_url
 
     if not upload_url.startswith("https://"):
         raise ValidationError(
             "NETLIFY_BLOB_UPLOAD_URL must use HTTPS."
         )
 
-    return upload_url.rstrip("/")
+    return upload_url
 
 
 def _get_upload_secret():
-    secret = _get_setting("NETLIFY_BLOB_UPLOAD_SECRET")
+    secret = _get_setting(
+        "NETLIFY_BLOB_UPLOAD_SECRET"
+    )
 
     if not secret:
         raise ValidationError(
-            "Django does not have NETLIFY_BLOB_UPLOAD_SECRET configured."
+            "Django/Render does not have "
+            "NETLIFY_BLOB_UPLOAD_SECRET configured."
         )
 
     return secret
@@ -66,31 +85,47 @@ def _get_upload_secret():
 
 def _get_timeout():
     try:
-        return int(
-            getattr(
-                settings,
-                "NETLIFY_BLOB_UPLOAD_TIMEOUT",
-                60,
-            )
+        value = getattr(
+            settings,
+            "NETLIFY_BLOB_UPLOAD_TIMEOUT",
+            60,
         )
+
+        return int(value)
+
     except (TypeError, ValueError):
         return 60
 
 
+# ============================================================
+# FILE HELPERS
+# ============================================================
+
+
 def _safe_filename(filename):
-    filename = os.path.basename(filename or "image.jpg")
+    filename = os.path.basename(
+        filename or "image.jpg"
+    )
 
     _, extension = os.path.splitext(filename)
+
     extension = extension.lower()
 
     if extension not in ALLOWED_EXTENSIONS:
         extension = ".jpg"
 
-    return f"{uuid.uuid4().hex}{extension}"
+    return (
+        f"{uuid.uuid4().hex}"
+        f"{extension}"
+    )
 
 
 def _detect_content_type(uploaded_file):
-    content_type = getattr(uploaded_file, "content_type", "")
+    content_type = getattr(
+        uploaded_file,
+        "content_type",
+        "",
+    )
 
     if content_type:
         return (
@@ -100,8 +135,15 @@ def _detect_content_type(uploaded_file):
             .lower()
         )
 
-    filename = getattr(uploaded_file, "name", "")
-    guessed_type, _ = mimetypes.guess_type(filename)
+    filename = getattr(
+        uploaded_file,
+        "name",
+        "",
+    )
+
+    guessed_type, _ = mimetypes.guess_type(
+        filename
+    )
 
     return (
         guessed_type
@@ -111,89 +153,182 @@ def _detect_content_type(uploaded_file):
 
 def _validate_image(uploaded_file):
     if not uploaded_file:
-        raise ValidationError("Please select an image.")
+        raise ValidationError(
+            "Please select an image."
+        )
 
-    filename = getattr(uploaded_file, "name", "")
+    filename = getattr(
+        uploaded_file,
+        "name",
+        "",
+    )
+
     _, extension = os.path.splitext(filename)
+
     extension = extension.lower()
 
-    if extension and extension not in ALLOWED_EXTENSIONS:
+    if (
+        extension
+        and extension not in ALLOWED_EXTENSIONS
+    ):
         raise ValidationError(
             "Unsupported image extension. "
             "Please upload JPG, JPEG, PNG or WebP."
         )
 
-    content_type = _detect_content_type(uploaded_file)
+    content_type = _detect_content_type(
+        uploaded_file
+    )
 
-    if content_type not in ALLOWED_CONTENT_TYPES:
+    if (
+        content_type
+        not in ALLOWED_CONTENT_TYPES
+    ):
         raise ValidationError(
-            f"Unsupported image type '{content_type}'. "
+            f"Unsupported image type "
+            f"'{content_type}'. "
             "Please upload JPG, PNG or WebP."
         )
 
-    size = getattr(uploaded_file, "size", 0)
+    size = getattr(
+        uploaded_file,
+        "size",
+        0,
+    )
 
     if size and size > MAX_IMAGE_SIZE:
         raise ValidationError(
-            "Image is too large. Maximum image size is 10 MB."
+            "Image is too large. "
+            "Maximum image size is 10 MB."
+        )
+
+    if size == 0:
+        raise ValidationError(
+            "The selected image is empty."
         )
 
     return content_type
 
 
-def _extract_error_message(response):
+# ============================================================
+# RESPONSE HELPERS
+# ============================================================
+
+
+def _extract_response_data(response):
+    """
+    Return:
+        tuple(dict_or_none, message)
+    """
+
     try:
         data = response.json()
     except ValueError:
         data = None
 
     if isinstance(data, dict):
-        return (
+        message = (
             data.get("detail")
             or data.get("error")
             or data.get("message")
             or ""
         )
 
-    return (response.text or "").strip()
+        return data, str(message).strip()
+
+    text = (
+        response.text
+        or ""
+    ).strip()
+
+    return None, text
 
 
-def _raise_netlify_error(response, upload_url):
+def _raise_netlify_error(
+    response,
+    upload_url,
+):
     status_code = response.status_code
-    message = _extract_error_message(response)
+
+    _, message = _extract_response_data(
+        response
+    )
+
+    if len(message) > 700:
+        message = (
+            message[:700]
+            + "..."
+        )
+
+    # --------------------------------------------------------
+    # Function not found
+    # --------------------------------------------------------
 
     if status_code == 404:
         raise ValidationError(
-            "Netlify upload function was not found. "
+            "Netlify restaurant image upload "
+            "function was not found. "
             f"Django called: {upload_url}"
         )
+
+    # --------------------------------------------------------
+    # Authentication failure
+    # --------------------------------------------------------
 
     if status_code in (401, 403):
         raise ValidationError(
             "Netlify rejected the image upload. "
             f"HTTP {status_code}. "
-            "The NETLIFY_BLOB_UPLOAD_SECRET configured in Django/Render "
-            "must exactly match the secret configured in Netlify Functions."
+            "The upload secret configured in Render "
+            "must exactly match the upload secret "
+            "configured in the Netlify Function."
         )
+
+    # --------------------------------------------------------
+    # Netlify Function explicitly says its environment
+    # variable is missing.
+    #
+    # Important:
+    # Only show this error if THAT response actually came
+    # from the Netlify Function.
+    # --------------------------------------------------------
+
+    normalized_message = message.lower()
 
     if (
-        "NETLIFY_BLOB_UPLOAD_SECRET" in message
-        and "not configured" in message.lower()
+        "netlify_blob_upload_secret"
+        in normalized_message
+        and (
+            "not configured"
+            in normalized_message
+            or "missing"
+            in normalized_message
+        )
     ):
         raise ValidationError(
-            "Netlify Function does not have "
-            "NETLIFY_BLOB_UPLOAD_SECRET configured. "
-            "Add it in Netlify Project configuration -> Environment variables, "
-            "make it available to Functions, and redeploy the Netlify site."
+            "The Netlify upload function is running, "
+            "but its runtime cannot read "
+            "NETLIFY_BLOB_UPLOAD_SECRET. "
+            "Check the variable in the same Netlify "
+            "project that hosts "
+            "upload-restaurant-image, then trigger "
+            "a fresh production deploy."
         )
 
-    if len(message) > 500:
-        message = message[:500] + "..."
+    # --------------------------------------------------------
+    # Generic error
+    # --------------------------------------------------------
 
     raise ValidationError(
-        f"Netlify image upload failed. HTTP {status_code}. "
+        "Netlify image upload failed. "
+        f"HTTP {status_code}. "
         f"{message or 'No error message returned.'}"
     )
+
+
+# ============================================================
+# MAIN UPLOAD FUNCTION
+# ============================================================
 
 
 def upload_image_to_netlify(
@@ -201,26 +336,50 @@ def upload_image_to_netlify(
     category="restaurants",
 ):
     """
-    Upload one image from Django to the FoodKindl Netlify Function.
+    Upload a restaurant image from Django/Render
+    to the Netlify upload function.
 
-    Required Django settings:
+    Django/Render settings required:
+
         NETLIFY_BLOB_UPLOAD_URL
         NETLIFY_BLOB_UPLOAD_SECRET
 
-    Required Netlify Function environment:
+    Netlify Function environment required:
+
         NETLIFY_BLOB_UPLOAD_SECRET
 
-    Django sends the uploaded file to Netlify using multipart field "file".
+    Django -> Netlify multipart field:
+
+        file
     """
 
-    content_type = _validate_image(uploaded_file)
+    # --------------------------------------------------------
+    # Validate input
+    # --------------------------------------------------------
+
+    content_type = _validate_image(
+        uploaded_file
+    )
+
+    # --------------------------------------------------------
+    # Settings
+    # --------------------------------------------------------
 
     upload_url = _get_upload_url()
+
     upload_secret = _get_upload_secret()
+
     timeout = _get_timeout()
 
+    # --------------------------------------------------------
+    # Clean category
+    # --------------------------------------------------------
+
     category = (
-        str(category or "restaurants")
+        str(
+            category
+            or "restaurants"
+        )
         .strip()
         .replace("\\", "/")
         .replace("..", "")
@@ -230,25 +389,39 @@ def upload_image_to_netlify(
     if not category:
         category = "restaurants"
 
+    # --------------------------------------------------------
+    # Filename
+    # --------------------------------------------------------
+
     original_filename = getattr(
         uploaded_file,
         "name",
         "image.jpg",
     )
 
-    safe_filename = _safe_filename(original_filename)
+    safe_filename = _safe_filename(
+        original_filename
+    )
+
+    # --------------------------------------------------------
+    # Reset file pointer
+    # --------------------------------------------------------
 
     try:
         uploaded_file.seek(0)
     except Exception:
         pass
 
+    # --------------------------------------------------------
+    # Multipart payload
+    # --------------------------------------------------------
+
     files = {
         "file": (
             safe_filename,
             uploaded_file,
             content_type,
-        )
+        ),
     }
 
     data = {
@@ -257,9 +430,15 @@ def upload_image_to_netlify(
     }
 
     headers = {
-        "x-foodkindl-upload-secret": upload_secret,
-        "Accept": "application/json",
+        "X-FoodKindl-Upload-Secret":
+            upload_secret,
+        "Accept":
+            "application/json",
     }
+
+    # --------------------------------------------------------
+    # Upload
+    # --------------------------------------------------------
 
     try:
         response = requests.post(
@@ -273,58 +452,114 @@ def upload_image_to_netlify(
 
     except requests.Timeout as exc:
         raise ValidationError(
-            "Image upload timed out. Please try again."
+            "Image upload timed out. "
+            "Please try again."
         ) from exc
 
     except requests.ConnectionError as exc:
         raise ValidationError(
-            "Could not connect to the Netlify image upload service. "
+            "Django could not connect to the "
+            "Netlify image upload service. "
             f"URL: {upload_url}"
         ) from exc
 
     except requests.RequestException as exc:
         raise ValidationError(
-            f"Image upload request failed: {exc}"
+            "Image upload request failed. "
+            f"{exc}"
         ) from exc
 
-    if response.status_code in (301, 302, 307, 308):
-        redirect_url = response.headers.get("Location", "")
+    # --------------------------------------------------------
+    # Redirect protection
+    # --------------------------------------------------------
+
+    if response.status_code in (
+        301,
+        302,
+        303,
+        307,
+        308,
+    ):
+        redirect_url = response.headers.get(
+            "Location",
+            "",
+        )
 
         raise ValidationError(
             "Image upload request was redirected. "
             f"From: {upload_url} "
-            f"To: {redirect_url}"
+            f"To: {redirect_url or 'unknown'}"
         )
 
+    # --------------------------------------------------------
+    # HTTP failure
+    # --------------------------------------------------------
+
     if not response.ok:
-        _raise_netlify_error(response, upload_url)
+        _raise_netlify_error(
+            response,
+            upload_url,
+        )
+
+    # --------------------------------------------------------
+    # JSON result
+    # --------------------------------------------------------
 
     try:
         result = response.json()
+
     except ValueError as exc:
-        response_type = response.headers.get(
-            "content-type",
-            "unknown",
+        response_type = (
+            response.headers.get(
+                "content-type",
+                "unknown",
+            )
         )
 
+        body_preview = (
+            response.text
+            or ""
+        ).strip()
+
+        if len(body_preview) > 300:
+            body_preview = (
+                body_preview[:300]
+                + "..."
+            )
+
         raise ValidationError(
-            "Image upload service returned an invalid response. "
-            f"Expected JSON but received: {response_type}"
+            "Netlify image upload returned "
+            "an invalid response. "
+            f"Content-Type: {response_type}. "
+            f"Response: "
+            f"{body_preview or 'empty'}"
         ) from exc
 
     if not isinstance(result, dict):
         raise ValidationError(
-            "Image upload service returned an unexpected response."
+            "Netlify image upload returned "
+            "an unexpected JSON response."
         )
+
+    # --------------------------------------------------------
+    # Netlify function returned success:false
+    # --------------------------------------------------------
 
     if result.get("success") is False:
         message = (
-            result.get("error")
-            or result.get("detail")
+            result.get("detail")
+            or result.get("error")
             or result.get("message")
             or "Image upload failed."
         )
-        raise ValidationError(message)
+
+        raise ValidationError(
+            str(message)
+        )
+
+    # --------------------------------------------------------
+    # Required response values
+    # --------------------------------------------------------
 
     blob_key = str(
         result.get("key")
@@ -340,33 +575,59 @@ def upload_image_to_netlify(
 
     if not blob_key:
         raise ValidationError(
-            "The image was uploaded but Netlify did not return the Blob key."
+            "The image upload succeeded, "
+            "but Netlify did not return "
+            "a Blob key."
         )
 
     if not public_url:
         raise ValidationError(
-            "The image was uploaded but Netlify did not return the image URL."
+            "The image upload succeeded, "
+            "but Netlify did not return "
+            "an image URL."
         )
 
-    if public_url.startswith(("http://localhost:", "http://127.0.0.1:")):
+    # --------------------------------------------------------
+    # Validate returned URL
+    # --------------------------------------------------------
+
+    if public_url.startswith(
+        (
+            "http://localhost:",
+            "http://127.0.0.1:",
+        )
+    ):
         if not settings.DEBUG:
             raise ValidationError(
-                "Netlify returned a localhost image URL in production."
+                "Netlify returned a localhost "
+                "image URL in production."
             )
-    elif not public_url.startswith("https://"):
+
+    elif not public_url.startswith(
+        "https://"
+    ):
         raise ValidationError(
-            "Netlify returned a non-HTTPS image URL."
+            "Netlify returned a "
+            "non-HTTPS image URL."
         )
+
+    # --------------------------------------------------------
+    # Success
+    # --------------------------------------------------------
 
     return {
         "key": blob_key,
         "url": public_url,
         "original_name": (
-            result.get("original_name")
+            result.get(
+                "original_name"
+            )
             or original_filename
         ),
         "content_type": (
-            result.get("content_type")
+            result.get(
+                "content_type"
+            )
             or content_type
         ),
     }
