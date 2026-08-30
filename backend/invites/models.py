@@ -2,6 +2,7 @@ import uuid
 
 from django.conf import settings
 from django.db import models
+from .geocoding import geocode_restaurant_location
 
 CUISINE_CHOICES = [
 
@@ -742,6 +743,69 @@ class Restaurant(models.Model):
             "name",
         ]
 
+    def save(self, *args, **kwargs):
+        should_geocode = (
+            self.latitude is None
+            or self.longitude is None
+        )
+
+        if self.pk:
+            try:
+                old = Restaurant.objects.get(
+                    pk=self.pk
+                )
+
+                if (
+                    old.address != self.address
+                    or old.locality != self.locality
+                    or old.city != self.city
+                    or old.pincode != self.pincode
+                ):
+                    should_geocode = True
+
+            except Restaurant.DoesNotExist:
+                should_geocode = True
+
+        if should_geocode:
+
+            print(
+                "📍 Trying to geocode restaurant:",
+                self.name,
+            )
+
+            result = geocode_restaurant_location(
+                address=self.address,
+                locality=self.locality,
+                city=self.city,
+                pincode=self.pincode,
+            )
+
+            if result:
+                self.latitude = result[
+                    "latitude"
+                ]
+
+                self.longitude = result[
+                    "longitude"
+                ]
+
+                print(
+                    "✅ SAVING COORDINATES:",
+                    self.latitude,
+                    self.longitude,
+                )
+
+            else:
+                print(
+                    "❌ Restaurant geocoding returned no result"
+                )
+
+        super().save(
+            *args,
+            **kwargs,
+        )
+
+
     def __str__(self):
         return self.name
 
@@ -1214,38 +1278,20 @@ class RestaurantBooking(
         ]
 
 
-    def save(
-        self,
-        *args,
-        **kwargs,
-    ):
-
+    def save(self, *args, **kwargs):
         if not self.booking_reference:
-
             self.booking_reference = (
                 "FK-"
-                +
-                uuid.uuid4()
-                .hex[:10]
-                .upper()
+                + uuid.uuid4().hex[:10].upper()
             )
 
+        super().save(*args, **kwargs)
 
-        super().save(
-            *args,
-            **kwargs,
-        )
-
-
-    def __str__(
-        self,
-    ):
-
+    def __str__(self):
         return (
             f"{self.booking_reference} "
             f"- {self.restaurant.name}"
         )
-        
 # ============================================================
 # CUSTOMER PLACE SUBMISSION
 #
