@@ -721,12 +721,68 @@ class PartnerRestaurantPhotosView(
         permissions.IsAuthenticated,
     ]
 
-
     parser_classes = [
         MultiPartParser,
         FormParser,
     ]
 
+    # ========================================================
+    # GET EXISTING GALLERY PHOTOS
+    # ========================================================
+
+    def get(
+        self,
+        request,
+        restaurant_id,
+    ):
+
+        if not ensure_partner(
+            request.user
+        ):
+
+            return (
+                partner_required_response()
+            )
+
+        restaurant = (
+            get_owned_restaurant(
+                request.user,
+                restaurant_id,
+            )
+        )
+
+        images = (
+            RestaurantImage.objects
+            .filter(
+                restaurant=restaurant,
+                is_active=True,
+            )
+            .order_by(
+                "sort_order",
+                "id",
+            )
+        )
+
+        serializer = (
+            PartnerRestaurantImageSerializer(
+                images,
+                many=True,
+                context={
+                    "request":
+                        request,
+                },
+            )
+        )
+
+        return Response(
+            serializer.data,
+            status=
+                status.HTTP_200_OK,
+        )
+
+    # ========================================================
+    # POST / UPLOAD GALLERY PHOTOS
+    # ========================================================
 
     def post(
         self,
@@ -742,7 +798,6 @@ class PartnerRestaurantPhotosView(
                 partner_required_response()
             )
 
-
         restaurant = (
             get_owned_restaurant(
                 request.user,
@@ -750,6 +805,12 @@ class PartnerRestaurantPhotosView(
             )
         )
 
+        # ----------------------------------------------------
+        # MULTIPLE PHOTOS
+        # Frontend can send:
+        #
+        # images = [file1, file2, ...]
+        # ----------------------------------------------------
 
         uploaded_files = (
             request.FILES.getlist(
@@ -757,9 +818,8 @@ class PartnerRestaurantPhotosView(
             )
         )
 
-
         # ----------------------------------------------------
-        # Also support one image called "image"
+        # ALSO SUPPORT SINGLE "image"
         # ----------------------------------------------------
 
         if not uploaded_files:
@@ -770,6 +830,23 @@ class PartnerRestaurantPhotosView(
                 )
             )
 
+            if single_file:
+
+                uploaded_files = [
+                    single_file
+                ]
+
+        # ----------------------------------------------------
+        # ALSO SUPPORT SINGLE "file"
+        # ----------------------------------------------------
+
+        if not uploaded_files:
+
+            single_file = (
+                request.FILES.get(
+                    "file"
+                )
+            )
 
             if single_file:
 
@@ -777,6 +854,9 @@ class PartnerRestaurantPhotosView(
                     single_file
                 ]
 
+        # ----------------------------------------------------
+        # NOTHING RECEIVED
+        # ----------------------------------------------------
 
         if not uploaded_files:
 
@@ -792,30 +872,33 @@ class PartnerRestaurantPhotosView(
                     status.HTTP_400_BAD_REQUEST,
             )
 
-
         created_images = []
-
 
         current_count = (
             RestaurantImage.objects
             .filter(
-                restaurant=
-                    restaurant
+                restaurant=restaurant
             )
             .count()
         )
 
+        # ====================================================
+        # UPLOAD EACH IMAGE
+        # ====================================================
 
         for index, uploaded_file in enumerate(
             uploaded_files
         ):
+
+            # ------------------------------------------------
+            # VALIDATE FILE
+            # ------------------------------------------------
 
             valid, error_message = (
                 validate_uploaded_image(
                     uploaded_file
                 )
             )
-
 
             if not valid:
 
@@ -831,6 +914,9 @@ class PartnerRestaurantPhotosView(
                         status.HTTP_400_BAD_REQUEST,
                 )
 
+            # ------------------------------------------------
+            # UPLOAD TO NETLIFY
+            # ------------------------------------------------
 
             try:
 
@@ -845,14 +931,12 @@ class PartnerRestaurantPhotosView(
                     )
                 )
 
-
             except Exception as exc:
 
                 print(
                     "GALLERY PHOTO ERROR:",
                     repr(exc),
                 )
-
 
                 return Response(
                     {
@@ -866,6 +950,9 @@ class PartnerRestaurantPhotosView(
                         status.HTTP_500_INTERNAL_SERVER_ERROR,
                 )
 
+            # ------------------------------------------------
+            # SAVE DATABASE RECORD
+            # ------------------------------------------------
 
             image = (
                 RestaurantImage.objects
@@ -911,11 +998,13 @@ class PartnerRestaurantPhotosView(
                 )
             )
 
-
             created_images.append(
                 image
             )
 
+        # ====================================================
+        # RESPONSE
+        # ====================================================
 
         serializer = (
             PartnerRestaurantImageSerializer(
@@ -931,14 +1020,11 @@ class PartnerRestaurantPhotosView(
             )
         )
 
-
         return Response(
             serializer.data,
             status=
                 status.HTTP_201_CREATED,
         )
-
-
 # ============================================================
 # DELETE GALLERY PHOTO
 # ============================================================
