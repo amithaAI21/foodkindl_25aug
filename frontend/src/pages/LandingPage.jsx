@@ -592,11 +592,15 @@ export default function LandingPage() {
     setStoryVideo,
   ] = useState(null);
 
-
   const [
     storyVideoLoading,
     setStoryVideoLoading,
   ] = useState(true);
+
+  const [
+    storyVideoError,
+    setStoryVideoError,
+  ] = useState("");
 
 
   useEffect(
@@ -609,17 +613,19 @@ export default function LandingPage() {
 
         try {
 
-          setStoryVideoLoading(
-            true
-          );
+          setStoryVideoLoading(true);
 
+          setStoryVideoError("");
+
+
+          // ====================================================
+          // BACKEND
+          // ====================================================
 
           const configuredBackend =
-            import.meta.env
-              .VITE_BACKEND_URL ||
-            import.meta.env
-              .VITE_API_BASE_URL ||
-            "";
+            import.meta.env.VITE_BACKEND_URL ||
+            import.meta.env.VITE_API_BASE_URL ||
+            "https://foodkindl-25aug.onrender.com";
 
 
           const backend =
@@ -630,28 +636,56 @@ export default function LandingPage() {
 
 
           const endpoint =
-            backend
-              ? `${backend}/api/website/homepage-video/`
-              : "/api/website/homepage-video/";
+            `${backend}/api/website/homepage-video/`;
 
+
+          console.log(
+            "FoodKindl homepage video endpoint:",
+            endpoint
+          );
+
+
+          // ====================================================
+          // FETCH
+          // ====================================================
 
           const response =
             await fetch(
-              endpoint,
+              `${endpoint}?t=${Date.now()}`,
               {
                 method: "GET",
+
                 headers: {
                   Accept:
                     "application/json",
                 },
+
+                cache:
+                  "no-store",
               }
             );
 
 
+          console.log(
+            "Homepage video HTTP status:",
+            response.status
+          );
+
+
           if (!response.ok) {
 
+            const responseText =
+              await response.text();
+
+
+            console.error(
+              "Homepage video backend response:",
+              responseText
+            );
+
+
             throw new Error(
-              `Homepage video request failed with status ${response.status}`
+              `Homepage video API returned ${response.status}`
             );
           }
 
@@ -660,51 +694,110 @@ export default function LandingPage() {
             await response.json();
 
 
+          console.log(
+            "Homepage video API data:",
+            data
+          );
+
+
           if (cancelled) {
             return;
           }
 
 
+          // ====================================================
+          // VALID VIDEO
+          // ====================================================
+
           if (
-            data?.available &&
-            data?.video_url
+            data &&
+            data.available === true &&
+            data.video_url
           ) {
 
-            setStoryVideo(
-              {
-                title:
-                  data.title ||
-                  "FoodKindl Story",
+            const cleanVideoUrl =
+              String(
+                data.video_url
+              ).trim();
 
-                video_url:
-                  data.video_url,
 
-                poster_url:
-                  data.poster_url ||
-                  "",
-              }
+            console.log(
+              "Homepage video URL:",
+              cleanVideoUrl
+            );
+
+
+            setStoryVideo({
+
+              id:
+                data.id ||
+                null,
+
+              title:
+                data.title ||
+                "FoodKindl Story",
+
+              video_url:
+                cleanVideoUrl,
+
+              poster_url:
+                data.poster_url
+                  ? String(
+                      data.poster_url
+                    ).trim()
+                  : "",
+
+              updated_at:
+                data.updated_at ||
+                null,
+
+            });
+
+
+            setStoryVideoError(
+              ""
             );
 
           } else {
 
+            console.warn(
+              "Homepage video unavailable from API:",
+              data
+            );
+
+
             setStoryVideo(
               null
             );
+
+
+            setStoryVideoError(
+              "No active homepage video was returned."
+            );
           }
+
 
         } catch (error) {
 
-          if (!cancelled) {
+          console.error(
+            "Unable to load FoodKindl homepage video:",
+            error
+          );
 
-            console.error(
-              "Unable to load FoodKindl homepage video:",
-              error
-            );
+
+          if (!cancelled) {
 
             setStoryVideo(
               null
             );
+
+
+            setStoryVideoError(
+              error?.message ||
+              "Unable to load homepage video."
+            );
           }
+
 
         } finally {
 
@@ -730,94 +823,6 @@ export default function LandingPage() {
     },
     []
   );
-
-
-  /* =========================================================
-     STORY VIDEO
-  ========================================================= */
-
-  const videoRef =
-    useRef(null);
-
-
-  const [
-    videoStarted,
-    setVideoStarted,
-  ] = useState(false);
-
-
-  useEffect(
-    () => {
-
-      setVideoStarted(
-        false
-      );
-
-
-      if (
-        videoRef.current
-      ) {
-
-        videoRef.current.pause();
-
-        videoRef.current.load();
-
-      }
-
-    },
-    [
-      storyVideo?.video_url,
-    ]
-  );
-
-
-  function playStoryVideo() {
-
-    if (
-      !storyVideo?.video_url ||
-      !videoRef.current
-    ) {
-      return;
-    }
-
-
-    setVideoStarted(
-      true
-    );
-
-
-    requestAnimationFrame(
-      () => {
-
-        const playPromise =
-          videoRef.current?.play();
-
-
-        if (
-          playPromise &&
-          typeof playPromise.catch ===
-            "function"
-        ) {
-
-          playPromise.catch(
-            error => {
-
-              console.error(
-                "Unable to play FoodKindl story video:",
-                error
-              );
-
-              setVideoStarted(
-                false
-              );
-
-            }
-          );
-        }
-
-      }
-    );
-  }
 
 
   /* =========================================================
@@ -1920,50 +1925,139 @@ export default function LandingPage() {
 
         <div className="fk-story-video-card">
 
-  {storyVideoLoading ? (
+          {storyVideoLoading ? (
 
-    <div className="fk-story-video-loading">
-      Loading FoodKindl Story...
-    </div>
+            <div
+              className="fk-story-video-loading"
+            >
 
-  ) : storyVideo?.video_url ? (
+              Loading FoodKindl Story...
 
-    <video
-      key={storyVideo.video_url}
-      className="fk-story-video"
-      controls
-      playsInline
-      preload="metadata"
-      src={storyVideo.video_url}
-      poster={
-        storyVideo.poster_url || undefined
-      }
-      onLoadedMetadata={() => {
-        console.log(
-          "Homepage video loaded:",
-          storyVideo.video_url
-        );
-      }}
-      onError={(event) => {
-        console.error(
-          "Homepage video failed:",
-          storyVideo.video_url,
-          event.currentTarget.error
-        );
-      }}
-    >
-      Your browser does not support the video tag.
-    </video>
+            </div>
 
-  ) : (
+          ) : storyVideo?.video_url ? (
 
-    <div className="fk-story-video-loading">
-      FoodKindl story video is currently unavailable.
-    </div>
+            <video
 
-  )}
+              key={
+                `${storyVideo.id || "video"}-${storyVideo.updated_at || storyVideo.video_url}`
+              }
 
-</div>
+              className="fk-story-video"
+
+              controls
+
+              playsInline
+
+              preload="metadata"
+
+              src={
+                storyVideo.video_url
+              }
+
+              poster={
+                storyVideo.poster_url ||
+                undefined
+              }
+
+              onLoadStart={() => {
+
+                console.log(
+                  "Homepage video loading:",
+                  storyVideo.video_url
+                );
+
+              }}
+
+              onLoadedMetadata={
+                event => {
+
+                  console.log(
+                    "Homepage video metadata loaded:",
+                    {
+                      url:
+                        storyVideo.video_url,
+
+                      duration:
+                        event.currentTarget
+                          .duration,
+
+                      width:
+                        event.currentTarget
+                          .videoWidth,
+
+                      height:
+                        event.currentTarget
+                          .videoHeight,
+                    }
+                  );
+
+                }
+              }
+
+              onCanPlay={() => {
+
+                console.log(
+                  "Homepage video ready to play."
+                );
+
+              }}
+
+              onError={
+                event => {
+
+                  const mediaError =
+                    event.currentTarget.error;
+
+
+                  console.error(
+                    "Homepage video browser error:",
+                    {
+                      url:
+                        storyVideo.video_url,
+
+                      code:
+                        mediaError?.code,
+
+                      message:
+                        mediaError?.message,
+                    }
+                  );
+
+                }
+              }
+
+            >
+
+              Your browser does not
+              support HTML5 video.
+
+            </video>
+
+          ) : (
+
+            <div
+              className="fk-story-video-loading"
+            >
+
+              <strong>
+                FoodKindl Story
+              </strong>
+
+              <span>
+
+                {
+                  storyVideoError ||
+                  "Video is currently unavailable."
+                }
+
+              </span>
+
+            </div>
+
+          )}
+
+        </div>
 
       </section>
 
