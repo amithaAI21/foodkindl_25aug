@@ -884,7 +884,8 @@ export default function ConnectDashboard() {
 
   function goToStep(stepNumber) {
 
-    const safeStep = Math.max(
+  const safeStep =
+    Math.max(
       1,
       Math.min(
         6,
@@ -892,123 +893,163 @@ export default function ConnectDashboard() {
       )
     );
 
-    setActiveJourneyStep(
-      safeStep
+
+  console.log(
+    "FoodKindl journey:",
+    {
+      current:
+        activeJourneyStep,
+
+      next:
+        safeStep,
+    }
+  );
+
+
+  /* ---------------------------------------------------------
+     CHANGE ACTIVE STEP
+  --------------------------------------------------------- */
+
+  setActiveJourneyStep(
+    safeStep
+  );
+
+
+  /*
+   * Wait until React has painted the newly-active card.
+   *
+   * setTimeout + requestAnimationFrame is more reliable here
+   * because journey cards change visibility when active.
+   */
+
+  window.setTimeout(
+    () => {
+
+      window.requestAnimationFrame(
+        () => {
+
+          const targetStep =
+            document.getElementById(
+              `connect-journey-step-${safeStep}`
+            );
+
+
+          if (!targetStep) {
+
+            console.warn(
+              "FoodKindl journey step not found:",
+              safeStep
+            );
+
+            return;
+          }
+
+
+          const rect =
+            targetStep.getBoundingClientRect();
+
+
+          const absoluteTop =
+            window.scrollY +
+            rect.top;
+
+
+          const offset =
+            Math.max(
+              100,
+              (
+                window.innerHeight -
+                rect.height
+              ) / 2
+            );
+
+
+          const targetTop =
+            Math.max(
+              0,
+              absoluteTop -
+              offset
+            );
+
+
+          window.scrollTo({
+            top:
+              targetTop,
+
+            behavior:
+              "smooth",
+          });
+
+        }
+      );
+
+    },
+    60
+  );
+}
+
+
+/* =========================================================
+   NEXT JOURNEY STEP
+========================================================= */
+
+function goToNextJourneyStep() {
+
+  const nextStep =
+    Math.min(
+      6,
+      activeJourneyStep + 1
     );
 
-    /*
-     * React needs to render the newly-visible card first.
-     * Two animation frames are more reliable here than a fixed
-     * timeout, especially because hidden journey cards use
-     * visibility / opacity / transforms.
-     */
-    window.requestAnimationFrame(() => {
 
-      window.requestAnimationFrame(() => {
+  console.log(
+    "Next stop:",
+    activeJourneyStep,
+    "→",
+    nextStep
+  );
 
-        const targetStep =
-          document.getElementById(
-            `connect-journey-step-${safeStep}`
-          ) ||
-          document.querySelector(
-            `.connect-step-0${safeStep}`
-          );
 
-        if (!targetStep) {
-          console.warn(
-            "FoodKindl journey step not found:",
-            safeStep
-          );
-          return;
-        }
+  if (
+    nextStep ===
+    activeJourneyStep
+  ) {
 
-        const rect =
-          targetStep.getBoundingClientRect();
+    console.log(
+      "Already at final FoodKindl journey step."
+    );
 
-        const absoluteTop =
-          window.scrollY +
-          rect.top;
-
-        /*
-         * Keep the active card comfortably inside the viewport.
-         * Using window.scrollTo is more predictable than
-         * scrollIntoView with absolutely-positioned journey cards.
-         */
-        const targetTop =
-          Math.max(
-            0,
-            absoluteTop -
-            Math.max(
-              90,
-              (window.innerHeight - rect.height) / 2
-            )
-          );
-
-        window.scrollTo({
-          top: targetTop,
-          behavior: "smooth",
-        });
-
-      });
-
-    });
+    return;
   }
 
+
+  goToStep(
+    nextStep
+  );
+}
 
   function goToNextJourneyStep() {
 
-    setActiveJourneyStep(
-      currentStep => {
-
-        const nextStep =
-          Math.min(
-            6,
-            currentStep + 1
-          );
-
-        window.requestAnimationFrame(() => {
-
-          window.requestAnimationFrame(() => {
-
-            const targetStep =
-              document.getElementById(
-                `connect-journey-step-${nextStep}`
-              );
-
-            if (!targetStep) {
-              return;
-            }
-
-            const rect =
-              targetStep.getBoundingClientRect();
-
-            const targetTop =
-              Math.max(
-                0,
-                window.scrollY +
-                rect.top -
-                Math.max(
-                  90,
-                  (
-                    window.innerHeight -
-                    rect.height
-                  ) / 2
-                )
-              );
-
-            window.scrollTo({
-              top: targetTop,
-              behavior: "smooth",
-            });
-
-          });
-
-        });
-
-        return nextStep;
-      }
+  const nextStep =
+    Math.min(
+      6,
+      activeJourneyStep + 1
     );
+
+
+  if (
+    nextStep ===
+    activeJourneyStep
+  ) {
+
+    return;
   }
+
+
+  goToStep(
+    nextStep
+  );
+}
 
   // =========================================================
   // HOME TOUR STORAGE

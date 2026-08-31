@@ -29,111 +29,331 @@ const REACTIONS = [
 
 
 
-async function uploadMediaToNetlify(
-  file
-) {
+async function uploadMediaToNetlify(file) {
+
   if (!file) {
-    return null;
+    throw new Error("Please select a file.");
   }
+
+
+  /* ============================================================
+     FILE TYPE VALIDATION
+  ============================================================ */
+
+  const allowedImageTypes = [
+    "image/jpeg",
+    "image/png",
+    "image/webp",
+  ];
+
+
+  const allowedVideoTypes = [
+    "video/mp4",
+    "video/webm",
+    "video/quicktime",
+  ];
+
+
+  const isImage =
+    allowedImageTypes.includes(
+      file.type
+    );
+
+
+  const isVideo =
+    allowedVideoTypes.includes(
+      file.type
+    );
+
+
+  if (!isImage && !isVideo) {
+
+    throw new Error(
+      "Unsupported file type. Use JPG, PNG, WebP, MP4, WebM or MOV."
+    );
+  }
+
+
+  /* ============================================================
+     FILE SIZE VALIDATION
+  ============================================================ */
+
+  const maxImageSize =
+    10 * 1024 * 1024;
+
+
+  const maxVideoSize =
+    50 * 1024 * 1024;
+
+
+  if (
+    isImage &&
+    file.size > maxImageSize
+  ) {
+
+    throw new Error(
+      "Image must be smaller than 10 MB."
+    );
+  }
+
+
+  if (
+    isVideo &&
+    file.size > maxVideoSize
+  ) {
+
+    throw new Error(
+      "Video must be smaller than 50 MB."
+    );
+  }
+
+
+  /* ============================================================
+     CREATE FORM DATA
+  ============================================================ */
 
   const formData =
     new FormData();
+
 
   formData.append(
     "file",
     file
   );
 
+
   formData.append(
     "upload_type",
     "public"
   );
 
+
+  formData.append(
+    "media_type",
+    isVideo
+      ? "video"
+      : "image"
+  );
+
+
+  console.log(
+    "MEDIA UPLOAD START:",
+    {
+      name:
+        file.name,
+
+      type:
+        file.type,
+
+      size:
+        file.size,
+
+      sizeMB:
+        (
+          file.size /
+          1024 /
+          1024
+        ).toFixed(2),
+
+      mediaType:
+        isVideo
+          ? "video"
+          : "image",
+    }
+  );
+
+
+  /* ============================================================
+     NETLIFY FUNCTION
+  ============================================================ */
+
   let response;
 
+
   try {
-    response = await fetch(
-      "/.netlify/functions/media-upload",
-      {
-        method: "POST",
-        body: formData,
-      }
-    );
+
+    response =
+      await fetch(
+        "/.netlify/functions/media-upload",
+        {
+          method:
+            "POST",
+
+          body:
+            formData,
+        }
+      );
+
   } catch (networkError) {
+
     console.error(
-      "NETLIFY UPLOAD NETWORK ERROR:",
+      "NETLIFY MEDIA UPLOAD NETWORK ERROR:",
       networkError
     );
 
+
     throw new Error(
-      "Could not connect to the media upload service."
+      "Unable to connect to the FoodKindl media upload service."
     );
   }
 
 
+  /* ============================================================
+     READ RESPONSE
+  ============================================================ */
+
   const responseText =
     await response.text();
+
+
+  console.log(
+    "MEDIA UPLOAD HTTP STATUS:",
+    response.status
+  );
+
+
+  console.log(
+    "MEDIA UPLOAD RAW RESPONSE:",
+    responseText
+  );
+
 
   let data = null;
 
 
   if (responseText) {
+
     try {
+
       data =
         JSON.parse(
           responseText
         );
+
     } catch (parseError) {
+
       console.error(
-        "NETLIFY NON-JSON RESPONSE:",
+        "MEDIA UPLOAD RESPONSE IS NOT JSON:",
         responseText
       );
 
+
       throw new Error(
-        `Media upload returned an invalid response. Status: ${response.status}`
+        `Media upload returned an invalid response (${response.status}).`
       );
     }
   }
 
 
+  /* ============================================================
+     HANDLE FUNCTION ERROR
+  ============================================================ */
+
   if (!response.ok) {
+
     console.error(
-      "NETLIFY UPLOAD FAILED:",
+      "MEDIA UPLOAD FAILED:",
       {
         status:
           response.status,
 
-        responseText,
-
         data,
+
+        responseText,
       }
     );
 
-    throw new Error(
+
+    const errorMessage =
       data?.error ||
       data?.detail ||
-      `Media upload failed with status ${response.status}.`
+      data?.message ||
+      `Media upload failed with status ${response.status}.`;
+
+
+    throw new Error(
+      errorMessage
     );
   }
 
 
-  if (
-    !data ||
-    !data.url ||
-    !data.key
-  ) {
+  /* ============================================================
+     NORMALISE NETLIFY RESPONSE
+  ============================================================ */
+
+  const uploadedUrl =
+    data?.url ||
+    data?.public_url ||
+    data?.publicUrl ||
+    data?.download_url ||
+    data?.downloadUrl ||
+    "";
+
+
+  const uploadedKey =
+    data?.key ||
+    data?.blob_key ||
+    data?.blobKey ||
+    "";
+
+
+  if (!uploadedKey) {
+
     console.error(
-      "NETLIFY UPLOAD RESPONSE INVALID:",
+      "MEDIA UPLOAD MISSING BLOB KEY:",
       data
     );
 
+
     throw new Error(
-      "Netlify upload completed without returning a media URL/key."
+      "The file uploaded, but Netlify did not return a Blob key."
     );
   }
 
 
-  return data;
+  if (!uploadedUrl) {
+
+    console.error(
+      "MEDIA UPLOAD MISSING PUBLIC URL:",
+      data
+    );
+
+
+    throw new Error(
+      "The file uploaded, but Netlify did not return a public media URL."
+    );
+  }
+
+
+  const result = {
+
+    ...data,
+
+    key:
+      uploadedKey,
+
+    url:
+      uploadedUrl,
+
+    filename:
+      data?.filename ||
+      file.name,
+
+    contentType:
+      data?.contentType ||
+      data?.content_type ||
+      file.type,
+
+  };
+
+
+  console.log(
+    "MEDIA UPLOAD SUCCESS:",
+    result
+  );
+
+
+  return result;
 }
 
 const emptyForm = {
@@ -176,9 +396,10 @@ export default function Community() {
   const imageInputRef = useRef(null);
   const videoInputRef = useRef(null);
 
-  const API_BASE =
-    import.meta.env.VITE_BACKEND_URL ||
-    "http://127.0.0.1:8000";
+  const API_BASE = (
+  import.meta.env.VITE_BACKEND_URL ||
+  "https://foodkindl-25aug.onrender.com"
+).replace(/\/+$/, "");
 
   function getMediaUrl(path) {
     if (!path) {

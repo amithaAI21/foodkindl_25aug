@@ -14,6 +14,10 @@ const AuthContext =
   createContext(null);
 
 
+/* ============================================================
+   AUTH PROVIDER
+============================================================ */
+
 export function AuthProvider({
   children,
 }) {
@@ -28,6 +32,29 @@ export function AuthProvider({
     loading,
     setLoading,
   ] = useState(true);
+
+
+  /* ============================================================
+     CLEAR AUTH
+  ============================================================ */
+
+  const clearAuth =
+    useCallback(
+      () => {
+
+        localStorage.removeItem(
+          "foodkindl_access"
+        );
+
+        localStorage.removeItem(
+          "foodkindl_refresh"
+        );
+
+        setUser(null);
+
+      },
+      []
+    );
 
 
   /* ============================================================
@@ -62,6 +89,12 @@ export function AuthProvider({
             );
 
 
+          console.log(
+            "CURRENT USER:",
+            response.data
+          );
+
+
           setUser(
             response.data
           );
@@ -74,21 +107,41 @@ export function AuthProvider({
 
           console.error(
             "Unable to load user:",
-            error.response?.data ||
-            error
+            {
+              status:
+                error.response?.status,
+
+              data:
+                error.response?.data,
+
+              url:
+                error.config?.url,
+
+              baseURL:
+                error.config?.baseURL,
+
+              message:
+                error.message,
+            }
           );
 
 
-          localStorage.removeItem(
-            "foodkindl_access"
-          );
+          /*
+           * Only clear authentication when
+           * the server says the token is invalid.
+           *
+           * Do NOT logout just because of a
+           * temporary network/server error.
+           */
 
-          localStorage.removeItem(
-            "foodkindl_refresh"
-          );
+          if (
+            error.response?.status === 401 ||
+            error.response?.status === 403
+          ) {
 
+            clearAuth();
+          }
 
-          setUser(null);
 
           return null;
 
@@ -98,9 +151,15 @@ export function AuthProvider({
           setLoading(false);
         }
       },
-      []
+      [
+        clearAuth,
+      ]
     );
 
+
+  /* ============================================================
+     INITIAL USER LOAD
+  ============================================================ */
 
   useEffect(
     () => {
@@ -133,11 +192,33 @@ export function AuthProvider({
             .toLowerCase();
 
 
+        /*
+         * Do NOT trim passwords.
+         *
+         * A password may legally contain
+         * leading/trailing spaces.
+         */
+
         const normalizedPassword =
           String(
             password || ""
-          )
-            .trim();
+          );
+
+
+        if (!normalizedEmail) {
+
+          throw new Error(
+            "Email address is required."
+          );
+        }
+
+
+        if (!normalizedPassword) {
+
+          throw new Error(
+            "Password is required."
+          );
+        }
 
 
         console.log(
@@ -173,24 +254,29 @@ export function AuthProvider({
           );
 
 
-          const {
-            access,
-            refresh,
-            user:
-              loggedInUser,
-          } = response.data;
+          const access =
+            response.data?.access;
 
 
-          if (
-            !access ||
-            !refresh
-          ) {
+          const refresh =
+            response.data?.refresh;
+
+
+          const loggedInUser =
+            response.data?.user;
+
+
+          if (!access) {
 
             throw new Error(
-              "Login succeeded, but authentication tokens were not returned."
+              "Login succeeded, but no access token was returned."
             );
           }
 
+
+          /* ======================================================
+             STORE ACCESS TOKEN
+          ====================================================== */
 
           localStorage.setItem(
             "foodkindl_access",
@@ -198,18 +284,91 @@ export function AuthProvider({
           );
 
 
-          localStorage.setItem(
-            "foodkindl_refresh",
-            refresh
-          );
+          /* ======================================================
+             STORE REFRESH TOKEN IF AVAILABLE
+          ====================================================== */
+
+          if (refresh) {
+
+            localStorage.setItem(
+              "foodkindl_refresh",
+              refresh
+            );
+
+          } else {
+
+            localStorage.removeItem(
+              "foodkindl_refresh"
+            );
+          }
 
 
-          setUser(
-            loggedInUser
-          );
+          /* ======================================================
+             USER RETURNED WITH LOGIN RESPONSE
+          ====================================================== */
+
+          if (loggedInUser) {
+
+            setUser(
+              loggedInUser
+            );
 
 
-          return loggedInUser;
+            return loggedInUser;
+          }
+
+
+          /* ======================================================
+             IF LOGIN RETURNS ONLY TOKENS,
+             FETCH USER FROM /auth/me/
+          ====================================================== */
+
+          try {
+
+            const meResponse =
+              await api.get(
+                "/auth/me/"
+              );
+
+
+            setUser(
+              meResponse.data
+            );
+
+
+            return meResponse.data;
+
+
+          } catch (userLoadError) {
+
+            console.error(
+              "Login worked but user could not be loaded:",
+              {
+                status:
+                  userLoadError.response?.status,
+
+                data:
+                  userLoadError.response?.data,
+
+                message:
+                  userLoadError.message,
+              }
+            );
+
+
+            /*
+             * Token is valid enough to have
+             * been returned by login.
+             *
+             * Don't automatically delete it
+             * for a temporary /auth/me/ failure.
+             */
+
+            setUser(null);
+
+
+            return null;
+          }
 
 
         } catch (error) {
@@ -225,6 +384,12 @@ export function AuthProvider({
 
               url:
                 error.config?.url,
+
+              baseURL:
+                error.config?.baseURL,
+
+              message:
+                error.message,
 
               email:
                 normalizedEmail,
@@ -248,9 +413,7 @@ export function AuthProvider({
 
   const register =
     useCallback(
-      async (
-        payload
-      ) => {
+      async payload => {
 
         const normalizedEmail =
           String(
@@ -260,6 +423,24 @@ export function AuthProvider({
             .toLowerCase();
 
 
+        const normalizedPassword =
+          String(
+            payload?.password || ""
+          );
+
+
+        const firstName =
+          String(
+            payload?.first_name || ""
+          ).trim();
+
+
+        const lastName =
+          String(
+            payload?.last_name || ""
+          ).trim();
+
+
         const accountType =
           payload?.account_type ===
           "partner"
@@ -267,9 +448,33 @@ export function AuthProvider({
             : "member";
 
 
+        if (!normalizedEmail) {
+
+          throw new Error(
+            "Email address is required."
+          );
+        }
+
+
+        if (!normalizedPassword) {
+
+          throw new Error(
+            "Password is required."
+          );
+        }
+
+
         console.log(
-          "Registering account type:",
-          accountType
+          "REGISTER DATA:",
+          {
+            email:
+              normalizedEmail,
+
+            accountType,
+
+            passwordLength:
+              normalizedPassword.length,
+          }
         );
 
 
@@ -281,30 +486,28 @@ export function AuthProvider({
               {
 
                 first_name:
-                  String(
-                    payload?.first_name ||
-                    ""
-                  ).trim(),
+                  firstName,
 
                 last_name:
-                  String(
-                    payload?.last_name ||
-                    ""
-                  ).trim(),
+                  lastName,
 
                 email:
                   normalizedEmail,
 
                 password:
-                  String(
-                    payload?.password ||
-                    ""
-                  ).trim(),
+                  normalizedPassword,
 
                 account_type:
                   accountType,
+
               }
             );
+
+
+          console.log(
+            "REGISTER SUCCESS:",
+            response.data
+          );
 
 
           return response.data;
@@ -323,6 +526,12 @@ export function AuthProvider({
 
               url:
                 error.config?.url,
+
+              baseURL:
+                error.config?.baseURL,
+
+              message:
+                error.message,
             }
           );
 
@@ -342,18 +551,12 @@ export function AuthProvider({
     useCallback(
       () => {
 
-        localStorage.removeItem(
-          "foodkindl_access"
-        );
+        clearAuth();
 
-        localStorage.removeItem(
-          "foodkindl_refresh"
-        );
-
-
-        setUser(null);
       },
-      []
+      [
+        clearAuth,
+      ]
     );
 
 
@@ -366,10 +569,13 @@ export function AuthProvider({
       () => ({
 
         user,
+
         loading,
 
         login,
+
         register,
+
         logout,
 
         reloadUser:
@@ -377,6 +583,13 @@ export function AuthProvider({
 
         refreshUser:
           loadUser,
+
+        isAuthenticated:
+          Boolean(
+            localStorage.getItem(
+              "foodkindl_access"
+            )
+          ),
 
       }),
       [
@@ -405,6 +618,7 @@ export function AuthProvider({
       {children}
 
     </AuthContext.Provider>
+
   );
 }
 
