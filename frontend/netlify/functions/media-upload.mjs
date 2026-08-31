@@ -11,9 +11,9 @@ const GOVERNMENT_ID_STORE =
   "foodkindl-government-ids";
 
 
-// ============================================================
-// JSON RESPONSE
-// ============================================================
+/* ============================================================
+   JSON RESPONSE
+============================================================ */
 
 function jsonResponse(
   body,
@@ -28,15 +28,18 @@ function jsonResponse(
       headers: {
         "Content-Type":
           "application/json",
+
+        "Cache-Control":
+          "no-store",
       },
     }
   );
 }
 
 
-// ============================================================
-// FILE EXTENSION
-// ============================================================
+/* ============================================================
+   GET EXTENSION
+============================================================ */
 
 function getExtension(
   filename
@@ -54,9 +57,7 @@ function getExtension(
   if (
     parts.length < 2
   ) {
-
     return "bin";
-
   }
 
 
@@ -70,41 +71,41 @@ function getExtension(
 }
 
 
-// ============================================================
-// MAIN HANDLER
-// ============================================================
+/* ============================================================
+   MAIN HANDLER
+============================================================ */
 
 export default async function handler(
   request
 ) {
 
+  /* ==========================================================
+     METHOD
+  ========================================================== */
+
+  if (
+    request.method !==
+    "POST"
+  ) {
+
+    return jsonResponse(
+      {
+        success:
+          false,
+
+        error:
+          "Method not allowed.",
+      },
+      405
+    );
+  }
+
+
   try {
 
-    // ========================================================
-    // METHOD
-    // ========================================================
-
-    if (
-      request.method !==
-      "POST"
-    ) {
-
-      return jsonResponse(
-        {
-          success: false,
-
-          error:
-            "Method not allowed.",
-        },
-        405
-      );
-
-    }
-
-
-    // ========================================================
-    // FORM DATA
-    // ========================================================
+    /* ========================================================
+       FORM DATA
+    ======================================================== */
 
     const formData =
       await request.formData();
@@ -128,23 +129,26 @@ export default async function handler(
         .toLowerCase();
 
 
+    /* ========================================================
+       VALIDATE FILE
+    ======================================================== */
+
     if (
-      !file
-      ||
+      !file ||
       typeof file ===
         "string"
     ) {
 
       return jsonResponse(
         {
-          success: false,
+          success:
+            false,
 
           error:
             "No file selected.",
         },
         400
       );
-
     }
 
 
@@ -155,9 +159,8 @@ export default async function handler(
 
 
     console.log(
-      "UPLOAD:",
+      "FOODKINDL MEDIA UPLOAD:",
       {
-
         name:
           file.name,
 
@@ -167,17 +170,19 @@ export default async function handler(
         size:
           file.size,
 
+        sizeMB:
+          (
+            file.size /
+            1024 /
+            1024
+          ).toFixed(2),
+
         extension,
 
         uploadType,
-
       }
     );
 
-
-    // ========================================================
-    // REQUEST ORIGIN
-    // ========================================================
 
     const origin =
       new URL(
@@ -185,16 +190,16 @@ export default async function handler(
       ).origin;
 
 
-    // ========================================================
-    // GOVERNMENT ID
-    // ========================================================
+    /* ========================================================
+       GOVERNMENT ID
+    ======================================================== */
 
     if (
       uploadType ===
       "government_id"
     ) {
 
-      const allowedGovernmentIdTypes = [
+      const allowedTypes = [
         "image/jpeg",
         "image/png",
         "image/webp",
@@ -202,7 +207,7 @@ export default async function handler(
       ];
 
 
-      const allowedGovernmentIdExtensions = [
+      const allowedExtensions = [
         "jpg",
         "jpeg",
         "png",
@@ -211,85 +216,62 @@ export default async function handler(
       ];
 
 
-      const validMimeType =
-        allowedGovernmentIdTypes
-          .includes(
-            file.type
-          );
+      const validType =
+        allowedTypes.includes(
+          file.type
+        );
 
 
       const validExtension =
-        allowedGovernmentIdExtensions
-          .includes(
-            extension
-          );
+        allowedExtensions.includes(
+          extension
+        );
 
-
-      // ======================================================
-      // VALIDATE TYPE
-      // ======================================================
 
       if (
-        !validMimeType
-        &&
+        !validType &&
         !validExtension
       ) {
 
         return jsonResponse(
           {
-            success: false,
+            success:
+              false,
 
             error:
-              (
-                "Government ID must be "
-                +
-                "JPG, JPEG, PNG, WebP or PDF. "
-                +
-                `Received type: ${
-                  file.type ||
-                  "unknown"
-                }`
-              ),
+              "Government ID must be JPG, JPEG, PNG, WebP or PDF.",
           },
           400
         );
-
       }
 
 
-      // ======================================================
-      // MAXIMUM SIZE - 5 MB
-      // ======================================================
+      /*
+       * Keep this small because the whole
+       * file passes through a Netlify Function.
+       */
 
-      const maxGovernmentIdSize =
-        5 * 1024 * 1024;
+      const maxSize =
+        4 * 1024 * 1024;
 
 
       if (
         file.size >
-        maxGovernmentIdSize
+        maxSize
       ) {
 
         return jsonResponse(
           {
-            success: false,
+            success:
+              false,
 
             error:
-              (
-                "Government ID must "
-                +
-                "be smaller than 5 MB."
-              ),
+              "Government ID must be smaller than 4 MB.",
           },
           400
         );
-
       }
 
-
-      // ======================================================
-      // CONTENT TYPE
-      // ======================================================
 
       const contentType =
         file.type
@@ -302,10 +284,6 @@ export default async function handler(
         );
 
 
-      // ======================================================
-      // PRIVATE BLOB KEY
-      // ======================================================
-
       const key =
         (
           "government-ids/"
@@ -317,10 +295,6 @@ export default async function handler(
           extension
         );
 
-
-      // ======================================================
-      // PRIVATE STORE
-      // ======================================================
 
       const store =
         getStore(
@@ -353,22 +327,12 @@ export default async function handler(
 
             private:
               "true",
-
           },
         }
       );
 
 
-      // ======================================================
-      // PRIVATE HTTPS URL
-      //
-      // IMPORTANT:
-      // This points to a SEPARATE protected Netlify function.
-      //
-      // Do NOT use the public /media function for Government ID.
-      // ======================================================
-
-      const governmentIdUrl =
+      const url =
         (
           `${origin}`
           +
@@ -380,44 +344,17 @@ export default async function handler(
         );
 
 
-      console.log(
-        "GOVERNMENT ID UPLOAD SUCCESS:",
-        {
-          key,
-
-          url:
-            governmentIdUrl,
-
-          filename:
-            file.name,
-
-          contentType,
-        }
-      );
-
-
-      // ======================================================
-      // GOVERNMENT ID RESPONSE
-      //
-      // Profile.jsx now receives:
-      //
-      // uploadedGovernmentId.key
-      // uploadedGovernmentId.url
-      // uploadedGovernmentId.filename
-      // uploadedGovernmentId.contentType
-      // ======================================================
-
       return jsonResponse(
         {
-          success: true,
+          success:
+            true,
 
           private:
             true,
 
           key,
 
-          url:
-            governmentIdUrl,
+          url,
 
           filename:
             file.name,
@@ -429,18 +366,16 @@ export default async function handler(
 
           category:
             "government_id",
-        },
-        200
+        }
       );
-
     }
 
 
-    // ========================================================
-    // PUBLIC MEDIA
-    // ========================================================
+    /* ========================================================
+       PUBLIC MEDIA
+    ======================================================== */
 
-    const allowedPublicTypes = [
+    const allowedTypes = [
 
       "image/jpeg",
       "image/png",
@@ -456,7 +391,7 @@ export default async function handler(
     ];
 
 
-    const allowedPublicExtensions = [
+    const allowedExtensions = [
 
       "jpg",
       "jpeg",
@@ -474,56 +409,38 @@ export default async function handler(
 
 
     const validMimeType =
-      allowedPublicTypes
-        .includes(
-          file.type
-        );
+      allowedTypes.includes(
+        file.type
+      );
 
 
     const validExtension =
-      allowedPublicExtensions
-        .includes(
-          extension
-        );
+      allowedExtensions.includes(
+        extension
+      );
 
-
-    // ========================================================
-    // VALIDATE PUBLIC FILE TYPE
-    // ========================================================
 
     if (
-      !validMimeType
-      &&
+      !validMimeType &&
       !validExtension
     ) {
 
       return jsonResponse(
         {
-          success: false,
+          success:
+            false,
 
           error:
-            (
-              "Unsupported file type. "
-              +
-              "Use JPG, JPEG, PNG, WebP, GIF, "
-              +
-              "MP4, WebM, MOV or PDF. "
-              +
-              `Received type: ${
-                file.type ||
-                "unknown"
-              }`
-            ),
+            "Unsupported file type. Use JPG, JPEG, PNG, WebP, GIF, MP4, WebM, MOV or PDF.",
         },
         400
       );
-
     }
 
 
-    // ========================================================
-    // FILE TYPE
-    // ========================================================
+    /* ========================================================
+       DETECT FILE CATEGORY
+    ======================================================== */
 
     const isPdf =
       (
@@ -538,7 +455,7 @@ export default async function handler(
     const isVideo =
       (
         file.type
-          .startsWith(
+          ?.startsWith(
             "video/"
           )
         ||
@@ -555,7 +472,7 @@ export default async function handler(
     const isImage =
       (
         file.type
-          .startsWith(
+          ?.startsWith(
             "image/"
           )
         ||
@@ -571,9 +488,15 @@ export default async function handler(
       );
 
 
-    // ========================================================
-    // SIZE LIMIT
-    // ========================================================
+    /* ========================================================
+       SIZE LIMIT
+
+       IMPORTANT:
+       Netlify may reject large multipart requests
+       BEFORE this function is executed.
+
+       Keep uploads deliberately small.
+    ======================================================== */
 
     let maxSize;
 
@@ -583,20 +506,12 @@ export default async function handler(
     ) {
 
       maxSize =
-        25 * 1024 * 1024;
-
-    } else if (
-      isPdf
-    ) {
-
-      maxSize =
-        10 * 1024 * 1024;
+        4 * 1024 * 1024;
 
     } else {
 
       maxSize =
-        10 * 1024 * 1024;
-
+        4 * 1024 * 1024;
     }
 
 
@@ -607,39 +522,24 @@ export default async function handler(
 
       return jsonResponse(
         {
-          success: false,
+          success:
+            false,
 
           error:
-
             isVideo
-              ? (
-                  "Video must be "
-                  +
-                  "smaller than 25 MB."
-                )
-
+              ? "Video must be smaller than 4 MB."
               : isPdf
-                ? (
-                    "PDF must be "
-                    +
-                    "smaller than 10 MB."
-                  )
-
-                : (
-                    "Image must be "
-                    +
-                    "smaller than 10 MB."
-                  ),
+                ? "PDF must be smaller than 4 MB."
+                : "Image must be smaller than 4 MB.",
         },
         400
       );
-
     }
 
 
-    // ========================================================
-    // FOLDER
-    // ========================================================
+    /* ========================================================
+       FOLDER
+    ======================================================== */
 
     let folder =
       "files";
@@ -665,13 +565,12 @@ export default async function handler(
 
       folder =
         "documents";
-
     }
 
 
-    // ========================================================
-    // KEY
-    // ========================================================
+    /* ========================================================
+       BLOB KEY
+    ======================================================== */
 
     const key =
       (
@@ -685,15 +584,9 @@ export default async function handler(
       );
 
 
-    // ========================================================
-    // STORE
-    // ========================================================
-
-    const store =
-      getStore(
-        PUBLIC_STORE
-      );
-
+    /* ========================================================
+       CONTENT TYPE
+    ======================================================== */
 
     const contentType =
       file.type
@@ -702,6 +595,16 @@ export default async function handler(
         isPdf
           ? "application/pdf"
           : "application/octet-stream"
+      );
+
+
+    /* ========================================================
+       STORE
+    ======================================================== */
+
+    const store =
+      getStore(
+        PUBLIC_STORE
       );
 
 
@@ -726,26 +629,21 @@ export default async function handler(
               .toISOString(),
 
           category:
-
             isVideo
               ? "video"
-
               : isImage
                 ? "image"
-
                 : isPdf
                   ? "pdf"
-
                   : "file",
-
         },
       }
     );
 
 
-    // ========================================================
-    // PUBLIC URL
-    // ========================================================
+    /* ========================================================
+       PUBLIC MEDIA URL
+    ======================================================== */
 
     const mediaUrl =
       (
@@ -759,13 +657,29 @@ export default async function handler(
       );
 
 
-    // ========================================================
-    // PUBLIC RESPONSE
-    // ========================================================
+    /* ========================================================
+       SUCCESS
+    ======================================================== */
+
+    console.log(
+      "FOODKINDL MEDIA UPLOAD SUCCESS:",
+      {
+        key,
+
+        mediaUrl,
+
+        contentType,
+
+        size:
+          file.size,
+      }
+    );
+
 
     return jsonResponse(
       {
-        success: true,
+        success:
+          true,
 
         private:
           false,
@@ -784,16 +698,12 @@ export default async function handler(
           file.size,
 
         category:
-
           isVideo
             ? "video"
-
             : isImage
               ? "image"
-
               : isPdf
                 ? "pdf"
-
                 : "file",
       },
       200
@@ -806,25 +716,30 @@ export default async function handler(
 
     console.error(
       "NETLIFY BLOB UPLOAD ERROR:",
-      error
+      {
+        name:
+          error?.name,
+
+        message:
+          error?.message,
+
+        stack:
+          error?.stack,
+      }
     );
 
 
     return jsonResponse(
       {
-        success: false,
+        success:
+          false,
 
         error:
           error?.message
           ||
-          (
-            "Unable to upload "
-            +
-            "the selected file."
-          ),
+          "Unable to upload the selected file.",
       },
       500
     );
-
   }
 }
