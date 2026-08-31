@@ -1920,103 +1920,50 @@ export default function LandingPage() {
 
         <div className="fk-story-video-card">
 
-          <video
-            ref={videoRef}
-            className="fk-story-video"
-            preload="metadata"
-            poster={
-              storyVideo?.poster_url ||
-              "/images/video-thumbnail.jpg"
-            }
-            controls={
-              videoStarted &&
-              Boolean(
-                storyVideo?.video_url
-              )
-            }
-          >
+  {storyVideoLoading ? (
 
-            {
-              storyVideo?.video_url &&
-              (
+    <div className="fk-story-video-loading">
+      Loading FoodKindl Story...
+    </div>
 
-                <source
-                  src={
-                    storyVideo.video_url
-                  }
-                  type="video/mp4"
-                />
+  ) : storyVideo?.video_url ? (
 
-              )
-            }
+    <video
+      key={storyVideo.video_url}
+      className="fk-story-video"
+      controls
+      playsInline
+      preload="metadata"
+      src={storyVideo.video_url}
+      poster={
+        storyVideo.poster_url || undefined
+      }
+      onLoadedMetadata={() => {
+        console.log(
+          "Homepage video loaded:",
+          storyVideo.video_url
+        );
+      }}
+      onError={(event) => {
+        console.error(
+          "Homepage video failed:",
+          storyVideo.video_url,
+          event.currentTarget.error
+        );
+      }}
+    >
+      Your browser does not support the video tag.
+    </video>
 
-            Your browser does not support the video tag.
+  ) : (
 
-          </video>
+    <div className="fk-story-video-loading">
+      FoodKindl story video is currently unavailable.
+    </div>
 
+  )}
 
-          {
-            !videoStarted &&
-            (
-
-              <button
-                type="button"
-                className="fk-story-video-overlay"
-                onClick={
-                  playStoryVideo
-                }
-                aria-label="Play FoodKindl story"
-                disabled={
-                  storyVideoLoading ||
-                  !storyVideo?.video_url
-                }
-              >
-
-                <span className="fk-story-play">
-
-                  <Play
-                    size={26}
-                    fill="currentColor"
-                  />
-
-                </span>
-
-
-                <span>
-                  SEE THE FOODKINDL STORY
-                </span>
-
-
-                <strong>
-
-                  {
-                    storyVideoLoading
-                      ? "Loading FoodKindl Story..."
-                      : storyVideo?.title ||
-                        "See How FoodKindl Brings People Together"
-                  }
-
-                </strong>
-
-
-                <small>
-
-                  {
-                    storyVideoLoading
-                      ? "Please wait while the latest video loads."
-                      : storyVideo?.video_url
-                        ? "A short story about food, connection and belonging."
-                        : "FoodKindl story video is currently unavailable."
-                  }
-
-                </small>
-
-              </button>
-
-            )
-          }
-
-        </div>
+</div>
 
       </section>
 
