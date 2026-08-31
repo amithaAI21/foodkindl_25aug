@@ -23,6 +23,7 @@ class HomepageVideoAdminForm(forms.ModelForm):
         required=False,
         help_text=(
             "Upload MP4, WebM or MOV. "
+            "Maximum file size: 50 MB. "
             "The video will be stored in Netlify Blobs."
         ),
     )
@@ -50,6 +51,7 @@ class HomepageVideoAdminForm(forms.ModelForm):
         video_file = cleaned_data.get(
             "video_file"
         )
+
 
         # ----------------------------------------------------
         # NO NEW FILE
@@ -93,16 +95,23 @@ class HomepageVideoAdminForm(forms.ModelForm):
         # FILE SIZE
         # ----------------------------------------------------
 
-        max_size = (
-            150
+        MAX_HOMEPAGE_VIDEO_SIZE = (
+            50
             * 1024
             * 1024
-        )
+        )  # 50 MB
 
-        if video_file.size > max_size:
+
+        if (
+            video_file.size
+            > MAX_HOMEPAGE_VIDEO_SIZE
+        ):
 
             raise forms.ValidationError(
-                "Video must be smaller than 150 MB."
+                (
+                    "Homepage video must be "
+                    "smaller than 50 MB."
+                )
             )
 
 
@@ -115,6 +124,7 @@ class HomepageVideoAdminForm(forms.ModelForm):
             "NETLIFY_HOMEPAGE_VIDEO_UPLOAD_URL",
             "",
         )
+
 
         upload_secret = getattr(
             settings,
@@ -144,17 +154,35 @@ class HomepageVideoAdminForm(forms.ModelForm):
 
 
         # ----------------------------------------------------
+        # PREPARE FILE
+        # ----------------------------------------------------
+
+        try:
+            video_file.seek(0)
+
+        except Exception:
+
+            raise forms.ValidationError(
+                (
+                    "Unable to read the uploaded "
+                    "video file."
+                )
+            )
+
+
+        # ----------------------------------------------------
         # SEND VIDEO TO NETLIFY
         # ----------------------------------------------------
 
         try:
 
-            video_file.seek(0)
-
             response = requests.post(
                 upload_url,
 
-                data=video_file.read(),
+                # IMPORTANT:
+                # Pass the file object directly instead
+                # of video_file.read().
+                data=video_file,
 
                 headers={
                     "Content-Type":
@@ -165,9 +193,51 @@ class HomepageVideoAdminForm(forms.ModelForm):
 
                     "X-FoodKindl-Upload-Secret":
                         upload_secret,
+
+                    "Accept":
+                        "application/json",
+
+                    "Connection":
+                        "close",
                 },
 
-                timeout=180,
+                # 15 sec connection timeout
+                # 180 sec response/read timeout
+                timeout=(
+                    15,
+                    180,
+                ),
+            )
+
+
+        except requests.exceptions.SSLError as exc:
+
+            raise forms.ValidationError(
+                (
+                    "Unable to securely connect to "
+                    "the Netlify video upload service. "
+                    f"SSL error: {exc}"
+                )
+            )
+
+
+        except requests.exceptions.ConnectTimeout:
+
+            raise forms.ValidationError(
+                (
+                    "Connection to the Netlify video "
+                    "upload service timed out."
+                )
+            )
+
+
+        except requests.exceptions.ReadTimeout:
+
+            raise forms.ValidationError(
+                (
+                    "Netlify took too long to process "
+                    "the video upload."
+                )
             )
 
 
@@ -204,6 +274,7 @@ class HomepageVideoAdminForm(forms.ModelForm):
                     or
                     response.text
                 )
+
 
             except Exception:
 
@@ -242,6 +313,24 @@ class HomepageVideoAdminForm(forms.ModelForm):
             )
 
 
+        # ----------------------------------------------------
+        # CHECK SUCCESS FLAG
+        # ----------------------------------------------------
+
+        if result.get("success") is False:
+
+            raise forms.ValidationError(
+                (
+                    "Homepage video upload failed: "
+                    f"{result.get('error') or 'Unknown error.'}"
+                )
+            )
+
+
+        # ----------------------------------------------------
+        # GET BLOB KEY
+        # ----------------------------------------------------
+
         blob_key = (
             result.get("key")
             or
@@ -250,6 +339,10 @@ class HomepageVideoAdminForm(forms.ModelForm):
             ""
         )
 
+
+        # ----------------------------------------------------
+        # GET PUBLIC VIDEO URL
+        # ----------------------------------------------------
 
         video_url = (
             result.get("video_url")
@@ -340,14 +433,18 @@ class HomepageVideoAdminForm(forms.ModelForm):
         return instance
 
 
+
 # ============================================================
 # HOMEPAGE VIDEO ADMIN
 # ============================================================
 
 @admin.register(HomepageVideo)
-class HomepageVideoAdmin(admin.ModelAdmin):
+class HomepageVideoAdmin(
+    admin.ModelAdmin
+):
 
     form = HomepageVideoAdminForm
+
 
     list_display = (
         "title",
@@ -356,13 +453,16 @@ class HomepageVideoAdmin(admin.ModelAdmin):
         "updated_at",
     )
 
+
     list_filter = (
         "is_active",
     )
 
+
     search_fields = (
         "title",
     )
+
 
     readonly_fields = (
         "video_blob_key",
@@ -370,6 +470,7 @@ class HomepageVideoAdmin(admin.ModelAdmin):
         "created_at",
         "updated_at",
     )
+
 
     fieldsets = (
 
@@ -419,6 +520,7 @@ class HomepageVideoAdmin(admin.ModelAdmin):
         return obj.has_video
 
 
+
 # ============================================================
 # WAITLIST ADMIN
 # ============================================================
@@ -435,15 +537,18 @@ class WaitlistEntryAdmin(
         "created_at",
     )
 
+
     search_fields = (
         "full_name",
         "email",
         "city",
     )
 
+
     readonly_fields = (
         "created_at",
     )
+
 
 
 # ============================================================
@@ -463,17 +568,20 @@ class FeedbackAdmin(
         "created_at",
     )
 
+
     list_filter = (
         "feedback_type",
         "status",
         "rating",
     )
 
+
     search_fields = (
         "name",
         "email",
         "message",
     )
+
 
     readonly_fields = (
         "created_at",
