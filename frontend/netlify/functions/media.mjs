@@ -3,14 +3,23 @@ import {
 } from "@netlify/blobs";
 
 
+/* ============================================================
+   STORE
+============================================================ */
+
 const PUBLIC_STORE =
   "foodkindl-media";
 
+
+/* ============================================================
+   JSON RESPONSE
+============================================================ */
 
 function jsonResponse(
   body,
   status = 200
 ) {
+
   return new Response(
     JSON.stringify(body),
     {
@@ -19,24 +28,35 @@ function jsonResponse(
       headers: {
         "Content-Type":
           "application/json",
+
+        "Cache-Control":
+          "no-store",
       },
     }
   );
 }
 
 
+/* ============================================================
+   MEDIA HANDLER
+============================================================ */
+
 export default async function handler(
   request
 ) {
-  // ==========================================================
-  // METHOD
-  // ==========================================================
+
+  /* ==========================================================
+     METHOD
+  ========================================================== */
 
   if (
     request.method !== "GET"
   ) {
+
     return jsonResponse(
       {
+        success: false,
+
         error:
           "Method not allowed.",
       },
@@ -46,9 +66,10 @@ export default async function handler(
 
 
   try {
-    // ========================================================
-    // GET KEY
-    // ========================================================
+
+    /* ========================================================
+       REQUEST URL
+    ======================================================== */
 
     const requestUrl =
       new URL(
@@ -56,15 +77,22 @@ export default async function handler(
       );
 
 
-    const key =
+    const rawKey =
       requestUrl
         .searchParams
         .get("key");
 
 
-    if (!key) {
+    /* ========================================================
+       VALIDATE KEY
+    ======================================================== */
+
+    if (!rawKey) {
+
       return jsonResponse(
         {
+          success: false,
+
           error:
             "Missing media key.",
         },
@@ -73,22 +101,55 @@ export default async function handler(
     }
 
 
-    // ========================================================
-    // SECURITY
-    //
-    // This endpoint can ONLY read
-    // the public media store.
-    //
-    // It cannot read Government IDs.
-    // ========================================================
+    const key =
+      String(
+        rawKey
+      ).trim();
+
+
+    if (!key) {
+
+      return jsonResponse(
+        {
+          success: false,
+
+          error:
+            "Invalid media key.",
+        },
+        400
+      );
+    }
+
+
+    console.log(
+      "FOODKINDL MEDIA REQUEST:",
+      {
+        key,
+      }
+    );
+
+
+    /* ========================================================
+       SECURITY
+       NEVER SERVE GOVERNMENT IDs HERE
+    ======================================================== */
 
     if (
       key.startsWith(
         "government-ids/"
       )
     ) {
+
+      console.warn(
+        "PUBLIC MEDIA ACCESS BLOCKED:",
+        key
+      );
+
+
       return jsonResponse(
         {
+          success: false,
+
           error:
             "Access denied.",
         },
@@ -97,9 +158,51 @@ export default async function handler(
     }
 
 
-    // ========================================================
-    // GET STORE
-    // ========================================================
+    /*
+     * Public upload keys should normally
+     * begin with one of these folders.
+     */
+
+    const allowedFolders = [
+      "images/",
+      "videos/",
+      "documents/",
+      "files/",
+    ];
+
+
+    const validPublicKey =
+      allowedFolders.some(
+        folder =>
+          key.startsWith(
+            folder
+          )
+      );
+
+
+    if (!validPublicKey) {
+
+      console.warn(
+        "INVALID PUBLIC MEDIA KEY:",
+        key
+      );
+
+
+      return jsonResponse(
+        {
+          success: false,
+
+          error:
+            "Invalid media key.",
+        },
+        400
+      );
+    }
+
+
+    /* ========================================================
+       STORE
+    ======================================================== */
 
     const store =
       getStore(
@@ -107,9 +210,9 @@ export default async function handler(
       );
 
 
-    // ========================================================
-    // GET FILE
-    // ========================================================
+    /* ========================================================
+       LOAD BLOB
+    ======================================================== */
 
     const result =
       await store.getWithMetadata(
@@ -121,12 +224,25 @@ export default async function handler(
       );
 
 
+    /* ========================================================
+       NOT FOUND
+    ======================================================== */
+
     if (
       !result ||
       !result.data
     ) {
+
+      console.warn(
+        "FOODKINDL MEDIA NOT FOUND:",
+        key
+      );
+
+
       return jsonResponse(
         {
+          success: false,
+
           error:
             "Media not found.",
         },
@@ -135,58 +251,173 @@ export default async function handler(
     }
 
 
-    // ========================================================
-    // CONTENT TYPE
-    // ========================================================
+    /* ========================================================
+       CONTENT TYPE
+    ======================================================== */
 
-    const contentType =
-      (
-        result.metadata
-          ?.contentType
+    let contentType =
+      result.metadata
+        ?.contentType
+      ||
+      result.metadata
+        ?.content_type
+      ||
+      result.data
+        ?.type
+      ||
+      "";
+
+
+    /*
+     * Fallback based on extension
+     * when Blob metadata is unavailable.
+     */
+
+    if (!contentType) {
+
+      const extension =
+        key
+          .split(".")
+          .pop()
+          ?.toLowerCase();
+
+
+      const contentTypes = {
+
+        jpg:
+          "image/jpeg",
+
+        jpeg:
+          "image/jpeg",
+
+        png:
+          "image/png",
+
+        webp:
+          "image/webp",
+
+        gif:
+          "image/gif",
+
+        mp4:
+          "video/mp4",
+
+        webm:
+          "video/webm",
+
+        mov:
+          "video/quicktime",
+
+        pdf:
+          "application/pdf",
+
+      };
+
+
+      contentType =
+        contentTypes[
+          extension
+        ]
         ||
-        result.data
-          ?.type
-        ||
-        "application/octet-stream"
-      );
+        "application/octet-stream";
+    }
 
 
-    // ========================================================
-    // RESPONSE
-    // ========================================================
+    /* ========================================================
+       DEBUG
+    ======================================================== */
+
+    console.log(
+      "FOODKINDL MEDIA SUCCESS:",
+      {
+        key,
+
+        contentType,
+
+        metadata:
+          result.metadata || null,
+
+        size:
+          result.data?.size,
+      }
+    );
+
+
+    /* ========================================================
+       MEDIA RESPONSE
+    ======================================================== */
+
+    const headers =
+      new Headers();
+
+
+    headers.set(
+      "Content-Type",
+      contentType
+    );
+
+
+    headers.set(
+      "Cache-Control",
+      "public, max-age=86400, stale-while-revalidate=604800"
+    );
+
+
+    headers.set(
+      "X-Content-Type-Options",
+      "nosniff"
+    );
+
+
+    headers.set(
+      "Accept-Ranges",
+      "bytes"
+    );
+
+
+    /*
+     * Allow media to render inside
+     * <img> and <video> elements.
+     */
+
+    headers.set(
+      "Content-Disposition",
+      "inline"
+    );
+
 
     return new Response(
       result.data,
       {
-        status: 200,
+        status:
+          200,
 
-        headers: {
-          "Content-Type":
-            contentType,
-
-          "Cache-Control":
-            (
-              "public, "
-              +
-              "max-age=86400"
-            ),
-
-          "X-Content-Type-Options":
-            "nosniff",
-        },
+        headers,
       }
     );
 
 
   } catch (error) {
+
     console.error(
       "NETLIFY BLOB READ ERROR:",
-      error
+      {
+        name:
+          error?.name,
+
+        message:
+          error?.message,
+
+        stack:
+          error?.stack,
+      }
     );
 
 
     return jsonResponse(
       {
+        success: false,
+
         error:
           error?.message ||
           "Unable to load media.",
