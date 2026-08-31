@@ -2,128 +2,247 @@ import { getStore } from "@netlify/blobs";
 
 const STORE_NAME = "foodkindl-homepage-media";
 
-export default async function handler(request) {
-  if (request.method !== "POST") {
-    return new Response(
-      JSON.stringify({
-        success: false,
-        error: "Method not allowed. Use POST.",
-      }),
+const MAX_FILE_SIZE =
+  5 * 1024 * 1024; // 5 MB for testing
+
+const ALLOWED_TYPES = new Set([
+  "video/mp4",
+  "video/webm",
+  "video/quicktime",
+]);
+
+
+function jsonResponse(
+  data,
+  status = 200
+) {
+  return new Response(
+    JSON.stringify(data),
+    {
+      status,
+
+      headers: {
+        "Content-Type":
+          "application/json",
+
+        "Cache-Control":
+          "no-store",
+      },
+    }
+  );
+}
+
+
+export default async function handler(
+  request
+) {
+
+  // ==========================================================
+  // METHOD
+  // ==========================================================
+
+  if (
+    request.method !== "POST"
+  ) {
+    return jsonResponse(
       {
-        status: 405,
-        headers: {
-          "Content-Type": "application/json",
-          "Cache-Control": "no-store",
-        },
-      }
+        success: false,
+        error:
+          "Method not allowed. Use POST.",
+      },
+      405
     );
   }
 
+
+  // ==========================================================
+  // SECRET
+  // ==========================================================
+
   const expectedSecret =
-    process.env.NETLIFY_VIDEO_UPLOAD_SECRET;
+    process.env
+      .NETLIFY_VIDEO_UPLOAD_SECRET;
+
 
   const receivedSecret =
     request.headers.get(
       "X-FoodKindl-Upload-Secret"
     );
 
+
   if (!expectedSecret) {
-    return new Response(
-      JSON.stringify({
-        success: false,
-        error:
-          "NETLIFY_VIDEO_UPLOAD_SECRET is not configured in Netlify.",
-      }),
+
+    console.error(
+      "NETLIFY_VIDEO_UPLOAD_SECRET missing."
+    );
+
+
+    return jsonResponse(
       {
-        status: 500,
-        headers: {
-          "Content-Type": "application/json",
-        },
-      }
+        success: false,
+
+        error:
+          "NETLIFY_VIDEO_UPLOAD_SECRET is not configured in the Netlify Function runtime.",
+      },
+      500
     );
   }
+
 
   if (
     !receivedSecret ||
-    receivedSecret !== expectedSecret
+    receivedSecret !==
+      expectedSecret
   ) {
-    return new Response(
-      JSON.stringify({
-        success: false,
-        error: "Unauthorized.",
-      }),
+
+    console.error(
+      "Homepage video secret mismatch."
+    );
+
+
+    return jsonResponse(
       {
-        status: 401,
-        headers: {
-          "Content-Type": "application/json",
-        },
-      }
+        success: false,
+        error:
+          "Unauthorized.",
+      },
+      401
     );
   }
 
-  try {
-    const contentType =
-      request.headers.get("content-type") ||
-      "video/mp4";
 
-    const cleanContentType =
-      contentType
-        .split(";")[0]
-        .trim()
-        .toLowerCase();
+  // ==========================================================
+  // CONTENT LENGTH
+  // ==========================================================
 
-    const originalFileName =
-      request.headers.get("x-file-name") ||
-      "homepage-video.mp4";
+  const contentLengthHeader =
+    request.headers.get(
+      "content-length"
+    );
 
-    const allowedTypes = [
-      "video/mp4",
-      "video/webm",
-      "video/quicktime",
-    ];
+
+  if (contentLengthHeader) {
+
+    const contentLength =
+      Number(
+        contentLengthHeader
+      );
+
 
     if (
-      !allowedTypes.includes(
-        cleanContentType
-      )
+      Number.isFinite(
+        contentLength
+      ) &&
+      contentLength >
+        MAX_FILE_SIZE
     ) {
-      return new Response(
-        JSON.stringify({
-          success: false,
-          error:
-            "Only MP4, WebM and MOV videos are allowed.",
-        }),
+
+      return jsonResponse(
         {
-          status: 400,
-          headers: {
-            "Content-Type":
-              "application/json",
-          },
-        }
+          success: false,
+
+          error:
+            "Video is too large. Maximum test upload size is 5 MB.",
+        },
+        413
       );
     }
+  }
+
+
+  // ==========================================================
+  // CONTENT TYPE
+  // ==========================================================
+
+  const rawContentType =
+    request.headers.get(
+      "content-type"
+    ) ||
+    "video/mp4";
+
+
+  const contentType =
+    rawContentType
+      .split(";")[0]
+      .trim()
+      .toLowerCase();
+
+
+  if (
+    !ALLOWED_TYPES.has(
+      contentType
+    )
+  ) {
+
+    return jsonResponse(
+      {
+        success: false,
+
+        error:
+          "Only MP4, WebM and MOV videos are allowed.",
+      },
+      400
+    );
+  }
+
+
+  // ==========================================================
+  // ORIGINAL FILE NAME
+  // ==========================================================
+
+  const originalFileName =
+    request.headers.get(
+      "x-file-name"
+    ) ||
+    "homepage-video.mp4";
+
+
+  try {
+
+    // ========================================================
+    // READ BODY
+    // ========================================================
 
     const videoBlob =
       await request.blob();
+
 
     if (
       !videoBlob ||
       videoBlob.size === 0
     ) {
-      return new Response(
-        JSON.stringify({
-          success: false,
-          error: "Uploaded video is empty.",
-        }),
+
+      return jsonResponse(
         {
-          status: 400,
-          headers: {
-            "Content-Type":
-              "application/json",
-          },
-        }
+          success: false,
+          error:
+            "Uploaded video is empty.",
+        },
+        400
       );
     }
+
+
+    if (
+      videoBlob.size >
+      MAX_FILE_SIZE
+    ) {
+
+      return jsonResponse(
+        {
+          success: false,
+
+          error:
+            "Video is too large. Maximum test upload size is 5 MB.",
+        },
+        413
+      );
+    }
+
+
+    // ========================================================
+    // EXTENSION
+    // ========================================================
 
     let extension =
       originalFileName
@@ -131,98 +250,165 @@ export default async function handler(request) {
         .pop()
         ?.toLowerCase();
 
+
     if (
-      !["mp4", "webm", "mov"].includes(
+      ![
+        "mp4",
+        "webm",
+        "mov",
+      ].includes(
         extension
       )
     ) {
+
       if (
-        cleanContentType ===
+        contentType ===
         "video/webm"
       ) {
-        extension = "webm";
+
+        extension =
+          "webm";
+
       } else if (
-        cleanContentType ===
+        contentType ===
         "video/quicktime"
       ) {
-        extension = "mov";
+
+        extension =
+          "mov";
+
       } else {
-        extension = "mp4";
+
+        extension =
+          "mp4";
       }
     }
 
+
+    // ========================================================
+    // BLOB KEY
+    // ========================================================
+
     const blobKey =
-      `homepage/videos/${crypto.randomUUID()}.${extension}`;
+      `homepage/videos/` +
+      `${crypto.randomUUID()}.` +
+      `${extension}`;
+
+
+    console.log(
+      "Uploading homepage video:",
+      {
+        blobKey,
+        size:
+          videoBlob.size,
+        contentType,
+      }
+    );
+
+
+    // ========================================================
+    // NETLIFY BLOB
+    // ========================================================
 
     const store =
-      getStore(STORE_NAME);
+      getStore(
+        STORE_NAME
+      );
+
 
     await store.set(
       blobKey,
       videoBlob,
       {
         metadata: {
-          contentType:
-            cleanContentType,
+
+          contentType,
+
           originalFileName,
+
           uploadedAt:
-            new Date().toISOString(),
+            new Date()
+              .toISOString(),
+
         },
       }
     );
 
-    const origin =
-      new URL(request.url).origin;
 
-    // IMPORTANT:
-    // This uses the custom route from homepage-video.mjs
+    // ========================================================
+    // PUBLIC URL
+    // ========================================================
+
+    const origin =
+      new URL(
+        request.url
+      ).origin;
+
+
     const videoUrl =
-      `${origin}/homepage-video?key=${encodeURIComponent(
+      `${origin}/homepage-video` +
+      `?key=${encodeURIComponent(
         blobKey
       )}`;
 
-    return new Response(
-      JSON.stringify({
-        success: true,
-        key: blobKey,
-        video_url: videoUrl,
-        url: videoUrl,
-        file_name:
-          originalFileName,
-        content_type:
-          cleanContentType,
-        size: videoBlob.size,
-      }),
+
+    console.log(
+      "Homepage video uploaded successfully:",
       {
-        status: 201,
-        headers: {
-          "Content-Type":
-            "application/json",
-          "Cache-Control":
-            "no-store",
-        },
+        blobKey,
+        videoUrl,
       }
     );
+
+
+    // ========================================================
+    // SUCCESS
+    // ========================================================
+
+    return jsonResponse(
+      {
+        success: true,
+
+        key:
+          blobKey,
+
+        video_url:
+          videoUrl,
+
+        url:
+          videoUrl,
+
+        file_name:
+          originalFileName,
+
+        content_type:
+          contentType,
+
+        size:
+          videoBlob.size,
+      },
+      201
+    );
+
+
   } catch (error) {
+
     console.error(
       "Homepage video upload failed:",
       error
     );
 
-    return new Response(
-      JSON.stringify({
-        success: false,
-        error:
-          error?.message ||
-          "Video upload failed.",
-      }),
+
+    return jsonResponse(
       {
-        status: 500,
-        headers: {
-          "Content-Type":
-            "application/json",
-        },
-      }
+        success: false,
+
+        error:
+          error instanceof Error
+            ? error.message
+            : "Video upload failed.",
+      },
+      500
     );
   }
 }
