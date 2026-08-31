@@ -468,7 +468,7 @@ CORS_ALLOWED_ORIGINS = get_env_list(
         "http://localhost:8888,"
         "http://127.0.0.1:8888,"
         "https://foodkindlapp.netlify.app,"
-        "https://myfoodkindlapps.netlify.app,"
+        "https://myfoodkindlapp.netlify.app,"
         "https://foodkindl.org,"
         "https://www.foodkindl.org"
     ),
@@ -489,7 +489,7 @@ CSRF_TRUSTED_ORIGINS = get_env_list(
         "http://localhost:8888,"
         "http://127.0.0.1:8888,"
         "https://foodkindlapp.netlify.app,"
-        "https://myfoodkindlapps.netlify.app,"
+        "https://myfoodkindlapp.netlify.app,"
         "https://foodkindl-25aug.onrender.com,"
         "https://foodkindl.org,"
         "https://www.foodkindl.org"
