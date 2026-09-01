@@ -336,80 +336,131 @@ export default function PartnerDashboard() {
   };
 
   const saveRestaurant = async (event) => {
-    event.preventDefault();
-    clearAlerts();
+  event.preventDefault();
 
-    try {
-      setSavingRestaurant(true);
+  clearAlerts();
 
-      const response = restaurantId
-        ? await api.patch(urls.restaurant, restaurantForm)
-        : await api.post(urls.restaurants, restaurantForm);
+  try {
+    setSavingRestaurant(true);
 
-      const saved = response.data;
 
-      setRestaurant(saved);
-      setRestaurantForm({
-        ...EMPTY_RESTAURANT,
-        ...saved,
-      });
+    // Only send fields that actually exist
+    // in the Partner Dashboard form.
+    const payload = {
+      name:
+        restaurantForm.name?.trim() || "",
 
-      setMessage(
-        restaurantId
-          ? "Restaurant details updated."
-          : "Restaurant created successfully."
-      );
-    } catch (err) {
-      console.error(err);
-      setError(getErrorMessage(err, "Unable to save restaurant."));
-    } finally {
-      setSavingRestaurant(false);
+      restaurant_type:
+        restaurantForm.restaurant_type ||
+        "restaurant",
+
+      description:
+        restaurantForm.description?.trim() || "",
+
+      cuisine:
+        restaurantForm.cuisine || "",
+
+      phone_number:
+        restaurantForm.phone_number?.trim() || "",
+
+      email:
+        restaurantForm.email?.trim() || "",
+
+      website:
+        restaurantForm.website?.trim() || "",
+
+      address:
+        restaurantForm.address?.trim() || "",
+
+      locality:
+        restaurantForm.locality?.trim() || "",
+
+      city:
+        restaurantForm.city?.trim() || "",
+
+      pincode:
+        restaurantForm.pincode?.trim() || "",
+
+      accepts_foodkindl_booking:
+        Boolean(
+          restaurantForm.accepts_foodkindl_booking
+        ),
+    };
+
+
+    // If website is optional and empty,
+    // completely remove it from request.
+    if (!payload.website) {
+      delete payload.website;
     }
-  };
 
-  const handleCoverSelection = (event) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
 
-    if (coverPreview) URL.revokeObjectURL(coverPreview);
+    console.log(
+      "RESTAURANT SAVE PAYLOAD:",
+      payload
+    );
 
-    setCoverImage(file);
-    setCoverPreview(URL.createObjectURL(file));
-  };
 
-  const uploadCoverPhoto = async () => {
-    if (!restaurantId || !coverImage) return;
+    const response =
+      restaurantId
+        ? await api.patch(
+            urls.restaurant,
+            payload
+          )
+        : await api.post(
+            urls.restaurants,
+            payload
+          );
 
-    clearAlerts();
 
-    try {
-      setUploadingCover(true);
+    const saved =
+      response.data;
 
-      const formData = new FormData();
-      formData.append("image", coverImage);
 
-      await api.post(urls.cover, formData);
+    setRestaurant(
+      saved
+    );
 
-      setMessage("Cover photo uploaded successfully.");
-      setCoverImage(null);
 
-      if (coverPreview) URL.revokeObjectURL(coverPreview);
-      setCoverPreview("");
+    setRestaurantForm({
+      ...EMPTY_RESTAURANT,
+      ...saved,
+    });
 
-      if (coverFileInputRef.current) {
-        coverFileInputRef.current.value = "";
-      }
 
-      await loadRestaurant();
-      await loadGallery();
-    } catch (err) {
-      console.error(err);
-      setError(getErrorMessage(err, "Cover photo upload failed."));
-    } finally {
-      setUploadingCover(false);
-    }
-  };
+    setMessage(
+      restaurantId
+        ? "Restaurant details updated."
+        : "Restaurant created successfully."
+    );
 
+
+  } catch (err) {
+
+    console.error(
+      "SAVE RESTAURANT ERROR:",
+      err?.response?.status,
+      err?.response?.data,
+      err
+    );
+
+
+    setError(
+      getErrorMessage(
+        err,
+        "Unable to save restaurant."
+      )
+    );
+
+
+  } finally {
+
+    setSavingRestaurant(
+      false
+    );
+
+  }
+};
   const handleGalleryUpload = async (event) => {
     const selectedFiles = Array.from(event.target.files || []);
 
