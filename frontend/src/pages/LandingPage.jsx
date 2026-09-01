@@ -141,7 +141,6 @@ const HOW_STEPS = [
     text:
       "Create your profile, add food interests and discover people in your local community.",
     visual: {
-      type: "person",
       name: "Asha",
       detail: "1.8 km away",
       tag: "South Indian",
@@ -153,12 +152,11 @@ const HOW_STEPS = [
     icon: Send,
     title: "Connect & Send a Food Invite",
     text:
-      "Message a person or group and invite them to Cook Together, Dine Out or join a Food Walk.",
+      "Connect with someone nearby, start a conversation and invite them to cook, dine out or join a Food Walk.",
     visual: {
-      type: "invite",
-      name: "Kerala Dinner",
-      detail: "Saturday · 7:30 PM",
-      tag: "Invite sent",
+      name: "Connect with Asha",
+      detail: "Nearby food connection",
+      tag: "Connect",
     },
   },
 
@@ -169,7 +167,6 @@ const HOW_STEPS = [
     text:
       "Meet at the planned venue, prepare a meal together or explore a partner restaurant.",
     visual: {
-      type: "meal",
       name: "FoodKindl Partner",
       detail: "Rajajinagar",
       tag: "Table for 4",
@@ -183,7 +180,6 @@ const HOW_STEPS = [
     text:
       "Post photos, videos, recipes and food stories to inspire the wider FoodKindl community.",
     visual: {
-      type: "share",
       name: "Sunday Lunch",
       detail: "6 photos · 3 tags",
       tag: "Shared",
@@ -238,7 +234,7 @@ const COMMUNITY_ACTIVITY = [
     title: "Kerala dinner this Saturday",
     location: "Indiranagar",
     meta: "4 people joining",
-    badge: "2 seats left",
+    // badge: "2 seats left",
   },
 
   {
@@ -256,7 +252,7 @@ const COMMUNITY_ACTIVITY = [
     title: "South Indian breakfast",
     location: "Yeshwanthpur",
     meta: "Sunday · 9:00 AM",
-    badge: "2 seats left",
+    // badge: "2 seats left",
   },
 ];
 
@@ -874,11 +870,10 @@ export default function LandingPage() {
 
 
             <p className="fk-hero-description">
-              Discover people nearby. Cook together,
-              dine out, build Food Walks and turn
-              shared meals into real connections.
+              Discover people nearby, connect over food,
+              cook together, dine out, explore Food Walks,
+              and turn shared meals into meaningful connections.
             </p>
-
 
             <div className="fk-hero-actions">
 
@@ -2180,9 +2175,9 @@ export default function LandingPage() {
             </div>
 
 
-            <span className="fk-coming-badge">
+            {/* <span className="fk-coming-badge">
               Coming Soon
-            </span>
+            </span> */}
 
 
             <span className="fk-safety-icon sos">

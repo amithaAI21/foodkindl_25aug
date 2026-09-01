@@ -1,5 +1,4 @@
 import {
-  ArrowLeft,
   ArrowRight,
   Check,
   ChefHat,
@@ -387,54 +386,6 @@ export default function Login() {
           login-background-glow-two
         "
       />
-
-
-      {/* =====================================================
-          TOP BAR
-      ====================================================== */}
-
-      <header className="login-topbar">
-
-        <Link
-          to="/"
-          className="login-brand"
-        >
-
-          <img
-            src="/images/icon.png"
-            alt="FoodKindl"
-          />
-
-
-          <div>
-
-            <strong>
-              FoodKindl
-            </strong>
-
-            <span>
-              Meet through food
-            </span>
-
-          </div>
-
-        </Link>
-
-
-        <Link
-          to="/"
-          className="login-back-link"
-        >
-
-          <ArrowLeft
-            size={16}
-          />
-
-          Back to home
-
-        </Link>
-
-      </header>
 
 
       {/* =====================================================

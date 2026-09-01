@@ -492,36 +492,129 @@ export default function PartnerDashboard() {
   };
 
   const handleGalleryUpload = async (event) => {
-    const selectedFiles = Array.from(event.target.files || []);
+    const selectedFiles =
+      Array.from(
+        event.target.files || []
+      );
 
-    if (!restaurantId || selectedFiles.length === 0) return;
+    if (!restaurantId) {
+      setError(
+        "Please save your restaurant before uploading photos."
+      );
+
+      return;
+    }
+
+    if (
+      selectedFiles.length === 0
+    ) {
+      return;
+    }
+
+    const allowedTypes = [
+      "image/jpeg",
+      "image/png",
+      "image/webp",
+    ];
+
+    const invalidFile =
+      selectedFiles.find(
+        (file) =>
+          !allowedTypes.includes(
+            file.type
+          )
+      );
+
+    if (invalidFile) {
+      setError(
+        "Only JPG, PNG and WebP photos are allowed."
+      );
+
+      event.target.value = "";
+
+      return;
+    }
+
+    const oversizedFile =
+      selectedFiles.find(
+        (file) =>
+          file.size >
+          10 * 1024 * 1024
+      );
+
+    if (oversizedFile) {
+      setError(
+        `${oversizedFile.name} is larger than 10 MB.`
+      );
+
+      event.target.value = "";
+
+      return;
+    }
 
     clearAlerts();
 
     try {
       setUploadingGallery(true);
 
-      const formData = new FormData();
+      const formData =
+        new FormData();
 
-      selectedFiles.forEach((file) => {
-        formData.append("images", file);
-      });
+      selectedFiles.forEach(
+        (file) => {
+          formData.append(
+            "images",
+            file
+          );
+        }
+      );
 
-      await api.post(urls.gallery, formData);
+      const response =
+        await api.post(
+          urls.gallery,
+          formData
+        );
 
-      setMessage("Gallery photos uploaded successfully.");
+      console.log(
+        "GALLERY UPLOAD RESPONSE:",
+        response?.data
+      );
+
+      setMessage(
+        selectedFiles.length === 1
+          ? "Photo uploaded successfully."
+          : `${selectedFiles.length} photos uploaded successfully.`
+      );
+
       await loadGallery();
+
     } catch (err) {
-      console.error(err);
-      setError(getErrorMessage(err, "Gallery upload failed."));
+      console.error(
+        "GALLERY UPLOAD ERROR:",
+        err?.response?.status,
+        err?.response?.data,
+        err
+      );
+
+      setError(
+        getErrorMessage(
+          err,
+          "Gallery upload failed."
+        )
+      );
+
     } finally {
       setUploadingGallery(false);
 
-      if (galleryFileInputRef.current) {
-        galleryFileInputRef.current.value = "";
+      if (
+        galleryFileInputRef.current
+      ) {
+        galleryFileInputRef.current.value =
+          "";
       }
     }
   };
+
 
   const deleteGalleryImage = async (imageId) => {
     if (!restaurantId || !imageId) return;
