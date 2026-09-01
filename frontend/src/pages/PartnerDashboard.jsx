@@ -257,6 +257,18 @@ export default function PartnerDashboard() {
       setRestaurantForm({
         ...EMPTY_RESTAURANT,
         ...firstRestaurant,
+        average_cost_for_two:
+          firstRestaurant.average_cost_for_two ?? "",
+        seating_capacity:
+          firstRestaurant.seating_capacity ?? "",
+        opening_time:
+          firstRestaurant.opening_time
+            ? String(firstRestaurant.opening_time).slice(0, 5)
+            : "",
+        closing_time:
+          firstRestaurant.closing_time
+            ? String(firstRestaurant.closing_time).slice(0, 5)
+            : "",
       });
 
       setGallery(
@@ -336,131 +348,149 @@ export default function PartnerDashboard() {
   };
 
   const saveRestaurant = async (event) => {
-  event.preventDefault();
+    event.preventDefault();
+    clearAlerts();
 
-  clearAlerts();
+    try {
+      setSavingRestaurant(true);
 
-  try {
-    setSavingRestaurant(true);
-
-
-    // Only send fields that actually exist
-    // in the Partner Dashboard form.
-    const payload = {
-      name:
-        restaurantForm.name?.trim() || "",
-
-      restaurant_type:
-        restaurantForm.restaurant_type ||
-        "restaurant",
-
-      description:
-        restaurantForm.description?.trim() || "",
-
-      cuisine:
-        restaurantForm.cuisine || "",
-
-      phone_number:
-        restaurantForm.phone_number?.trim() || "",
-
-      email:
-        restaurantForm.email?.trim() || "",
-
-      website:
-        restaurantForm.website?.trim() || "",
-
-      address:
-        restaurantForm.address?.trim() || "",
-
-      locality:
-        restaurantForm.locality?.trim() || "",
-
-      city:
-        restaurantForm.city?.trim() || "",
-
-      pincode:
-        restaurantForm.pincode?.trim() || "",
-
-      accepts_foodkindl_booking:
-        Boolean(
+      const payload = {
+        name: restaurantForm.name?.trim() || "",
+        restaurant_type:
+          restaurantForm.restaurant_type || "restaurant",
+        description:
+          restaurantForm.description?.trim() || "",
+        cuisine: restaurantForm.cuisine || "",
+        phone_number:
+          restaurantForm.phone_number?.trim() || "",
+        email: restaurantForm.email?.trim() || "",
+        address: restaurantForm.address?.trim() || "",
+        locality: restaurantForm.locality?.trim() || "",
+        city: restaurantForm.city?.trim() || "",
+        pincode: restaurantForm.pincode?.trim() || "",
+        price_range: restaurantForm.price_range || "",
+        average_cost_for_two:
+          restaurantForm.average_cost_for_two === ""
+            ? null
+            : Number(restaurantForm.average_cost_for_two),
+        opening_time:
+          restaurantForm.opening_time || null,
+        closing_time:
+          restaurantForm.closing_time || null,
+        seating_capacity:
+          restaurantForm.seating_capacity === ""
+            ? null
+            : Number(restaurantForm.seating_capacity),
+        has_parking: Boolean(restaurantForm.has_parking),
+        has_wifi: Boolean(restaurantForm.has_wifi),
+        accepts_cards: Boolean(restaurantForm.accepts_cards),
+        family_friendly: Boolean(restaurantForm.family_friendly),
+        outdoor_seating: Boolean(restaurantForm.outdoor_seating),
+        wheelchair_accessible: Boolean(
+          restaurantForm.wheelchair_accessible
+        ),
+        serves_vegetarian: Boolean(restaurantForm.serves_vegetarian),
+        serves_non_vegetarian: Boolean(
+          restaurantForm.serves_non_vegetarian
+        ),
+        accepts_foodkindl_booking: Boolean(
           restaurantForm.accepts_foodkindl_booking
         ),
-    };
+      };
 
+      // DRF URLField rejects an empty string on some serializers,
+      // so only send website when the partner has entered one.
+      if (restaurantForm.website?.trim()) {
+        payload.website = restaurantForm.website.trim();
+      }
 
-    // If website is optional and empty,
-    // completely remove it from request.
-    if (!payload.website) {
-      delete payload.website;
+      const response = restaurantId
+        ? await api.patch(urls.restaurant, payload)
+        : await api.post(urls.restaurants, payload);
+
+      const saved = response.data;
+
+      setRestaurant(saved);
+      setRestaurantForm({
+        ...EMPTY_RESTAURANT,
+        ...saved,
+        average_cost_for_two:
+          saved.average_cost_for_two ?? "",
+        seating_capacity:
+          saved.seating_capacity ?? "",
+        opening_time:
+          saved.opening_time
+            ? String(saved.opening_time).slice(0, 5)
+            : "",
+        closing_time:
+          saved.closing_time
+            ? String(saved.closing_time).slice(0, 5)
+            : "",
+      });
+
+      setMessage(
+        restaurantId
+          ? "Restaurant details updated."
+          : "Restaurant created successfully."
+      );
+    } catch (err) {
+      console.error(
+        "SAVE RESTAURANT ERROR:",
+        err?.response?.status,
+        err?.response?.data,
+        err
+      );
+      setError(
+        getErrorMessage(err, "Unable to save restaurant.")
+      );
+    } finally {
+      setSavingRestaurant(false);
     }
+  };
 
+  const handleCoverSelection = (event) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
 
-    console.log(
-      "RESTAURANT SAVE PAYLOAD:",
-      payload
-    );
+    if (coverPreview) URL.revokeObjectURL(coverPreview);
 
+    setCoverImage(file);
+    setCoverPreview(URL.createObjectURL(file));
+  };
 
-    const response =
-      restaurantId
-        ? await api.patch(
-            urls.restaurant,
-            payload
-          )
-        : await api.post(
-            urls.restaurants,
-            payload
-          );
+  const uploadCoverPhoto = async () => {
+    if (!restaurantId || !coverImage) return;
 
+    clearAlerts();
 
-    const saved =
-      response.data;
+    try {
+      setUploadingCover(true);
 
+      const formData = new FormData();
+      formData.append("image", coverImage);
 
-    setRestaurant(
-      saved
-    );
+      await api.post(urls.cover, formData);
 
+      setMessage("Cover photo uploaded successfully.");
+      setCoverImage(null);
 
-    setRestaurantForm({
-      ...EMPTY_RESTAURANT,
-      ...saved,
-    });
+      if (coverPreview) URL.revokeObjectURL(coverPreview);
+      setCoverPreview("");
 
+      if (coverFileInputRef.current) {
+        coverFileInputRef.current.value = "";
+      }
 
-    setMessage(
-      restaurantId
-        ? "Restaurant details updated."
-        : "Restaurant created successfully."
-    );
+      await loadRestaurant();
+      await loadGallery();
+    } catch (err) {
+      console.error(err);
+      setError(getErrorMessage(err, "Cover photo upload failed."));
+    } finally {
+      setUploadingCover(false);
+    }
+  };
 
-
-  } catch (err) {
-
-    console.error(
-      "SAVE RESTAURANT ERROR:",
-      err?.response?.status,
-      err?.response?.data,
-      err
-    );
-
-
-    setError(
-      getErrorMessage(
-        err,
-        "Unable to save restaurant."
-      )
-    );
-
-
-  } finally {
-
-    setSavingRestaurant(
-      false
-    );
-
-  }
-};
   const handleGalleryUpload = async (event) => {
     const selectedFiles = Array.from(event.target.files || []);
 
@@ -969,6 +999,185 @@ export default function PartnerDashboard() {
                   </span>
                 </div>
               )}
+
+              <div className="fk-subheading fk-section-space">
+                <span>Pricing & operating hours</span>
+              </div>
+
+              <div className="fk-grid three">
+                <label>
+                  Price range
+                  <select
+                    value={restaurantForm.price_range || ""}
+                    onChange={(e) =>
+                      updateRestaurantField(
+                        "price_range",
+                        e.target.value
+                      )
+                    }
+                  >
+                    <option value="">Select price range</option>
+                    <option value="budget">₹ Budget</option>
+                    <option value="moderate">₹₹ Moderate</option>
+                    <option value="premium">₹₹₹ Premium</option>
+                    <option value="luxury">₹₹₹₹ Luxury</option>
+                  </select>
+                </label>
+
+                <label>
+                  Average cost for two
+                  <div className="fk-price">
+                    <span>₹</span>
+                    <input
+                      type="number"
+                      min="0"
+                      step="1"
+                      placeholder="Eg. 800"
+                      value={
+                        restaurantForm.average_cost_for_two ?? ""
+                      }
+                      onChange={(e) =>
+                        updateRestaurantField(
+                          "average_cost_for_two",
+                          e.target.value
+                        )
+                      }
+                    />
+                  </div>
+                </label>
+
+                <label>
+                  Seating capacity
+                  <input
+                    type="number"
+                    min="0"
+                    step="1"
+                    placeholder="Eg. 50"
+                    value={restaurantForm.seating_capacity ?? ""}
+                    onChange={(e) =>
+                      updateRestaurantField(
+                        "seating_capacity",
+                        e.target.value
+                      )
+                    }
+                  />
+                </label>
+              </div>
+
+              <div className="fk-grid two">
+                <label>
+                  Opening time
+                  <input
+                    type="time"
+                    value={restaurantForm.opening_time || ""}
+                    onChange={(e) =>
+                      updateRestaurantField(
+                        "opening_time",
+                        e.target.value
+                      )
+                    }
+                  />
+                </label>
+
+                <label>
+                  Closing time
+                  <input
+                    type="time"
+                    value={restaurantForm.closing_time || ""}
+                    onChange={(e) =>
+                      updateRestaurantField(
+                        "closing_time",
+                        e.target.value
+                      )
+                    }
+                  />
+                </label>
+              </div>
+
+              <div className="fk-subheading fk-section-space">
+                <span>Facilities & amenities</span>
+              </div>
+
+              <div className="fk-toggle-grid">
+                <Switch
+                  label="Parking available"
+                  checked={Boolean(restaurantForm.has_parking)}
+                  onChange={(value) =>
+                    updateRestaurantField("has_parking", value)
+                  }
+                />
+                <Switch
+                  label="Wi-Fi available"
+                  checked={Boolean(restaurantForm.has_wifi)}
+                  onChange={(value) =>
+                    updateRestaurantField("has_wifi", value)
+                  }
+                />
+                <Switch
+                  label="Accepts cards"
+                  checked={Boolean(restaurantForm.accepts_cards)}
+                  onChange={(value) =>
+                    updateRestaurantField("accepts_cards", value)
+                  }
+                />
+                <Switch
+                  label="Family friendly"
+                  checked={Boolean(restaurantForm.family_friendly)}
+                  onChange={(value) =>
+                    updateRestaurantField("family_friendly", value)
+                  }
+                />
+                <Switch
+                  label="Outdoor seating"
+                  checked={Boolean(restaurantForm.outdoor_seating)}
+                  onChange={(value) =>
+                    updateRestaurantField("outdoor_seating", value)
+                  }
+                />
+                <Switch
+                  label="Wheelchair accessible"
+                  checked={Boolean(
+                    restaurantForm.wheelchair_accessible
+                  )}
+                  onChange={(value) =>
+                    updateRestaurantField(
+                      "wheelchair_accessible",
+                      value
+                    )
+                  }
+                />
+              </div>
+
+              <div className="fk-subheading fk-section-space">
+                <span>Food options</span>
+              </div>
+
+              <div className="fk-toggle-grid">
+                <Switch
+                  label="Vegetarian food"
+                  checked={Boolean(
+                    restaurantForm.serves_vegetarian
+                  )}
+                  onChange={(value) =>
+                    updateRestaurantField(
+                      "serves_vegetarian",
+                      value
+                    )
+                  }
+                />
+                <Switch
+                  label="Non-vegetarian food"
+                  checked={Boolean(
+                    restaurantForm.serves_non_vegetarian
+                  )}
+                  onChange={(value) =>
+                    updateRestaurantField(
+                      "serves_non_vegetarian",
+                      value
+                    )
+                  }
+                />
+              </div>
 
               <button
                 type="submit"
@@ -1665,6 +1874,24 @@ export default function PartnerDashboard() {
           margin-bottom: 20px;
         }
 
+        .fk-section-space {
+          margin-top: 30px;
+          padding-top: 25px;
+          border-top: 1px solid #ecece8;
+        }
+
+        .fk-toggle-grid {
+          display: grid;
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+          gap: 12px;
+          margin-bottom: 28px;
+        }
+
+        .fk-toggle-grid .fk-switch-wrap {
+          width: 100%;
+          justify-content: flex-start;
+        }
+
         .fk-save-btn,
         .fk-dark-btn,
         .fk-orange-btn,
@@ -2218,6 +2445,10 @@ export default function PartnerDashboard() {
             flex-direction: column;
           }
 
+          .fk-toggle-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+          }
+
           .fk-main {
             padding: 24px 16px 60px;
           }
@@ -2235,6 +2466,12 @@ export default function PartnerDashboard() {
           .fk-gallery-head {
             align-items: flex-start;
             flex-direction: column;
+          }
+        }
+
+        @media (max-width: 650px) {
+          .fk-toggle-grid {
+            grid-template-columns: 1fr;
           }
         }
       `}</style>
