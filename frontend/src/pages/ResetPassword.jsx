@@ -16,135 +16,258 @@ import {
 
 import api from "../api";
 
+
+function getErrorMessage(data) {
+  if (!data) {
+    return "Unable to reset your password.";
+  }
+
+  if (typeof data.detail === "string") {
+    return data.detail;
+  }
+
+  if (Array.isArray(data.detail)) {
+    return data.detail[0];
+  }
+
+  if (typeof data.message === "string") {
+    return data.message;
+  }
+
+  if (Array.isArray(data.password)) {
+    return data.password[0];
+  }
+
+  if (typeof data.password === "string") {
+    return data.password;
+  }
+
+  if (Array.isArray(data.confirm_password)) {
+    return data.confirm_password[0];
+  }
+
+  if (typeof data.confirm_password === "string") {
+    return data.confirm_password;
+  }
+
+  if (Array.isArray(data.token)) {
+    return data.token[0];
+  }
+
+  if (typeof data.token === "string") {
+    return data.token;
+  }
+
+  if (Array.isArray(data.uid)) {
+    return data.uid[0];
+  }
+
+  if (typeof data.uid === "string") {
+    return data.uid;
+  }
+
+  return "Password reset link is invalid or has expired.";
+}
+
+
 export default function ResetPassword() {
   const {
     uid,
     token,
   } = useParams();
 
+
   const [
     password,
     setPassword,
   ] = useState("");
+
 
   const [
     confirmPassword,
     setConfirmPassword,
   ] = useState("");
 
+
   const [
     showPassword,
     setShowPassword,
   ] = useState(false);
+
+
+  const [
+    showConfirmPassword,
+    setShowConfirmPassword,
+  ] = useState(false);
+
 
   const [
     submitting,
     setSubmitting,
   ] = useState(false);
 
+
   const [
     error,
     setError,
   ] = useState("");
+
 
   const [
     success,
     setSuccess,
   ] = useState(false);
 
+
   const passwordValid =
     useMemo(() => {
-      return (
-        password.length >= 8
-      );
+      return password.length >= 8;
     }, [password]);
+
 
   async function submit(event) {
     event.preventDefault();
 
+
+    if (submitting) {
+      return;
+    }
+
+
     setError("");
+
 
     if (!uid || !token) {
       setError(
-        "Password reset link is invalid."
+        "Password reset link is invalid. Please request a new reset link."
       );
+
       return;
     }
+
 
     if (!password) {
       setError(
         "Enter your new password."
       );
+
       return;
     }
+
 
     if (!passwordValid) {
       setError(
         "Password must be at least 8 characters."
       );
+
       return;
     }
 
+
+    if (!confirmPassword) {
+      setError(
+        "Confirm your new password."
+      );
+
+      return;
+    }
+
+
     if (
-      password !== confirmPassword
+      password !==
+      confirmPassword
     ) {
       setError(
         "Passwords do not match."
       );
+
       return;
     }
 
+
     try {
       setSubmitting(true);
+
 
       await api.post(
         "/auth/reset-password/",
         {
           uid,
           token,
-          new_password: password,
+          password,
+          confirm_password:
+            confirmPassword,
         }
       );
 
+
       setSuccess(true);
+
+
+      setPassword("");
+      setConfirmPassword("");
+
+
     } catch (requestError) {
       console.error(
         "Password reset error:",
-        requestError.response?.data
+        {
+          status:
+            requestError.response?.status,
+
+          data:
+            requestError.response?.data,
+
+          url:
+            requestError.config?.url,
+
+          baseURL:
+            requestError.config?.baseURL,
+        }
       );
+
 
       const data =
         requestError.response?.data;
 
+
       setError(
-        data?.detail ||
-        data?.message ||
-        data?.token?.[0] ||
-        data?.new_password?.[0] ||
-        "Password reset link is invalid or has expired."
+        getErrorMessage(data)
       );
+
+
     } finally {
       setSubmitting(false);
     }
   }
 
+
   if (success) {
     return (
       <main className="reset-password-page">
+
         <section className="reset-password-card">
+
           <div className="reset-password-success">
             ✓
           </div>
+
+
+          <span className="reset-password-eyebrow">
+            FOODKINDL ACCOUNT
+          </span>
+
 
           <h1>
             Password updated
           </h1>
 
+
           <p>
             Your FoodKindl password
-            has been changed
-            successfully.
+            has been changed successfully.
           </p>
+
 
           <Link
             to="/login"
@@ -152,41 +275,59 @@ export default function ResetPassword() {
           >
             Continue to login
           </Link>
+
         </section>
+
       </main>
     );
   }
 
+
   return (
     <main className="reset-password-page">
+
       <section className="reset-password-card">
 
+
         <div className="reset-password-icon">
-          <LockKeyhole size={28} />
+
+          <LockKeyhole
+            size={28}
+          />
+
         </div>
+
 
         <span className="reset-password-eyebrow">
           FOODKINDL ACCOUNT
         </span>
 
+
         <h1>
           Create a new password
         </h1>
 
+
         <p>
-          Choose a new password for
-          your FoodKindl account.
+          Choose a new password
+          for your FoodKindl account.
         </p>
+
 
         <form onSubmit={submit}>
 
+
           <label>
+
             New password
 
+
             <div className="reset-password-input">
+
               <LockKeyhole
                 size={17}
               />
+
 
               <input
                 type={
@@ -206,8 +347,10 @@ export default function ResetPassword() {
                 }}
                 autoComplete="new-password"
                 placeholder="Enter new password"
+                minLength={8}
                 required
               />
+
 
               <button
                 type="button"
@@ -223,32 +366,47 @@ export default function ResetPassword() {
                     : "Show password"
                 }
               >
-                {showPassword ? (
-                  <EyeOff size={17} />
-                ) : (
-                  <Eye size={17} />
-                )}
+
+                {
+                  showPassword
+                    ? (
+                      <EyeOff
+                        size={17}
+                      />
+                    )
+                    : (
+                      <Eye
+                        size={17}
+                      />
+                    )
+                }
+
               </button>
+
             </div>
+
           </label>
 
+
           <label>
+
             Confirm new password
 
+
             <div className="reset-password-input">
+
               <LockKeyhole
                 size={17}
               />
 
+
               <input
                 type={
-                  showPassword
+                  showConfirmPassword
                     ? "text"
                     : "password"
                 }
-                value={
-                  confirmPassword
-                }
+                value={confirmPassword}
                 onChange={(event) => {
                   setConfirmPassword(
                     event.target.value
@@ -260,28 +418,81 @@ export default function ResetPassword() {
                 }}
                 autoComplete="new-password"
                 placeholder="Confirm new password"
+                minLength={8}
                 required
               />
+
+
+              <button
+                type="button"
+                onClick={() =>
+                  setShowConfirmPassword(
+                    (current) =>
+                      !current
+                  )
+                }
+                aria-label={
+                  showConfirmPassword
+                    ? "Hide confirm password"
+                    : "Show confirm password"
+                }
+              >
+
+                {
+                  showConfirmPassword
+                    ? (
+                      <EyeOff
+                        size={17}
+                      />
+                    )
+                    : (
+                      <Eye
+                        size={17}
+                      />
+                    )
+                }
+
+              </button>
+
             </div>
+
           </label>
 
-          {error && (
-            <div className="reset-password-error">
-              {error}
-            </div>
-          )}
+
+          <div className="reset-password-password-note">
+            Password must be at least
+            8 characters.
+          </div>
+
+
+          {
+            error &&
+            (
+              <div className="reset-password-error">
+                {error}
+              </div>
+            )
+          }
+
 
           <button
             type="submit"
             className="reset-password-primary"
             disabled={submitting}
           >
-            {submitting
-              ? "Updating password..."
-              : "Save new password"}
+
+            {
+              submitting
+                ? "Updating password..."
+                : "Save new password"
+            }
+
           </button>
+
         </form>
+
       </section>
+
     </main>
   );
 }
