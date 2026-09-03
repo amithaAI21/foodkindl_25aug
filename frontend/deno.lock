@@ -17,6 +17,7 @@
         "npm:date-fns@^4.4.0",
         "npm:leaflet@^1.9.4",
         "npm:lucide-react@0.468",
+        "npm:maplibre-gl@^6.5.0",
         "npm:react-datepicker@^9.1.0",
         "npm:react-dom@19",
         "npm:react-leaflet@5",

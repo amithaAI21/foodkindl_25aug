@@ -5980,3 +5980,105 @@
 .connect-step-marker {
   z-index: 28;
 }
+
+/* ============================================================
+   READABILITY AND ACCESSIBILITY ENHANCEMENTS
+============================================================ */
+
+.connect-journey-page { --fk-text: #ffffff; --fk-muted: #c4bbb6; }
+
+.connect-journey-eyebrow,
+.connect-journey-intro > span { font-size: 11px; line-height: 1.4; }
+
+.connect-journey-header-copy > p {
+  max-width: 680px; color: #cfc7c2; font-size: 15px; line-height: 1.7;
+}
+
+.connect-verified-chip,
+.connect-verification-chip { font-size: 11px; line-height: 1.35; }
+
+.connect-journey-profile { border-color: rgba(255, 255, 255, 0.14); }
+.connect-journey-profile-link strong { color: #fff; font-size: 12px; line-height: 1.4; }
+.connect-journey-profile-link div > span { color: #bbb2ad; font-size: 10px; line-height: 1.4; }
+.connect-refresh-button { border-color: rgba(255, 255, 255, 0.13); color: #b8afaa; }
+.connect-refresh-error { color: #ffaaa4; font-size: 11px; line-height: 1.5; }
+
+.connect-journey-intro p {
+  max-width: 580px; color: #cbc2bd; font-size: 14px; line-height: 1.7;
+}
+
+.connect-step-card { border-color: rgba(255, 255, 255, 0.14); }
+.connect-step-label { font-size: 10px; line-height: 1.4; }
+.connect-step-card h3 { font-size: 22px; line-height: 1.2; }
+.connect-step-card > p { color: #c7beb9; font-size: 12px; line-height: 1.65; }
+.journey-next-stop { min-height: 42px; font-size: 11px; line-height: 1.35; }
+
+.connect-demo-people,
+.connect-food-option,
+.connect-chat-demo div { border-color: rgba(255, 255, 255, 0.11); }
+
+.connect-demo-person strong { color: #fff; font-size: 11px; line-height: 1.35; }
+.connect-demo-person small { color: #beb5b0; font-size: 10px; line-height: 1.4; }
+.connect-match-chip,
+.connect-mini-connection strong { font-size: 10px; line-height: 1.3; }
+.connect-chat-demo div { color: #d0c7c2; font-size: 10.5px; line-height: 1.5; }
+.connect-food-option strong { color: #fff; font-size: 10.5px; line-height: 1.35; }
+.connect-food-option small { color: #bbb2ad; font-size: 9.5px; line-height: 1.45; }
+
+.connect-guided-tour-head > span { font-size: 10px; line-height: 1.35; }
+.connect-guided-tour-head > button { border-color: rgba(255,255,255,.14); color: #c1b8b3; }
+.connect-guided-tour-card > p { color: #c9c0bb; font-size: 12px; line-height: 1.65; }
+.connect-guided-tour-sos > div {
+  border-color: rgba(255,255,255,.12); color: #ded7d2; font-size: 11px; line-height: 1.45;
+}
+.connect-guided-tour-sos > div > span,
+.connect-guided-tour-skip,
+.connect-guided-tour-back,
+.connect-guided-tour-next { font-size: 11px; }
+.connect-guided-tour-skip { color: #b6ada8; }
+.connect-guided-tour-back { color: #d0c7c2; border-color: rgba(255,255,255,.14); }
+
+.kindli-ai-pill { font-size: 10px; }
+.kindli-brand p,
+.kindli-status-strip { color: rgba(255,255,255,.72); font-size: 12px; line-height: 1.45; }
+.kindli-message-bubble { color: rgba(255,255,255,.9); font-size: 13px; line-height: 1.6; }
+.kindli-quick-actions button,
+.kindli-profile-action,
+.kindli-support-action { color: rgba(255,255,255,.86); font-size: 11.5px; line-height: 1.4; }
+.kindli-composer { border-color: rgba(255,255,255,.16); }
+.kindli-composer input { font-size: 13px; }
+.kindli-composer input::placeholder { color: rgba(255,255,255,.58); }
+.kindli-footer { color: rgba(255,255,255,.58); font-size: 10px; line-height: 1.4; }
+
+.fk-toast-label { font-size: 10px; line-height: 1.35; }
+.fk-toast-title { font-size: 15px; line-height: 1.4; }
+.fk-toast-message { color: rgba(255,255,255,.8); font-size: 12px; line-height: 1.6; }
+.fk-toast-primary,
+.fk-toast-help { min-height: 38px; font-size: 11px; }
+.fk-toast-close { color: rgba(255,255,255,.68); }
+.kindli-floating-copy small { color: rgba(255,255,255,.7); font-size: 10px; line-height: 1.35; }
+
+.journey-next-stop:focus-visible,
+.connect-refresh-button:focus-visible,
+.connect-guided-tour-head > button:focus-visible,
+.connect-guided-tour-skip:focus-visible,
+.connect-guided-tour-back:focus-visible,
+.connect-guided-tour-next:focus-visible,
+.kindli-quick-actions button:focus-visible,
+.kindli-support-action:focus-visible,
+.kindli-composer button:focus-visible,
+.fk-toast-primary:focus-visible,
+.fk-toast-help:focus-visible,
+.fk-toast-close:focus-visible,
+.kindli-floating-launcher:focus-visible {
+  outline: 3px solid rgba(255,133,78,.78); outline-offset: 3px;
+}
+
+@media (max-width: 700px) {
+  .connect-journey-header-copy > p { font-size: 14px; }
+  .connect-journey-intro p { font-size: 13px; }
+  .connect-step-card > p,
+  .connect-guided-tour-card > p,
+  .fk-toast-message { font-size: 12px; }
+  .connect-step-card h3 { font-size: 20px; }
+}

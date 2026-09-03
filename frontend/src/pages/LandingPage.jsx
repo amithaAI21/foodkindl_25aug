@@ -2393,9 +2393,9 @@ export default function LandingPage() {
       ====================================================== */}
 
       <div
-            className="kindli-global"
-            style={{ order: 9 }}
-          >
+        className="kindli-global"
+        style={{ order: 9 }}
+      >
 
         {
           !kindliOpen &&

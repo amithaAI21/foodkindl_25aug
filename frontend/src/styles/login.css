@@ -1710,3 +1710,84 @@
     gap: 8px;
   }
 }
+
+/* ==========================================================
+   REMEMBER ME
+========================================================== */
+
+.login-form-options {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.login-remember-option {
+  display: inline-flex !important;
+  align-items: center;
+  gap: 8px;
+  margin: 0 !important;
+
+  cursor: pointer;
+  user-select: none;
+}
+
+.login-remember-option input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.login-remember-box {
+  width: 18px;
+  height: 18px;
+
+  display: grid;
+  place-items: center;
+
+  flex: 0 0 18px;
+
+  border: 1px solid rgba(255,255,255,.18);
+  border-radius: 5px;
+
+  color: transparent;
+
+  background: rgba(255,255,255,.035);
+
+  transition:
+    border-color .18s ease,
+    background .18s ease,
+    color .18s ease,
+    box-shadow .18s ease;
+}
+
+.login-remember-option input:checked + .login-remember-box {
+  border-color: rgba(235,103,50,.70);
+  color: #fff;
+
+  background: linear-gradient(
+    135deg,
+    #e56632,
+    #b6421d
+  );
+
+  box-shadow:
+    0 0 0 3px rgba(229,102,50,.08);
+}
+
+.login-remember-option input:focus-visible + .login-remember-box {
+  outline: 2px solid rgba(235,103,50,.55);
+  outline-offset: 2px;
+}
+
+.login-remember-text {
+  color: rgba(255,255,255,.68);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.login-remember-option:hover .login-remember-text {
+  color: rgba(255,255,255,.92);
+}

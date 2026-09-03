@@ -2216,11 +2216,11 @@ function goToNextJourneyStep() {
 
 
         <h2>
-          One connection.
+          Share a Meal. Start a
           <br />
 
           <strong>
-            One shared meal.
+           Friendship
           </strong>
         </h2>
 

@@ -14,7 +14,7 @@ import {
   Users,
 } from "lucide-react";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import {
   Link,
@@ -65,6 +65,38 @@ export default function Login() {
     showPassword,
     setShowPassword,
   ] = useState(false);
+
+
+  const [
+    rememberMe,
+    setRememberMe,
+  ] = useState(false);
+
+
+  // =========================================================
+  // REMEMBER USER
+  // =========================================================
+
+  useEffect(() => {
+
+    const rememberedEmail =
+      localStorage.getItem(
+        "foodkindl_remembered_email"
+      );
+
+    if (rememberedEmail) {
+
+      setForm(
+        previous => ({
+          ...previous,
+          email: rememberedEmail,
+        })
+      );
+
+      setRememberMe(true);
+    }
+
+  }, []);
 
 
   // =========================================================
@@ -127,6 +159,23 @@ export default function Login() {
       console.log(
         "2. Login successful."
       );
+
+
+      if (rememberMe) {
+
+        localStorage.setItem(
+          "foodkindl_remembered_email",
+          form.email
+            .trim()
+            .toLowerCase()
+        );
+
+      } else {
+
+        localStorage.removeItem(
+          "foodkindl_remembered_email"
+        );
+      }
 
 
       // =====================================================
@@ -545,9 +594,9 @@ export default function Login() {
                 </div>
 
 
-                <div className="login-seat-badge">
+                {/* <div className="login-seat-badge">
                   2 seats left
-                </div>
+                </div> */}
 
               </div>
 
@@ -859,9 +908,28 @@ export default function Login() {
 
               <div className="login-form-options">
 
-                <span>
-                  Secure login
-                </span>
+                <label className="login-remember-option">
+
+                  <input
+                    type="checkbox"
+                    checked={rememberMe}
+                    onChange={
+                      event =>
+                        setRememberMe(
+                          event.target.checked
+                        )
+                    }
+                  />
+
+                  <span className="login-remember-box">
+                    <Check size={12} />
+                  </span>
+
+                  <span className="login-remember-text">
+                    Remember me
+                  </span>
+
+                </label>
 
                 <Link
                   to="/forgot-password"
