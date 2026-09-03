@@ -2049,3 +2049,229 @@
     padding: 15px;
   }
 }
+
+/* ============================================================
+   REGISTRATION PAGE — READABILITY IMPROVEMENTS
+   Add this at the bottom of register.css
+============================================================ */
+
+.register-page {
+  --register-text-primary: #ffffff;
+  --register-text-secondary: #dedede;
+  --register-text-muted: #b8b8b8;
+  --register-text-soft: #a6a6a6;
+}
+
+
+/* LEFT-SIDE INTRODUCTION */
+
+.register-story-content h1 {
+  color: var(--register-text-primary);
+  line-height: 1.08;
+}
+
+.register-story-content > p {
+  color: var(--register-text-secondary);
+  font-size: 1rem;
+  line-height: 1.7;
+  max-width: 520px;
+}
+
+.register-story-pill {
+  color: #ffd0ca;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+}
+
+
+/* LEFT-SIDE FEATURE POINTS */
+
+.register-story-points article strong {
+  color: #ffffff;
+  font-size: 1rem;
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+.register-story-points article p {
+  color: var(--register-text-secondary);
+  font-size: 0.92rem;
+  line-height: 1.55;
+  margin-top: 5px;
+}
+
+.register-story-icon {
+  color: #ff6257;
+}
+
+
+/* FORM HEADING */
+
+.register-form-header h2 {
+  color: #ffffff;
+}
+
+.register-form-header p {
+  color: var(--register-text-secondary);
+  font-size: 0.96rem;
+  line-height: 1.55;
+}
+
+.register-eyebrow {
+  color: #ff756b;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+}
+
+
+/* ACCOUNT-TYPE HEADING */
+
+.register-account-type-heading > span {
+  color: #f4f4f4;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+
+.register-account-type-heading small {
+  color: var(--register-text-muted);
+  font-size: 0.88rem;
+  line-height: 1.5;
+}
+
+
+/* MEMBER AND RESTAURANT CARDS */
+
+.register-account-card {
+  color: #ffffff;
+}
+
+.register-account-card-copy strong {
+  color: #ffffff;
+  font-size: 0.98rem;
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+.register-account-card-copy small {
+  color: #c8c8c8;
+  font-size: 0.88rem;
+  line-height: 1.5;
+}
+
+.register-account-card:hover
+.register-account-card-copy small,
+.register-account-card.selected
+.register-account-card-copy small {
+  color: #e8e8e8;
+}
+
+.register-account-card-action {
+  color: #ff6257;
+}
+
+
+/* FORM LABELS */
+
+.register-form-card form label {
+  color: #ededed;
+  font-size: 0.9rem;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+
+/* INPUT TEXT */
+
+.register-form-card input {
+  color: #ffffff;
+  font-size: 0.96rem;
+  font-weight: 500;
+}
+
+.register-form-card input::placeholder {
+  color: #979797;
+  opacity: 1;
+}
+
+.register-form-card input:focus {
+  color: #ffffff;
+}
+
+
+/* PASSWORD ICON */
+
+.register-password-field button {
+  color: #c9c9c9;
+}
+
+.register-password-field button:hover {
+  color: #ffffff;
+}
+
+
+/* ERROR AND SUCCESS MESSAGES */
+
+.register-error {
+  color: #ffaaa3;
+  font-size: 0.9rem;
+  font-weight: 600;
+  line-height: 1.5;
+}
+
+.register-success {
+  color: #7ee8a5;
+  font-size: 0.9rem;
+  font-weight: 600;
+  line-height: 1.5;
+}
+
+
+/* LOGIN SUPPORTING TEXT */
+
+.register-login-link {
+  color: #c7c7c7;
+  font-size: 0.92rem;
+  line-height: 1.5;
+}
+
+.register-login-link a {
+  color: #ff756b;
+  font-size: 0.92rem;
+  font-weight: 700;
+}
+
+.register-login-link a:hover {
+  color: #ff9a92;
+}
+
+
+/* MOBILE READABILITY */
+
+@media (max-width: 768px) {
+  .register-story-content > p {
+    font-size: 0.96rem;
+    line-height: 1.6;
+  }
+
+  .register-story-points article p,
+  .register-account-card-copy small,
+  .register-form-header p {
+    font-size: 0.9rem;
+  }
+
+  .register-account-type-heading small,
+  .register-login-link {
+    font-size: 0.88rem;
+  }
+
+  .register-form-card form label {
+    font-size: 0.88rem;
+  }
+
+  .register-form-card input {
+    font-size: 1rem;
+  }
+}

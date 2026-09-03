@@ -14,7 +14,6 @@ import {
   Send,
   ShieldCheck,
   Sparkles,
-  Star,
   UserCheck,
   Users,
   Utensils,
@@ -92,7 +91,6 @@ const HERO_EXPERIENCES = [
     tags: [
       "South Indian",
       "Restaurant",
-      "FoodKindl Partner",
     ],
 
     meta:
@@ -167,7 +165,7 @@ const HOW_STEPS = [
     text:
       "Meet at the planned venue, prepare a meal together or explore a partner restaurant.",
     visual: {
-      name: "FoodKindl Partner",
+      name: "South Indian Restaurant",
       detail: "Rajajinagar",
       tag: "Table for 4",
     },
@@ -233,7 +231,7 @@ const COMMUNITY_ACTIVITY = [
     icon: Utensils,
     title: "Kerala dinner this Saturday",
     location: "Indiranagar",
-    meta: "4 people joining",
+    meta: null,
     // badge: "2 seats left",
   },
 
@@ -242,7 +240,7 @@ const COMMUNITY_ACTIVITY = [
     icon: Footprints,
     title: "Rajajinagar → Malleshwaram",
     location: "3 partner stops",
-    meta: "5 people interested",
+    meta: null,
     badge: "Food Walk",
   },
 
@@ -827,16 +825,23 @@ export default function LandingPage() {
 
   return (
 
-    <main className="fk-landing">
+    <main
+  className="fk-landing"
+  style={{
+    display: "flex",
+    flexDirection: "column",
+  }}
+>
 
       {/* =====================================================
           HERO
       ====================================================== */}
 
       <section
-        className="fk-hero"
-        id="connect"
-      >
+  className="fk-hero"
+  id="connect"
+  style={{ order: 1 }}
+>
 
         <div className="fk-hero-glow fk-hero-glow-one" />
 
@@ -850,15 +855,6 @@ export default function LandingPage() {
 
           <div className="fk-hero-copy">
 
-            <div className="fk-status-pill">
-
-              <span />
-
-              Platform now live
-
-            </div>
-
-
             <h1>
               Meet people
               <br />
@@ -870,36 +866,36 @@ export default function LandingPage() {
 
 
             <p className="fk-hero-description">
-              Discover people nearby, connect over food,
-              cook together, dine out, explore Food Walks,
-              and turn shared meals into meaningful connections.
+              Discover people nearby and connect over food. 
+              From cooking together and dining out to exploring Food Walks, 
+              turn shared meals into meaningful connections
             </p>
 
             <div className="fk-hero-actions">
+                        <Link
+                          className="fk-primary-button"
+                          to={user ? "/connect-dashboard" : "/register"}
+                        >
+                          {user ? "Open FoodKindl Connect" : "Join FoodKindl"}
+                          <ArrowRight size={18} />
+                        </Link>
 
-                                <Link
-                    className="fk-primary-button"
-                    to={
-                      user
-                        ? "/connect-dashboard"
-                        : "/login"
-                    }
-                  >
-                    Explore FoodKindl Connect
+                        {!user && (
+                          <Link
+                            className="fk-secondary-button"
+                            to="/login"
+                          >
+                            Log in
+                          </Link>
+                        )}
 
-                    <ArrowRight size={18} />
-                  </Link>
-
-
-              <a
-                className="fk-secondary-button"
-                href="#how-it-works"
-              >
-                See how it works
-              </a>
-
-            </div>
-
+                        <a
+                          className="fk-secondary-button"
+                          href="#how-it-works"
+                        >
+                          See how it works
+                        </a>
+                      </div>
 
             <div className="fk-hero-proof">
 
@@ -1178,17 +1174,6 @@ export default function LandingPage() {
               </span>
 
 
-              <span className="fk-rating">
-
-                <Star
-                  size={13}
-                  fill="currentColor"
-                />
-
-                4.8
-
-              </span>
-
             </div>
 
 
@@ -1225,10 +1210,10 @@ export default function LandingPage() {
       ====================================================== */}
 
       <section
-        className="fk-section fk-food-walk-section"
-        id="food-walk"
-      >
-
+          className="fk-section fk-food-walk-section"
+          id="food-walk"
+          style={{ display: "none" }}
+        >
         <div className="fk-section-heading fk-section-heading-left">
 
           <span className="fk-section-kicker">
@@ -1261,10 +1246,6 @@ export default function LandingPage() {
             <div className="fk-food-walk-route-head">
 
               <div>
-
-                <span>
-                  LIVE ROUTE PREVIEW
-                </span>
 
                 <strong>
                   Nagasandra → Indiranagar
@@ -1335,23 +1316,6 @@ export default function LandingPage() {
                           }
                         </small>
 
-
-                        {
-                          stop.partner &&
-                          (
-
-                            <em>
-
-                              <Check
-                                size={10}
-                              />
-
-                              FoodKindl Partner
-
-                            </em>
-
-                          )
-                        }
 
                       </div>
 
@@ -1451,10 +1415,10 @@ export default function LandingPage() {
       ====================================================== */}
 
       <section
-        className="fk-section"
-        id="how-it-works"
-      >
-
+            className="fk-section"
+            id="how-it-works"
+            style={{ order: 3 }}
+          >
         <div className="fk-section-heading">
 
           <span className="fk-section-kicker">
@@ -1590,26 +1554,28 @@ export default function LandingPage() {
           HAPPENING ON FOODKINDL
       ====================================================== */}
 
-      <section className="fk-section fk-activity-section">
+      <section
+          className="fk-section fk-activity-section"
+          id="ways-to-connect"
+          style={{ order: 2 }}
+        >
 
         <div className="fk-section-heading fk-section-heading-left">
 
           <span className="fk-section-kicker">
-            COMMUNITY RIGHT NOW
-          </span>
-
+  CHOOSE YOUR FOOD EXPERIENCE
+</span>
 
           <h2>
-            Happening on{" "}
+            Three ways to{" "}
             <span>
-              FoodKindl
+              connect
             </span>
           </h2>
 
-
           <p>
-            A glimpse of the food moments people can create
-            and discover across the community.
+            Cook together, dine out or turn a route
+            into a shared Food Walk.
           </p>
 
         </div>
@@ -1649,10 +1615,6 @@ export default function LandingPage() {
                       </span>
 
 
-                      <span className="fk-activity-live">
-                        LIVE
-                      </span>
-
                     </div>
 
 
@@ -1676,11 +1638,16 @@ export default function LandingPage() {
                     </div>
 
 
-                    <p>
-                      {
-                        activity.meta
-                      }
-                    </p>
+                    {
+                      activity.meta &&
+                      (
+                        <p>
+                          {
+                            activity.meta
+                          }
+                        </p>
+                      )
+                    }
 
 
                     <div className="fk-activity-footer">
@@ -1717,10 +1684,10 @@ export default function LandingPage() {
       ====================================================== */}
 
       <section
-        className="fk-section fk-ecosystem-section"
-        id="learn-create-share"
-      >
-
+            className="fk-section fk-ecosystem-section"
+            id="learn-create-share"
+            style={{ order: 5 }}
+          >
         <div className="fk-section-heading">
 
           <span className="fk-section-kicker">
@@ -1865,28 +1832,28 @@ export default function LandingPage() {
           SOCIAL DINING + STORY VIDEO
       ====================================================== */}
 
-      <section className="fk-section fk-story-section">
+      <section
+          className="fk-section fk-story-section"
+          style={{ order: 6 }}
+        >
 
         <div className="fk-story-copy">
 
-          <span className="fk-section-kicker">
-            HUMAN-CENTRIC FOOD PLATFORM
-          </span>
+                            <span className="fk-section-kicker">
+                    SEE FOODKINDL IN ACTION
+                  </span>
 
+                  <h2>
+                    How FoodKindl{" "}
+                    <span>
+                      brings people together
+                    </span>
+                  </h2>
 
-          <h2>
-            Social Dining,{" "}
-            <span>
-              Simplified.
-            </span>
-          </h2>
-
-
-          <p>
-            Meaningful connections often begin around food:
-            cooking together, sharing a meal and enjoying
-            conversations that can grow into lasting friendships.
-          </p>
+                  <p>
+                    Watch the short product story to see how nearby
+                    discovery, Food Invites and shared meals work together.
+                  </p>
 
 
           <p>
@@ -2061,7 +2028,10 @@ export default function LandingPage() {
           TRUST & SAFETY
       ====================================================== */}
 
-      <section className="fk-section fk-safety-section">
+      <section
+  className="fk-section fk-safety-section"
+  style={{ order: 4 }}
+>
 
         <div className="fk-safety-intro">
 
@@ -2195,11 +2165,10 @@ export default function LandingPage() {
 
 
             <p>
-              A future emergency safety control
-              designed to alert trusted contacts
-              during an active gathering.
-            </p>
-
+          Hold the SOS control to alert trusted
+          contacts by SMS and WhatsApp during
+          an emergency.
+          </p>
 
             <small>
               EMERGENCY SUPPORT LAYER
@@ -2216,7 +2185,10 @@ export default function LandingPage() {
           FINAL CTA
       ====================================================== */}
 
-      <section className="fk-final-cta">
+                <section
+            className="fk-final-cta"
+            style={{ order: 7 }}
+          >
 
         <div>
 
@@ -2260,7 +2232,10 @@ export default function LandingPage() {
           FOOTER
       ====================================================== */}
 
-      <footer className="fk-footer">
+      <footer
+  className="fk-footer"
+  style={{ order: 8 }}
+>
 
   <div className="fk-footer-grid">
 
@@ -2417,7 +2392,10 @@ export default function LandingPage() {
           KINDLI — GLOBAL LANDING PAGE AI ASSISTANT
       ====================================================== */}
 
-      <div className="kindli-global">
+      <div
+            className="kindli-global"
+            style={{ order: 9 }}
+          >
 
         {
           !kindliOpen &&

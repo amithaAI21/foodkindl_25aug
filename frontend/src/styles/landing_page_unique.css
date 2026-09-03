@@ -2063,3 +2063,131 @@
     border-radius:20px;
   }
 }
+
+/* ============================================================
+   READABILITY AND CONTRAST IMPROVEMENTS
+============================================================ */
+
+.fk-landing {
+  --fk-text-primary: #ffffff;
+  --fk-text-secondary: #d8d8d8;
+  --fk-text-muted: #b8b8b8;
+  --fk-text-soft: #a5a5a5;
+}
+
+
+/* Card descriptions */
+
+.fk-landing article p,
+.fk-how-card p,
+.fk-activity-card p,
+.fk-ecosystem-card p,
+.fk-safety-grid article p,
+.fk-experience-preview p {
+  color: var(--fk-text-secondary);
+  font-size: 0.96rem;
+  line-height: 1.65;
+}
+
+
+/* Location and distance */
+
+.fk-profile-copy span,
+.fk-activity-location,
+.fk-distance-chip,
+.fk-route-stop-copy small,
+.fk-demo-meta,
+.fk-route-distance {
+  color: var(--fk-text-muted);
+  font-size: 0.88rem;
+  line-height: 1.45;
+}
+
+
+/* Food tags */
+
+.fk-cuisine-chips span,
+.fk-activity-type,
+.fk-mini-visual > span,
+.fk-verified-pill {
+  color: #f4f4f4;
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+
+/* Small labels and supporting information */
+
+.fk-section-kicker,
+.fk-demo-eyebrow,
+.fk-safety-grid article small,
+.fk-ecosystem-content small,
+.fk-live-label,
+.fk-hero-proof small {
+  color: #c8c8c8;
+  font-size: 0.76rem;
+  font-weight: 600;
+  letter-spacing: 0.07em;
+}
+
+
+/* People joining information */
+
+.fk-activity-footer,
+.fk-activity-footer strong,
+.fk-avatar-stack + strong,
+.fk-people-joining,
+.fk-joining-count {
+  color: #dcdcdc;
+  font-size: 0.86rem;
+  font-weight: 600;
+}
+
+
+/* Main section descriptions */
+
+.fk-section-heading p,
+.fk-safety-description,
+.fk-story-copy p,
+.fk-hero-description {
+  color: #d0d0d0;
+  font-size: 1rem;
+  line-height: 1.7;
+}
+
+
+/* Footer readability */
+
+.fk-footer p,
+.fk-footer a,
+.fk-footer-bottom p {
+  color: #bdbdbd;
+  font-size: 0.88rem;
+  line-height: 1.55;
+}
+
+
+/* Mobile readability */
+
+@media (max-width: 768px) {
+  .fk-landing article p,
+  .fk-section-heading p,
+  .fk-story-copy p,
+  .fk-safety-description {
+    font-size: 0.95rem;
+    line-height: 1.6;
+  }
+
+  .fk-profile-copy span,
+  .fk-activity-location,
+  .fk-distance-chip,
+  .fk-demo-meta {
+    font-size: 0.84rem;
+  }
+
+  .fk-cuisine-chips span,
+  .fk-section-kicker,
+  .fk-demo-eyebrow {
+    font-size: 0.75rem;
+  }
+}

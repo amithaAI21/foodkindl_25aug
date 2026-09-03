@@ -2755,3 +2755,51 @@
     min-height: 54px;
   }
 }
+
+/* ============================================================
+   RESTAURANT PARTNER SECONDARY LINK
+============================================================ */
+
+.register-partner-link {
+  margin-top: 22px;
+  padding-top: 20px;
+  border-top: 1px solid rgba(255, 255, 255, 0.09);
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 7px;
+
+  color: #c2c2c2;
+  font-size: 0.88rem;
+  line-height: 1.5;
+  text-align: center;
+}
+
+.register-partner-link a {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+
+  color: #ff756b;
+  font-weight: 700;
+  text-decoration: none;
+
+  transition:
+    color 180ms ease,
+    transform 180ms ease;
+}
+
+.register-partner-link a:hover {
+  color: #ff9b94;
+  text-decoration: underline;
+  transform: translateX(2px);
+}
+
+@media (max-width: 600px) {
+  .register-partner-link {
+    flex-direction: column;
+    gap: 4px;
+  }
+}

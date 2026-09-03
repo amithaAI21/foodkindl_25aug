@@ -1,10 +1,8 @@
 import {
   ArrowRight,
-  Check,
   Eye,
   EyeOff,
   ShieldCheck,
-  Store,
   Users,
 } from "lucide-react";
 
@@ -33,14 +31,6 @@ export default function Register() {
   const {
     register,
   } = useAuth();
-
-
-  const [
-    accountType,
-    setAccountType,
-  ] = useState(
-    "member"
-  );
 
 
   const [
@@ -123,43 +113,6 @@ export default function Register() {
   }
 
 
-  function chooseMember() {
-
-    setAccountType(
-      "member"
-    );
-
-    setError("");
-  }
-
-
-  function chooseRestaurantPartner() {
-
-    /*
-     * IMPORTANT:
-     * use "partner"
-     *
-     * NOT:
-     * restaurant_partner
-     */
-
-    setAccountType(
-      "partner"
-    );
-
-
-    navigate(
-      "/register/restaurant",
-      {
-        state: {
-          accountType:
-            "partner",
-        },
-      }
-    );
-  }
-
-
   async function handleSubmit(
     event
   ) {
@@ -168,25 +121,6 @@ export default function Register() {
 
 
     if (loading) {
-      return;
-    }
-
-
-    if (
-      accountType ===
-      "partner"
-    ) {
-
-      navigate(
-        "/register/restaurant",
-        {
-          state: {
-            accountType:
-              "partner",
-          },
-        }
-      );
-
       return;
     }
 
@@ -338,6 +272,8 @@ export default function Register() {
       <section className="register-shell">
 
 
+        {/* LEFT-SIDE STORY */}
+
         <aside className="register-story">
 
           <div className="register-story-content">
@@ -378,8 +314,7 @@ export default function Register() {
                   <p>
                     Discover people,
                     Food Invites and
-                    shared food
-                    experiences.
+                    shared food experiences.
                   </p>
 
                 </div>
@@ -402,9 +337,8 @@ export default function Register() {
 
                   <p>
                     Profile controls,
-                    verification and
-                    safer connection
-                    features.
+                    verification and safer
+                    connection features.
                   </p>
 
                 </div>
@@ -418,6 +352,8 @@ export default function Register() {
         </aside>
 
 
+        {/* REGISTRATION FORM */}
+
         <section className="register-form-panel">
 
           <div className="register-form-card">
@@ -430,127 +366,13 @@ export default function Register() {
               </span>
 
               <h2>
-                Join FoodKindl
+                Create your FoodKindl account
               </h2>
 
               <p>
-                Choose how you want
-                to use FoodKindl.
+                Meet people nearby and build real
+                connections through food.
               </p>
-
-            </div>
-
-
-            <div className="register-account-type-section">
-
-              <div className="register-account-type-heading">
-
-                <span>
-                  REGISTER AS
-                </span>
-
-                <small>
-                  Choose your FoodKindl
-                  account type.
-                </small>
-
-              </div>
-
-
-              <div className="register-account-options">
-
-
-                <button
-                  type="button"
-                  className={
-                    `register-account-card ${
-                      accountType ===
-                      "member"
-                        ? "selected"
-                        : ""
-                    }`
-                  }
-                  onClick={
-                    chooseMember
-                  }
-                >
-
-                  <span className="register-account-card-icon">
-                    <Users size={20} />
-                  </span>
-
-
-                  <span className="register-account-card-copy">
-
-                    <strong>
-                      FoodKindl Member
-                    </strong>
-
-                    <small>
-                      Meet people and
-                      connect through food.
-                    </small>
-
-                  </span>
-
-
-                  <span className="register-account-card-action">
-
-                    {
-                      accountType ===
-                      "member"
-                        ? (
-                          <Check
-                            size={18}
-                          />
-                        )
-                        : null
-                    }
-
-                  </span>
-
-                </button>
-
-
-                <button
-                  type="button"
-                  className="register-account-card restaurant-partner-option"
-                  onClick={
-                    chooseRestaurantPartner
-                  }
-                >
-
-                  <span className="register-account-card-icon">
-                    <Store size={20} />
-                  </span>
-
-
-                  <span className="register-account-card-copy">
-
-                    <strong>
-                      Restaurant Partner
-                    </strong>
-
-                    <small>
-                      Register and manage
-                      your restaurant or
-                      café on FoodKindl.
-                    </small>
-
-                  </span>
-
-
-                  <span className="register-account-card-action">
-
-                    <ArrowRight
-                      size={18}
-                    />
-
-                  </span>
-
-                </button>
-
-              </div>
 
             </div>
 
@@ -574,6 +396,7 @@ export default function Register() {
                   onChange={
                     handleChange
                   }
+                  autoComplete="given-name"
                   required
                 />
 
@@ -593,6 +416,7 @@ export default function Register() {
                   onChange={
                     handleChange
                   }
+                  autoComplete="family-name"
                   required
                 />
 
@@ -612,6 +436,7 @@ export default function Register() {
                   onChange={
                     handleChange
                   }
+                  autoComplete="email"
                   required
                 />
 
@@ -637,6 +462,7 @@ export default function Register() {
                     onChange={
                       handleChange
                     }
+                    autoComplete="new-password"
                     required
                     minLength={6}
                   />
@@ -649,6 +475,11 @@ export default function Register() {
                         previous =>
                           !previous
                       )
+                    }
+                    aria-label={
+                      showPassword
+                        ? "Hide password"
+                        : "Show password"
                     }
                   >
 
@@ -676,7 +507,10 @@ export default function Register() {
               {
                 error &&
                 (
-                  <div className="register-error">
+                  <div
+                    className="register-error"
+                    role="alert"
+                  >
                     {error}
                   </div>
                 )
@@ -686,7 +520,10 @@ export default function Register() {
               {
                 success &&
                 (
-                  <div className="register-success">
+                  <div
+                    className="register-success"
+                    role="status"
+                  >
                     {success}
                   </div>
                 )
@@ -696,14 +533,15 @@ export default function Register() {
               <button
                 type="submit"
                 disabled={
-                  loading
+                  loading ||
+                  !canSubmit
                 }
               >
 
                 {
                   loading
                     ? "Creating account..."
-                    : "Create Member Account"
+                    : "Create FoodKindl Account"
                 }
 
                 {
@@ -718,6 +556,25 @@ export default function Register() {
               </button>
 
             </form>
+
+
+            {/* SECONDARY RESTAURANT JOURNEY */}
+
+            <div className="register-partner-link">
+
+              <span>
+                Own or manage a restaurant?
+              </span>
+
+              <Link to="/register/restaurant">
+
+                Register as a Restaurant Partner
+
+                <ArrowRight size={14} />
+
+              </Link>
+
+            </div>
 
 
             <div className="register-login-link">

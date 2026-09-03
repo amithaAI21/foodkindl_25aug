@@ -5,9 +5,7 @@ import requests
 from django.conf import settings
 
 
-logger = logging.getLogger(
-    __name__
-)
+logger = logging.getLogger(__name__)
 
 
 FAST2SMS_URL = (
@@ -16,7 +14,7 @@ FAST2SMS_URL = (
 
 
 # ============================================================
-# NORMALIZE INDIAN PHONE NUMBER
+# NORMALIZE INDIAN PHONE NUMBER FOR SMS
 # ============================================================
 
 def normalize_indian_number(
@@ -25,7 +23,6 @@ def normalize_indian_number(
 
     if not phone_number:
         return ""
-
 
     number = (
         str(phone_number)
@@ -36,21 +33,11 @@ def normalize_indian_number(
         .replace(")", "")
     )
 
-
-    # +919746711754
-    # ->
-    # 9746711754
-
     if (
         number.startswith("+91")
         and len(number) == 13
     ):
         number = number[3:]
-
-
-    # 919746711754
-    # ->
-    # 9746711754
 
     elif (
         number.startswith("91")
@@ -58,19 +45,90 @@ def normalize_indian_number(
     ):
         number = number[2:]
 
-
     if (
         not number.isdigit()
         or len(number) != 10
     ):
         return ""
 
+    return number
+
+
+# ============================================================
+# NORMALIZE PHONE NUMBER FOR WHATSAPP
+# WhatsApp expects country code without "+"
+# Example: 919876543210
+# ============================================================
+
+def normalize_whatsapp_number(
+    phone_number,
+):
+
+    if not phone_number:
+        return ""
+
+    number = (
+        str(phone_number)
+        .strip()
+        .replace(" ", "")
+        .replace("-", "")
+        .replace("(", "")
+        .replace(")", "")
+        .replace("+", "")
+    )
+
+    if len(number) == 10:
+        number = f"91{number}"
+
+    if (
+        not number.isdigit()
+        or len(number) < 11
+        or len(number) > 15
+    ):
+        return ""
 
     return number
 
 
 # ============================================================
-# BUILD SOS MESSAGE
+# USER DISPLAY NAME
+# ============================================================
+
+def get_user_name(
+    user,
+):
+
+    return (
+        user.get_full_name().strip()
+        or user.first_name
+        or "A FoodKindl member"
+    )
+
+
+# ============================================================
+# LOCATION LINK
+# ============================================================
+
+def build_location_url(
+    sos_event,
+):
+
+    if (
+        sos_event.latitude is not None
+        and
+        sos_event.longitude is not None
+    ):
+        return (
+            "https://maps.google.com/?q="
+            f"{sos_event.latitude},"
+            f"{sos_event.longitude}"
+        )
+
+    return "Location was unavailable."
+
+
+# ============================================================
+# BUILD SMS MESSAGE
 # ============================================================
 
 def build_sos_message(
@@ -79,43 +137,26 @@ def build_sos_message(
     sos_event,
 ):
 
-    user_name = (
-        user.get_full_name().strip()
-        or user.first_name
-        or "A FoodKindl member"
+    user_name = get_user_name(
+        user
     )
 
+    location_url = (
+        build_location_url(
+            sos_event
+        )
+    )
 
-    message = (
-        f"FOODKINDL SOS ALERT: "
+    return (
+        "FOODKINDL SOS ALERT: "
         f"{user_name} may be in danger and needs help. "
-        f"Please contact them immediately."
+        "Please contact them immediately. "
+        f"Location: {location_url}"
     )
-
-
-    if (
-        sos_event.latitude is not None
-        and
-        sos_event.longitude is not None
-    ):
-
-        map_url = (
-            "https://maps.google.com/?q="
-            f"{sos_event.latitude},"
-            f"{sos_event.longitude}"
-        )
-
-
-        message += (
-            f" Location: {map_url}"
-        )
-
-
-    return message
 
 
 # ============================================================
-# SEND ONE FAST2SMS MESSAGE
+# SEND SMS THROUGH FAST2SMS
 # ============================================================
 
 def send_fast2sms(
@@ -124,21 +165,18 @@ def send_fast2sms(
     message,
 ):
 
-    api_key = (
-        settings.FAST2SMS_API_KEY
+    api_key = getattr(
+        settings,
+        "FAST2SMS_API_KEY",
+        "",
     )
 
-
     if not api_key:
-
         return {
-            "success":
-                False,
-
+            "success": False,
             "error":
                 "FAST2SMS_API_KEY is not configured.",
         }
-
 
     number = (
         normalize_indian_number(
@@ -146,44 +184,26 @@ def send_fast2sms(
         )
     )
 
-
     if not number:
-
         return {
-            "success":
-                False,
-
+            "success": False,
             "error":
                 "Invalid Indian phone number.",
         }
 
-
     headers = {
-        "Authorization":
-            api_key,
-
-        "Content-Type":
-            "application/json",
+        "Authorization": api_key,
+        "Content-Type": "application/json",
     }
-
 
     payload = {
-        "route":
-            "q",
-
-        "message":
-            message,
-
-        "numbers":
-            number,
-
-        "sms_details":
-            "1",
+        "route": "q",
+        "message": message,
+        "numbers": number,
+        "sms_details": "1",
     }
 
-
     try:
-
         response = requests.post(
             FAST2SMS_URL,
             headers=headers,
@@ -191,82 +211,247 @@ def send_fast2sms(
             timeout=12,
         )
 
-
         try:
-
             response_data = (
                 response.json()
             )
-
         except ValueError:
-
             response_data = {
-                "raw":
-                    response.text
+                "raw": response.text
             }
-
-
-        logger.info(
-            "Fast2SMS response status=%s number=%s response=%s",
-            response.status_code,
-            number,
-            response_data,
-        )
-
 
         if (
             response.ok
-            and
-            response_data.get(
+            and response_data.get(
                 "return"
             ) is not False
         ):
-
             return {
-                "success":
-                    True,
-
-                "number":
-                    number,
-
-                "provider_response":
-                    response_data,
+                "success": True,
+                "number": number,
             }
 
+        logger.error(
+            "Fast2SMS rejected SOS. "
+            "status=%s response=%s",
+            response.status_code,
+            response_data,
+        )
 
         return {
-            "success":
-                False,
-
-            "number":
-                number,
-
-            "error":
-                response_data,
+            "success": False,
+            "number": number,
+            "error": response_data,
         }
 
-
     except requests.RequestException as exc:
-
         logger.exception(
             "Fast2SMS request failed."
         )
 
-
         return {
-            "success":
-                False,
-
-            "number":
-                number,
-
-            "error":
-                str(exc),
+            "success": False,
+            "number": number,
+            "error": str(exc),
         }
 
 
 # ============================================================
-# SEND SOS TO TRUSTED CONTACTS
+# SEND WHATSAPP TEMPLATE THROUGH META CLOUD API
+# ============================================================
+
+def send_whatsapp_sos(
+    *,
+    phone_number,
+    user,
+    sos_event,
+):
+
+    access_token = getattr(
+        settings,
+        "WHATSAPP_ACCESS_TOKEN",
+        "",
+    )
+
+    phone_number_id = getattr(
+        settings,
+        "WHATSAPP_PHONE_NUMBER_ID",
+        "",
+    )
+
+    template_name = getattr(
+        settings,
+        "WHATSAPP_TEMPLATE_NAME",
+        "foodkindl_sos_alert",
+    )
+
+    template_language = getattr(
+        settings,
+        "WHATSAPP_TEMPLATE_LANGUAGE",
+        "en",
+    )
+
+    api_version = getattr(
+        settings,
+        "WHATSAPP_API_VERSION",
+        "v23.0",
+    )
+
+    if (
+        not access_token
+        or not phone_number_id
+    ):
+        return {
+            "success": False,
+            "error":
+                "WhatsApp Cloud API is not configured.",
+        }
+
+    number = (
+        normalize_whatsapp_number(
+            phone_number
+        )
+    )
+
+    if not number:
+        return {
+            "success": False,
+            "error":
+                "Invalid WhatsApp phone number.",
+        }
+
+    user_name = get_user_name(
+        user
+    )
+
+    location_url = (
+        build_location_url(
+            sos_event
+        )
+    )
+
+    url = (
+        f"https://graph.facebook.com/"
+        f"{api_version}/"
+        f"{phone_number_id}/messages"
+    )
+
+    headers = {
+        "Authorization":
+            f"Bearer {access_token}",
+        "Content-Type":
+            "application/json",
+    }
+
+    payload = {
+        "messaging_product":
+            "whatsapp",
+
+        "recipient_type":
+            "individual",
+
+        "to":
+            number,
+
+        "type":
+            "template",
+
+        "template": {
+            "name":
+                template_name,
+
+            "language": {
+                "code":
+                    template_language,
+            },
+
+            "components": [
+                {
+                    "type":
+                        "body",
+
+                    "parameters": [
+                        {
+                            "type":
+                                "text",
+
+                            "text":
+                                user_name,
+                        },
+                        {
+                            "type":
+                                "text",
+
+                            "text":
+                                location_url,
+                        },
+                    ],
+                },
+            ],
+        },
+    }
+
+    try:
+        response = requests.post(
+            url,
+            headers=headers,
+            json=payload,
+            timeout=12,
+        )
+
+        try:
+            response_data = (
+                response.json()
+            )
+        except ValueError:
+            response_data = {
+                "raw": response.text
+            }
+
+        if (
+            response.ok
+            and response_data.get(
+                "messages"
+            )
+        ):
+            message_id = (
+                response_data["messages"][0]
+                .get("id")
+            )
+
+            return {
+                "success": True,
+                "number": number,
+                "message_id": message_id,
+            }
+
+        logger.error(
+            "WhatsApp rejected SOS. "
+            "status=%s response=%s",
+            response.status_code,
+            response_data,
+        )
+
+        return {
+            "success": False,
+            "number": number,
+            "error": response_data,
+        }
+
+    except requests.RequestException as exc:
+        logger.exception(
+            "WhatsApp SOS request failed."
+        )
+
+        return {
+            "success": False,
+            "number": number,
+            "error": str(exc),
+        }
+
+
+# ============================================================
+# SEND BOTH SMS AND WHATSAPP
 # ============================================================
 
 def send_sos_to_contacts(
@@ -276,41 +461,65 @@ def send_sos_to_contacts(
     contacts,
 ):
 
-    message = (
+    sms_message = (
         build_sos_message(
             user=user,
             sos_event=sos_event,
         )
     )
 
-
-    results = []
-
+    sms_results = []
+    whatsapp_results = []
 
     for contact in contacts:
 
-        result = (
+        sms_result = (
             send_fast2sms(
                 phone_number=
                     contact.phone_number,
 
                 message=
-                    message,
+                    sms_message,
             )
         )
 
+        sms_results.append({
+            "contact_id":
+                contact.id,
 
-        results.append(
-            {
-                "contact_id":
-                    contact.id,
+            "contact_name":
+                contact.name,
 
-                "contact_name":
-                    contact.name,
+            **sms_result,
+        })
 
-                **result,
-            }
+        whatsapp_result = (
+            send_whatsapp_sos(
+                phone_number=
+                    contact.phone_number,
+
+                user=
+                    user,
+
+                sos_event=
+                    sos_event,
+            )
         )
 
+        whatsapp_results.append({
+            "contact_id":
+                contact.id,
 
-    return results
+            "contact_name":
+                contact.name,
+
+            **whatsapp_result,
+        })
+
+    return {
+        "sms_results":
+            sms_results,
+
+        "whatsapp_results":
+            whatsapp_results,
+    }

@@ -4,7 +4,6 @@ import {
   CheckCircle2,
   ContactRound,
   MapPin,
-  MessageCircle,
   Phone,
   Plus,
   ShieldAlert,
@@ -128,6 +127,24 @@ export default function SOSSafety() {
   const [
     smsSentCount,
     setSmsSentCount,
+  ] = useState(0);
+
+
+  const [
+    whatsappSentCount,
+    setWhatsappSentCount,
+  ] = useState(0);
+
+
+  const [
+    smsFailedCount,
+    setSmsFailedCount,
+  ] = useState(0);
+
+
+  const [
+    whatsappFailedCount,
+    setWhatsappFailedCount,
   ] = useState(0);
 
 
@@ -620,198 +637,6 @@ export default function SOSSafety() {
 
 
   // =========================================================
-  // CREATE WHATSAPP FALLBACK MESSAGE
-  // =========================================================
-
-  function createSOSMessage() {
-
-    let message =
-      "🚨 FOODKINDL SOS ALERT\n\n" +
-      "I am in danger and may need help.\n" +
-      "Please contact me immediately.";
-
-
-    if (
-      sosLocation?.latitude != null &&
-      sosLocation?.longitude != null
-    ) {
-
-      const mapLink =
-        "https://maps.google.com/?q=" +
-        `${sosLocation.latitude},${sosLocation.longitude}`;
-
-
-      message +=
-        "\n\nMy current location:\n" +
-        mapLink;
-
-    }
-
-
-    return message;
-  }
-
-
-  // =========================================================
-  // NORMALIZE PHONE FOR WHATSAPP
-  // =========================================================
-
-  function normalizePhoneNumber(
-    phoneNumber
-  ) {
-
-    if (!phoneNumber) {
-      return "";
-    }
-
-
-    let number =
-      String(
-        phoneNumber
-      )
-        .replace(/\s+/g, "")
-        .replace(/-/g, "")
-        .replace(/\(/g, "")
-        .replace(/\)/g, "");
-
-
-    // Indian number:
-    // 9876543210 -> 919876543210
-
-    if (
-      /^\d{10}$/.test(
-        number
-      )
-    ) {
-
-      number =
-        `91${number}`;
-
-    }
-
-
-    // +919876543210 -> 919876543210
-
-    if (
-      number.startsWith("+")
-    ) {
-
-      number =
-        number.slice(1);
-
-    }
-
-
-    return number;
-  }
-
-
-  // =========================================================
-  // MANUAL WHATSAPP FALLBACK
-  //
-  // Automatic WhatsApp requires WhatsApp Business API.
-  // This opens the trusted contact chat with message ready.
-  // =========================================================
-
-  function sendWhatsAppSOS(
-    contact
-  ) {
-
-    const phone =
-      normalizePhoneNumber(
-        contact?.phone_number
-      );
-
-
-    if (!phone) {
-
-      window.alert(
-        "Trusted contact phone number is unavailable."
-      );
-
-      return;
-    }
-
-
-    const message =
-      createSOSMessage();
-
-
-    const url =
-      `https://wa.me/${phone}?text=${encodeURIComponent(
-        message
-      )}`;
-
-
-    window.open(
-      url,
-      "_blank",
-      "noopener,noreferrer"
-    );
-  }
-
-
-
-  // =========================================================
-  // MANUAL SMS FALLBACK — NO FOODKINDL SMS API COST
-  //
-  // Opens the user's native SMS app with the SOS message
-  // pre-filled. The user must tap Send.
-  // Carrier charges may still apply according to their plan.
-  // =========================================================
-
-  function sendSMSSOS(
-    contact
-  ) {
-
-    const phone =
-      String(
-        contact?.phone_number || ""
-      )
-        .replace(/\s+/g, "")
-        .replace(/-/g, "")
-        .replace(/\(/g, "")
-        .replace(/\)/g, "");
-
-
-    if (!phone) {
-
-      window.alert(
-        "Trusted contact phone number is unavailable."
-      );
-
-      return;
-    }
-
-
-    const message =
-      createSOSMessage();
-
-
-    const isIOS =
-      /iPad|iPhone|iPod/i.test(
-        navigator.userAgent
-      );
-
-
-    const separator =
-      isIOS
-        ? "&"
-        : "?";
-
-
-    const smsUrl =
-      `sms:${phone}${separator}body=${encodeURIComponent(
-        message
-      )}`;
-
-
-    window.location.href =
-      smsUrl;
-  }
-
-
-  // =========================================================
   // ACTIVATE SOS
   //
   // IMPORTANT:
@@ -857,6 +682,10 @@ export default function SOSSafety() {
       0
     );
 
+    setWhatsappSentCount(0);
+    setSmsFailedCount(0);
+    setWhatsappFailedCount(0);
+
 
     let location =
       null;
@@ -898,11 +727,8 @@ export default function SOSSafety() {
       // =====================================================
       // SEND TO DJANGO
       //
-      // Django:
-      // 1. Creates SOS event
-      // 2. Finds trusted contacts
-      // 3. Calls Fast2SMS
-      // 4. Returns sms_started
+      // Django creates one SOS event and automatically attempts
+      // both SMS and WhatsApp for every active trusted contact.
       // =====================================================
 
       const response =
@@ -910,12 +736,14 @@ export default function SOSSafety() {
           "/safety/sos/",
           {
             latitude:
-              location?.latitude ??
-              null,
+              location?.latitude != null
+                ? location.latitude.toFixed(6)
+                : null,
 
             longitude:
-              location?.longitude ??
-              null,
+              location?.longitude != null
+                ? location.longitude.toFixed(6)
+                : null,
 
             location_accuracy:
               location?.accuracy ??
@@ -946,34 +774,44 @@ export default function SOSSafety() {
 
 
       // =====================================================
-      // SMS RESULT
+      // COMBINED SMS + WHATSAPP RESULT
       // =====================================================
 
-      const sent =
-        Number(
-          response.data
-            ?.sms_started ||
-          0
-        );
+      const smsSent = Number(
+        response.data?.sms_sent ??
+        response.data?.sms_started ??
+        0
+      );
 
+      const whatsappSent = Number(
+        response.data?.whatsapp_sent ?? 0
+      );
 
-      setSmsSentCount(
-        sent
+      const smsFailed = Number(
+        response.data?.sms_failed ?? 0
+      );
+
+      const whatsappFailed = Number(
+        response.data?.whatsapp_failed ?? 0
       );
 
 
+      setSmsSentCount(
+        smsSent
+      );
+
+      setWhatsappSentCount(whatsappSent);
+      setSmsFailedCount(smsFailed);
+      setWhatsappFailedCount(whatsappFailed);
+
+
       if (
-        sent > 0
+        smsSent > 0 || whatsappSent > 0
       ) {
 
         setSosMessage(
-          sent === 1
-            ? (
-                "SOS activated. SMS alert was sent to your trusted contact."
-              )
-            : (
-                `SOS activated. SMS alerts were sent to ${sent} trusted contacts.`
-              )
+          response.data?.detail ||
+          "SOS activated. SMS and WhatsApp alerts were submitted automatically."
         );
 
 
@@ -982,11 +820,8 @@ export default function SOSSafety() {
       } else {
 
         setSosError(
-          (
-            "SOS was recorded, but the SMS provider did not "
-            +
-            "accept the alert. Use WhatsApp below immediately."
-          )
+          response.data?.detail ||
+          "SOS was recorded, but neither SMS nor WhatsApp accepted the alert."
         );
 
       }
@@ -1003,9 +838,7 @@ export default function SOSSafety() {
       );
 
 
-      setSosActive(
-        true
-      );
+      setSosActive(false);
 
 
       setSosError(
@@ -1014,7 +847,7 @@ export default function SOSSafety() {
             .response
             ?.data
             ?.detail ||
-          "The automatic SMS could not be sent. Use WhatsApp below immediately."
+          "Unable to activate SOS. Please try again."
         )
       );
 
@@ -1212,6 +1045,10 @@ export default function SOSSafety() {
         0
       );
 
+      setWhatsappSentCount(0);
+      setSmsFailedCount(0);
+      setWhatsappFailedCount(0);
+
 
       setSosMessage(
         "You have been marked safe."
@@ -1306,8 +1143,8 @@ export default function SOSSafety() {
 
         <p>
           Add people you trust. Holding SOS
-          can automatically send an SMS alert
-          to their phone through FoodKindl.
+          automatically sends both SMS and WhatsApp
+          alerts through FoodKindl.
         </p>
 
       </section>
@@ -1737,12 +1574,10 @@ export default function SOSSafety() {
               {
                 sosActive
                   ? (
-                      smsSentCount > 0
-                        ? "Your SMS alert has been submitted."
-                        : "Use the WhatsApp fallback below."
+                      "SMS and WhatsApp were attempted automatically."
                     )
                   : (
-                      "Press and hold for three seconds to send the SOS alert."
+                      "Hold for three seconds to send SMS and WhatsApp alerts."
                     )
               }
 
@@ -1879,15 +1714,7 @@ export default function SOSSafety() {
               }
 
 
-              {/* =============================================
-                  SMS RESULT
-              ============================================= */}
-
-              {
-                smsSentCount > 0 &&
-                (
-
-                  <div className="sos-sms-result">
+              <div className="sos-sms-result">
 
                     <CheckCircle2
                       size={18}
@@ -1896,124 +1723,22 @@ export default function SOSSafety() {
                     <div>
 
                       <strong>
-                        SMS alert submitted
+                        Automatic alert delivery
                       </strong>
 
-
                       <span>
-
-                        {
-                          smsSentCount === 1
-                            ? (
-                                "1 trusted contact was sent an SMS alert."
-                              )
-                            : (
-                                `${smsSentCount} trusted contacts were sent SMS alerts.`
-                              )
-                        }
-
+                        SMS: {smsSentCount} sent
+                        {smsFailedCount > 0
+                          ? `, ${smsFailedCount} failed`
+                          : ""}
+                        {" • "}
+                        WhatsApp: {whatsappSentCount} sent
+                        {whatsappFailedCount > 0
+                          ? `, ${whatsappFailedCount} failed`
+                          : ""}
                       </span>
 
                     </div>
-
-                  </div>
-
-                )
-              }
-
-
-              {/* =============================================
-                  WHATSAPP FALLBACK
-              ============================================= */}
-
-              <div className="sos-contact-actions-list">
-
-                <span className="sos-contact-actions-title">
-                  Emergency message backup
-                </span>
-
-
-                {
-                  contacts.map(
-                    (
-                      contact
-                    ) => (
-
-                      <div
-                        key={
-                          contact.id
-                        }
-
-                        className="sos-contact-action-card"
-                      >
-
-                        <div className="sos-contact-action-name">
-
-                          <strong>
-                            {contact.name}
-                          </strong>
-
-
-                          <span>
-                            {
-                              contact.relationship ||
-                              "Trusted contact"
-                            }
-                          </span>
-
-                        </div>
-
-
-                        <div className="sos-contact-action-buttons">
-
-                          <button
-                            type="button"
-
-                            className="sos-action-sms"
-
-                            onClick={() =>
-                              sendSMSSOS(
-                                contact
-                              )
-                            }
-                          >
-
-                            <Phone
-                              size={15}
-                            />
-
-                            SMS
-
-                          </button>
-
-
-                          <button
-                            type="button"
-
-                            className="sos-action-whatsapp"
-
-                            onClick={() =>
-                              sendWhatsAppSOS(
-                                contact
-                              )
-                            }
-                          >
-
-                            <MessageCircle
-                              size={15}
-                            />
-
-                            WhatsApp
-
-                          </button>
-
-                        </div>
-
-                      </div>
-
-                    )
-                  )
-                }
 
               </div>
 
@@ -2105,8 +1830,8 @@ export default function SOSSafety() {
 
               <span>
                 FoodKindl sends the SOS request
-                to the backend, which submits SMS
-                alerts to active trusted contacts.
+                once. The backend automatically submits
+                both SMS and WhatsApp alerts.
               </span>
 
             </div>
@@ -2128,14 +1853,13 @@ export default function SOSSafety() {
 
             <div>
 
-              <MessageCircle
+              <ShieldCheck
                 size={16}
               />
 
               <span>
-                WhatsApp is available as a backup.
-                Automatic WhatsApp delivery requires
-                the WhatsApp Business API.
+                You do not need to select a contact or
+                choose an alert channel manually.
               </span>
 
             </div>

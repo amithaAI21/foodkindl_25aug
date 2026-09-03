@@ -109,6 +109,55 @@ FAST2SMS_API_KEY = (
 
 
 # ============================================================
+# WHATSAPP CLOUD API
+# ============================================================
+
+WHATSAPP_ACCESS_TOKEN = (
+    os.environ.get(
+        "WHATSAPP_ACCESS_TOKEN",
+        "",
+    )
+    .strip()
+)
+
+
+WHATSAPP_PHONE_NUMBER_ID = (
+    os.environ.get(
+        "WHATSAPP_PHONE_NUMBER_ID",
+        "",
+    )
+    .strip()
+)
+
+
+WHATSAPP_TEMPLATE_NAME = (
+    os.environ.get(
+        "WHATSAPP_TEMPLATE_NAME",
+        "foodkindl_sos_alert",
+    )
+    .strip()
+)
+
+
+WHATSAPP_TEMPLATE_LANGUAGE = (
+    os.environ.get(
+        "WHATSAPP_TEMPLATE_LANGUAGE",
+        "en",
+    )
+    .strip()
+)
+
+
+WHATSAPP_API_VERSION = (
+    os.environ.get(
+        "WHATSAPP_API_VERSION",
+        "v23.0",
+    )
+    .strip()
+)
+
+
+# ============================================================
 # OPENROUTESERVICE
 # ============================================================
 

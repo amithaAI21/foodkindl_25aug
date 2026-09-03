@@ -188,7 +188,31 @@ class SOSCreateView(
     ):
 
         # ====================================================
-        # CHECK EXISTING SOS
+        # CHECK TRUSTED CONTACTS FIRST
+        # ====================================================
+
+        trusted_contacts = list(
+            TrustedContact.objects
+            .filter(
+                user=request.user,
+                is_active=True,
+            )
+            .order_by("id")
+        )
+
+        if not trusted_contacts:
+            return Response(
+                {
+                    "detail":
+                        "Add at least one trusted contact "
+                        "before activating SOS."
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+
+        # ====================================================
+        # CHECK EXISTING ACTIVE SOS
         # ====================================================
 
         existing_sos = (
@@ -197,15 +221,11 @@ class SOSCreateView(
                 user=request.user,
                 status="active",
             )
-            .order_by(
-                "-activated_at"
-            )
+            .order_by("-activated_at")
             .first()
         )
 
-
         if existing_sos:
-
             return Response(
                 {
                     "id":
@@ -227,14 +247,15 @@ class SOSCreateView(
                         existing_sos.activated_at,
 
                     "detail":
-                        "SOS is already active.",
+                        "SOS is already active. "
+                        "Alerts were not sent again.",
                 },
                 status=status.HTTP_200_OK,
             )
 
 
         # ====================================================
-        # CREATE SOS EVENT
+        # VALIDATE AND CREATE SOS
         # ====================================================
 
         serializer = (
@@ -243,11 +264,9 @@ class SOSCreateView(
             )
         )
 
-
         serializer.is_valid(
             raise_exception=True
         )
-
 
         sos_event = (
             serializer.save(
@@ -258,56 +277,87 @@ class SOSCreateView(
 
 
         # ====================================================
-        # GET TRUSTED CONTACTS
+        # SEND BOTH ALERT CHANNELS
         # ====================================================
 
-        trusted_contacts = list(
-            TrustedContact.objects
-            .filter(
+        delivery = (
+            send_sos_to_contacts(
                 user=request.user,
-                is_active=True,
+                sos_event=sos_event,
+                contacts=trusted_contacts,
             )
-            .order_by(
-                "id"
+        )
+
+        sms_results = (
+            delivery.get(
+                "sms_results",
+                [],
             )
+        )
+
+        whatsapp_results = (
+            delivery.get(
+                "whatsapp_results",
+                [],
+            )
+        )
+
+        sms_sent = sum(
+            1
+            for item in sms_results
+            if item.get("success")
+        )
+
+        whatsapp_sent = sum(
+            1
+            for item in whatsapp_results
+            if item.get("success")
+        )
+
+        sms_failed = (
+            len(sms_results)
+            - sms_sent
+        )
+
+        whatsapp_failed = (
+            len(whatsapp_results)
+            - whatsapp_sent
         )
 
 
         # ====================================================
-        # SEND SMS
+        # USER-FACING RESULT
         # ====================================================
 
-        sms_results = []
-
-
-        if trusted_contacts:
-
-            sms_results = (
-                send_sos_to_contacts(
-                    user=request.user,
-                    sos_event=sos_event,
-                    contacts=trusted_contacts,
-                )
+        if (
+            sms_sent > 0
+            and whatsapp_sent > 0
+        ):
+            detail = (
+                "SOS activated. SMS and WhatsApp "
+                "alerts were submitted to your "
+                "trusted contacts."
             )
 
-
-        sms_attempted = (
-            len(
-                sms_results
+        elif sms_sent > 0:
+            detail = (
+                "SOS activated. SMS alerts were "
+                "submitted, but WhatsApp delivery "
+                "could not be started."
             )
-        )
 
-
-        sms_started = (
-            sum(
-                1
-                for item
-                in sms_results
-                if item.get(
-                    "success"
-                )
+        elif whatsapp_sent > 0:
+            detail = (
+                "SOS activated. WhatsApp alerts were "
+                "submitted, but SMS delivery could "
+                "not be started."
             )
-        )
+
+        else:
+            detail = (
+                "SOS was recorded, but neither SMS "
+                "nor WhatsApp delivery could be started."
+            )
 
 
         # ====================================================
@@ -335,37 +385,29 @@ class SOSCreateView(
                     sos_event.activated_at,
 
                 "trusted_contacts_count":
-                    len(
-                        trusted_contacts
-                    ),
+                    len(trusted_contacts),
 
-                "sms_attempted":
-                    sms_attempted,
-
+                # Keep this for existing frontend compatibility.
                 "sms_started":
-                    sms_started,
+                    sms_sent,
 
-                "sms_results":
-                    sms_results,
+                "sms_sent":
+                    sms_sent,
+
+                "sms_failed":
+                    sms_failed,
+
+                "whatsapp_sent":
+                    whatsapp_sent,
+
+                "whatsapp_failed":
+                    whatsapp_failed,
 
                 "detail":
-                    (
-                        (
-                            f"SOS activated. "
-                            f"{sms_started} SMS alert(s) submitted."
-                        )
-                        if sms_started > 0
-                        else
-                        (
-                            "SOS activated, but no SMS "
-                            "alert could be submitted."
-                        )
-                    ),
+                    detail,
             },
             status=status.HTTP_201_CREATED,
         )
-
-
 # ============================================================
 # ACTIVE SOS
 # ============================================================
