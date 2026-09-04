@@ -5767,180 +5767,524 @@ button.active {
   }
 }
 
+
+
 /* ============================================================
-   PAGE 08 — LARGER VIDEO, STILL INSIDE THE BOOK PAGE
+   PAGE 03 — CLEAN FOOD WALK
+   Less text, wider route card, clearer route hierarchy
 ============================================================ */
 
-.fk-flip-page-8 .fk-light-page {
-  padding: 44px 42px !important;
-}
+.fk-flip-page-3 .fk-foodwalk-page {
+  position: relative;
 
-.fk-flip-page-8 .fk-video-page-shell {
   width: 100%;
   height: 100%;
+  min-height: 0 !important;
 
-  display: grid;
-
-  grid-template-columns:
-    minmax(280px, .62fr)
-    minmax(0, 1.38fr);
-
-  gap: 34px;
-
-  align-items: center;
-}
-
-.fk-flip-page-8 .fk-video-page-copy {
-  max-width: 360px;
-}
-
-.fk-flip-page-8 .fk-video-page-copy h2 {
-  font-size: clamp(46px, 4.4vw, 68px);
-  line-height: .92;
-}
-
-.fk-flip-page-8 .fk-video-page-copy p {
-  max-width: 340px;
-
-  font-size: 12px;
-  line-height: 1.65;
-}
-
-
-/* VIDEO CONTAINER */
-
-.fk-flip-page-8 .fk-video-page-card {
-  width: 100%;
-
-  min-height: 470px;
-
-  aspect-ratio: auto;
+  padding: 52px 56px 54px !important;
 
   display: flex;
+  flex-direction: column;
 
-  overflow: hidden;
-
-  border:
-    1px solid
-    rgba(255, 91, 34, .38) !important;
-
-  border-radius: 24px !important;
-
-  background: #050505;
-
-  box-shadow:
-    0 28px 68px
-    rgba(0, 0, 0, .38);
+  overflow: hidden !important;
 }
 
+.fk-foodwalk-header {
+  max-width: 920px;
 
-/* ACTUAL VIDEO */
+  margin-bottom: 30px;
+}
 
-.fk-flip-page-8 .fk-story-video {
-  width: 100%;
-  height: 100%;
-
-  min-height: 470px;
-
+.fk-foodwalk-kicker,
+.fk-foodwalk-label {
   display: block;
 
-  object-fit: cover;
+  color: #ff5b22;
 
-  border-radius: 23px;
+  font-size: 9px;
+  font-weight: 900;
+
+  letter-spacing: .13em;
+  text-transform: uppercase;
+}
+
+.fk-foodwalk-header h2 {
+  margin: 10px 0 0;
+
+  font-size: clamp(48px, 5vw, 74px);
+  line-height: .94;
+
+  letter-spacing: -.055em;
+}
+
+.fk-foodwalk-header h2 span {
+  color: #ff5b22;
+}
+
+.fk-foodwalk-header p {
+  max-width: 720px;
+
+  margin: 17px 0 0;
+
+  color: #bdb4af;
+
+  font-size: 13px;
+  line-height: 1.6;
 }
 
 
-/* VIDEO PLACEHOLDER */
+/* ============================================================
+   TWO-CARD LAYOUT
+============================================================ */
 
-.fk-flip-page-8 .fk-story-video-loading {
+.fk-foodwalk-layout {
   width: 100%;
-  min-height: 470px;
 
   display: grid;
-  place-items: center;
-  align-content: center;
+  grid-template-columns:
+    minmax(0, 2.65fr)
+    minmax(220px, 1fr);
+
+  gap: 18px;
+
+  flex: 1;
+
+  min-height: 0;
+}
+
+
+/* ============================================================
+   ROUTE CARD
+============================================================ */
+
+.fk-foodwalk-route-card {
+  min-width: 0;
+
+  padding: 26px 28px;
+
+  border: 1px solid rgba(255,91,34,.34);
+  border-radius: 20px;
+
+  background:
+    linear-gradient(
+      145deg,
+      rgba(255,91,34,.035),
+      rgba(255,255,255,.008)
+    );
+}
+
+.fk-foodwalk-route-top {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+
+  gap: 24px;
+}
+
+.fk-foodwalk-route-top h3 {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+
+  margin: 8px 0 0;
+
+  color: #fffaf7;
+
+  font-size: clamp(23px, 2.2vw, 31px);
+  line-height: 1.08;
+}
+
+.fk-foodwalk-route-top h3 span {
+  color: #ff5b22;
+}
+
+.fk-foodwalk-distance {
+  flex-shrink: 0;
+
+  display: flex;
+  align-items: center;
+  gap: 9px;
+
+  color: #ff6a34;
+}
+
+.fk-foodwalk-distance > div {
+  display: grid;
+  gap: 2px;
+}
+
+.fk-foodwalk-distance strong {
+  color: #f5efeb;
+
+  font-size: 11px;
+}
+
+.fk-foodwalk-distance small {
+  color: #7f7772;
+
+  font-size: 8px;
+}
+
+.fk-foodwalk-divider {
+  width: 100%;
+  height: 1px;
+
+  margin: 25px 0 32px;
+
+  background: rgba(255,255,255,.075);
+}
+
+
+/* ============================================================
+   ROUTE STOPS
+============================================================ */
+
+.fk-foodwalk-route {
+  position: relative;
+
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0,1fr));
+
+  gap: 8px;
+}
+
+.fk-foodwalk-route::before {
+  content: "";
+
+  position: absolute;
+
+  top: 20px;
+  left: 12%;
+  right: 12%;
+
+  height: 1px;
+
+  background:
+    linear-gradient(
+      90deg,
+      #ff5b22,
+      rgba(255,91,34,.32),
+      #ff5b22
+    );
+}
+
+.fk-foodwalk-stop {
+  position: relative;
+  z-index: 2;
+
+  min-width: 0;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 
   text-align: center;
 }
 
+.fk-foodwalk-node {
+  width: 42px;
+  height: 42px;
+
+  margin-bottom: 16px;
+
+  display: grid;
+  place-items: center;
+
+  border: 1px solid rgba(255,91,34,.68);
+  border-radius: 50%;
+
+  color: #ff6a32;
+
+  font-size: 11px;
+  font-weight: 900;
+
+  background: #100b09;
+
+  box-shadow:
+    0 0 0 6px #090807;
+}
+
+.fk-foodwalk-node.partner {
+  border-color: rgba(49,194,116,.65);
+
+  color: #62d797;
+
+  background: rgba(20,73,45,.38);
+}
+
+.fk-foodwalk-stop > strong {
+  width: 100%;
+
+  overflow: hidden;
+
+  color: #f6f0ec;
+
+  font-size: 11px;
+  font-weight: 850;
+
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.fk-foodwalk-stop > small {
+  min-height: 24px;
+
+  margin-top: 5px;
+
+  color: #716a66;
+
+  font-size: 7px;
+  line-height: 1.35;
+}
+
+.fk-partner-badge {
+  margin-top: 7px;
+
+  padding: 5px 8px;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+
+  border-radius: 999px;
+
+  color: #59d892;
+
+  font-size: 6px;
+  font-weight: 850;
+
+  background: rgba(31,157,91,.10);
+}
+
 
 /* ============================================================
-   TABLET
+   DISCOVERY CARD
+============================================================ */
+
+.fk-foodwalk-discovery {
+  padding: 25px 24px;
+
+  border: 1px solid rgba(255,91,34,.34);
+  border-radius: 20px;
+
+  background:
+    linear-gradient(
+      155deg,
+      rgba(255,91,34,.05),
+      rgba(255,255,255,.008)
+    );
+}
+
+.fk-foodwalk-location-icon {
+  width: 49px;
+  height: 49px;
+
+  margin-bottom: 23px;
+
+  display: grid;
+  place-items: center;
+
+  border: 1px solid rgba(255,91,34,.40);
+  border-radius: 15px;
+
+  color: #ff5b22;
+
+  background: rgba(255,91,34,.045);
+}
+
+.fk-foodwalk-discovery h3 {
+  margin: 10px 0 0;
+
+  color: #f8f3ef;
+
+  font-size: clamp(28px, 2.8vw, 42px);
+  line-height: 1.02;
+
+  letter-spacing: -.045em;
+}
+
+.fk-foodwalk-discovery > p {
+  margin: 16px 0 22px;
+
+  color: #948b86;
+
+  font-size: 10px;
+  line-height: 1.55;
+}
+
+.fk-foodwalk-benefits {
+  display: grid;
+  gap: 11px;
+}
+
+.fk-foodwalk-benefits span {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  color: #c8bfba;
+
+  font-size: 9px;
+}
+
+.fk-foodwalk-benefits svg {
+  color: #58d58d;
+
+  flex: 0 0 auto;
+}
+
+.fk-foodwalk-action {
+  margin-top: 24px;
+
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+
+  color: #f0a47f;
+
+  font-size: 8px;
+  font-weight: 900;
+
+  text-decoration: none;
+}
+
+
+/* ============================================================
+   PAGE 03 — TABLET
 ============================================================ */
 
 @media (max-width: 1100px) {
 
-  .fk-flip-page-8 .fk-video-page-shell {
-    grid-template-columns:
-      .72fr 1.28fr;
-
-    gap: 26px;
+  .fk-flip-page-3 .fk-foodwalk-page {
+    padding: 42px 34px 50px !important;
   }
 
-  .fk-flip-page-8 .fk-video-page-card,
-  .fk-flip-page-8 .fk-story-video,
-  .fk-flip-page-8 .fk-story-video-loading {
-    min-height: 390px;
+  .fk-foodwalk-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .fk-foodwalk-discovery {
+    display: grid;
+    grid-template-columns: auto 1fr;
+
+    column-gap: 20px;
+
+    align-items: center;
+  }
+
+  .fk-foodwalk-location-icon {
+    grid-row: 1 / 6;
+
+    margin: 0;
+  }
+
+  .fk-foodwalk-discovery > p {
+    margin: 8px 0 12px;
+  }
+
+  .fk-foodwalk-benefits {
+    grid-template-columns: repeat(3, auto);
+
+    gap: 12px;
+  }
+
+  .fk-foodwalk-action {
+    margin-top: 13px;
   }
 }
 
 
 /* ============================================================
-   MOBILE
+   PAGE 03 — MOBILE
 ============================================================ */
 
 @media (max-width: 760px) {
 
-  .fk-flip-page-8 .fk-light-page {
-    padding:
-      32px 18px 78px !important;
+  .fk-flip-page-3 .fk-foodwalk-page {
+    padding: 34px 18px 78px !important;
+
+    overflow-y: auto !important;
   }
 
-  .fk-flip-page-8 .fk-video-page-shell {
+  .fk-foodwalk-header {
+    margin-bottom: 24px;
+  }
+
+  .fk-foodwalk-header h2 {
+    font-size: clamp(42px, 12vw, 58px);
+  }
+
+  .fk-foodwalk-header p {
+    margin-top: 14px;
+
+    font-size: 11px;
+  }
+
+  .fk-foodwalk-route-card {
+    padding: 22px 16px;
+  }
+
+  .fk-foodwalk-route-top {
+    align-items: flex-start;
+  }
+
+  .fk-foodwalk-route-top h3 {
     display: block;
+
+    font-size: 21px;
   }
 
-  .fk-flip-page-8 .fk-video-page-copy {
-    max-width: none;
-
-    margin-bottom: 22px;
+  .fk-foodwalk-route-top h3 span {
+    margin: 0 5px;
   }
 
-  .fk-flip-page-8 .fk-video-page-copy h2 {
-    font-size:
-      clamp(40px, 11vw, 56px);
+  .fk-foodwalk-route {
+    overflow-x: auto;
+
+    grid-template-columns:
+      repeat(4, minmax(112px,1fr));
+
+    padding:
+      0 4px 12px;
   }
 
-  .fk-flip-page-8 .fk-video-page-card {
-    width: 100%;
-
-    min-height: 260px;
-
-    border-radius: 18px !important;
+  .fk-foodwalk-route::before {
+    left: 56px;
+    right: 56px;
   }
 
-  .fk-flip-page-8 .fk-story-video,
-  .fk-flip-page-8 .fk-story-video-loading {
-    min-height: 260px;
+  .fk-foodwalk-stop > strong {
+    white-space: normal;
+  }
 
-    border-radius: 17px;
+  .fk-foodwalk-discovery {
+    display: block;
+
+    padding: 22px 18px;
+  }
+
+  .fk-foodwalk-location-icon {
+    margin-bottom: 18px;
+  }
+
+  .fk-foodwalk-benefits {
+    grid-template-columns: 1fr;
   }
 }
 
+
 /* ============================================================
-   PAGE 08 — VIDEO BELOW CONTENT
+   PAGE 08 — VIDEO BELOW CONTENT, WIDE INSIDE THE PAGE
 ============================================================ */
 
 .fk-flip-page-8 .fk-light-page {
-  padding: 44px 52px 54px !important;
+  padding: 42px 48px 52px !important;
 }
 
 .fk-flip-page-8 .fk-video-page {
   display: block !important;
 }
-
-
-/* MAIN PAGE LAYOUT */
 
 .fk-flip-page-8 .fk-video-page-shell {
   width: 100%;
@@ -5949,11 +6293,8 @@ button.active {
   display: flex;
   flex-direction: column;
 
-  gap: 24px;
+  gap: 20px;
 }
-
-
-/* TOP CONTENT */
 
 .fk-flip-page-8 .fk-video-page-copy {
   width: 100%;
@@ -5961,10 +6302,11 @@ button.active {
 }
 
 .fk-flip-page-8 .fk-video-page-copy h2 {
-  margin: 10px 0 14px;
+  margin: 9px 0 12px;
 
-  font-size: clamp(44px, 4vw, 64px);
+  font-size: clamp(42px, 3.8vw, 60px);
   line-height: .92;
+
   letter-spacing: -.05em;
 }
 
@@ -5979,14 +6321,9 @@ button.active {
 
   color: #c7bdb7;
 
-  font-size: 12px;
-  line-height: 1.65;
+  font-size: 10px;
+  line-height: 1.6;
 }
-
-
-/* ============================================================
-   VIDEO BELOW
-============================================================ */
 
 .fk-flip-page-8 .fk-video-page-card {
   width: 100%;
@@ -5994,28 +6331,20 @@ button.active {
   flex: 1;
 
   min-height: 0;
-
-  max-height: 520px;
+  max-height: 500px;
 
   aspect-ratio: 16 / 9;
 
   overflow: hidden;
 
-  border:
-    1px solid
-    rgba(255,91,34,.36) !important;
-
-  border-radius: 22px !important;
+  border: 1px solid rgba(255,91,34,.34) !important;
+  border-radius: 20px !important;
 
   background: #050505;
 
   box-shadow:
-    0 24px 60px
-    rgba(0,0,0,.34);
+    0 22px 56px rgba(0,0,0,.32);
 }
-
-
-/* ACTUAL VIDEO */
 
 .fk-flip-page-8 .fk-story-video {
   width: 100%;
@@ -6025,17 +6354,14 @@ button.active {
 
   object-fit: cover;
 
-  border-radius: 21px;
+  border-radius: 19px;
 }
-
-
-/* FALLBACK */
 
 .fk-flip-page-8 .fk-story-video-loading {
   width: 100%;
   height: 100%;
 
-  min-height: 330px;
+  min-height: 300px;
 
   display: grid;
   place-items: center;
@@ -6044,55 +6370,36 @@ button.active {
   text-align: center;
 }
 
-
-/* ============================================================
-   TABLET
-============================================================ */
-
 @media (max-width: 1100px) {
 
   .fk-flip-page-8 .fk-light-page {
-    padding:
-      38px 38px 48px !important;
+    padding: 36px 34px 48px !important;
   }
 
   .fk-flip-page-8 .fk-video-page-card {
-    max-height: 440px;
+    max-height: 430px;
   }
 }
-
-
-/* ============================================================
-   MOBILE
-============================================================ */
 
 @media (max-width: 760px) {
 
   .fk-flip-page-8 .fk-light-page {
-    padding:
-      32px 18px 78px !important;
+    padding: 32px 18px 78px !important;
   }
 
   .fk-flip-page-8 .fk-video-page-shell {
-    gap: 18px;
+    gap: 16px;
   }
 
   .fk-flip-page-8 .fk-video-page-copy h2 {
-    font-size:
-      clamp(
-        38px,
-        11vw,
-        54px
-      );
+    font-size: clamp(38px, 11vw, 54px);
   }
 
   .fk-flip-page-8 .fk-video-page-copy p {
-    font-size: 11px;
+    font-size: 10px;
   }
 
   .fk-flip-page-8 .fk-video-page-card {
-    width: 100%;
-
     max-height: none;
 
     aspect-ratio: 16 / 9;
@@ -6103,5 +6410,1397 @@ button.active {
   .fk-flip-page-8 .fk-story-video {
     border-radius: 16px;
   }
+}
 
+
+
+/* ============================================================
+   FINAL DECLUTTER PASS — PAGE 03 + PAGE 04
+   Goal:
+   - More breathing room
+   - Smaller headings
+   - No horizontal overflow
+   - 2x2 How It Works cards instead of 4 crowded columns
+============================================================ */
+
+/* ============================================================
+   PAGE 03 — FOOD WALK
+============================================================ */
+
+.fk-flip-page-3 .fk-foodwalk-page {
+  padding: 42px 46px 48px !important;
+}
+
+.fk-flip-page-3 .fk-foodwalk-header {
+  max-width: 760px;
+  margin-bottom: 24px;
+}
+
+.fk-flip-page-3 .fk-foodwalk-header h2 {
+  font-size: clamp(42px, 4.4vw, 64px);
+  line-height: .95;
+}
+
+.fk-flip-page-3 .fk-foodwalk-header p {
+  max-width: 650px;
+  margin-top: 14px;
+
+  font-size: 11px;
+  line-height: 1.55;
+}
+
+.fk-flip-page-3 .fk-foodwalk-layout {
+  grid-template-columns:
+    minmax(0, 2.9fr)
+    minmax(190px, .85fr);
+
+  gap: 14px;
+}
+
+.fk-flip-page-3 .fk-foodwalk-route-card,
+.fk-flip-page-3 .fk-foodwalk-discovery {
+  border-radius: 17px;
+}
+
+.fk-flip-page-3 .fk-foodwalk-route-card {
+  padding: 22px 24px;
+}
+
+.fk-flip-page-3 .fk-foodwalk-route-top h3 {
+  font-size: clamp(20px, 1.9vw, 27px);
+}
+
+.fk-flip-page-3 .fk-foodwalk-divider {
+  margin: 20px 0 26px;
+}
+
+.fk-flip-page-3 .fk-foodwalk-node {
+  width: 36px;
+  height: 36px;
+
+  margin-bottom: 12px;
+
+  font-size: 9px;
+}
+
+.fk-flip-page-3 .fk-foodwalk-route::before {
+  top: 17px;
+}
+
+.fk-flip-page-3 .fk-foodwalk-stop > strong {
+  font-size: 9px;
+}
+
+.fk-flip-page-3 .fk-foodwalk-stop > small {
+  min-height: 20px;
+
+  font-size: 6px;
+}
+
+.fk-flip-page-3 .fk-partner-badge {
+  margin-top: 5px;
+
+  padding: 4px 7px;
+
+  font-size: 5.5px;
+}
+
+.fk-flip-page-3 .fk-foodwalk-discovery {
+  padding: 21px 19px;
+}
+
+.fk-flip-page-3 .fk-foodwalk-location-icon {
+  width: 44px;
+  height: 44px;
+
+  margin-bottom: 18px;
+}
+
+.fk-flip-page-3 .fk-foodwalk-discovery h3 {
+  font-size: clamp(23px, 2.2vw, 34px);
+}
+
+.fk-flip-page-3 .fk-foodwalk-discovery > p {
+  margin: 12px 0 18px;
+
+  font-size: 8px;
+}
+
+.fk-flip-page-3 .fk-foodwalk-benefits {
+  gap: 8px;
+}
+
+.fk-flip-page-3 .fk-foodwalk-benefits span {
+  font-size: 7.5px;
+}
+
+.fk-flip-page-3 .fk-foodwalk-action {
+  margin-top: 16px;
+
+  font-size: 7px;
+}
+
+
+/* ============================================================
+   PAGE 04 — HOW FOODKINDL CONNECT WORKS
+============================================================ */
+
+.fk-flip-page-4 .fk-book-page-inner {
+  padding: 42px 46px 46px !important;
+
+  overflow: hidden !important;
+}
+
+.fk-flip-page-4 .fk-section-heading {
+  max-width: 760px;
+  margin-bottom: 24px;
+}
+
+.fk-flip-page-4 .fk-section-heading h2 {
+  font-size: clamp(42px, 4.4vw, 64px);
+  line-height: .95;
+}
+
+.fk-flip-page-4 .fk-section-heading p {
+  max-width: 650px;
+
+  font-size: 10px;
+  line-height: 1.55;
+}
+
+
+/* 2x2 grid instead of 4 squeezed cards */
+
+.fk-flip-page-4 .fk-how-track {
+  width: 100%;
+
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+
+  gap: 14px !important;
+}
+
+.fk-flip-page-4 .fk-how-card {
+  min-width: 0 !important;
+  min-height: 215px !important;
+
+  padding: 17px 18px !important;
+
+  border-radius: 16px !important;
+}
+
+.fk-flip-page-4 .fk-how-number {
+  font-size: 19px;
+}
+
+.fk-flip-page-4 .fk-how-icon {
+  width: 35px;
+  height: 35px;
+}
+
+.fk-flip-page-4 .fk-how-mini-visual {
+  margin: 12px 0 14px;
+
+  padding: 8px;
+
+  min-height: 46px;
+}
+
+.fk-flip-page-4 .fk-how-mini-visual strong {
+  font-size: 7px;
+}
+
+.fk-flip-page-4 .fk-how-mini-visual small,
+.fk-flip-page-4 .fk-how-mini-visual > span {
+  font-size: 5.5px;
+}
+
+.fk-flip-page-4 .fk-how-card h3 {
+  margin: 0 0 7px;
+
+  font-size: 14px;
+  line-height: 1.12;
+}
+
+.fk-flip-page-4 .fk-how-card > p {
+  font-size: 8px;
+  line-height: 1.48;
+}
+
+
+/* Remove arrows between cards: grid itself communicates the sequence */
+
+.fk-flip-page-4 .fk-how-connector {
+  display: none !important;
+}
+
+
+/* Add subtle sequence cue */
+
+.fk-flip-page-4 .fk-how-card::after {
+  content: "";
+
+  position: absolute;
+  left: 18px;
+  right: 18px;
+  bottom: 0;
+
+  height: 2px;
+
+  border-radius: 999px;
+
+  background:
+    linear-gradient(
+      90deg,
+      rgba(255,91,34,.55),
+      rgba(255,91,34,.04)
+    );
+}
+
+
+/* ============================================================
+   TABLET
+============================================================ */
+
+@media (max-width: 1100px) {
+
+  .fk-flip-page-3 .fk-foodwalk-page,
+  .fk-flip-page-4 .fk-book-page-inner {
+    padding: 36px 30px 44px !important;
+  }
+
+  .fk-flip-page-3 .fk-foodwalk-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .fk-flip-page-3 .fk-foodwalk-discovery {
+    display: grid;
+    grid-template-columns: auto 1fr;
+  }
+
+  .fk-flip-page-4 .fk-how-track {
+    grid-template-columns: repeat(2, minmax(0,1fr)) !important;
+  }
+}
+
+
+/* ============================================================
+   MOBILE
+============================================================ */
+
+@media (max-width: 760px) {
+
+  .fk-flip-page-3 .fk-foodwalk-page,
+  .fk-flip-page-4 .fk-book-page-inner {
+    padding: 30px 18px 78px !important;
+
+    overflow-y: auto !important;
+  }
+
+  .fk-flip-page-3 .fk-foodwalk-header h2,
+  .fk-flip-page-4 .fk-section-heading h2 {
+    font-size: clamp(38px, 11vw, 52px);
+  }
+
+  .fk-flip-page-4 .fk-how-track {
+    grid-template-columns: 1fr !important;
+  }
+
+  .fk-flip-page-4 .fk-how-card {
+    min-height: auto !important;
+  }
+}
+
+@media (min-width: 1101px) {
+
+  /* Main flipbook area */
+  .fk-book-stage {
+    min-height: auto !important;
+    height: calc(100vh - 125px) !important;
+    max-height: 720px !important;
+
+    padding-top: 18px !important;
+    padding-bottom: 18px !important;
+  }
+
+  /* Flipbook itself */
+  .fk-book-shell,
+  .fk-book-wrap,
+  .fk-flip-book {
+    height: min(720px, calc(100vh - 150px)) !important;
+    max-height: 720px !important;
+  }
+
+  /* Every page */
+  .fk-book-page,
+  .fk-book-page-inner,
+  .fk-light-page {
+    height: 100% !important;
+    min-height: 0 !important;
+  }
+
+  /* Slightly reduce page padding */
+  .fk-book-page-inner {
+    padding-top: 36px !important;
+    padding-bottom: 36px !important;
+  }
+
+  /* First page */
+  .fk-flip-page-1 .fk-book-page-inner {
+    padding: 34px 42px !important;
+  }
+
+  /* Reduce huge first-page heading */
+  .fk-flip-page-1 h1 {
+    font-size: clamp(56px, 5vw, 82px) !important;
+    line-height: 0.94 !important;
+  }
+
+  /* Reduce first-page mockup slightly */
+  .fk-flip-page-1 .fk-hero-book-preview {
+    max-height: 470px !important;
+  }
+
+  /* Second page */
+  .fk-flip-page-2 .fk-book-page-inner {
+    padding: 30px 38px 34px !important;
+  }
+
+  /* Food Walk */
+  .fk-flip-page-3 .fk-foodwalk-page {
+    padding: 32px 40px 38px !important;
+  }
+
+  /* How it works */
+  .fk-flip-page-4 .fk-book-page-inner {
+    padding: 32px 40px 38px !important;
+  }
+
+  /* Pages 5–10 */
+  .fk-flip-page-5 .fk-book-page-inner,
+  .fk-flip-page-6 .fk-book-page-inner,
+  .fk-flip-page-7 .fk-book-page-inner,
+  .fk-flip-page-8 .fk-book-page-inner,
+  .fk-flip-page-9 .fk-book-page-inner,
+  .fk-flip-page-10 .fk-book-page-inner {
+    padding-top: 32px !important;
+    padding-bottom: 38px !important;
+  }
+}
+
+/* ============================================================
+   FINAL BOOK HEIGHT — SHORTER DESKTOP BOOK
+============================================================ */
+
+@media (min-width: 1101px) {
+
+  /* Outer area containing the book */
+  .fk-book-stage {
+    min-height: 0 !important;
+    height: auto !important;
+
+    padding-top: 18px !important;
+    padding-bottom: 18px !important;
+  }
+
+  /* Main book */
+  .fk-book-shell,
+  .fk-book-wrap {
+    height: 650px !important;
+    max-height: 650px !important;
+    min-height: 650px !important;
+  }
+
+  /* React page flip component */
+  .fk-flip-book {
+    height: 650px !important;
+    max-height: 650px !important;
+  }
+
+  /* Individual pages */
+  .fk-book-page {
+    height: 650px !important;
+    min-height: 650px !important;
+    max-height: 650px !important;
+  }
+
+  .fk-book-page-inner,
+  .fk-light-page {
+    height: 100% !important;
+    min-height: 0 !important;
+    max-height: 100% !important;
+
+    overflow: hidden !important;
+  }
+}
+
+@media (min-width: 1101px) {
+
+  /* Main page padding */
+  .fk-book-page-inner {
+    padding-top: 30px !important;
+    padding-bottom: 30px !important;
+  }
+
+  /* Page 1 */
+  .fk-flip-page-1 .fk-book-page-inner {
+    padding: 28px 34px !important;
+  }
+
+  /* Main hero heading */
+  .fk-flip-page-1 h1 {
+    font-size: clamp(52px, 4.4vw, 72px) !important;
+    line-height: 0.93 !important;
+  }
+
+  /* Hero description */
+  .fk-flip-page-1 p {
+    line-height: 1.5;
+  }
+
+  /* Page 2 */
+  .fk-flip-page-2 .fk-book-page-inner {
+    padding: 26px 34px !important;
+  }
+
+  /* Food Walk */
+  .fk-flip-page-3 .fk-foodwalk-page {
+    padding: 28px 34px 32px !important;
+  }
+
+  /* How it works */
+  .fk-flip-page-4 .fk-book-page-inner {
+    padding: 28px 34px 32px !important;
+  }
+
+  /* Other pages */
+  .fk-flip-page-5 .fk-book-page-inner,
+  .fk-flip-page-6 .fk-book-page-inner,
+  .fk-flip-page-7 .fk-book-page-inner,
+  .fk-flip-page-8 .fk-book-page-inner,
+  .fk-flip-page-9 .fk-book-page-inner,
+  .fk-flip-page-10 .fk-book-page-inner {
+    padding: 28px 34px 32px !important;
+  }
+}
+
+
+
+/* ============================================================
+   FINAL RESPONSIVE BOOK SIZE FIX
+   IMPORTANT:
+   react-pageflip height is now controlled in JSX.
+   These rules size the surrounding shell and page content.
+============================================================ */
+
+.fk-landing-book-shell {
+  width: min(1320px, calc(100% - 28px)) !important;
+  padding: 18px 0 22px !important;
+}
+
+.fk-real-book-wrap {
+  width: 100% !important;
+  min-height: 0 !important;
+
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+
+  padding-right: 46px !important;
+
+  overflow: visible !important;
+}
+
+/* react-pageflip generated container */
+.fk-real-book-wrap .stf__parent,
+.fk-real-book-wrap .stf__wrapper,
+.fk-real-book-wrap .stf__block {
+  min-height: 0 !important;
+  max-height: 650px !important;
+}
+
+/* Every actual page follows the height from HTMLFlipBook */
+.fk-flip-page,
+.fk-flip-page .fk-book-page-inner,
+.fk-flip-page .fk-light-page {
+  min-height: 0 !important;
+  max-height: 100% !important;
+}
+
+/* Let dense pages scroll INSIDE the page instead of increasing book height */
+.fk-flip-page .fk-book-page-inner,
+.fk-flip-page .fk-light-page,
+.fk-flip-page-3 .fk-foodwalk-page {
+  overflow-y: auto !important;
+  overscroll-behavior: contain;
+}
+
+/* Keep desktop page content comfortably inside shorter pages */
+@media (min-width: 1101px) {
+
+  .fk-cinematic-topbar {
+    min-height: 68px !important;
+    padding: 14px 30px !important;
+  }
+
+  .fk-cinematic-brand > img {
+    width: 40px !important;
+    height: 40px !important;
+  }
+
+  .fk-cinematic-hero-layout {
+    min-height: 0 !important;
+    height: calc(100% - 68px) !important;
+
+    padding: 10px 30px 20px !important;
+
+    grid-template-columns:
+      minmax(300px, .78fr)
+      minmax(400px, 1.22fr) !important;
+
+    gap: 24px !important;
+  }
+
+  .fk-cinematic-copy h1 {
+    font-size: clamp(48px, 4.35vw, 70px) !important;
+  }
+
+  .fk-cinematic-description {
+    margin-top: 15px !important;
+    font-size: 12px !important;
+    line-height: 1.5 !important;
+  }
+
+  .fk-cinematic-actions {
+    margin-top: 18px !important;
+  }
+
+  .fk-cinematic-proof-grid {
+    margin-top: 16px !important;
+  }
+
+  .fk-front-book {
+    height: 430px !important;
+    transform: scale(.82) !important;
+    transform-origin: center !important;
+  }
+
+  /* Page 02 */
+  .fk-flip-page-2 .fk-book-page-table {
+    padding: 18px !important;
+  }
+
+  .fk-flip-page-2 .fk-empty-seat-card {
+    min-height: 0 !important;
+    height: calc(100% - 4px) !important;
+    padding: 22px 28px 18px !important;
+  }
+
+  .fk-flip-page-2 .fk-empty-seat-scene {
+    transform: scale(.78) !important;
+    transform-origin: top center !important;
+    margin-bottom: -78px !important;
+  }
+
+  .fk-flip-page-2 .fk-empty-seat-copy h3 {
+    font-size: clamp(28px, 2.6vw, 38px) !important;
+  }
+
+  .fk-flip-page-2 .fk-empty-seat-flow {
+    margin-top: 14px !important;
+    padding-top: 12px !important;
+  }
+
+  /* General */
+  .fk-flip-page-3 .fk-foodwalk-page,
+  .fk-flip-page-4 .fk-book-page-inner,
+  .fk-light-page {
+    padding: 28px 34px 34px !important;
+  }
+
+  .fk-flip-page-3 .fk-foodwalk-header h2,
+  .fk-flip-page-4 .fk-section-heading h2 {
+    font-size: clamp(38px, 3.7vw, 56px) !important;
+  }
+
+  .fk-book-controls {
+    margin-top: 14px !important;
+  }
+}
+
+
+/* ============================================================
+   TABLET — 761px to 1100px
+============================================================ */
+
+@media (min-width: 761px) and (max-width: 1100px) {
+
+  .fk-landing-book-shell {
+    width: calc(100% - 18px) !important;
+    padding: 14px 0 18px !important;
+  }
+
+  .fk-real-book-wrap {
+    padding-right: 30px !important;
+  }
+
+  .fk-real-book-wrap .stf__parent,
+  .fk-real-book-wrap .stf__wrapper,
+  .fk-real-book-wrap .stf__block {
+    max-height: 640px !important;
+  }
+
+  .fk-cinematic-topbar {
+    min-height: 62px !important;
+    padding: 12px 22px !important;
+  }
+
+  .fk-cinematic-hero-layout {
+    min-height: 0 !important;
+    height: calc(100% - 62px) !important;
+
+    padding: 10px 22px 18px !important;
+
+    grid-template-columns:
+      minmax(240px, .82fr)
+      minmax(310px, 1.18fr) !important;
+
+    gap: 18px !important;
+  }
+
+  .fk-cinematic-copy h1 {
+    font-size: clamp(42px, 5vw, 58px) !important;
+  }
+
+  .fk-cinematic-description {
+    font-size: 11px !important;
+  }
+
+  .fk-front-book {
+    height: 390px !important;
+    transform: scale(.74) !important;
+    transform-origin: center !important;
+  }
+
+  .fk-flip-page .fk-book-page-inner,
+  .fk-flip-page .fk-light-page,
+  .fk-flip-page-3 .fk-foodwalk-page {
+    padding: 26px 26px 34px !important;
+  }
+
+  .fk-book-controls {
+    margin-top: 12px !important;
+  }
+}
+
+
+/* ============================================================
+   MOBILE — single portrait page
+============================================================ */
+
+@media (max-width: 760px) {
+
+  .fk-landing-book-shell {
+    width: calc(100% - 10px) !important;
+    padding: 8px 0 14px !important;
+  }
+
+  .fk-real-book-wrap {
+    padding-right: 0 !important;
+    overflow: hidden !important;
+  }
+
+  .fk-real-book-wrap .stf__parent,
+  .fk-real-book-wrap .stf__wrapper,
+  .fk-real-book-wrap .stf__block {
+    width: 100% !important;
+    max-width: 100% !important;
+    max-height: 650px !important;
+  }
+
+  .fk-real-book-wrap::after {
+    display: none !important;
+  }
+
+  .fk-flip-page {
+    border-radius: 16px !important;
+  }
+
+  .fk-flip-page .fk-book-page-inner,
+  .fk-flip-page .fk-light-page,
+  .fk-flip-page-3 .fk-foodwalk-page {
+    padding: 24px 16px 68px !important;
+    overflow-y: auto !important;
+  }
+
+  /* Mobile hero */
+  .fk-cinematic-topbar {
+    min-height: 56px !important;
+    padding: 10px 14px !important;
+  }
+
+  .fk-cinematic-brand > img {
+    width: 34px !important;
+    height: 34px !important;
+  }
+
+  .fk-cinematic-brand strong {
+    font-size: 14px !important;
+  }
+
+  .fk-cinematic-top-cta {
+    min-height: 34px !important;
+    max-width: 116px !important;
+    padding: 0 8px !important;
+    font-size: 7px !important;
+  }
+
+  .fk-cinematic-hero-layout {
+    min-height: 0 !important;
+    height: auto !important;
+
+    padding: 20px 15px 76px !important;
+
+    display: block !important;
+  }
+
+  .fk-cinematic-copy h1 {
+    font-size: clamp(42px, 13vw, 58px) !important;
+  }
+
+  .fk-cinematic-description {
+    margin-top: 14px !important;
+    font-size: 12px !important;
+    line-height: 1.52 !important;
+  }
+
+  .fk-cinematic-actions {
+    margin-top: 17px !important;
+  }
+
+  .fk-cinematic-proof-grid {
+    margin-top: 16px !important;
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Hide decorative physical mini-book on small screens.
+     The actual page-flip book remains the interaction. */
+  .fk-front-book {
+    display: none !important;
+  }
+
+  /* Page 02 */
+  .fk-flip-page-2 .fk-book-page-table {
+    padding: 10px !important;
+  }
+
+  .fk-flip-page-2 .fk-empty-seat-card {
+    min-height: 0 !important;
+    height: auto !important;
+    padding: 18px 14px 72px !important;
+  }
+
+  .fk-empty-seat-scene {
+    width: 290px !important;
+    max-width: 100% !important;
+    height: 275px !important;
+    transform: scale(.84) !important;
+    transform-origin: top center !important;
+    margin-bottom: -38px !important;
+  }
+
+  .fk-empty-seat-copy h3 {
+    font-size: clamp(25px, 8vw, 34px) !important;
+  }
+
+  .fk-empty-seat-flow {
+    grid-template-columns: 1fr 1fr !important;
+  }
+
+  /* Page controls stay below the book, not over content */
+  .fk-book-controls {
+    position: relative !important;
+    bottom: auto !important;
+
+    margin-top: 10px !important;
+    padding: 7px !important;
+  }
+
+  .fk-book-page-dots {
+    gap: 4px !important;
+  }
+
+  .fk-book-page-dots button {
+    width: 27px !important;
+    height: 27px !important;
+  }
+
+  .fk-page-peek-hint {
+    display: none !important;
+  }
+
+  .fk-page-turn-tab-prev,
+  .fk-page-turn-tab-next {
+    bottom: 10px !important;
+    width: 42px !important;
+    height: 42px !important;
+    min-height: 42px !important;
+  }
+}
+
+
+/* Very small phones */
+@media (max-width: 390px) {
+
+  .fk-cinematic-copy h1 {
+    font-size: clamp(38px, 12.5vw, 50px) !important;
+  }
+
+  .fk-book-page-dots button {
+    width: 24px !important;
+    height: 24px !important;
+    font-size: 5.5px !important;
+  }
+
+  .kindli-launcher {
+    width: 54px !important;
+    height: 54px !important;
+  }
+}
+
+
+
+/* ============================================================
+   PAGE 03 + PAGE 04 — FINAL POLISHED SPREAD
+   Cleaner spacing, no clipped cards, stronger hierarchy.
+============================================================ */
+
+/* ------------------------------------------------------------
+   PAGE 03 — FOOD WALK
+------------------------------------------------------------ */
+
+.fk-flip-page-3 .fk-foodwalk-page {
+  padding: 30px 34px 34px !important;
+  overflow: hidden !important;
+}
+
+.fk-flip-page-3 .fk-foodwalk-header {
+  margin-bottom: 18px !important;
+  max-width: 720px !important;
+}
+
+.fk-flip-page-3 .fk-foodwalk-kicker {
+  font-size: 8px !important;
+  letter-spacing: .12em !important;
+}
+
+.fk-flip-page-3 .fk-foodwalk-header h2 {
+  margin-top: 8px !important;
+  font-size: clamp(38px, 3.6vw, 54px) !important;
+  line-height: .95 !important;
+}
+
+.fk-flip-page-3 .fk-foodwalk-header p {
+  max-width: 640px !important;
+  margin-top: 10px !important;
+  font-size: 10px !important;
+  line-height: 1.45 !important;
+}
+
+.fk-flip-page-3 .fk-foodwalk-layout {
+  grid-template-columns: minmax(0, 2.35fr) minmax(205px, .85fr) !important;
+  gap: 12px !important;
+}
+
+.fk-flip-page-3 .fk-foodwalk-route-card,
+.fk-flip-page-3 .fk-foodwalk-discovery {
+  min-height: 0 !important;
+  border-radius: 16px !important;
+}
+
+/* Route card */
+.fk-flip-page-3 .fk-foodwalk-route-card {
+  padding: 18px 20px !important;
+}
+
+.fk-flip-page-3 .fk-foodwalk-route-top {
+  display: grid !important;
+  grid-template-columns: minmax(0,1fr) auto !important;
+  gap: 14px !important;
+  align-items: end !important;
+}
+
+.fk-flip-page-3 .fk-foodwalk-label {
+  margin-bottom: 0 !important;
+  font-size: 7px !important;
+}
+
+.fk-flip-page-3 .fk-foodwalk-route-top h3 {
+  margin-top: 6px !important;
+  font-size: clamp(20px, 1.85vw, 26px) !important;
+  line-height: 1.05 !important;
+  white-space: nowrap !important;
+}
+
+.fk-flip-page-3 .fk-foodwalk-distance {
+  padding: 7px 9px !important;
+  border: 1px solid rgba(255,255,255,.06) !important;
+  border-radius: 11px !important;
+  background: rgba(255,255,255,.018) !important;
+}
+
+.fk-flip-page-3 .fk-foodwalk-distance strong {
+  font-size: 9px !important;
+}
+
+.fk-flip-page-3 .fk-foodwalk-distance small {
+  font-size: 6px !important;
+}
+
+.fk-flip-page-3 .fk-foodwalk-divider {
+  margin: 16px 0 18px !important;
+}
+
+.fk-flip-page-3 .fk-foodwalk-route {
+  gap: 4px !important;
+}
+
+.fk-flip-page-3 .fk-foodwalk-route::before {
+  top: 16px !important;
+  left: 11% !important;
+  right: 11% !important;
+}
+
+.fk-flip-page-3 .fk-foodwalk-node {
+  width: 34px !important;
+  height: 34px !important;
+  margin-bottom: 10px !important;
+  font-size: 8px !important;
+  box-shadow: 0 0 0 5px #090807 !important;
+}
+
+.fk-flip-page-3 .fk-foodwalk-stop > strong {
+  font-size: 8px !important;
+  white-space: normal !important;
+  line-height: 1.2 !important;
+}
+
+.fk-flip-page-3 .fk-foodwalk-stop > small {
+  min-height: 18px !important;
+  margin-top: 4px !important;
+  font-size: 5.5px !important;
+  line-height: 1.25 !important;
+}
+
+.fk-flip-page-3 .fk-partner-badge {
+  margin-top: 5px !important;
+  padding: 4px 6px !important;
+  font-size: 5px !important;
+}
+
+/* Discovery side card */
+.fk-flip-page-3 .fk-foodwalk-discovery {
+  padding: 18px 17px !important;
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+.fk-flip-page-3 .fk-foodwalk-location-icon {
+  width: 40px !important;
+  height: 40px !important;
+  margin-bottom: 14px !important;
+}
+
+.fk-flip-page-3 .fk-foodwalk-discovery h3 {
+  margin-top: 6px !important;
+  font-size: clamp(22px, 2vw, 30px) !important;
+  line-height: 1 !important;
+}
+
+.fk-flip-page-3 .fk-foodwalk-discovery > p {
+  margin: 10px 0 14px !important;
+  font-size: 7px !important;
+  line-height: 1.45 !important;
+}
+
+.fk-flip-page-3 .fk-foodwalk-benefits {
+  gap: 7px !important;
+}
+
+.fk-flip-page-3 .fk-foodwalk-benefits span {
+  font-size: 7px !important;
+}
+
+.fk-flip-page-3 .fk-foodwalk-action {
+  margin-top: auto !important;
+  padding-top: 14px !important;
+  font-size: 6.5px !important;
+}
+
+
+/* ------------------------------------------------------------
+   PAGE 04 — HOW FOODKINDL CONNECT WORKS
+------------------------------------------------------------ */
+
+.fk-flip-page-4 .fk-book-page-inner {
+  padding: 30px 34px 34px !important;
+  overflow: hidden !important;
+}
+
+.fk-flip-page-4 .fk-section-heading {
+  max-width: 760px !important;
+  margin: 0 auto 18px !important;
+}
+
+.fk-flip-page-4 .fk-section-heading .fk-section-kicker {
+  margin-bottom: 7px !important;
+  font-size: 8px !important;
+}
+
+.fk-flip-page-4 .fk-section-heading h2 {
+  margin-top: 0 !important;
+  font-size: clamp(38px, 3.8vw, 56px) !important;
+  line-height: .94 !important;
+}
+
+.fk-flip-page-4 .fk-section-heading p {
+  margin-top: 10px !important;
+  font-size: 9px !important;
+  line-height: 1.45 !important;
+}
+
+/* Force four steps to fit fully within the page */
+.fk-flip-page-4 .fk-how-track {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0,1fr)) !important;
+  grid-template-rows: repeat(2, minmax(0,1fr)) !important;
+  gap: 10px !important;
+  height: calc(100% - 135px) !important;
+  min-height: 0 !important;
+}
+
+.fk-flip-page-4 .fk-how-card {
+  position: relative !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+  height: 100% !important;
+  padding: 13px 14px !important;
+  border-radius: 14px !important;
+  overflow: hidden !important;
+}
+
+.fk-flip-page-4 .fk-how-number {
+  top: 12px !important;
+  right: 13px !important;
+  font-size: 18px !important;
+}
+
+.fk-flip-page-4 .fk-how-icon {
+  width: 32px !important;
+  height: 32px !important;
+  margin-bottom: 9px !important;
+  border-radius: 9px !important;
+}
+
+.fk-flip-page-4 .fk-how-mini-visual {
+  min-height: 38px !important;
+  margin: 0 0 10px !important;
+  padding: 6px 7px !important;
+  gap: 6px !important;
+  border-radius: 9px !important;
+}
+
+.fk-flip-page-4 .fk-mini-avatar {
+  width: 25px !important;
+  height: 25px !important;
+  border-radius: 7px !important;
+  font-size: 7px !important;
+}
+
+.fk-flip-page-4 .fk-how-mini-visual strong {
+  font-size: 6.5px !important;
+}
+
+.fk-flip-page-4 .fk-how-mini-visual small,
+.fk-flip-page-4 .fk-how-mini-visual > span {
+  font-size: 5px !important;
+}
+
+.fk-flip-page-4 .fk-how-card h3 {
+  margin: 0 0 5px !important;
+  font-size: 12px !important;
+  line-height: 1.1 !important;
+}
+
+.fk-flip-page-4 .fk-how-card > p {
+  margin: 0 !important;
+  font-size: 6.8px !important;
+  line-height: 1.42 !important;
+}
+
+.fk-flip-page-4 .fk-how-connector {
+  display: none !important;
+}
+
+/* small sequence accent */
+.fk-flip-page-4 .fk-how-card::after {
+  content: "";
+  position: absolute;
+  left: 14px;
+  right: 14px;
+  bottom: 0;
+  height: 2px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, rgba(255,91,34,.55), rgba(255,91,34,.04));
+}
+
+
+/* ------------------------------------------------------------
+   TABLET
+------------------------------------------------------------ */
+
+@media (min-width: 761px) and (max-width: 1100px) {
+
+  .fk-flip-page-3 .fk-foodwalk-layout {
+    grid-template-columns: 1fr !important;
+  }
+
+  .fk-flip-page-3 .fk-foodwalk-discovery {
+    display: grid !important;
+    grid-template-columns: auto 1fr !important;
+    column-gap: 14px !important;
+    align-items: center !important;
+  }
+
+  .fk-flip-page-3 .fk-foodwalk-location-icon {
+    grid-row: 1 / 6 !important;
+    margin-bottom: 0 !important;
+  }
+
+  .fk-flip-page-3 .fk-foodwalk-benefits {
+    grid-template-columns: repeat(3,auto) !important;
+    gap: 10px !important;
+  }
+
+  .fk-flip-page-4 .fk-how-track {
+    height: calc(100% - 125px) !important;
+  }
+}
+
+
+/* ------------------------------------------------------------
+   MOBILE
+------------------------------------------------------------ */
+
+@media (max-width: 760px) {
+
+  .fk-flip-page-3 .fk-foodwalk-page,
+  .fk-flip-page-4 .fk-book-page-inner {
+    padding: 24px 16px 68px !important;
+    overflow-y: auto !important;
+  }
+
+  .fk-flip-page-3 .fk-foodwalk-header h2,
+  .fk-flip-page-4 .fk-section-heading h2 {
+    font-size: clamp(34px, 10.5vw, 48px) !important;
+  }
+
+  .fk-flip-page-3 .fk-foodwalk-layout {
+    grid-template-columns: 1fr !important;
+  }
+
+  .fk-flip-page-3 .fk-foodwalk-route-top {
+    grid-template-columns: 1fr !important;
+  }
+
+  .fk-flip-page-3 .fk-foodwalk-route-top h3 {
+    white-space: normal !important;
+  }
+
+  .fk-flip-page-3 .fk-foodwalk-route {
+    overflow-x: auto !important;
+    grid-template-columns: repeat(4, minmax(100px,1fr)) !important;
+    padding-bottom: 8px !important;
+  }
+
+  .fk-flip-page-4 .fk-how-track {
+    height: auto !important;
+    grid-template-columns: 1fr !important;
+    grid-template-rows: none !important;
+  }
+
+  .fk-flip-page-4 .fk-how-card {
+    min-height: 150px !important;
+  }
+}
+
+/* ============================================================
+   FOOD WALK — FIX ROUTE TITLE CONGESTION
+============================================================ */
+
+.fk-flip-page-3 .fk-foodwalk-route-top {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: flex-start !important;
+  gap: 10px !important;
+}
+
+
+/* Route name gets full width */
+
+.fk-flip-page-3 .fk-foodwalk-route-top > div:first-child {
+  width: 100% !important;
+}
+
+
+.fk-flip-page-3 .fk-foodwalk-route-top h3 {
+  width: 100% !important;
+
+  margin: 7px 0 0 !important;
+
+  display: flex !important;
+  align-items: center !important;
+
+  gap: 12px !important;
+
+  white-space: nowrap !important;
+
+  font-size: clamp(
+    20px,
+    2.05vw,
+    28px
+  ) !important;
+
+  line-height: 1.05 !important;
+}
+
+
+.fk-flip-page-3
+.fk-foodwalk-route-top h3 span {
+  flex: 0 0 auto;
+
+  color: #ff5b22;
+
+  font-size: .85em;
+}
+
+
+/* Distance becomes a small line below */
+
+.fk-flip-page-3 .fk-foodwalk-distance {
+  width: auto !important;
+
+  display: inline-flex !important;
+  align-items: center !important;
+
+  gap: 7px !important;
+
+  padding: 6px 9px !important;
+
+  border:
+    1px solid
+    rgba(255,255,255,.06) !important;
+
+  border-radius: 999px !important;
+
+  background:
+    rgba(255,255,255,.02) !important;
+}
+
+
+.fk-flip-page-3 .fk-foodwalk-distance > div {
+  display: flex !important;
+  align-items: center !important;
+
+  gap: 6px !important;
+}
+
+
+.fk-flip-page-3 .fk-foodwalk-distance strong {
+  font-size: 8px !important;
+
+  color: #ddd4cf !important;
+}
+
+
+.fk-flip-page-3 .fk-foodwalk-distance small {
+  font-size: 6px !important;
+
+  color: #7d746f !important;
+}
+
+
+.fk-flip-page-3
+.fk-foodwalk-distance small::before {
+  content: "•";
+
+  margin-right: 5px;
+
+  color: #ff5b22;
+}
+
+/* ============================================================
+   FOOD WALK — STACK START / DESTINATION VERTICALLY
+============================================================ */
+
+.fk-flip-page-3 .fk-foodwalk-route-title {
+  margin: 8px 0 0 !important;
+
+  display: grid !important;
+  grid-template-columns: 1fr !important;
+
+  gap: 3px !important;
+
+  align-items: start !important;
+
+  white-space: normal !important;
+}
+
+
+.fk-flip-page-3 .fk-foodwalk-route-start,
+.fk-flip-page-3 .fk-foodwalk-route-end {
+  display: block !important;
+
+  color: #fffaf7 !important;
+
+  font-size: clamp(
+    20px,
+    2vw,
+    27px
+  ) !important;
+
+  font-weight: 850 !important;
+
+  line-height: 1.04 !important;
+
+  letter-spacing: -.035em !important;
+}
+
+
+.fk-flip-page-3 .fk-foodwalk-route-end {
+  color: #f3ece7 !important;
+}
+
+
+.fk-flip-page-3 .fk-foodwalk-route-arrow {
+  display: block !important;
+
+  width: fit-content !important;
+
+  margin: 1px 0 !important;
+
+  color: #ff5b22 !important;
+
+  font-size: 16px !important;
+
+  line-height: 1 !important;
+}
+
+
+/* Distance stays below the route */
+
+.fk-flip-page-3 .fk-foodwalk-distance {
+  margin-top: 8px !important;
+
+  width: fit-content !important;
 }

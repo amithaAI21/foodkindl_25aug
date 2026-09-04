@@ -857,6 +857,155 @@ export default function LandingPage() {
 
   
   /* =========================================================
+     RESPONSIVE FLIPBOOK SIZE
+     The previous version used height={820}, so CSS could not
+     truly shorten react-pageflip. These dimensions resize the
+     actual flipbook component itself.
+  ========================================================= */
+
+  const [
+    bookDimensions,
+    setBookDimensions,
+  ] = useState({
+    width: 600,
+    height: 650,
+  });
+
+
+  useEffect(
+    () => {
+
+      function updateBookDimensions() {
+
+        const viewportWidth =
+          window.innerWidth;
+
+        const viewportHeight =
+          window.innerHeight;
+
+
+        /* MOBILE — one portrait page */
+        if (
+          viewportWidth <= 760
+        ) {
+
+          const width =
+            Math.max(
+              280,
+              Math.min(
+                viewportWidth - 22,
+                430
+              )
+            );
+
+
+          const availableHeight =
+            viewportHeight - 150;
+
+
+          const height =
+            Math.max(
+              500,
+              Math.min(
+                650,
+                availableHeight
+              )
+            );
+
+
+          setBookDimensions({
+            width,
+            height,
+          });
+
+          return;
+        }
+
+
+        /* TABLET — compact spread / portrait fallback */
+        if (
+          viewportWidth <= 1100
+        ) {
+
+          const width =
+            Math.max(
+              360,
+              Math.min(
+                500,
+                (viewportWidth - 72) / 2
+              )
+            );
+
+
+          const height =
+            Math.max(
+              540,
+              Math.min(
+                640,
+                viewportHeight - 145
+              )
+            );
+
+
+          setBookDimensions({
+            width,
+            height,
+          });
+
+          return;
+        }
+
+
+        /* DESKTOP — shorter landscape book */
+        const width =
+          Math.max(
+            500,
+            Math.min(
+              610,
+              (viewportWidth - 150) / 2
+            )
+          );
+
+
+        const height =
+          Math.max(
+            560,
+            Math.min(
+              650,
+              viewportHeight - 155
+            )
+          );
+
+
+        setBookDimensions({
+          width,
+          height,
+        });
+      }
+
+
+      updateBookDimensions();
+
+
+      window.addEventListener(
+        "resize",
+        updateBookDimensions
+      );
+
+
+      return () => {
+
+        window.removeEventListener(
+          "resize",
+          updateBookDimensions
+        );
+      };
+    },
+    []
+  );
+
+
+  /* =========================================================
      LANDING BOOK NAVIGATION — REACT PAGEFLIP
   ========================================================= */
 
@@ -978,15 +1127,16 @@ export default function LandingPage() {
         <div className="fk-real-book-wrap">
 
           <HTMLFlipBook
+            key={`${bookDimensions.width}-${bookDimensions.height}`}
             ref={landingBookRef}
             className="fk-real-flipbook"
-            width={640}
-            height={820}
-            size="stretch"
-            minWidth={300}
-            maxWidth={1320}
-            minHeight={520}
-            maxHeight={940}
+            width={bookDimensions.width}
+            height={bookDimensions.height}
+            size="fixed"
+            minWidth={280}
+            maxWidth={610}
+            minHeight={500}
+            maxHeight={650}
             maxShadowOpacity={0.45}
             showCover={false}
             mobileScrollSupport={true}
@@ -1688,12 +1838,17 @@ export default function LandingPage() {
 
           <FlipPage className="fk-flip-page-3">
 
-            <div className="fk-book-page-inner">
+            <div className="fk-book-page-inner fk-foodwalk-page">
 
-              <div className="fk-section-heading fk-section-heading-left">
+              <div className="fk-light-page-number">
+                03 / 10
+              </div>
 
-                <span className="fk-section-kicker">
-                  A FOODKINDL ORIGINAL EXPERIENCE
+
+              <div className="fk-foodwalk-header">
+
+                <span className="fk-foodwalk-kicker">
+                  ORIGINAL EXPERIENCE
                 </span>
 
 
@@ -1706,46 +1861,70 @@ export default function LandingPage() {
 
 
                 <p>
-                  Choose a starting point and destination.
-                  Discover FoodKindl partner restaurants
-                  along the way and create a multi-stop
-                  food experience with friends.
+                  Pick a start and destination. Discover great food stops
+                  along your route and explore together.
                 </p>
 
               </div>
 
 
-              <div className="fk-food-walk-shell">
+              <div className="fk-foodwalk-layout">
 
-                <div className="fk-food-walk-route">
+                {/* =============================================
+                    ROUTE CARD
+                ============================================== */}
 
-                  <div className="fk-food-walk-route-head">
+                <div className="fk-foodwalk-route-card">
+
+                  <div className="fk-foodwalk-route-top">
 
                     <div>
 
-                      <span>
+                      <span className="fk-foodwalk-label">
                         LIVE ROUTE PREVIEW
                       </span>
 
-                      <strong>
-                        Nagasandra → Indiranagar
-                      </strong>
+
+                                          <h3 className="fk-foodwalk-route-title">
+                      <span className="fk-foodwalk-route-start">
+                        Nagasandra
+                      </span>
+
+                      <span className="fk-foodwalk-route-arrow">
+                        ↓
+                      </span>
+
+                      <span className="fk-foodwalk-route-end">
+                        Indiranagar
+                      </span>
+                    </h3>
 
                     </div>
 
 
-                    <div className="fk-route-distance">
+                    <div className="fk-foodwalk-distance">
 
-                      <Footprints size={16} />
+                      <Footprints size={18} />
 
-                      17.3 km Food Trail
+                      <div>
+                        <strong>
+                          17.3 km
+                        </strong>
+
+                        <small>
+                          4 stops
+                        </small>
+                      </div>
 
                     </div>
 
                   </div>
 
 
-                  <div className="fk-route-line">
+                  <div className="fk-foodwalk-divider" />
+
+
+                  <div className="fk-foodwalk-route">
 
                     {
                       FOOD_WALK_STOPS.map(
@@ -1755,69 +1934,44 @@ export default function LandingPage() {
                         ) => (
 
                           <div
-                            className="fk-route-stop"
-                            key={
-                              stop.name
-                            }
+                            className="fk-foodwalk-stop"
+                            key={stop.name}
                           >
 
                             <div
                               className={
                                 stop.partner
-                                  ? "fk-route-dot partner"
-                                  : "fk-route-dot"
+                                  ? "fk-foodwalk-node partner"
+                                  : "fk-foodwalk-node"
                               }
                             >
-                              {
-                                index + 1
-                              }
+                              {index + 1}
                             </div>
 
 
-                            <div className="fk-route-stop-copy">
-
-                              <span>
-                                {
-                                  stop.type
-                                }
-                              </span>
-
-                              <strong>
-                                {
-                                  stop.name
-                                }
-                              </strong>
-
-                              <small>
-                                {
-                                  stop.detail
-                                }
-                              </small>
-
-
-                              {
-                                stop.partner &&
-                                (
-
-                                  <em>
-
-                                    <Check size={10} />
-
-                                    FoodKindl Partner
-
-                                  </em>
-
-                                )
-                              }
-
-                            </div>
+                            <strong>
+                              {stop.name}
+                            </strong>
 
 
                             {
-                              index <
-                              FOOD_WALK_STOPS.length - 1 &&
+                              stop.partner &&
+                              stop.detail &&
                               (
-                                <div className="fk-route-connector" />
+                                <small>
+                                  {stop.detail}
+                                </small>
+                              )
+                            }
+
+
+                            {
+                              stop.partner &&
+                              (
+                                <span className="fk-partner-badge">
+                                  <Check size={10} />
+                                  FoodKindl Partner
+                                </span>
                               )
                             }
 
@@ -1832,47 +1986,49 @@ export default function LandingPage() {
                 </div>
 
 
-                <div className="fk-food-walk-side">
+                {/* =============================================
+                    DISCOVERY CARD
+                ============================================== */}
 
-                  <div className="fk-food-walk-side-icon">
+                <aside className="fk-foodwalk-discovery">
 
-                    <MapPin size={24} />
-
+                  <div className="fk-foodwalk-location-icon">
+                    <MapPin size={25} />
                   </div>
 
 
-                  <span>
+                  <span className="fk-foodwalk-label">
                     ROUTE-BASED DISCOVERY
                   </span>
 
 
                   <h3>
-                    Find food along the way.
+                    Find food
+                    <br />
+                    along the way.
                   </h3>
 
 
                   <p>
-                    FoodKindl uses restaurant location data
-                    to surface partner places close to your route,
-                    so the journey itself becomes part of the meal.
+                    Discover recommended food stops along your route.
                   </p>
 
 
-                  <div className="fk-food-walk-benefits">
+                  <div className="fk-foodwalk-benefits">
 
                     <span>
                       <Check size={13} />
-                      Partner restaurants first
+                      Partner restaurants
                     </span>
 
                     <span>
                       <Check size={13} />
-                      Choose 2–5 stops
+                      Choose your stops
                     </span>
 
                     <span>
                       <Check size={13} />
-                      Invite your connections
+                      Invite friends
                     </span>
 
                   </div>
@@ -1884,14 +2040,14 @@ export default function LandingPage() {
                         ? "/food-invites"
                         : "/register"
                     }
-                    className="fk-text-link"
+                    className="fk-foodwalk-action"
                   >
                     Build your Food Walk
 
-                    <ArrowRight size={16} />
+                    <ArrowRight size={15} />
                   </Link>
 
-                </div>
+                </aside>
 
               </div>
 
@@ -2422,103 +2578,106 @@ export default function LandingPage() {
 
           <FlipPage className="fk-flip-page-8">
 
-  <div className="fk-book-page-inner fk-light-page fk-video-page">
+            <div className="fk-book-page-inner fk-light-page fk-video-page">
 
-    <div className="fk-light-page-number">
-      08 / 10
-    </div>
-
-
-    <div className="fk-video-page-shell">
-
-      <div className="fk-video-page-copy">
-
-        <span className="fk-section-kicker">
-          HUMAN-CENTRIC FOOD PLATFORM
-        </span>
+              <div className="fk-light-page-number">
+                08 / 10
+              </div>
 
 
-        <h2>
-          Social Dining,{" "}
-          <span>
-            Simplified.
-          </span>
-        </h2>
+              <div className="fk-video-page-shell">
+
+                <div className="fk-video-page-copy">
+
+                  <span className="fk-section-kicker">
+                    HUMAN-CENTRIC FOOD PLATFORM
+                  </span>
 
 
-        <p>
-          Meaningful connections often begin around food:
-          cooking together, sharing a meal and enjoying
-          conversations that can grow into lasting friendships.
-        </p>
+                  <h2>
+                    Social Dining,{" "}
+                    <span>
+                      Simplified.
+                    </span>
+                  </h2>
 
-      </div>
+
+                  <p>
+                    Meaningful connections often begin around food:
+                    cooking together, sharing a meal and enjoying
+                    conversations that can grow into lasting friendships.
+                  </p>
+
+                </div>
 
 
-      <div className="fk-story-video-card fk-video-page-card">
+                <div className="fk-story-video-card fk-video-page-card">
 
-        {storyVideoLoading ? (
+                  {storyVideoLoading ? (
 
-          <div className="fk-story-video-loading">
-            Loading FoodKindl Story...
-          </div>
+                    <div className="fk-story-video-loading">
+                      Loading FoodKindl Story...
+                    </div>
 
-        ) : storyVideo?.video_url ? (
+                  ) : storyVideo?.video_url ? (
 
-          <video
+                    <video
 
-            key={
-              `${storyVideo.id || "video"}-${storyVideo.updated_at || storyVideo.video_url}`
-            }
+                      key={
+                        `${storyVideo.id || "video"}-${storyVideo.updated_at || storyVideo.video_url}`
+                      }
 
-            className="fk-story-video"
+                      className="fk-story-video"
 
-            controls
+                      controls
 
-            playsInline
+                      playsInline
 
-            preload="metadata"
+                      preload="metadata"
 
-            src={storyVideo.video_url}
+                      src={
+                        storyVideo.video_url
+                      }
 
-            poster={
-              storyVideo.poster_url ||
-              undefined
-            }
+                      poster={
+                        storyVideo.poster_url ||
+                        undefined
+                      }
 
-          >
+                    >
 
-            Your browser does not
-            support HTML5 video.
+                      Your browser does not
+                      support HTML5 video.
 
-          </video>
+                    </video>
 
-        ) : (
+                  ) : (
 
-          <div className="fk-story-video-loading">
+                    <div className="fk-story-video-loading">
 
-            <strong>
-              FoodKindl Story
-            </strong>
+                      <strong>
+                        FoodKindl Story
+                      </strong>
 
-            <span>
-              {
-                storyVideoError ||
-                "Video is currently unavailable."
-              }
-            </span>
+                      <span>
+                        {
+                          storyVideoError ||
+                          "Video is currently unavailable."
+                        }
+                      </span>
 
-          </div>
+                    </div>
 
-        )}
+                  )}
 
-      </div>
+                </div>
 
-    </div>
+              </div>
 
-  </div>
+            </div>
 
-</FlipPage>
+          </FlipPage>
+
 
           {/* =====================================================
               PAGE 09 — TRUST & SAFETY
@@ -2637,9 +2796,9 @@ export default function LandingPage() {
                   </div>
 
 
-                  <span className="fk-coming-badge">
+                  {/* <span className="fk-coming-badge">
                     Coming Soon
-                  </span>
+                  </span> */}
 
 
                   <span className="fk-safety-icon sos">
@@ -2797,7 +2956,7 @@ export default function LandingPage() {
 
         <div className="fk-book-controls">
 
-          {/* <button
+          <button
             type="button"
             className="fk-book-nav-button"
             onClick={() =>
@@ -2808,7 +2967,7 @@ export default function LandingPage() {
             }
           >
             ← Previous page
-          </button> */}
+          </button>
 
 
           <div className="fk-book-page-dots">
@@ -2849,7 +3008,7 @@ export default function LandingPage() {
           </div>
 
 
-          {/* <button
+          <button
             type="button"
             className="fk-book-nav-button"
             onClick={() =>
@@ -2861,7 +3020,7 @@ export default function LandingPage() {
             }
           >
             Next page →
-          </button> */}
+          </button>
 
         </div>
 
