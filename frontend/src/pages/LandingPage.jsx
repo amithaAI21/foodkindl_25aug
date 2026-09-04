@@ -1,6 +1,5 @@
 import {
   ArrowRight,
-  CalendarDays,
   Check,
   ChefHat,
   Facebook,
@@ -14,7 +13,6 @@ import {
   Send,
   ShieldCheck,
   Sparkles,
-  Star,
   UserCheck,
   Users,
   Utensils,
@@ -41,93 +39,6 @@ import "../styles/landing_page_unique.css";
 /* ============================================================
    HERO EXPERIENCES
 ============================================================ */
-
-const HERO_EXPERIENCES = [
-  {
-    id: "cook",
-    label: "Cook Together",
-    icon: ChefHat,
-
-    member: {
-      name: "Lakshmi Nair",
-      initials: "LN",
-      locality: "Indiranagar",
-      distance: "2.3 km away",
-      image: "/images/homepage1.jpg",
-    },
-
-    title: "Kerala Sunday Lunch",
-
-    description:
-      "Looking for a few food lovers to cook a Kerala lunch together this Sunday.",
-
-    tags: [
-      "Kerala",
-      "Home Cooking",
-      "Weekend",
-    ],
-
-    meta:
-      "Sunday · 12:30 PM",
-  },
-
-  {
-    id: "dine",
-    label: "Dine Out",
-    icon: Utensils,
-
-    member: {
-      name: "Arjun Menon",
-      initials: "AM",
-      locality: "Rajajinagar",
-      distance: "3.1 km away",
-      image: "/images/food2.webp",
-    },
-
-    title: "South Indian Dinner",
-
-    description:
-      "Meet nearby FoodKindl members for dinner at a FoodKindl partner restaurant.",
-
-    tags: [
-      "South Indian",
-      "Restaurant",
-      "FoodKindl Partner",
-    ],
-
-    meta:
-      "Friday · 8:00 PM",
-  },
-
-  {
-    id: "walk",
-    label: "Food Walk",
-    icon: Footprints,
-
-    member: {
-      name: "Meera Joseph",
-      initials: "MJ",
-      locality: "Yeshwanthpur",
-      distance: "4.0 km away",
-      image: "/images/food11.webp",
-    },
-
-    title: "Bengaluru Food Walk",
-
-    description:
-      "Discover partner restaurants along a route and build a multi-stop food experience.",
-
-    tags: [
-      "Street Food",
-      "3 Stops",
-      "Food Walk",
-    ],
-
-    meta:
-      "Yeshwanthpur → Rajajinagar",
-  },
-];
-
 
 /* ============================================================
    HOW IT WORKS
@@ -278,6 +189,79 @@ export default function LandingPage() {
 
   const [kindliOpen, setKindliOpen] =
     useState(false);
+
+
+  const [
+    showKindliLauncher,
+    setShowKindliLauncher,
+  ] = useState(false);
+
+
+  /*
+    PERFORMANCE:
+    Kindli is fixed to the viewport, but it is not needed for the
+    first paint. Reveal it after the browser becomes idle.
+  */
+  useEffect(
+    () => {
+
+      let idleHandle = null;
+      let timeoutHandle = null;
+
+
+      const showKindli = () => {
+        setShowKindliLauncher(
+          true
+        );
+      };
+
+
+      if (
+        "requestIdleCallback" in window
+      ) {
+
+        idleHandle =
+          window.requestIdleCallback(
+            showKindli,
+            {
+              timeout: 2500,
+            }
+          );
+
+      } else {
+
+        timeoutHandle =
+          window.setTimeout(
+            showKindli,
+            1800
+          );
+      }
+
+
+      return () => {
+
+        if (
+          idleHandle !== null &&
+          "cancelIdleCallback" in window
+        ) {
+          window.cancelIdleCallback(
+            idleHandle
+          );
+        }
+
+
+        if (
+          timeoutHandle !== null
+        ) {
+          window.clearTimeout(
+            timeoutHandle
+          );
+        }
+      };
+
+    },
+    []
+  );
 
   const [kindliMessages, setKindliMessages] =
     useState([
@@ -474,11 +458,6 @@ export default function LandingPage() {
 
     } catch (error) {
 
-      console.warn(
-        "Kindli AI service unavailable:",
-        error
-      );
-
       setKindliMessages(
         current => [
           ...current,
@@ -577,62 +556,6 @@ export default function LandingPage() {
 
 
   /* =========================================================
-     HERO ROTATION
-  ========================================================= */
-
-  const [
-    activeHeroExperience,
-    setActiveHeroExperience,
-  ] = useState(0);
-
-
-  useEffect(
-    () => {
-
-      const interval =
-        window.setInterval(
-          () => {
-
-            if (
-              document.hidden
-            ) {
-              return;
-            }
-
-            setActiveHeroExperience(
-              current =>
-                (
-                  current + 1
-                ) %
-                HERO_EXPERIENCES.length
-            );
-
-          },
-          4500
-        );
-
-
-      return () =>
-        window.clearInterval(
-          interval
-        );
-
-    },
-    []
-  );
-
-
-  const heroExperience =
-    HERO_EXPERIENCES[
-      activeHeroExperience
-    ];
-
-
-  const HeroExperienceIcon =
-    heroExperience.icon;
-
-
-  /* =========================================================
      HOMEPAGE VIDEO — LOADED FROM DJANGO / NETLIFY BLOB
   ========================================================= */
 
@@ -700,7 +623,7 @@ export default function LandingPage() {
           },
           {
             rootMargin:
-              "500px 0px",
+              "250px 0px",
             threshold:
               0.01,
           }
@@ -764,19 +687,13 @@ export default function LandingPage() {
             `${backend}/api/website/homepage-video/`;
 
 
-          console.log(
-            "FoodKindl homepage video endpoint:",
-            endpoint
-          );
-
-
           // ====================================================
           // FETCH
           // ====================================================
 
           const response =
             await fetch(
-              `${endpoint}?t=${Date.now()}`,
+              endpoint,
               {
                 method: "GET",
 
@@ -786,15 +703,9 @@ export default function LandingPage() {
                 },
 
                 cache:
-                  "no-store",
+                  "force-cache",
               }
             );
-
-
-          console.log(
-            "Homepage video HTTP status:",
-            response.status
-          );
 
 
           if (!response.ok) {
@@ -819,12 +730,6 @@ export default function LandingPage() {
             await response.json();
 
 
-          console.log(
-            "Homepage video API data:",
-            data
-          );
-
-
           if (cancelled) {
             return;
           }
@@ -844,12 +749,6 @@ export default function LandingPage() {
               String(
                 data.video_url
               ).trim();
-
-
-            console.log(
-              "Homepage video URL:",
-              cleanVideoUrl
-            );
 
 
             setStoryVideo({
@@ -884,11 +783,6 @@ export default function LandingPage() {
             );
 
           } else {
-
-            console.warn(
-              "Homepage video unavailable from API:",
-              data
-            );
 
 
             setStoryVideo(
@@ -969,9 +863,9 @@ export default function LandingPage() {
         id="connect"
       >
 
-        <div className="fk-hero-glow fk-hero-glow-one" />
+        <div className="fk-hero-glow fk-hero-glow-one" aria-hidden="true" />
 
-        <div className="fk-hero-glow fk-hero-glow-two" />
+        <div className="fk-hero-glow fk-hero-glow-two" aria-hidden="true" />
 
 
         <div className="fk-hero-inner">
@@ -1973,100 +1867,28 @@ export default function LandingPage() {
           ) : storyVideo?.video_url ? (
 
             <video
-
               key={
                 `${storyVideo.id || "video"}-${storyVideo.updated_at || storyVideo.video_url}`
               }
-
               className="fk-story-video"
-
               controls
-
               playsInline
-
               preload="none"
-
               src={
                 storyVideo.video_url
               }
-
               poster={
                 storyVideo.poster_url ||
                 undefined
               }
-
-              onLoadStart={() => {
-
-                console.log(
-                  "Homepage video loading:",
-                  storyVideo.video_url
+              onError={() => {
+                setStoryVideoError(
+                  "Video could not be played."
                 );
-
               }}
-
-              onLoadedMetadata={
-                event => {
-
-                  console.log(
-                    "Homepage video metadata loaded:",
-                    {
-                      url:
-                        storyVideo.video_url,
-
-                      duration:
-                        event.currentTarget
-                          .duration,
-
-                      width:
-                        event.currentTarget
-                          .videoWidth,
-
-                      height:
-                        event.currentTarget
-                          .videoHeight,
-                    }
-                  );
-
-                }
-              }
-
-              onCanPlay={() => {
-
-                console.log(
-                  "Homepage video ready to play."
-                );
-
-              }}
-
-              onError={
-                event => {
-
-                  const mediaError =
-                    event.currentTarget.error;
-
-
-                  console.error(
-                    "Homepage video browser error:",
-                    {
-                      url:
-                        storyVideo.video_url,
-
-                      code:
-                        mediaError?.code,
-
-                      message:
-                        mediaError?.message,
-                    }
-                  );
-
-                }
-              }
-
             >
-
               Your browser does not
               support HTML5 video.
-
             </video>
 
           ) : (
@@ -2461,7 +2283,10 @@ export default function LandingPage() {
           KINDLI — GLOBAL LANDING PAGE AI ASSISTANT
       ====================================================== */}
 
-      <div className="kindli-global">
+      {
+        showKindliLauncher &&
+        (
+          <div className="kindli-global">
 
         {
           !kindliOpen &&
@@ -2484,7 +2309,7 @@ export default function LandingPage() {
                 decoding="async"
                 width="74"
                 height="74"
-              />
+            />
 
               <span className="kindli-launcher-online" />
 
@@ -2515,6 +2340,7 @@ export default function LandingPage() {
                   <img
                     src="/images/kindliicon.webp"
                     alt="Kindli"
+                    loading="lazy"
                     decoding="async"
                     width="42"
                     height="42"
@@ -2691,7 +2517,9 @@ export default function LandingPage() {
           )
         }
 
-      </div>
+          </div>
+        )
+      }
 
 
     </main>

@@ -296,252 +296,6 @@
 }
 
 
-/* HERO DEMO */
-
-.fk-hero-demo {
-  width: 100%;
-  max-width: 490px;
-  justify-self: end;
-  padding: 22px;
-  border: 1px solid var(--fk-line-strong);
-  border-radius: 26px;
-  background:
-    linear-gradient(
-      145deg,
-      rgba(29, 13, 8, 0.97),
-      rgba(9, 8, 8, 0.98)
-    );
-  box-shadow:
-    0 34px 80px rgba(0, 0, 0, 0.58),
-    0 0 50px rgba(255, 73, 17, 0.07);
-}
-
-.fk-demo-top,
-.fk-demo-meta,
-.fk-profile-preview {
-  display: flex;
-  align-items: center;
-}
-
-.fk-demo-top {
-  justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 17px;
-}
-
-.fk-live-label,
-.fk-distance-chip,
-.fk-verified-pill {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.fk-live-label {
-  color: #ff794b;
-  font-size: 9px;
-  font-weight: 800;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-}
-
-.fk-live-dot {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: var(--fk-orange);
-  box-shadow:
-    0 0 0 5px rgba(255, 90, 31, 0.10);
-}
-
-.fk-distance-chip {
-  color: #8d8784;
-  font-size: 9px;
-}
-
-.fk-demo-tabs {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 7px;
-  margin-bottom: 18px;
-}
-
-.fk-demo-tabs button {
-  min-height: 38px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  border: 1px solid rgba(255, 255, 255, 0.07);
-  border-radius: 11px;
-  background: rgba(255, 255, 255, 0.02);
-  color: #817b78;
-  font-size: 9px;
-  font-weight: 700;
-  cursor: pointer;
-}
-
-.fk-demo-tabs button.active {
-  border-color: rgba(255, 93, 31, 0.42);
-  background: rgba(255, 93, 31, 0.08);
-  color: #ff7c4d;
-}
-
-.fk-profile-preview {
-  gap: 10px;
-  padding: 0 0 16px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-}
-
-.fk-profile-avatar {
-  width: 50px;
-  height: 50px;
-  overflow: hidden;
-  border-radius: 14px;
-  background: #2b1710;
-}
-
-.fk-profile-avatar img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.fk-profile-avatar span {
-  display: grid;
-  place-items: center;
-  width: 100%;
-  height: 100%;
-  color: #ff7a4b;
-  font-weight: 800;
-}
-
-.fk-profile-copy {
-  flex: 1;
-}
-
-.fk-profile-copy strong {
-  display: block;
-  color: #fff;
-  font-size: 13px;
-}
-
-.fk-profile-copy span {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  margin-top: 4px;
-  color: #807a77;
-  font-size: 9px;
-}
-
-.fk-profile-copy em {
-  font-style: normal;
-}
-
-.fk-verified-pill {
-  padding: 5px 8px;
-  border: 1px solid rgba(58, 210, 140, 0.16);
-  border-radius: 999px;
-  background: rgba(58, 210, 140, 0.06);
-  color: var(--fk-green);
-  font-size: 8px;
-  font-weight: 800;
-}
-
-.fk-experience-preview {
-  display: grid;
-  grid-template-columns: auto 1fr;
-  gap: 11px;
-  padding: 17px 0 10px;
-}
-
-.fk-experience-icon {
-  display: grid;
-  place-items: center;
-  width: 43px;
-  height: 43px;
-  border: 1px solid rgba(255, 96, 31, 0.28);
-  border-radius: 13px;
-  background: rgba(255, 96, 31, 0.07);
-  color: #ff7040;
-}
-
-.fk-demo-eyebrow {
-  color: #ff7040;
-  font-size: 8px;
-  font-weight: 800;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-}
-
-.fk-experience-preview h3 {
-  margin: 3px 0 5px;
-  color: #fff;
-  font-size: 19px;
-}
-
-.fk-experience-preview p {
-  margin: 0;
-  color: #8e8783;
-  font-size: 10px;
-  line-height: 1.55;
-}
-
-.fk-cuisine-chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  margin: 5px 0 15px;
-}
-
-.fk-cuisine-chips span {
-  padding: 5px 8px;
-  border: 1px solid rgba(255, 255, 255, 0.07);
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.025);
-  color: #bbb3af;
-  font-size: 8px;
-  font-weight: 700;
-}
-
-.fk-demo-meta {
-  justify-content: space-between;
-  gap: 10px;
-  margin-bottom: 14px;
-  color: #938b87;
-  font-size: 9px;
-}
-
-.fk-demo-meta > span {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.fk-rating {
-  color: #ffc052;
-}
-
-.fk-send-invite {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  width: 100%;
-  min-height: 43px;
-  border-radius: 11px;
-  background:
-    linear-gradient(
-      135deg,
-      var(--fk-orange),
-      var(--fk-orange-2)
-    );
-  color: white;
-  font-size: 10px;
-  font-weight: 800;
-}
-
 
 /* ==========================================================
    FOOD WALK
@@ -1741,6 +1495,7 @@
 }
 
 
+
 .kindli-global {
   position: fixed;
   right: 24px;
@@ -2061,511 +1816,6 @@
     width:auto;
     height:min(72vh,610px);
     border-radius:20px;
-  }
-}
-
-/* ============================================================
-   READABILITY AND CONTRAST IMPROVEMENTS
-============================================================ */
-
-.fk-landing {
-  --fk-text-primary: #ffffff;
-  --fk-text-secondary: #d8d8d8;
-  --fk-text-muted: #b8b8b8;
-  --fk-text-soft: #a5a5a5;
-}
-
-
-/* Card descriptions */
-
-.fk-landing article p,
-.fk-how-card p,
-.fk-activity-card p,
-.fk-ecosystem-card p,
-.fk-safety-grid article p,
-.fk-experience-preview p {
-  color: var(--fk-text-secondary);
-  font-size: 0.96rem;
-  line-height: 1.65;
-}
-
-
-/* Location and distance */
-
-.fk-profile-copy span,
-.fk-activity-location,
-.fk-distance-chip,
-.fk-route-stop-copy small,
-.fk-demo-meta,
-.fk-route-distance {
-  color: var(--fk-text-muted);
-  font-size: 0.88rem;
-  line-height: 1.45;
-}
-
-
-/* Food tags */
-
-.fk-cuisine-chips span,
-.fk-activity-type,
-.fk-mini-visual > span,
-.fk-verified-pill {
-  color: #f4f4f4;
-  font-size: 0.78rem;
-  font-weight: 600;
-}
-
-
-/* Small labels and supporting information */
-
-.fk-section-kicker,
-.fk-demo-eyebrow,
-.fk-safety-grid article small,
-.fk-ecosystem-content small,
-.fk-live-label,
-.fk-hero-proof small {
-  color: #c8c8c8;
-  font-size: 0.76rem;
-  font-weight: 600;
-  letter-spacing: 0.07em;
-}
-
-
-/* People joining information */
-
-.fk-activity-footer,
-.fk-activity-footer strong,
-.fk-avatar-stack + strong,
-.fk-people-joining,
-.fk-joining-count {
-  color: #dcdcdc;
-  font-size: 0.86rem;
-  font-weight: 600;
-}
-
-
-/* Main section descriptions */
-
-.fk-section-heading p,
-.fk-safety-description,
-.fk-story-copy p,
-.fk-hero-description {
-  color: #d0d0d0;
-  font-size: 1rem;
-  line-height: 1.7;
-}
-
-
-/* Footer readability */
-
-.fk-footer p,
-.fk-footer a,
-.fk-footer-bottom p {
-  color: #bdbdbd;
-  font-size: 0.88rem;
-  line-height: 1.55;
-}
-
-
-/* Mobile readability */
-
-@media (max-width: 768px) {
-  .fk-landing article p,
-  .fk-section-heading p,
-  .fk-story-copy p,
-  .fk-safety-description {
-    font-size: 0.95rem;
-    line-height: 1.6;
-  }
-
-  .fk-profile-copy span,
-  .fk-activity-location,
-  .fk-distance-chip,
-  .fk-demo-meta {
-    font-size: 0.84rem;
-  }
-
-  .fk-cuisine-chips span,
-  .fk-section-kicker,
-  .fk-demo-eyebrow {
-    font-size: 0.75rem;
-  }
-}
-
-
-.fk-empty-seat-card {
-  padding: 24px;
-
-  border-color:
-    rgba(255, 104, 41, 0.38);
-
-  background:
-    radial-gradient(
-      circle at 50% 38%,
-      rgba(255, 92, 31, 0.12),
-      transparent 31%
-    ),
-    radial-gradient(
-      circle at 82% 8%,
-      rgba(255, 147, 78, 0.04),
-      transparent 24%
-    ),
-    linear-gradient(
-      145deg,
-      rgba(29, 13, 8, 0.99),
-      rgba(7, 7, 7, 1)
-    );
-
-  box-shadow:
-    0 44px 110px rgba(0, 0, 0, 0.62),
-    0 0 90px rgba(255, 73, 17, 0.06);
-}
-
-
-/* ------------------------------------------------------------
-   SMALL PROMISE LINE
------------------------------------------------------------- */
-
-.fk-empty-seat-promise {
-  position: relative;
-  z-index: 3;
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  gap: 7px;
-
-  margin-top: 12px;
-  margin-bottom: -2px;
-
-  color:
-    rgba(255, 255, 255, 0.48);
-
-  font-size: 8.5px;
-  font-weight: 650;
-}
-
-.fk-empty-seat-promise-dot {
-  width: 6px;
-  height: 6px;
-
-  border-radius: 50%;
-
-  background: #ff7841;
-
-  box-shadow:
-    0 0 0 5px
-    rgba(255, 106, 42, 0.06);
-}
-
-
-/* ------------------------------------------------------------
-   SCENE ENHANCEMENT
------------------------------------------------------------- */
-
-.fk-empty-seat-scene {
-  margin-top: 0;
-}
-
-.fk-empty-seat-scene::after {
-  content: "";
-
-  position: absolute;
-
-  left: 50%;
-  top: 52%;
-
-  width: 290px;
-  height: 290px;
-
-  transform:
-    translate(-50%, -50%);
-
-  border-radius: 50%;
-
-  background:
-    radial-gradient(
-      circle,
-      transparent 0 62%,
-      rgba(255, 106, 42, 0.045) 63% 64%,
-      transparent 65%
-    );
-
-  pointer-events: none;
-}
-
-.fk-empty-seat-table {
-  width: 214px;
-  height: 214px;
-
-  background:
-    radial-gradient(
-      circle at 42% 30%,
-      rgba(255, 255, 255, 0.055),
-      transparent 34%
-    ),
-    radial-gradient(
-      circle at 52% 62%,
-      rgba(255, 104, 41, 0.06),
-      transparent 42%
-    ),
-    linear-gradient(
-      145deg,
-      #2b160f,
-      #120906
-    );
-}
-
-
-/* ------------------------------------------------------------
-   CENTER MARK
------------------------------------------------------------- */
-
-.fk-empty-seat-center span {
-  margin-top: 1px;
-
-  color: #ff956d;
-
-  font-size: 6.7px;
-
-  letter-spacing: 0.12em;
-}
-
-.fk-empty-seat-center::after {
-  content: "Food makes the first move.";
-
-  position: absolute;
-
-  top: calc(100% + 14px);
-
-  width: 170px;
-
-  color:
-    rgba(255, 255, 255, 0.32);
-
-  font-size: 7px;
-  font-weight: 600;
-
-  text-align: center;
-}
-
-
-/* ------------------------------------------------------------
-   SEAT LABELS
------------------------------------------------------------- */
-
-.fk-seat:not(.fk-seat-yours) {
-  width: 58px;
-  height: 58px;
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-direction: column;
-
-  gap: 4px;
-}
-
-.fk-seat:not(.fk-seat-yours) span {
-  color:
-    rgba(255, 255, 255, 0.40);
-
-  font-size: 6.5px;
-  font-weight: 750;
-
-  letter-spacing: 0.04em;
-}
-
-.fk-seat-yours {
-  width: 94px;
-  height: 70px;
-
-  border-color:
-    rgba(255, 105, 42, 0.58);
-
-  background:
-    linear-gradient(
-      145deg,
-      rgba(255, 104, 40, 0.14),
-      rgba(26, 12, 8, 0.99)
-    );
-
-  box-shadow:
-    0 18px 40px rgba(0, 0, 0, 0.34),
-    0 0 34px rgba(255, 92, 31, 0.13);
-}
-
-.fk-seat-yours svg {
-  filter:
-    drop-shadow(
-      0 0 8px
-      rgba(255, 104, 41, 0.30)
-    );
-}
-
-.fk-seat-yours small {
-  color: #ff9a73;
-}
-
-
-/* ------------------------------------------------------------
-   COPY
------------------------------------------------------------- */
-
-.fk-empty-seat-copy > span {
-  padding: 6px 9px;
-
-  color: #ff895c;
-
-  background:
-    rgba(255, 106, 42, 0.055);
-}
-
-.fk-empty-seat-copy h3 {
-  max-width: 410px;
-
-  margin-left: auto;
-  margin-right: auto;
-
-  font-size: 26px;
-
-  line-height: 1.12;
-}
-
-.fk-empty-seat-copy h3::first-line {
-  color: #ffffff;
-}
-
-.fk-empty-seat-copy p {
-  max-width: 430px;
-
-  font-size: 11px;
-
-  line-height: 1.65;
-}
-
-
-/* ------------------------------------------------------------
-   FLOW — CLEANER PILL STEPS
------------------------------------------------------------- */
-
-.fk-empty-seat-flow {
-  gap: 7px;
-}
-
-.fk-empty-seat-flow > div {
-  min-height: 30px;
-
-  padding: 6px 8px;
-
-  border:
-    1px solid
-    rgba(255, 255, 255, 0.055);
-
-  background:
-    rgba(255, 255, 255, 0.018);
-}
-
-.fk-empty-seat-flow > div:hover {
-  border-color:
-    rgba(255, 105, 42, 0.15);
-}
-
-.fk-empty-seat-flow i {
-  width: 12px;
-}
-
-
-/* ------------------------------------------------------------
-   FOOTER / TRUST
------------------------------------------------------------- */
-
-.fk-empty-seat-footer-note {
-  color:
-    rgba(255, 255, 255, 0.42);
-
-  font-size: 8.5px;
-}
-
-.fk-empty-seat-trust {
-  position: relative;
-  z-index: 3;
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  gap: 6px;
-
-  margin-top: 10px;
-
-  padding-top: 11px;
-
-  border-top:
-    1px solid
-    rgba(255, 255, 255, 0.045);
-
-  color:
-    rgba(255, 255, 255, 0.33);
-
-  font-size: 7.8px;
-}
-
-.fk-empty-seat-trust svg {
-  color: #6fd99d;
-}
-
-
-/* ------------------------------------------------------------
-   SUBTLE HOVER — WHOLE CARD
------------------------------------------------------------- */
-
-.fk-empty-seat-card {
-  transition:
-    transform 260ms ease,
-    border-color 260ms ease,
-    box-shadow 260ms ease;
-}
-
-.fk-empty-seat-card:hover {
-  transform:
-    translateY(-3px);
-
-  border-color:
-    rgba(255, 111, 46, 0.46);
-
-  box-shadow:
-    0 52px 120px rgba(0, 0, 0, 0.66),
-    0 0 100px rgba(255, 73, 17, 0.075);
-}
-
-
-/* ------------------------------------------------------------
-   MOBILE
------------------------------------------------------------- */
-
-@media (max-width: 480px) {
-
-  .fk-empty-seat-card {
-    padding: 18px;
-  }
-
-  .fk-empty-seat-promise {
-    justify-content: flex-start;
-  }
-
-  .fk-empty-seat-table {
-    width: 180px;
-    height: 180px;
-  }
-
-  .fk-empty-seat-copy h3 {
-    font-size: 22px;
-  }
-
-  .fk-empty-seat-trust {
-    justify-content: flex-start;
   }
 }
 
@@ -3830,6 +3080,402 @@ html[data-page-hidden="true"] .fk-seat-yours {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+
+
+/* ============================================================
+   LIGHTHOUSE PERFORMANCE PASS V2
+   Focus: FCP/LCP, CLS, image decoding, lower paint cost
+============================================================ */
+
+/* 1. Stabilize initial hero height to reduce layout movement */
+.fk-hero {
+  min-height: min(760px, 100svh);
+  contain: layout paint;
+}
+
+/* 2. Reserve the primary visual column */
+.fk-empty-seat-card {
+  min-height: 610px;
+}
+
+/* 3. Reduce costly blur/shadow work further */
+.fk-hero-glow {
+  filter: blur(34px) !important;
+  opacity: 0.055 !important;
+}
+
+.fk-empty-seat-card,
+.fk-hero-demo {
+  box-shadow:
+    0 14px 32px rgba(0, 0, 0, 0.32),
+    0 0 18px rgba(255, 73, 17, 0.025) !important;
+}
+
+.fk-empty-seat-card:hover {
+  box-shadow:
+    0 18px 36px rgba(0, 0, 0, 0.36),
+    0 0 20px rgba(255, 73, 17, 0.03) !important;
+}
+
+/* 4. Disable non-essential expensive visual effects on first paint */
+.fk-empty-seat-card::after {
+  filter: none !important;
+  opacity: 0.28 !important;
+}
+
+.fk-empty-seat-glow {
+  filter: none !important;
+  opacity: 0.72 !important;
+}
+
+/* 5. Ensure image boxes never cause CLS */
+img {
+  max-width: 100%;
+}
+
+.fk-profile-avatar {
+  width: 50px;
+  height: 50px;
+  flex: 0 0 50px;
+  aspect-ratio: 1 / 1;
+}
+
+.fk-profile-avatar img,
+.fk-footer-brand img,
+.kindli-launcher img,
+.kindli-chat-brand > img,
+.kindli-chat-message > img {
+  display: block;
+}
+
+/* 6. Stable card media sizes */
+.fk-ecosystem-card {
+  contain: layout paint;
+  content-visibility: auto;
+  contain-intrinsic-size: 1px 390px;
+}
+
+.fk-ecosystem-card > img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* 7. Keep video completely out of initial rendering cost */
+.fk-story-video-card {
+  contain: strict;
+  aspect-ratio: 16 / 9;
+  min-height: 0;
+}
+
+.fk-story-video,
+.fk-story-video-loading {
+  width: 100%;
+  height: 100%;
+}
+
+/* 8. Lower-page sections: skip rendering until near viewport */
+.fk-food-walk-section,
+#how-it-works,
+.fk-activity-section,
+.fk-ecosystem-section,
+.fk-story-section,
+.fk-safety-section,
+.fk-final-cta,
+.fk-footer {
+  content-visibility: auto;
+  contain: layout paint style;
+}
+
+/* 9. Prevent CLS from fixed assistant */
+.kindli-global {
+  contain: layout paint;
+}
+
+.kindli-launcher {
+  width: 68px !important;
+  height: 68px !important;
+}
+
+.kindli-launcher img {
+  width: 68px !important;
+  height: 68px !important;
+}
+
+/* 10. Make initial paint cheaper on mobile */
+@media (max-width: 760px) {
+
+  .fk-hero {
+    min-height: auto !important;
+    contain: layout paint;
+  }
+
+  .fk-hero-inner {
+    gap: 24px !important;
+  }
+
+  .fk-empty-seat-card {
+    min-height: 0 !important;
+  }
+
+  .fk-hero-glow {
+    display: none !important;
+  }
+
+  .fk-empty-seat-card::after,
+  .fk-empty-seat-glow {
+    display: none !important;
+  }
+
+  .fk-empty-seat-scene::before,
+  .fk-seat-pulse,
+  .fk-empty-seat-center svg,
+  .fk-seat-yours,
+  .kindli-launcher {
+    animation: none !important;
+  }
+
+  .kindli-launcher {
+    width: 56px !important;
+    height: 56px !important;
+  }
+
+  .kindli-launcher img {
+    width: 56px !important;
+    height: 56px !important;
+  }
+}
+
+/* 11. Stop transitions/animations when page hidden */
+html[data-page-hidden="true"] *,
+html[data-page-hidden="true"] *::before,
+html[data-page-hidden="true"] *::after {
+  animation-play-state: paused !important;
+  transition: none !important;
+}
+
+/* 12. Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+
+
+/* ============================================================
+   FOODKINDL — PERFORMANCE TARGET PASS
+   Designed to improve Lighthouse mobile FCP/LCP/CLS.
+============================================================ */
+
+/* Avoid expensive initial paint effects */
+.fk-hero {
+  min-height: auto !important;
+  padding: 48px 0 42px !important;
+  contain: layout paint;
+}
+
+.fk-hero-inner {
+  gap: 34px !important;
+}
+
+.fk-hero-glow {
+  display: none !important;
+}
+
+/* Keep visual depth without giant GPU-heavy shadows */
+.fk-empty-seat-card,
+.fk-empty-seat-card:hover,
+.fk-hero-demo {
+  box-shadow:
+    0 12px 28px rgba(0,0,0,.30),
+    0 0 0 1px rgba(255,91,31,.025) !important;
+}
+
+.fk-empty-seat-card::after,
+.fk-empty-seat-glow {
+  filter: none !important;
+}
+
+/* Stop all decorative hero/table motion during initial browsing */
+.fk-empty-seat-scene::before,
+.fk-empty-seat-center svg,
+.fk-seat-yours,
+.fk-seat-pulse {
+  animation: none !important;
+}
+
+/* Reserve predictable layout dimensions */
+.fk-empty-seat-card {
+  min-height: 0 !important;
+}
+
+.fk-story-video-card {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  contain: layout paint;
+}
+
+.fk-ecosystem-card > img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.fk-footer-brand img,
+.kindli-launcher img,
+.kindli-chat-brand > img,
+.kindli-chat-message > img {
+  display: block;
+}
+
+/* Do not render expensive lower sections until close to viewport */
+.fk-food-walk-section,
+#how-it-works,
+.fk-activity-section,
+.fk-ecosystem-section,
+.fk-story-section,
+.fk-safety-section,
+.fk-final-cta,
+.fk-footer {
+  content-visibility: auto;
+  contain: layout paint style;
+  contain-intrinsic-size: auto 640px;
+}
+
+/* Kindli: no continuous animation on initial page */
+.kindli-launcher {
+  animation: none !important;
+  filter:
+    drop-shadow(
+      0 8px 14px rgba(222,77,20,.14)
+    ) !important;
+}
+
+.kindli-launcher-halo {
+  animation: none !important;
+  opacity: .34 !important;
+  box-shadow: none !important;
+}
+
+/* Reduce costly backdrop blur on chat panel */
+.kindli-chat-panel {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  box-shadow:
+    0 18px 48px rgba(0,0,0,.48) !important;
+}
+
+/* Mobile-first Lighthouse path */
+@media (max-width: 760px) {
+
+  .fk-landing {
+    background: #050505 !important;
+  }
+
+  .fk-hero {
+    padding:
+      34px 0
+      34px !important;
+  }
+
+  .fk-hero-inner {
+    gap: 22px !important;
+  }
+
+  .fk-status-pill {
+    margin-bottom: 14px !important;
+  }
+
+  .fk-hero-copy h1 {
+    font-size:
+      clamp(
+        42px,
+        12.5vw,
+        58px
+      ) !important;
+  }
+
+  .fk-hero-description {
+    margin-top: 16px !important;
+    font-size: 13px !important;
+    line-height: 1.55 !important;
+  }
+
+  .fk-hero-actions {
+    margin-top: 18px !important;
+  }
+
+  .fk-hero-proof {
+    margin-top: 18px !important;
+  }
+
+  /* The right-side experience card is below the LCP text.
+     Keep it visually complete but cheaper. */
+  .fk-empty-seat-card {
+    padding: 16px !important;
+    border-radius: 20px !important;
+  }
+
+  .fk-empty-seat-scene {
+    min-height: 280px !important;
+  }
+
+  .fk-empty-seat-card::after,
+  .fk-empty-seat-glow,
+  .fk-empty-seat-scene::before {
+    display: none !important;
+  }
+
+  .kindli-launcher {
+    width: 54px !important;
+    height: 54px !important;
+  }
+
+  .kindli-launcher img {
+    width: 54px !important;
+    height: 54px !important;
+  }
+}
+
+/* Very small phones */
+@media (max-width: 480px) {
+
+  .fk-hero {
+    padding-top: 28px !important;
+  }
+
+  .fk-hero-copy h1 {
+    font-size:
+      clamp(
+        40px,
+        13vw,
+        52px
+      ) !important;
+  }
+
+  .fk-empty-seat-scene {
+    min-height: 250px !important;
+  }
+}
+
+/* Accessibility / battery */
+@media (prefers-reduced-motion: reduce) {
+
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
     scroll-behavior: auto !important;
   }
 }
