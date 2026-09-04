@@ -19,6 +19,7 @@
     "react-datepicker": "^9.1.0",
     "react-dom": "^19.0.0",
     "react-leaflet": "^5.0.0",
+    "react-pageflip": "^2.0.3",
     "react-router-dom": "^7.1.5"
   },
   "devDependencies": {
