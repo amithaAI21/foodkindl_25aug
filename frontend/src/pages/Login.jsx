@@ -492,264 +492,21 @@ export default function Login() {
                 LIVE COMMUNITY PREVIEW
             ================================================ */}
 
-            <div className="login-live-card">
-
-
-              <div className="login-live-top">
-
-                <span className="login-live-title">
-
-                  <span className="login-live-dot" />
-
-                  HAPPENING NEAR YOU
-
-                </span>
-
-
-                <span className="login-live-distance">
-
-                  <MapPin
-                    size={12}
-                  />
-
-                  Bengaluru
-
-                </span>
-
-              </div>
-
-
-              {/* MEMBER */}
-
-              <div className="login-member-preview">
-
-
-                <div className="login-member-avatar">
-                  LN
-                </div>
-
-
-                <div className="login-member-details">
-
-                  <strong>
-                    Lakshmi Nair
-                  </strong>
-
-                  <span>
-
-                    Indiranagar
-
-                    <em>
-                      •
-                    </em>
-
-                    2.3 km away
-
-                  </span>
-
-                </div>
-
-
-                <span className="login-verified">
-
-                  <Check
-                    size={11}
-                  />
-
-                  Verified
-
-                </span>
-
-              </div>
-
-
-              {/* INVITE */}
-
-              <div className="login-invite-preview">
-
-
-                <div className="login-invite-icon">
-
-                  <ChefHat
-                    size={19}
-                  />
-
-                </div>
-
-
-                <div>
-
-                  <span>
-                    COOK TOGETHER
-                  </span>
-
-                  <strong>
-                    Kerala Sunday Lunch
-                  </strong>
-
-                  <small>
-                    Sunday · 12:30 PM
-                  </small>
-
-                </div>
-
-
-                {/* <div className="login-seat-badge">
-                  2 seats left
-                </div> */}
-
-              </div>
-
-
-              <div className="login-food-tags">
-
-                <span>
-                  Kerala
-                </span>
-
-                <span>
-                  Home Cooking
-                </span>
-
-                <span>
-                  Weekend
-                </span>
-
-              </div>
-
-            </div>
-
-
             {/* ===============================================
-                MINI FEATURES
-            ================================================ */}
+    FOODKINDL EXPERIENCE IMAGE
+================================================ */}
 
-            <div className="login-feature-grid">
+<div className="login-community-image-card">
 
-
-              <article>
-
-                <div className="login-feature-icon">
-
-                  <Send
-                    size={17}
-                  />
-
-                </div>
+  <img
+    src="/images/dynamic.webp"
+    alt="People connecting over food with FoodKindl"
+    loading="eager"
+    decoding="async"
+  />
 
 
-                <div>
-
-                  <strong>
-                    Food Invites
-                  </strong>
-
-                  <p>
-                    Invite people to cook,
-                    dine or explore food together.
-                  </p>
-
-                </div>
-
-              </article>
-
-
-              <article>
-
-                <div className="login-feature-icon">
-
-                  <Footprints
-                    size={17}
-                  />
-
-                </div>
-
-
-                <div>
-
-                  <strong>
-                    Food Walk
-                  </strong>
-
-                  <p>
-                    Build routes with multiple
-                    restaurant stops.
-                  </p>
-
-                </div>
-
-              </article>
-
-
-              <article>
-
-                <div className="login-feature-icon">
-
-                  <Heart
-                    size={17}
-                  />
-
-                </div>
-
-
-                <div>
-
-                  <strong>
-                    Community
-                  </strong>
-
-                  <p>
-                    Share photos, videos,
-                    recipes and food moments.
-                  </p>
-
-                </div>
-
-              </article>
-
-            </div>
-
-
-            {/* ===============================================
-                TRUST
-            ================================================ */}
-
-            <div className="login-trust-row">
-
-              <span>
-
-                <ShieldCheck
-                  size={14}
-                />
-
-                Safety-first community
-
-              </span>
-
-
-              <span>
-
-                <Users
-                  size={14}
-                />
-
-                Real connections
-
-              </span>
-
-
-              <span>
-
-                <Utensils
-                  size={14}
-                />
-
-                Food-first experiences
-
-              </span>
-
-            </div>
-
+</div>
           </div>
 
         </aside>
@@ -909,27 +666,19 @@ export default function Login() {
               <div className="login-form-options">
 
                 <label className="login-remember-option">
+  <input
+    type="checkbox"
+    className="login-remember-checkbox"
+    checked={rememberMe}
+    onChange={(event) =>
+      setRememberMe(event.target.checked)
+    }
+  />
 
-                  <input
-                    type="checkbox"
-                    checked={rememberMe}
-                    onChange={
-                      event =>
-                        setRememberMe(
-                          event.target.checked
-                        )
-                    }
-                  />
-
-                  <span className="login-remember-box">
-                    <Check size={12} />
-                  </span>
-
-                  <span className="login-remember-text">
-                    Remember me
-                  </span>
-
-                </label>
+  <span className="login-remember-text">
+    Remember me
+  </span>
+</label>
 
                 <Link
                   to="/forgot-password"

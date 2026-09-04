@@ -25,6 +25,8 @@ import {
 
 import api from "../api";
 
+import "../styles/SOSSafety.css";
+
 
 export default function SOSSafety() {
 
@@ -1143,7 +1145,7 @@ export default function SOSSafety() {
 
         <p>
           Add people you trust. Holding SOS
-          automatically sends both SMS and WhatsApp
+          automatically sends both SMS
           alerts through FoodKindl.
         </p>
 
@@ -1574,10 +1576,10 @@ export default function SOSSafety() {
               {
                 sosActive
                   ? (
-                      "SMS and WhatsApp were attempted automatically."
+                      "Emergency SMS alerts were sent automatically."
                     )
                   : (
-                      "Hold for three seconds to send SMS and WhatsApp alerts."
+                      "Hold for three seconds to send an emergency SMS alert."
                     )
               }
 
@@ -1716,31 +1718,72 @@ export default function SOSSafety() {
 
               <div className="sos-sms-result">
 
-                    <CheckCircle2
-                      size={18}
-                    />
+  {
+    (
+      smsSentCount > 0
+      //  ||
+      // whatsappSentCount > 0
+    )
+      ? (
+          <CheckCircle2
+            size={18}
+          />
+        )
+      : (
+          <AlertTriangle
+            size={18}
+          />
+        )
+  }
 
-                    <div>
 
-                      <strong>
-                        Automatic alert delivery
-                      </strong>
+  <div>
 
-                      <span>
-                        SMS: {smsSentCount} sent
-                        {smsFailedCount > 0
-                          ? `, ${smsFailedCount} failed`
-                          : ""}
-                        {" • "}
-                        WhatsApp: {whatsappSentCount} sent
-                        {whatsappFailedCount > 0
-                          ? `, ${whatsappFailedCount} failed`
-                          : ""}
-                      </span>
+    <strong>
+      Alert delivery status
+    </strong>
 
-                    </div>
 
-              </div>
+    <div className="sos-channel-results">
+
+      <span
+        className={
+          smsSentCount > 0
+            ? "success"
+            : "failed"
+        }
+      >
+        SMS:
+        {" "}
+        {
+          smsSentCount > 0
+            ? `${smsSentCount} sent`
+            : `${smsFailedCount} failed`
+        }
+      </span>
+
+
+      {/* <span
+        className={
+          whatsappSentCount > 0
+            ? "success"
+            : "failed"
+        }
+      >
+        WhatsApp:
+        {" "}
+        {
+          whatsappSentCount > 0
+            ? `${whatsappSentCount} sent`
+            : `${whatsappFailedCount} failed`
+        }
+      </span> */}
+
+    </div>
+
+  </div>
+
+</div>
 
 
               {/* =============================================
@@ -1829,10 +1872,10 @@ export default function SOSSafety() {
               />
 
               <span>
-                FoodKindl sends the SOS request
-                once. The backend automatically submits
-                both SMS and WhatsApp alerts.
-              </span>
+  FoodKindl sends the SOS request once.
+  Emergency SMS alerts are automatically
+  sent to your trusted contacts.
+</span>
 
             </div>
 

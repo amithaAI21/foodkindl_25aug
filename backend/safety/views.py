@@ -173,22 +173,20 @@ class TrustedContactDeleteView(
 # CREATE SOS + SEND SMS
 # ============================================================
 
-class SOSCreateView(
-    APIView
-):
+# ============================================================
+# CREATE / RETRY SOS + SEND SMS AND WHATSAPP
+# ============================================================
+
+class SOSCreateView(APIView):
 
     permission_classes = [
         permissions.IsAuthenticated,
     ]
 
-
-    def post(
-        self,
-        request,
-    ):
+    def post(self, request):
 
         # ====================================================
-        # CHECK TRUSTED CONTACTS FIRST
+        # 1. GET TRUSTED CONTACTS
         # ====================================================
 
         trusted_contacts = list(
@@ -210,9 +208,8 @@ class SOSCreateView(
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-
         # ====================================================
-        # CHECK EXISTING ACTIVE SOS
+        # 2. CHECK FOR EXISTING ACTIVE SOS
         # ====================================================
 
         existing_sos = (
@@ -225,82 +222,99 @@ class SOSCreateView(
             .first()
         )
 
+        # ====================================================
+        # 3. UPDATE EXISTING SOS OR CREATE NEW ONE
+        # ====================================================
+
         if existing_sos:
-            return Response(
-                {
-                    "id":
-                        existing_sos.id,
 
-                    "status":
-                        existing_sos.status,
-
-                    "latitude":
-                        existing_sos.latitude,
-
-                    "longitude":
-                        existing_sos.longitude,
-
-                    "location_accuracy":
-                        existing_sos.location_accuracy,
-
-                    "activated_at":
-                        existing_sos.activated_at,
-
-                    "detail":
-                        "SOS is already active. "
-                        "Alerts were not sent again.",
-                },
-                status=status.HTTP_200_OK,
+            serializer = SOSEventSerializer(
+                existing_sos,
+                data=request.data,
+                partial=True,
             )
 
+            serializer.is_valid(
+                raise_exception=True
+            )
 
-        # ====================================================
-        # VALIDATE AND CREATE SOS
-        # ====================================================
+            sos_event = serializer.save()
 
-        serializer = (
-            SOSEventSerializer(
+            response_status = status.HTTP_200_OK
+
+        else:
+
+            serializer = SOSEventSerializer(
                 data=request.data
             )
-        )
 
-        serializer.is_valid(
-            raise_exception=True
-        )
+            serializer.is_valid(
+                raise_exception=True
+            )
 
-        sos_event = (
-            serializer.save(
+            sos_event = serializer.save(
                 user=request.user,
                 status="active",
             )
-        )
 
+            response_status = status.HTTP_201_CREATED
 
         # ====================================================
-        # SEND BOTH ALERT CHANNELS
+        # 4. SEND SMS + WHATSAPP
         # ====================================================
 
-        delivery = (
-            send_sos_to_contacts(
+        try:
+
+            delivery = send_sos_to_contacts(
                 user=request.user,
                 sos_event=sos_event,
                 contacts=trusted_contacts,
             )
+
+        except Exception as exc:
+
+            # Don't lose the SOS record just because
+            # an external provider failed.
+
+            print(
+                "SOS DELIVERY ERROR:",
+                repr(exc)
+            )
+
+            delivery = {
+                "sms_results": [
+                    {
+                        "success": False,
+                        "error": str(exc),
+                    }
+                    for _ in trusted_contacts
+                ],
+                "whatsapp_results": [
+                    {
+                        "success": False,
+                        "error": str(exc),
+                    }
+                    for _ in trusted_contacts
+                ],
+            }
+
+        # ====================================================
+        # 5. READ DELIVERY RESULTS
+        # ====================================================
+
+        sms_results = delivery.get(
+            "sms_results",
+            [],
         )
 
-        sms_results = (
-            delivery.get(
-                "sms_results",
-                [],
-            )
+        whatsapp_results = delivery.get(
+            "whatsapp_results",
+            [],
         )
 
-        whatsapp_results = (
-            delivery.get(
-                "whatsapp_results",
-                [],
-            )
-        )
+        # ====================================================
+        # 6. COUNT SMS RESULTS
+        # ====================================================
 
         sms_sent = sum(
             1
@@ -308,31 +322,37 @@ class SOSCreateView(
             if item.get("success")
         )
 
+        sms_failed = sum(
+            1
+            for item in sms_results
+            if not item.get("success")
+        )
+
+        # ====================================================
+        # 7. COUNT WHATSAPP RESULTS
+        # ====================================================
+
         whatsapp_sent = sum(
             1
             for item in whatsapp_results
             if item.get("success")
         )
 
-        sms_failed = (
-            len(sms_results)
-            - sms_sent
+        whatsapp_failed = sum(
+            1
+            for item in whatsapp_results
+            if not item.get("success")
         )
-
-        whatsapp_failed = (
-            len(whatsapp_results)
-            - whatsapp_sent
-        )
-
 
         # ====================================================
-        # USER-FACING RESULT
+        # 8. USER-FACING MESSAGE
         # ====================================================
 
         if (
             sms_sent > 0
             and whatsapp_sent > 0
         ):
+
             detail = (
                 "SOS activated. SMS and WhatsApp "
                 "alerts were submitted to your "
@@ -340,6 +360,7 @@ class SOSCreateView(
             )
 
         elif sms_sent > 0:
+
             detail = (
                 "SOS activated. SMS alerts were "
                 "submitted, but WhatsApp delivery "
@@ -347,6 +368,7 @@ class SOSCreateView(
             )
 
         elif whatsapp_sent > 0:
+
             detail = (
                 "SOS activated. WhatsApp alerts were "
                 "submitted, but SMS delivery could "
@@ -354,29 +376,25 @@ class SOSCreateView(
             )
 
         else:
+
             detail = (
                 "SOS was recorded, but neither SMS "
                 "nor WhatsApp delivery could be started."
             )
 
-
         # ====================================================
-        # RESPONSE
+        # 9. RESPONSE
         # ====================================================
 
         return Response(
             {
-                "id":
-                    sos_event.id,
+                "id": sos_event.id,
 
-                "status":
-                    sos_event.status,
+                "status": sos_event.status,
 
-                "latitude":
-                    sos_event.latitude,
+                "latitude": sos_event.latitude,
 
-                "longitude":
-                    sos_event.longitude,
+                "longitude": sos_event.longitude,
 
                 "location_accuracy":
                     sos_event.location_accuracy,
@@ -387,7 +405,7 @@ class SOSCreateView(
                 "trusted_contacts_count":
                     len(trusted_contacts),
 
-                # Keep this for existing frontend compatibility.
+                # Existing frontend compatibility
                 "sms_started":
                     sms_sent,
 
@@ -405,8 +423,14 @@ class SOSCreateView(
 
                 "detail":
                     detail,
+
+                # Useful while debugging provider problems
+                "delivery": {
+                    "sms": sms_results,
+                    "whatsapp": whatsapp_results,
+                },
             },
-            status=status.HTTP_201_CREATED,
+            status=response_status,
         )
 # ============================================================
 # ACTIVE SOS

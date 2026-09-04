@@ -1252,28 +1252,25 @@ class FoodMatchView(
         # ====================================================
 
         members = (
+    User.objects
+    .filter(
+        is_active=True,
+        is_staff=False,
+        is_superuser=False,
+        profile__isnull=False,
 
-            User.objects
-
-            .filter(
-                is_active=True,
-                is_staff=False,
-                is_superuser=False,
-                profile__isnull=False,
-                profile__member_profile_enabled=True,
-            )
-
-            .exclude(
-                id__in=
-                    excluded_ids,
-            )
-
-            .select_related(
-                "profile"
-            )
-
-            .distinct()
-        )
+        # Only normal FoodKindl members
+        profile__account_type="member",
+        profile__member_profile_enabled=True,
+    )
+    .exclude(
+        id__in=excluded_ids,
+    )
+    .select_related(
+        "profile"
+    )
+    .distinct()
+)
 
 
         results = []
@@ -1481,19 +1478,6 @@ class FoodMatchView(
             status=
                 status.HTTP_200_OK,
         )
-
-
-# ============================================================
-# VERIFICATION STATUS
-# ============================================================
-
-# ============================================================
-# VERIFICATION STATUS
-# ============================================================
-
-# ============================================================
-# VERIFICATION STATUS
-# ============================================================
 
 class VerificationStatusView(APIView):
 

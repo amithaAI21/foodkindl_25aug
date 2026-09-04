@@ -156,6 +156,12 @@ WHATSAPP_API_VERSION = (
     .strip()
 )
 
+WHATSAPP_TEMPLATE_BODY_PARAMETER_COUNT = int(
+    os.environ.get(
+        "WHATSAPP_TEMPLATE_BODY_PARAMETER_COUNT",
+        "1",
+    )
+)
 
 # ============================================================
 # OPENROUTESERVICE

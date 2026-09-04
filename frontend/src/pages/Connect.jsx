@@ -664,18 +664,19 @@ export default function Connect() {
 
 
       const memberList =
-        response.data?.results ||
-        response.data;
+            response.data?.results ||
+            response.data;
 
+          const memberOnlyList =
+            Array.isArray(memberList)
+              ? memberList.filter(
+                  (member) =>
+                    member?.profile?.account_type !== "partner" &&
+                    member?.account_type !== "partner"
+                )
+              : [];
 
-      setMembers(
-        Array.isArray(
-          memberList
-        )
-          ? memberList
-          : []
-      );
-
+          setMembers(memberOnlyList);
 
     } catch (
       requestError
@@ -815,13 +816,28 @@ export default function Connect() {
       );
 
 
-      setConnections(
-        acceptedResponse.data
-          ?.results ||
-        acceptedResponse.data ||
-        []
-      );
+      const acceptedConnections =
+  acceptedResponse.data?.results ||
+  acceptedResponse.data ||
+  [];
 
+setConnections(
+  Array.isArray(acceptedConnections)
+    ? acceptedConnections.filter(
+        (connection) => {
+          const otherMember =
+            Number(connection?.sender?.id) === Number(user?.id)
+              ? connection?.receiver
+              : connection?.sender;
+
+          return (
+            otherMember?.profile?.account_type !== "partner" &&
+            otherMember?.account_type !== "partner"
+          );
+        }
+      )
+    : []
+);
 
     } catch (
       requestError

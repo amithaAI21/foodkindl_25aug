@@ -193,10 +193,12 @@ def send_fast2sms(
 
     headers = {
         "Authorization": api_key,
-        "Content-Type": "application/json",
+        "Accept": "application/json",
     }
 
-    payload = {
+    # Fast2SMS Quick SMS is documented as GET /dev/bulkV2
+    # with route/message/numbers as query parameters.
+    params = {
         "route": "q",
         "message": message,
         "numbers": number,
@@ -204,11 +206,11 @@ def send_fast2sms(
     }
 
     try:
-        response = requests.post(
+        response = requests.get(
             FAST2SMS_URL,
             headers=headers,
-            json=payload,
-            timeout=12,
+            params=params,
+            timeout=15,
         )
 
         try:
@@ -239,10 +241,15 @@ def send_fast2sms(
         )
 
         return {
-            "success": False,
-            "number": number,
-            "error": response_data,
-        }
+                            "success": False,
+                            "number": number,
+                            "status_code":
+                                response.status_code,
+                            "error":
+                                response_data,
+                            "provider_response":
+                                response_data,
+                        }
 
     except requests.RequestException as exc:
         logger.exception(
@@ -343,49 +350,48 @@ def send_whatsapp_sos(
             "application/json",
     }
 
+    # IMPORTANT: the number of body parameters must match the
+    # approved WhatsApp template exactly. Your template screenshot
+    # visibly contains {{1}}. Set this to 2 only if the template also
+    # contains {{2}} for the location URL.
+    parameter_count = getattr(
+        settings,
+        "WHATSAPP_TEMPLATE_BODY_PARAMETER_COUNT",
+        1,
+    )
+
+    try:
+        parameter_count = int(parameter_count)
+    except (TypeError, ValueError):
+        parameter_count = 1
+
+    body_parameters = [
+        {
+            "type": "text",
+            "text": user_name,
+        },
+    ]
+
+    if parameter_count >= 2:
+        body_parameters.append({
+            "type": "text",
+            "text": location_url,
+        })
+
     payload = {
-        "messaging_product":
-            "whatsapp",
-
-        "recipient_type":
-            "individual",
-
-        "to":
-            number,
-
-        "type":
-            "template",
-
+        "messaging_product": "whatsapp",
+        "recipient_type": "individual",
+        "to": number,
+        "type": "template",
         "template": {
-            "name":
-                template_name,
-
+            "name": template_name,
             "language": {
-                "code":
-                    template_language,
+                "code": template_language,
             },
-
             "components": [
                 {
-                    "type":
-                        "body",
-
-                    "parameters": [
-                        {
-                            "type":
-                                "text",
-
-                            "text":
-                                user_name,
-                        },
-                        {
-                            "type":
-                                "text",
-
-                            "text":
-                                location_url,
-                        },
-                    ],
+                    "type": "body",
+                    "parameters": body_parameters,
                 },
             ],
         },
@@ -432,10 +438,22 @@ def send_whatsapp_sos(
             response_data,
         )
 
+        error_obj = (
+            response_data.get("error", {})
+            if isinstance(response_data, dict)
+            else {}
+        )
+
         return {
             "success": False,
             "number": number,
-            "error": response_data,
+            "status_code": response.status_code,
+            "error_code": error_obj.get("code"),
+            "error": (
+                error_obj.get("message")
+                or response_data
+            ),
+            "provider_response": response_data,
         }
 
     except requests.RequestException as exc:
