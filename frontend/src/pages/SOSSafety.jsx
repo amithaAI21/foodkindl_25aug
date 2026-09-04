@@ -123,6 +123,19 @@ export default function SOSSafety() {
     setSmsFailedCount,
   ] = useState(0);
 
+  /*
+    We only show SMS sent/failed status if the
+    current browser session actually received a
+    delivery result from Django.
+
+    This avoids showing "SMS: 0 failed" after
+    refreshing an already-active SOS.
+  */
+  const [
+    deliveryKnown,
+    setDeliveryKnown,
+  ] = useState(false);
+
 
   // =========================================================
   // HOLD TIMER
@@ -160,11 +173,13 @@ export default function SOSSafety() {
           "/safety/trusted-contacts/"
         );
 
+      const data =
+        response.data?.results ||
+        response.data;
+
       setContacts(
-        Array.isArray(
-          response.data
-        )
-          ? response.data
+        Array.isArray(data)
+          ? data
           : []
       );
 
@@ -175,7 +190,7 @@ export default function SOSSafety() {
       console.error(
         "Unable to load trusted contacts:",
         requestError.response?.data ||
-          requestError
+        requestError
       );
 
       setContactsError(
@@ -217,12 +232,32 @@ export default function SOSSafety() {
         const sos =
           response.data.sos;
 
+        /*
+          The backend says an SOS event is still active.
+
+          We restore the event, but we DO NOT invent an SMS
+          delivery result because ActiveSOSView currently
+          does not return sms_sent / sms_failed.
+        */
+
         setSosActive(
           true
         );
 
         setSosId(
           sos.id
+        );
+
+        setDeliveryKnown(
+          false
+        );
+
+        setSmsSentCount(
+          0
+        );
+
+        setSmsFailedCount(
+          0
         );
 
         if (
@@ -245,7 +280,27 @@ export default function SOSSafety() {
               sos.location_accuracy,
           });
 
+        } else {
+
+          setSosLocation(
+            null
+          );
+
         }
+
+      } else {
+
+        setSosActive(
+          false
+        );
+
+        setSosId(
+          null
+        );
+
+        setDeliveryKnown(
+          false
+        );
 
       }
 
@@ -256,7 +311,7 @@ export default function SOSSafety() {
       console.warn(
         "Unable to load active SOS:",
         requestError.response?.data ||
-          requestError
+        requestError
       );
 
     }
@@ -349,6 +404,7 @@ export default function SOSSafety() {
       return;
     }
 
+
     try {
 
       setSavingContact(
@@ -402,7 +458,7 @@ export default function SOSSafety() {
       console.error(
         "Unable to add trusted contact:",
         requestError.response?.data ||
-          requestError
+        requestError
       );
 
       setContactsError(
@@ -451,6 +507,7 @@ export default function SOSSafety() {
       return;
     }
 
+
     try {
 
       setDeletingContactId(
@@ -481,7 +538,7 @@ export default function SOSSafety() {
       console.error(
         "Unable to remove trusted contact:",
         requestError.response?.data ||
-          requestError
+        requestError
       );
 
       setContactsError(
@@ -583,15 +640,24 @@ export default function SOSSafety() {
 
   // =========================================================
   // ACTIVATE SOS
-  //
-  // Django creates the SOS event and sends Fast2SMS.
   // =========================================================
 
   async function activateSOS() {
 
     if (
-      sosLoading ||
-      sosActive
+      sosLoading
+    ) {
+      return;
+    }
+
+    /*
+      If there is an active SOS that was successfully
+      delivered, don't accidentally send it again.
+    */
+    if (
+      sosActive &&
+      deliveryKnown &&
+      smsSentCount > 0
     ) {
       return;
     }
@@ -606,6 +672,7 @@ export default function SOSSafety() {
 
       return;
     }
+
 
     setSosLoading(
       true
@@ -623,13 +690,19 @@ export default function SOSSafety() {
       0
     );
 
+    setDeliveryKnown(
+      false
+    );
+
+
     let location =
       null;
+
 
     try {
 
       // =====================================================
-      // GET CURRENT LOCATION
+      // GET LOCATION
       // =====================================================
 
       try {
@@ -689,21 +762,20 @@ export default function SOSSafety() {
 
 
       // =====================================================
-      // SAVE SOS ID
+      // SAVE SOS EVENT ID
       // =====================================================
+
+      const returnedSosId =
+        response.data?.id ||
+        null;
 
       setSosId(
-        response.data?.id ||
-        null
-      );
-
-      setSosActive(
-        true
+        returnedSosId
       );
 
 
       // =====================================================
-      // SMS RESULT
+      // READ SMS RESULT
       // =====================================================
 
       const smsSent =
@@ -719,6 +791,7 @@ export default function SOSSafety() {
           0
         );
 
+
       setSmsSentCount(
         smsSent
       );
@@ -727,14 +800,22 @@ export default function SOSSafety() {
         smsFailed
       );
 
+      setDeliveryKnown(
+        true
+      );
+
 
       // =====================================================
-      // RESULT MESSAGE
+      // SMS SUCCESS
       // =====================================================
 
       if (
         smsSent > 0
       ) {
+
+        setSosActive(
+          true
+        );
 
         setSosMessage(
           response.data?.detail ||
@@ -743,16 +824,30 @@ export default function SOSSafety() {
 
         setSosError("");
 
-      } else {
-
-        setSosMessage("");
-
-        setSosError(
-          response.data?.detail ||
-          "SOS was recorded, but the emergency SMS alert could not be sent."
-        );
-
+        return;
       }
+
+
+      // =====================================================
+      // SMS FAILED
+      //
+      // IMPORTANT:
+      // Do not display "SOS Active" when no SMS was sent.
+      // The backend record may exist, but the emergency
+      // notification itself failed.
+      // =====================================================
+
+      setSosActive(
+        false
+      );
+
+      setSosMessage("");
+
+      setSosError(
+        response.data?.detail ||
+        "SOS was recorded, but the emergency SMS alert could not be sent. Please try again."
+      );
+
 
     } catch (
       requestError
@@ -762,10 +857,14 @@ export default function SOSSafety() {
         "SOS activation failed:",
         requestError.response?.status,
         requestError.response?.data ||
-          requestError
+        requestError
       );
 
       setSosActive(
+        false
+      );
+
+      setDeliveryKnown(
         false
       );
 
@@ -792,14 +891,14 @@ export default function SOSSafety() {
 
 
   // =========================================================
-  // START HOLD
+  // START SOS HOLD
   // =========================================================
 
   function startSOSHold() {
 
     if (
-      sosActive ||
-      sosLoading
+      sosLoading ||
+      sosActive
     ) {
       return;
     }
@@ -808,6 +907,7 @@ export default function SOSSafety() {
 
     holdStartedAtRef.current =
       Date.now();
+
 
     holdIntervalRef.current =
       window.setInterval(
@@ -834,6 +934,7 @@ export default function SOSSafety() {
         50
       );
 
+
     holdTimerRef.current =
       window.setTimeout(
         () => {
@@ -851,7 +952,7 @@ export default function SOSSafety() {
 
 
   // =========================================================
-  // CLEAR HOLD
+  // CLEAR SOS HOLD
   // =========================================================
 
   function clearSOSHold(
@@ -887,6 +988,7 @@ export default function SOSSafety() {
     holdStartedAtRef.current =
       null;
 
+
     if (
       resetProgress
     ) {
@@ -920,6 +1022,20 @@ export default function SOSSafety() {
 
   async function markSafe() {
 
+    if (!sosId) {
+
+      setSosActive(
+        false
+      );
+
+      setDeliveryKnown(
+        false
+      );
+
+      return;
+    }
+
+
     try {
 
       setSosLoading(
@@ -928,15 +1044,11 @@ export default function SOSSafety() {
 
       setSosError("");
 
-      if (
-        sosId
-      ) {
 
-        await api.post(
-          `/safety/sos/${sosId}/safe/`
-        );
+      await api.post(
+        `/safety/sos/${sosId}/safe/`
+      );
 
-      }
 
       setSosActive(
         false
@@ -958,9 +1070,14 @@ export default function SOSSafety() {
         0
       );
 
+      setDeliveryKnown(
+        false
+      );
+
       setSosMessage(
         "You have been marked safe."
       );
+
 
     } catch (
       requestError
@@ -969,7 +1086,7 @@ export default function SOSSafety() {
       console.error(
         "Unable to mark safe:",
         requestError.response?.data ||
-          requestError
+        requestError
       );
 
       setSosError(
@@ -1007,11 +1124,13 @@ export default function SOSSafety() {
           to="/safety-verification"
           className="sos-back-link"
         >
+
           <ArrowLeft
             size={18}
           />
 
           Back to Safety &amp; Verification
+
         </Link>
 
       </div>
@@ -1033,12 +1152,17 @@ export default function SOSSafety() {
 
         </div>
 
+
         <h1>
+
           SOS &amp;{" "}
+
           <span>
             Trusted Contacts
           </span>
+
         </h1>
+
 
         <p>
           Add people you trust. Holding SOS
@@ -1055,6 +1179,7 @@ export default function SOSSafety() {
 
       <section className="sos-layout">
 
+
         {/* ===================================================
             TRUSTED CONTACTS
         =================================================== */}
@@ -1069,9 +1194,11 @@ export default function SOSSafety() {
                 YOUR SAFETY NETWORK
               </span>
 
+
               <h2>
                 Trusted Contacts
               </h2>
+
 
               <p>
                 Add up to three people who
@@ -1080,12 +1207,15 @@ export default function SOSSafety() {
 
             </div>
 
+
             <div className="trusted-contact-count">
               {contacts.length}/3
             </div>
 
           </div>
 
+
+          {/* ERROR */}
 
           {contactsError && (
 
@@ -1102,6 +1232,8 @@ export default function SOSSafety() {
           )}
 
 
+          {/* LOADING */}
+
           {loadingContacts && (
 
             <div className="trusted-contact-empty">
@@ -1110,6 +1242,8 @@ export default function SOSSafety() {
 
           )}
 
+
+          {/* EMPTY */}
 
           {
             !loadingContacts &&
@@ -1122,9 +1256,11 @@ export default function SOSSafety() {
                   size={31}
                 />
 
+
                 <strong>
                   No trusted contacts yet
                 </strong>
+
 
                 <span>
                   Add someone before using SOS.
@@ -1135,6 +1271,8 @@ export default function SOSSafety() {
             )
           }
 
+
+          {/* CONTACT LIST */}
 
           {
             !loadingContacts &&
@@ -1171,12 +1309,16 @@ export default function SOSSafety() {
                             {contact.name}
                           </strong>
 
+
                           <span>
+
                             {
                               contact.relationship ||
                               "Trusted contact"
                             }
+
                           </span>
+
 
                           <small>
 
@@ -1207,6 +1349,7 @@ export default function SOSSafety() {
                             `Remove ${contact.name}`
                           }
                         >
+
                           {
                             deletingContactId ===
                             contact.id
@@ -1217,6 +1360,7 @@ export default function SOSSafety() {
                                   />
                                 )
                           }
+
                         </button>
 
                       </div>
@@ -1230,6 +1374,8 @@ export default function SOSSafety() {
             )
           }
 
+
+          {/* ADD CONTACT */}
 
           {
             contacts.length < 3 &&
@@ -1258,6 +1404,8 @@ export default function SOSSafety() {
           }
 
 
+          {/* ADD CONTACT FORM */}
+
           {showContactForm && (
 
             <form
@@ -1272,6 +1420,7 @@ export default function SOSSafety() {
                 <strong>
                   Add Trusted Contact
                 </strong>
+
 
                 <button
                   type="button"
@@ -1366,11 +1515,13 @@ export default function SOSSafety() {
                   savingContact
                 }
               >
+
                 {
                   savingContact
                     ? "Saving..."
                     : "Save Trusted Contact"
                 }
+
               </button>
 
             </form>
@@ -1398,48 +1549,71 @@ export default function SOSSafety() {
               EMERGENCY CONTROL
             </span>
 
+
             <h2>
+
               {
                 sosActive
                   ? "SOS Active"
                   : "Hold for SOS"
               }
+
             </h2>
 
+
             <p>
+
               {
                 sosActive
-                  ? "Emergency SMS alerts were attempted automatically."
-                  : "Hold for three seconds to send an emergency SMS alert."
+                  ? (
+                      deliveryKnown
+                        ? "Emergency SMS alerts were sent to your trusted contacts."
+                        : "An SOS event is currently active."
+                    )
+                  : (
+                      "Hold for three seconds to send an emergency SMS alert."
+                    )
               }
+
             </p>
 
           </div>
 
+
+          {/* =================================================
+              SOS BUTTON
+          ================================================= */}
 
           {!sosActive && (
 
             <button
               type="button"
               className="sos-hold-button"
+
               onMouseDown={
                 startSOSHold
               }
+
               onMouseUp={() =>
                 clearSOSHold()
               }
+
               onMouseLeave={() =>
                 clearSOSHold()
               }
+
               onTouchStart={
                 startSOSHold
               }
+
               onTouchEnd={() =>
                 clearSOSHold()
               }
+
               onTouchCancel={() =>
                 clearSOSHold()
               }
+
               disabled={
                 sosLoading
               }
@@ -1453,17 +1627,22 @@ export default function SOSSafety() {
                 }}
               />
 
+
               <ShieldAlert
                 size={44}
               />
 
+
               <strong>
+
                 {
                   sosLoading
                     ? "SENDING..."
                     : "SOS"
                 }
+
               </strong>
+
 
               <small>
                 Hold for 3 seconds
@@ -1473,6 +1652,10 @@ export default function SOSSafety() {
 
           )}
 
+
+          {/* =================================================
+              ACTIVE SOS
+          ================================================= */}
 
           {sosActive && (
 
@@ -1485,6 +1668,7 @@ export default function SOSSafety() {
                 />
 
               </div>
+
 
               <strong>
                 SOS Activated
@@ -1522,51 +1706,101 @@ export default function SOSSafety() {
               }
 
 
-              <div className="sos-sms-result">
+              {/* =============================================
+                  DELIVERY STATUS
 
-                {
-                  smsSentCount > 0
-                    ? (
-                        <CheckCircle2
-                          size={18}
-                        />
-                      )
-                    : (
-                        <AlertTriangle
-                          size={18}
-                        />
-                      )
-                }
+                  Only show this if the current browser
+                  actually received the SMS result.
+              ============================================= */}
 
-                <div>
+              {deliveryKnown && (
 
-                  <strong>
-                    Alert delivery status
-                  </strong>
+                <div className="sos-sms-result">
 
-                  <div className="sos-channel-results">
+                  {
+                    smsSentCount > 0
+                      ? (
+                          <CheckCircle2
+                            size={18}
+                          />
+                        )
+                      : (
+                          <AlertTriangle
+                            size={18}
+                          />
+                        )
+                  }
 
-                    <span
-                      className={
-                        smsSentCount > 0
-                          ? "success"
-                          : "failed"
-                      }
-                    >
-                      SMS:{" "}
-                      {
-                        smsSentCount > 0
-                          ? `${smsSentCount} sent`
-                          : `${smsFailedCount} failed`
-                      }
-                    </span>
+
+                  <div>
+
+                    <strong>
+                      Alert delivery status
+                    </strong>
+
+
+                    <div className="sos-channel-results">
+
+                      <span
+                        className={
+                          smsSentCount > 0
+                            ? "success"
+                            : "failed"
+                        }
+                      >
+
+                        SMS:{" "}
+
+                        {
+                          smsSentCount > 0
+                            ? `${smsSentCount} sent`
+                            : `${smsFailedCount} failed`
+                        }
+
+                      </span>
+
+                    </div>
 
                   </div>
 
                 </div>
 
-              </div>
+              )}
 
+
+              {!deliveryKnown && (
+
+                <div className="sos-sms-result">
+
+                  <ShieldCheck
+                    size={18}
+                  />
+
+                  <div>
+
+                    <strong>
+                      SOS remains active
+                    </strong>
+
+                    <div className="sos-channel-results">
+
+                      <span>
+                        Delivery status was recorded
+                        during the original activation.
+                      </span>
+
+                    </div>
+
+                  </div>
+
+                </div>
+
+              )}
+
+
+              {/* =============================================
+                  I'M SAFE
+              ============================================= */}
 
               <button
                 type="button"
@@ -1596,6 +1830,10 @@ export default function SOSSafety() {
           )}
 
 
+          {/* =================================================
+              SUCCESS
+          ================================================= */}
+
           {sosMessage && (
 
             <div className="sos-success-message">
@@ -1610,6 +1848,10 @@ export default function SOSSafety() {
 
           )}
 
+
+          {/* =================================================
+              ERROR
+          ================================================= */}
 
           {sosError && (
 
@@ -1626,6 +1868,10 @@ export default function SOSSafety() {
           )}
 
 
+          {/* =================================================
+              INFO
+          ================================================= */}
+
           <div className="sos-info-list">
 
             <div>
@@ -1635,9 +1881,9 @@ export default function SOSSafety() {
               />
 
               <span>
-                FoodKindl sends the SOS request once.
-                Emergency SMS alerts are automatically
-                sent to your trusted contacts.
+                FoodKindl sends emergency SMS
+                alerts to your trusted contacts
+                when SOS is activated.
               </span>
 
             </div>
@@ -1664,8 +1910,8 @@ export default function SOSSafety() {
               />
 
               <span>
-                You do not need to select a contact or
-                choose an alert channel manually.
+                If SMS delivery fails, you can
+                try activating SOS again.
               </span>
 
             </div>
@@ -1686,6 +1932,7 @@ export default function SOSSafety() {
         <AlertTriangle
           size={20}
         />
+
 
         <p>
           FoodKindl does not provide emergency

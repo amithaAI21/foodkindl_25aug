@@ -23,27 +23,72 @@ class Command(
         **options,
     ):
 
-        result = (
-            check_fast2sms_wallet()
+        self.stdout.write(
+            "Checking Fast2SMS wallet..."
         )
 
 
-        if not result.get(
-            "success"
-        ):
+        try:
+
+            result = (
+                check_fast2sms_wallet()
+            )
+
+        except Exception as exc:
 
             self.stderr.write(
                 self.style.ERROR(
-                    str(
-                        result.get(
-                            "detail"
-                        )
+                    (
+                        "Fast2SMS wallet checker "
+                        f"crashed: {exc}"
                     )
                 )
             )
 
             return
 
+
+        # ====================================================
+        # SHOW RAW RESULT
+        # ====================================================
+
+        self.stdout.write(
+            f"Wallet checker result: {result}"
+        )
+
+
+        # ====================================================
+        # CHECK FAILURE
+        # ====================================================
+
+        if not result.get(
+            "success"
+        ):
+
+            error_message = (
+                result.get(
+                    "detail"
+                )
+                or result.get(
+                    "error"
+                )
+                or "Unknown wallet check error."
+            )
+
+            self.stderr.write(
+                self.style.ERROR(
+                    str(
+                        error_message
+                    )
+                )
+            )
+
+            return
+
+
+        # ====================================================
+        # BALANCE
+        # ====================================================
 
         balance = (
             result.get(
@@ -62,13 +107,80 @@ class Command(
         )
 
 
+        # ====================================================
+        # ALERT CREATED
+        # ====================================================
+
         if result.get(
             "alert_created"
         ):
 
+            level = (
+                result.get(
+                    "level"
+                )
+                or "unknown"
+            )
+
+            alert_id = (
+                result.get(
+                    "alert_id"
+                )
+            )
+
             self.stdout.write(
                 self.style.WARNING(
-                    "Admin low balance "
-                    "alert created."
+                    (
+                        "Admin low balance "
+                        "alert created. "
+                        f"Level: {level}. "
+                        f"Alert ID: {alert_id}"
+                    )
+                )
+            )
+
+
+            if result.get(
+                "email_sent"
+            ):
+
+                self.stdout.write(
+                    self.style.SUCCESS(
+                        "Admin email sent."
+                    )
+                )
+
+            else:
+
+                self.stdout.write(
+                    self.style.WARNING(
+                        (
+                            "Admin alert was created, "
+                            "but email was not sent."
+                        )
+                    )
+                )
+
+
+        # ====================================================
+        # NO NEW ALERT
+        # ====================================================
+
+        else:
+
+            detail = (
+                result.get(
+                    "detail"
+                )
+                or
+                "No new alert was required."
+            )
+
+            self.stdout.write(
+                self.style.WARNING(
+                    (
+                        "No new admin alert created. "
+                        f"Reason: {detail}"
+                    )
                 )
             )
