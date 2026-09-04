@@ -479,59 +479,27 @@ def send_sos_to_contacts(
     contacts,
 ):
 
-    sms_message = (
-        build_sos_message(
-            user=user,
-            sos_event=sos_event,
-        )
+    sms_message = build_sos_message(
+        user=user,
+        sos_event=sos_event,
     )
 
     sms_results = []
+
+    # WhatsApp temporarily disabled
     whatsapp_results = []
 
     for contact in contacts:
 
-        sms_result = (
-            send_fast2sms(
-                phone_number=
-                    contact.phone_number,
-
-                message=
-                    sms_message,
-            )
+        sms_result = send_fast2sms(
+            phone_number=contact.phone_number,
+            message=sms_message,
         )
 
         sms_results.append({
-            "contact_id":
-                contact.id,
-
-            "contact_name":
-                contact.name,
-
+            "contact_id": contact.id,
+            "contact_name": contact.name,
             **sms_result,
-        })
-
-        whatsapp_result = (
-            send_whatsapp_sos(
-                phone_number=
-                    contact.phone_number,
-
-                user=
-                    user,
-
-                sos_event=
-                    sos_event,
-            )
-        )
-
-        whatsapp_results.append({
-            "contact_id":
-                contact.id,
-
-            "contact_name":
-                contact.name,
-
-            **whatsapp_result,
         })
 
     return {
