@@ -81,7 +81,7 @@ const HERO_EXPERIENCES = [
       initials: "AM",
       locality: "Rajajinagar",
       distance: "3.1 km away",
-      image: "/images/food22.png",
+      image: "/images/food2.webp",
     },
 
     title: "South Indian Dinner",
@@ -109,7 +109,7 @@ const HERO_EXPERIENCES = [
       initials: "MJ",
       locality: "Yeshwanthpur",
       distance: "4.0 km away",
-      image: "/images/food11.png",
+      image: "/images/food11.webp",
     },
 
     title: "Bengaluru Food Walk",
@@ -534,6 +534,49 @@ export default function LandingPage() {
 
 
   /* =========================================================
+     PAGE VISIBILITY — PAUSE DECORATIVE MOTION
+  ========================================================= */
+
+  useEffect(
+    () => {
+
+      function syncPageVisibility() {
+
+        document.documentElement.setAttribute(
+          "data-page-hidden",
+          document.hidden
+            ? "true"
+            : "false"
+        );
+      }
+
+
+      syncPageVisibility();
+
+
+      document.addEventListener(
+        "visibilitychange",
+        syncPageVisibility
+      );
+
+
+      return () => {
+
+        document.removeEventListener(
+          "visibilitychange",
+          syncPageVisibility
+        );
+
+        document.documentElement.removeAttribute(
+          "data-page-hidden"
+        );
+      };
+    },
+    []
+  );
+
+
+  /* =========================================================
      HERO ROTATION
   ========================================================= */
 
@@ -549,6 +592,12 @@ export default function LandingPage() {
       const interval =
         window.setInterval(
           () => {
+
+            if (
+              document.hidden
+            ) {
+              return;
+            }
 
             setActiveHeroExperience(
               current =>
@@ -595,7 +644,7 @@ export default function LandingPage() {
   const [
     storyVideoLoading,
     setStoryVideoLoading,
-  ] = useState(true);
+  ] = useState(false);
 
   const [
     storyVideoError,
@@ -603,8 +652,84 @@ export default function LandingPage() {
   ] = useState("");
 
 
+  const [
+    shouldLoadStoryVideo,
+    setShouldLoadStoryVideo,
+  ] = useState(false);
+
+  const storySectionRef =
+    useRef(null);
+
+
+  /*
+    PERFORMANCE:
+    Do not hit the homepage-video API during the initial page load.
+    Start loading only when the Social Dining / video section is
+    getting close to the viewport.
+  */
   useEffect(
     () => {
+
+      const node =
+        storySectionRef.current;
+
+      if (
+        !node ||
+        shouldLoadStoryVideo
+      ) {
+        return;
+      }
+
+      const observer =
+        new IntersectionObserver(
+          entries => {
+
+            if (
+              entries.some(
+                entry =>
+                  entry.isIntersecting
+              )
+            ) {
+
+              setShouldLoadStoryVideo(
+                true
+              );
+
+              observer.disconnect();
+            }
+          },
+          {
+            rootMargin:
+              "500px 0px",
+            threshold:
+              0.01,
+          }
+        );
+
+      observer.observe(
+        node
+      );
+
+
+      return () => {
+        observer.disconnect();
+      };
+    },
+    [
+      shouldLoadStoryVideo,
+    ]
+  );
+
+
+  useEffect(
+    () => {
+
+      if (
+        !shouldLoadStoryVideo
+      ) {
+        return;
+      }
+
 
       let cancelled = false;
 
@@ -821,7 +946,9 @@ export default function LandingPage() {
       };
 
     },
-    []
+    [
+      shouldLoadStoryVideo,
+    ]
   );
 
 
@@ -1642,8 +1769,12 @@ export default function LandingPage() {
           <article className="fk-ecosystem-card">
 
             <img
-              src="/images/food11.png"
+              src="/images/food11.webp"
               alt="FoodKindl AI recipes"
+              loading="lazy"
+              decoding="async"
+              width="800"
+              height="600"
             />
 
             <div className="fk-ecosystem-overlay" />
@@ -1697,8 +1828,12 @@ export default function LandingPage() {
           <article className="fk-ecosystem-card">
 
             <img
-              src="/images/food22.png"
+              src="/images/food22.webp"
               alt="FoodKindl community food videos"
+              loading="lazy"
+              decoding="async"
+              width="800"
+              height="600"
             />
 
             <div className="fk-ecosystem-overlay" />
@@ -1754,7 +1889,10 @@ export default function LandingPage() {
           SOCIAL DINING + STORY VIDEO
       ====================================================== */}
 
-      <section className="fk-section fk-story-section">
+      <section
+        ref={storySectionRef}
+        className="fk-section fk-story-section"
+      >
 
         <div className="fk-story-copy">
 
@@ -1809,7 +1947,20 @@ export default function LandingPage() {
 
         <div className="fk-story-video-card">
 
-          {storyVideoLoading ? (
+          {!shouldLoadStoryVideo ? (
+
+            <div
+              className="fk-story-video-loading fk-story-video-deferred"
+            >
+              <strong>
+                FoodKindl Story
+              </strong>
+              <span>
+                Video loads when you reach this section.
+              </span>
+            </div>
+
+          ) : storyVideoLoading ? (
 
             <div
               className="fk-story-video-loading"
@@ -1833,7 +1984,7 @@ export default function LandingPage() {
 
               playsInline
 
-              preload="metadata"
+              preload="none"
 
               src={
                 storyVideo.video_url
@@ -2064,9 +2215,9 @@ export default function LandingPage() {
             </div>
 
 
-            <span className="fk-coming-badge">
+            {/* <span className="fk-coming-badge">
               Coming Soon
-            </span>
+            </span> */}
 
 
             <span className="fk-safety-icon sos">
@@ -2158,8 +2309,12 @@ export default function LandingPage() {
     <div className="fk-footer-brand">
 
       <img
-        src="/images/icon.png"
+        src="/images/icon.webp"
         alt="FoodKindl"
+        loading="lazy"
+        decoding="async"
+        width="54"
+        height="54"
       />
 
       <p>
@@ -2324,8 +2479,11 @@ export default function LandingPage() {
               <span className="kindli-launcher-halo" />
 
               <img
-                src="/images/kindliicon.png"
+                src="/images/kindliicon.webp"
                 alt="Kindli"
+                decoding="async"
+                width="74"
+                height="74"
               />
 
               <span className="kindli-launcher-online" />
@@ -2355,8 +2513,11 @@ export default function LandingPage() {
                 <div className="kindli-chat-brand">
 
                   <img
-                    src="/images/kindliicon.png"
+                    src="/images/kindliicon.webp"
                     alt="Kindli"
+                    decoding="async"
+                    width="42"
+                    height="42"
                   />
 
                   <div>
@@ -2409,9 +2570,13 @@ export default function LandingPage() {
                           message.role === "assistant" &&
                           (
                             <img
-                              src="/images/kindliicon.png"
+                              src="/images/kindliicon.webp"
                               alt=""
                               aria-hidden="true"
+                              loading="lazy"
+                              decoding="async"
+                              width="27"
+                              height="27"
                             />
                           )
                         }
@@ -2434,9 +2599,13 @@ export default function LandingPage() {
                     <div className="kindli-chat-message assistant">
 
                       <img
-                        src="/images/kindli-icon.png"
+                        src="/images/kindliicon.webp"
                         alt=""
                         aria-hidden="true"
+                        loading="lazy"
+                        decoding="async"
+                        width="27"
+                        height="27"
                       />
 
                       <div className="kindli-thinking">
