@@ -39,36 +39,30 @@ export default function SOSSafety() {
     setContacts,
   ] = useState([]);
 
-
   const [
     loadingContacts,
     setLoadingContacts,
   ] = useState(true);
-
 
   const [
     contactsError,
     setContactsError,
   ] = useState("");
 
-
   const [
     showContactForm,
     setShowContactForm,
   ] = useState(false);
-
 
   const [
     savingContact,
     setSavingContact,
   ] = useState(false);
 
-
   const [
     deletingContactId,
     setDeletingContactId,
   ] = useState(null);
-
 
   const [
     contactForm,
@@ -89,64 +83,44 @@ export default function SOSSafety() {
     setSosActive,
   ] = useState(false);
 
-
   const [
     sosId,
     setSosId,
   ] = useState(null);
-
 
   const [
     sosLoading,
     setSosLoading,
   ] = useState(false);
 
-
   const [
     sosMessage,
     setSosMessage,
   ] = useState("");
-
 
   const [
     sosError,
     setSosError,
   ] = useState("");
 
-
   const [
     sosLocation,
     setSosLocation,
   ] = useState(null);
-
 
   const [
     holdProgress,
     setHoldProgress,
   ] = useState(0);
 
-
   const [
     smsSentCount,
     setSmsSentCount,
   ] = useState(0);
 
-
-  const [
-    whatsappSentCount,
-    setWhatsappSentCount,
-  ] = useState(0);
-
-
   const [
     smsFailedCount,
     setSmsFailedCount,
-  ] = useState(0);
-
-
-  const [
-    whatsappFailedCount,
-    setWhatsappFailedCount,
   ] = useState(0);
 
 
@@ -157,14 +131,11 @@ export default function SOSSafety() {
   const holdTimerRef =
     useRef(null);
 
-
   const holdIntervalRef =
     useRef(null);
 
-
   const holdStartedAtRef =
     useRef(null);
-
 
   const HOLD_DURATION =
     3000;
@@ -182,15 +153,12 @@ export default function SOSSafety() {
         true
       );
 
-
       setContactsError("");
-
 
       const response =
         await api.get(
           "/safety/trusted-contacts/"
         );
-
 
       setContacts(
         Array.isArray(
@@ -209,7 +177,6 @@ export default function SOSSafety() {
         requestError.response?.data ||
           requestError
       );
-
 
       setContactsError(
         requestError
@@ -242,7 +209,6 @@ export default function SOSSafety() {
           "/safety/sos/active/"
         );
 
-
       if (
         response.data?.active === true &&
         response.data?.sos
@@ -251,16 +217,13 @@ export default function SOSSafety() {
         const sos =
           response.data.sos;
 
-
         setSosActive(
           true
         );
 
-
         setSosId(
           sos.id
         );
-
 
         if (
           sos.latitude != null &&
@@ -326,7 +289,6 @@ export default function SOSSafety() {
       value,
     } = event.target;
 
-
     setContactForm(
       (
         current
@@ -350,9 +312,7 @@ export default function SOSSafety() {
 
     event.preventDefault();
 
-
     setContactsError("");
-
 
     if (
       !contactForm.name.trim()
@@ -364,7 +324,6 @@ export default function SOSSafety() {
 
       return;
     }
-
 
     if (
       !contactForm
@@ -379,7 +338,6 @@ export default function SOSSafety() {
       return;
     }
 
-
     if (
       contacts.length >= 3
     ) {
@@ -391,13 +349,11 @@ export default function SOSSafety() {
       return;
     }
 
-
     try {
 
       setSavingContact(
         true
       );
-
 
       const response =
         await api.post(
@@ -420,7 +376,6 @@ export default function SOSSafety() {
           }
         );
 
-
       setContacts(
         (
           current
@@ -430,13 +385,11 @@ export default function SOSSafety() {
         ]
       );
 
-
       setContactForm({
         name: "",
         relationship: "",
         phone_number: "",
       });
-
 
       setShowContactForm(
         false
@@ -451,7 +404,6 @@ export default function SOSSafety() {
         requestError.response?.data ||
           requestError
       );
-
 
       setContactsError(
         requestError
@@ -490,17 +442,14 @@ export default function SOSSafety() {
       return;
     }
 
-
     const confirmed =
       window.confirm(
         `Remove ${contact.name} from your trusted contacts?`
       );
 
-
     if (!confirmed) {
       return;
     }
-
 
     try {
 
@@ -508,11 +457,9 @@ export default function SOSSafety() {
         contact.id
       );
 
-
       await api.delete(
         `/safety/trusted-contacts/${contact.id}/`
       );
-
 
       setContacts(
         (
@@ -536,7 +483,6 @@ export default function SOSSafety() {
         requestError.response?.data ||
           requestError
       );
-
 
       setContactsError(
         requestError
@@ -581,7 +527,6 @@ export default function SOSSafety() {
           return;
         }
 
-
         navigator.geolocation
           .getCurrentPosition(
 
@@ -608,7 +553,6 @@ export default function SOSSafety() {
 
             },
 
-
             (
               error
             ) => {
@@ -618,7 +562,6 @@ export default function SOSSafety() {
               );
 
             },
-
 
             {
               enableHighAccuracy:
@@ -641,8 +584,7 @@ export default function SOSSafety() {
   // =========================================================
   // ACTIVATE SOS
   //
-  // IMPORTANT:
-  // Django is responsible for actually sending Fast2SMS.
+  // Django creates the SOS event and sends Fast2SMS.
   // =========================================================
 
   async function activateSOS() {
@@ -653,11 +595,6 @@ export default function SOSSafety() {
     ) {
       return;
     }
-
-
-    // -------------------------------------------------------
-    // Cannot send without a trusted contact.
-    // -------------------------------------------------------
 
     if (
       contacts.length === 0
@@ -670,11 +607,9 @@ export default function SOSSafety() {
       return;
     }
 
-
     setSosLoading(
       true
     );
-
 
     setSosError("");
 
@@ -684,14 +619,12 @@ export default function SOSSafety() {
       0
     );
 
-    setWhatsappSentCount(0);
-    setSmsFailedCount(0);
-    setWhatsappFailedCount(0);
-
+    setSmsFailedCount(
+      0
+    );
 
     let location =
       null;
-
 
     try {
 
@@ -703,7 +636,6 @@ export default function SOSSafety() {
 
         location =
           await getCurrentLocation();
-
 
         setSosLocation(
           location
@@ -718,7 +650,6 @@ export default function SOSSafety() {
           locationError
         );
 
-
         setSosLocation(
           null
         );
@@ -727,10 +658,7 @@ export default function SOSSafety() {
 
 
       // =====================================================
-      // SEND TO DJANGO
-      //
-      // Django creates one SOS event and automatically attempts
-      // both SMS and WhatsApp for every active trusted contact.
+      // SEND SOS TO DJANGO
       // =====================================================
 
       const response =
@@ -769,61 +697,59 @@ export default function SOSSafety() {
         null
       );
 
-
       setSosActive(
         true
       );
 
 
       // =====================================================
-      // COMBINED SMS + WHATSAPP RESULT
+      // SMS RESULT
       // =====================================================
 
-      const smsSent = Number(
-        response.data?.sms_sent ??
-        response.data?.sms_started ??
-        0
-      );
+      const smsSent =
+        Number(
+          response.data?.sms_sent ??
+          response.data?.sms_started ??
+          0
+        );
 
-      const whatsappSent = Number(
-        response.data?.whatsapp_sent ?? 0
-      );
-
-      const smsFailed = Number(
-        response.data?.sms_failed ?? 0
-      );
-
-      const whatsappFailed = Number(
-        response.data?.whatsapp_failed ?? 0
-      );
-
+      const smsFailed =
+        Number(
+          response.data?.sms_failed ??
+          0
+        );
 
       setSmsSentCount(
         smsSent
       );
 
-      setWhatsappSentCount(whatsappSent);
-      setSmsFailedCount(smsFailed);
-      setWhatsappFailedCount(whatsappFailed);
+      setSmsFailedCount(
+        smsFailed
+      );
 
+
+      // =====================================================
+      // RESULT MESSAGE
+      // =====================================================
 
       if (
-        smsSent > 0 || whatsappSent > 0
+        smsSent > 0
       ) {
 
         setSosMessage(
           response.data?.detail ||
-          "SOS activated. SMS and WhatsApp alerts were submitted automatically."
+          "SOS activated. Emergency SMS alerts were sent."
         );
-
 
         setSosError("");
 
       } else {
 
+        setSosMessage("");
+
         setSosError(
           response.data?.detail ||
-          "SOS was recorded, but neither SMS nor WhatsApp accepted the alert."
+          "SOS was recorded, but the emergency SMS alert could not be sent."
         );
 
       }
@@ -839,18 +765,16 @@ export default function SOSSafety() {
           requestError
       );
 
-
-      setSosActive(false);
-
+      setSosActive(
+        false
+      );
 
       setSosError(
-        (
-          requestError
-            .response
-            ?.data
-            ?.detail ||
-          "Unable to activate SOS. Please try again."
-        )
+        requestError
+          .response
+          ?.data
+          ?.detail ||
+        "Unable to activate SOS. Please try again."
       );
 
     } finally {
@@ -858,7 +782,6 @@ export default function SOSSafety() {
       setSosLoading(
         false
       );
-
 
       setHoldProgress(
         0
@@ -881,13 +804,10 @@ export default function SOSSafety() {
       return;
     }
 
-
     clearSOSHold();
-
 
     holdStartedAtRef.current =
       Date.now();
-
 
     holdIntervalRef.current =
       window.setInterval(
@@ -896,7 +816,6 @@ export default function SOSSafety() {
           const elapsed =
             Date.now() -
             holdStartedAtRef.current;
-
 
           const progress =
             Math.min(
@@ -907,7 +826,6 @@ export default function SOSSafety() {
               100
             );
 
-
           setHoldProgress(
             progress
           );
@@ -916,7 +834,6 @@ export default function SOSSafety() {
         50
       );
 
-
     holdTimerRef.current =
       window.setTimeout(
         () => {
@@ -924,7 +841,6 @@ export default function SOSSafety() {
           clearSOSHold(
             false
           );
-
 
           activateSOS();
 
@@ -950,12 +866,10 @@ export default function SOSSafety() {
         holdTimerRef.current
       );
 
-
       holdTimerRef.current =
         null;
 
     }
-
 
     if (
       holdIntervalRef.current
@@ -965,16 +879,13 @@ export default function SOSSafety() {
         holdIntervalRef.current
       );
 
-
       holdIntervalRef.current =
         null;
 
     }
 
-
     holdStartedAtRef.current =
       null;
-
 
     if (
       resetProgress
@@ -1015,11 +926,11 @@ export default function SOSSafety() {
         true
       );
 
-
       setSosError("");
 
-
-      if (sosId) {
+      if (
+        sosId
+      ) {
 
         await api.post(
           `/safety/sos/${sosId}/safe/`
@@ -1027,30 +938,25 @@ export default function SOSSafety() {
 
       }
 
-
       setSosActive(
         false
       );
-
 
       setSosId(
         null
       );
 
-
       setSosLocation(
         null
       );
-
 
       setSmsSentCount(
         0
       );
 
-      setWhatsappSentCount(0);
-      setSmsFailedCount(0);
-      setWhatsappFailedCount(0);
-
+      setSmsFailedCount(
+        0
+      );
 
       setSosMessage(
         "You have been marked safe."
@@ -1065,7 +971,6 @@ export default function SOSSafety() {
         requestError.response?.data ||
           requestError
       );
-
 
       setSosError(
         requestError
@@ -1092,7 +997,6 @@ export default function SOSSafety() {
   return (
     <main className="sos-safety-page">
 
-
       {/* =====================================================
           TOP
       ===================================================== */}
@@ -1103,13 +1007,11 @@ export default function SOSSafety() {
           to="/safety-verification"
           className="sos-back-link"
         >
-
           <ArrowLeft
             size={18}
           />
 
           Back to Safety &amp; Verification
-
         </Link>
 
       </div>
@@ -1131,21 +1033,16 @@ export default function SOSSafety() {
 
         </div>
 
-
         <h1>
-
           SOS &amp;{" "}
-
           <span>
             Trusted Contacts
           </span>
-
         </h1>
-
 
         <p>
           Add people you trust. Holding SOS
-          automatically sends both SMS
+          automatically sends emergency SMS
           alerts through FoodKindl.
         </p>
 
@@ -1157,7 +1054,6 @@ export default function SOSSafety() {
       ===================================================== */}
 
       <section className="sos-layout">
-
 
         {/* ===================================================
             TRUSTED CONTACTS
@@ -1173,11 +1069,9 @@ export default function SOSSafety() {
                 YOUR SAFETY NETWORK
               </span>
 
-
               <h2>
                 Trusted Contacts
               </h2>
-
 
               <p>
                 Add up to three people who
@@ -1186,17 +1080,12 @@ export default function SOSSafety() {
 
             </div>
 
-
             <div className="trusted-contact-count">
-
               {contacts.length}/3
-
             </div>
 
           </div>
 
-
-          {/* ERROR */}
 
           {contactsError && (
 
@@ -1213,20 +1102,14 @@ export default function SOSSafety() {
           )}
 
 
-          {/* LOADING */}
-
           {loadingContacts && (
 
             <div className="trusted-contact-empty">
-
               Loading trusted contacts...
-
             </div>
 
           )}
 
-
-          {/* EMPTY */}
 
           {
             !loadingContacts &&
@@ -1239,11 +1122,9 @@ export default function SOSSafety() {
                   size={31}
                 />
 
-
                 <strong>
                   No trusted contacts yet
                 </strong>
-
 
                 <span>
                   Add someone before using SOS.
@@ -1254,8 +1135,6 @@ export default function SOSSafety() {
             )
           }
 
-
-          {/* CONTACT LIST */}
 
           {
             !loadingContacts &&
@@ -1274,7 +1153,6 @@ export default function SOSSafety() {
                         key={
                           contact.id
                         }
-
                         className="trusted-contact-row"
                       >
 
@@ -1293,16 +1171,12 @@ export default function SOSSafety() {
                             {contact.name}
                           </strong>
 
-
                           <span>
-
                             {
                               contact.relationship ||
                               "Trusted contact"
                             }
-
                           </span>
-
 
                           <small>
 
@@ -1319,25 +1193,20 @@ export default function SOSSafety() {
 
                         <button
                           type="button"
-
                           className="trusted-contact-delete"
-
                           disabled={
                             deletingContactId ===
                             contact.id
                           }
-
                           onClick={() =>
                             deleteTrustedContact(
                               contact
                             )
                           }
-
                           aria-label={
                             `Remove ${contact.name}`
                           }
                         >
-
                           {
                             deletingContactId ===
                             contact.id
@@ -1348,7 +1217,6 @@ export default function SOSSafety() {
                                   />
                                 )
                           }
-
                         </button>
 
                       </div>
@@ -1363,8 +1231,6 @@ export default function SOSSafety() {
           }
 
 
-          {/* ADD CONTACT BUTTON */}
-
           {
             contacts.length < 3 &&
             !showContactForm &&
@@ -1372,9 +1238,7 @@ export default function SOSSafety() {
 
               <button
                 type="button"
-
                 className="add-trusted-contact-button"
-
                 onClick={() =>
                   setShowContactForm(
                     true
@@ -1394,13 +1258,10 @@ export default function SOSSafety() {
           }
 
 
-          {/* ADD CONTACT FORM */}
-
           {showContactForm && (
 
             <form
               className="trusted-contact-form"
-
               onSubmit={
                 addTrustedContact
               }
@@ -1412,18 +1273,14 @@ export default function SOSSafety() {
                   Add Trusted Contact
                 </strong>
 
-
                 <button
                   type="button"
-
                   aria-label="Close"
-
                   onClick={() => {
 
                     setShowContactForm(
                       false
                     );
-
 
                     setContactForm({
                       name: "",
@@ -1449,19 +1306,14 @@ export default function SOSSafety() {
 
                 <input
                   type="text"
-
                   name="name"
-
                   value={
                     contactForm.name
                   }
-
                   onChange={
                     handleContactChange
                   }
-
                   placeholder="Full name"
-
                   required
                 />
 
@@ -1474,17 +1326,13 @@ export default function SOSSafety() {
 
                 <input
                   type="text"
-
                   name="relationship"
-
                   value={
                     contactForm.relationship
                   }
-
                   onChange={
                     handleContactChange
                   }
-
                   placeholder="Wife, husband, friend..."
                 />
 
@@ -1497,19 +1345,14 @@ export default function SOSSafety() {
 
                 <input
                   type="tel"
-
                   name="phone_number"
-
                   value={
                     contactForm.phone_number
                   }
-
                   onChange={
                     handleContactChange
                   }
-
                   placeholder="+91 98765 43210"
-
                   required
                 />
 
@@ -1518,20 +1361,16 @@ export default function SOSSafety() {
 
               <button
                 type="submit"
-
                 className="save-trusted-contact-button"
-
                 disabled={
                   savingContact
                 }
               >
-
                 {
                   savingContact
                     ? "Saving..."
                     : "Save Trusted Contact"
                 }
-
               </button>
 
             </form>
@@ -1542,7 +1381,7 @@ export default function SOSSafety() {
 
 
         {/* ===================================================
-            SOS
+            SOS CONTROL
         =================================================== */}
 
         <article
@@ -1559,70 +1398,48 @@ export default function SOSSafety() {
               EMERGENCY CONTROL
             </span>
 
-
             <h2>
-
               {
                 sosActive
                   ? "SOS Active"
                   : "Hold for SOS"
               }
-
             </h2>
 
-
             <p>
-
               {
                 sosActive
-                  ? (
-                      "Emergency SMS alerts were sent automatically."
-                    )
-                  : (
-                      "Hold for three seconds to send an emergency SMS alert."
-                    )
+                  ? "Emergency SMS alerts were attempted automatically."
+                  : "Hold for three seconds to send an emergency SMS alert."
               }
-
             </p>
 
           </div>
 
 
-          {/* =================================================
-              SOS BUTTON
-          ================================================= */}
-
           {!sosActive && (
 
             <button
               type="button"
-
               className="sos-hold-button"
-
               onMouseDown={
                 startSOSHold
               }
-
               onMouseUp={() =>
                 clearSOSHold()
               }
-
               onMouseLeave={() =>
                 clearSOSHold()
               }
-
               onTouchStart={
                 startSOSHold
               }
-
               onTouchEnd={() =>
                 clearSOSHold()
               }
-
               onTouchCancel={() =>
                 clearSOSHold()
               }
-
               disabled={
                 sosLoading
               }
@@ -1630,29 +1447,23 @@ export default function SOSSafety() {
 
               <span
                 className="sos-progress-ring"
-
                 style={{
                   "--sos-progress":
                     `${holdProgress}%`,
                 }}
               />
 
-
               <ShieldAlert
                 size={44}
               />
 
-
               <strong>
-
                 {
                   sosLoading
                     ? "SENDING..."
                     : "SOS"
                 }
-
               </strong>
-
 
               <small>
                 Hold for 3 seconds
@@ -1662,10 +1473,6 @@ export default function SOSSafety() {
 
           )}
 
-
-          {/* =================================================
-              ACTIVE SOS
-          ================================================= */}
 
           {sosActive && (
 
@@ -1678,7 +1485,6 @@ export default function SOSSafety() {
                 />
 
               </div>
-
 
               <strong>
                 SOS Activated
@@ -1718,87 +1524,56 @@ export default function SOSSafety() {
 
               <div className="sos-sms-result">
 
-  {
-    (
-      smsSentCount > 0
-      //  ||
-      // whatsappSentCount > 0
-    )
-      ? (
-          <CheckCircle2
-            size={18}
-          />
-        )
-      : (
-          <AlertTriangle
-            size={18}
-          />
-        )
-  }
+                {
+                  smsSentCount > 0
+                    ? (
+                        <CheckCircle2
+                          size={18}
+                        />
+                      )
+                    : (
+                        <AlertTriangle
+                          size={18}
+                        />
+                      )
+                }
 
+                <div>
 
-  <div>
+                  <strong>
+                    Alert delivery status
+                  </strong>
 
-    <strong>
-      Alert delivery status
-    </strong>
+                  <div className="sos-channel-results">
 
+                    <span
+                      className={
+                        smsSentCount > 0
+                          ? "success"
+                          : "failed"
+                      }
+                    >
+                      SMS:{" "}
+                      {
+                        smsSentCount > 0
+                          ? `${smsSentCount} sent`
+                          : `${smsFailedCount} failed`
+                      }
+                    </span>
 
-    <div className="sos-channel-results">
+                  </div>
 
-      <span
-        className={
-          smsSentCount > 0
-            ? "success"
-            : "failed"
-        }
-      >
-        SMS:
-        {" "}
-        {
-          smsSentCount > 0
-            ? `${smsSentCount} sent`
-            : `${smsFailedCount} failed`
-        }
-      </span>
+                </div>
 
+              </div>
 
-      {/* <span
-        className={
-          whatsappSentCount > 0
-            ? "success"
-            : "failed"
-        }
-      >
-        WhatsApp:
-        {" "}
-        {
-          whatsappSentCount > 0
-            ? `${whatsappSentCount} sent`
-            : `${whatsappFailedCount} failed`
-        }
-      </span> */}
-
-    </div>
-
-  </div>
-
-</div>
-
-
-              {/* =============================================
-                  I'M SAFE
-              ============================================= */}
 
               <button
                 type="button"
-
                 className="mark-safe-button"
-
                 onClick={
                   markSafe
                 }
-
                 disabled={
                   sosLoading
                 }
@@ -1821,10 +1596,6 @@ export default function SOSSafety() {
           )}
 
 
-          {/* =================================================
-              SUCCESS
-          ================================================= */}
-
           {sosMessage && (
 
             <div className="sos-success-message">
@@ -1839,10 +1610,6 @@ export default function SOSSafety() {
 
           )}
 
-
-          {/* =================================================
-              ERROR
-          ================================================= */}
 
           {sosError && (
 
@@ -1859,10 +1626,6 @@ export default function SOSSafety() {
           )}
 
 
-          {/* =================================================
-              INFO
-          ================================================= */}
-
           <div className="sos-info-list">
 
             <div>
@@ -1872,10 +1635,10 @@ export default function SOSSafety() {
               />
 
               <span>
-  FoodKindl sends the SOS request once.
-  Emergency SMS alerts are automatically
-  sent to your trusted contacts.
-</span>
+                FoodKindl sends the SOS request once.
+                Emergency SMS alerts are automatically
+                sent to your trusted contacts.
+              </span>
 
             </div>
 
@@ -1923,7 +1686,6 @@ export default function SOSSafety() {
         <AlertTriangle
           size={20}
         />
-
 
         <p>
           FoodKindl does not provide emergency
