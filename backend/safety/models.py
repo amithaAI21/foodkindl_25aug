@@ -126,3 +126,55 @@ class SOSEvent(models.Model):
             f"SOS - {self.user.email} - "
             f"{self.status}"
         )
+        
+class AdminSystemAlert(models.Model):
+
+    LEVEL_CHOICES = [
+        ("info", "Info"),
+        ("warning", "Warning"),
+        ("urgent", "Urgent"),
+        ("critical", "Critical"),
+    ]
+
+    source = models.CharField(
+        max_length=100,
+        default="system",
+    )
+
+    level = models.CharField(
+        max_length=20,
+        choices=LEVEL_CHOICES,
+        default="info",
+    )
+
+    title = models.CharField(
+        max_length=200,
+    )
+
+    message = models.TextField()
+
+    balance = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        null=True,
+        blank=True,
+    )
+
+    is_read = models.BooleanField(
+        default=False,
+    )
+
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+    )
+
+    class Meta:
+        ordering = [
+            "-created_at",
+        ]
+
+    def __str__(self):
+        return (
+            f"{self.level.upper()} - "
+            f"{self.title}"
+        )

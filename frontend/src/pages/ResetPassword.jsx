@@ -76,42 +76,35 @@ export default function ResetPassword() {
     token,
   } = useParams();
 
-
   const [
     password,
     setPassword,
   ] = useState("");
-
 
   const [
     confirmPassword,
     setConfirmPassword,
   ] = useState("");
 
-
   const [
     showPassword,
     setShowPassword,
   ] = useState(false);
-
 
   const [
     showConfirmPassword,
     setShowConfirmPassword,
   ] = useState(false);
 
-
   const [
     submitting,
     setSubmitting,
   ] = useState(false);
 
-
   const [
     error,
     setError,
   ] = useState("");
-
 
   const [
     success,
@@ -119,23 +112,20 @@ export default function ResetPassword() {
   ] = useState(false);
 
 
-  const passwordValid =
-    useMemo(() => {
-      return password.length >= 8;
-    }, [password]);
+  const passwordValid = useMemo(
+    () => password.length >= 8,
+    [password]
+  );
 
 
   async function submit(event) {
     event.preventDefault();
 
-
     if (submitting) {
       return;
     }
 
-
     setError("");
-
 
     if (!uid || !token) {
       setError(
@@ -145,7 +135,6 @@ export default function ResetPassword() {
       return;
     }
 
-
     if (!password) {
       setError(
         "Enter your new password."
@@ -153,7 +142,6 @@ export default function ResetPassword() {
 
       return;
     }
-
 
     if (!passwordValid) {
       setError(
@@ -163,7 +151,6 @@ export default function ResetPassword() {
       return;
     }
 
-
     if (!confirmPassword) {
       setError(
         "Confirm your new password."
@@ -171,7 +158,6 @@ export default function ResetPassword() {
 
       return;
     }
-
 
     if (
       password !==
@@ -188,7 +174,6 @@ export default function ResetPassword() {
     try {
       setSubmitting(true);
 
-
       await api.post(
         "/auth/reset-password/",
         {
@@ -200,41 +185,23 @@ export default function ResetPassword() {
         }
       );
 
-
       setSuccess(true);
-
 
       setPassword("");
       setConfirmPassword("");
 
-
     } catch (requestError) {
       console.error(
         "Password reset error:",
-        {
-          status:
-            requestError.response?.status,
-
-          data:
-            requestError.response?.data,
-
-          url:
-            requestError.config?.url,
-
-          baseURL:
-            requestError.config?.baseURL,
-        }
+        requestError.response?.data ||
+        requestError
       );
-
-
-      const data =
-        requestError.response?.data;
-
 
       setError(
-        getErrorMessage(data)
+        getErrorMessage(
+          requestError.response?.data
+        )
       );
-
 
     } finally {
       setSubmitting(false);
@@ -252,22 +219,18 @@ export default function ResetPassword() {
             ✓
           </div>
 
-
           <span className="reset-password-eyebrow">
             FOODKINDL ACCOUNT
           </span>
-
 
           <h1>
             Password updated
           </h1>
 
-
           <p>
             Your FoodKindl password
             has been changed successfully.
           </p>
-
 
           <Link
             to="/login"
@@ -288,7 +251,6 @@ export default function ResetPassword() {
 
       <section className="reset-password-card">
 
-
         <div className="reset-password-icon">
 
           <LockKeyhole
@@ -297,16 +259,13 @@ export default function ResetPassword() {
 
         </div>
 
-
         <span className="reset-password-eyebrow">
           FOODKINDL ACCOUNT
         </span>
 
-
         <h1>
           Create a new password
         </h1>
-
 
         <p>
           Choose a new password
@@ -316,18 +275,14 @@ export default function ResetPassword() {
 
         <form onSubmit={submit}>
 
-
           <label>
-
             New password
-
 
             <div className="reset-password-input">
 
               <LockKeyhole
                 size={17}
               />
-
 
               <input
                 type={
@@ -351,12 +306,11 @@ export default function ResetPassword() {
                 required
               />
 
-
               <button
                 type="button"
                 onClick={() =>
                   setShowPassword(
-                    (current) =>
+                    current =>
                       !current
                   )
                 }
@@ -366,39 +320,33 @@ export default function ResetPassword() {
                     : "Show password"
                 }
               >
-
                 {
                   showPassword
                     ? (
-                      <EyeOff
-                        size={17}
-                      />
-                    )
+                        <EyeOff
+                          size={17}
+                        />
+                      )
                     : (
-                      <Eye
-                        size={17}
-                      />
-                    )
+                        <Eye
+                          size={17}
+                        />
+                      )
                 }
-
               </button>
 
             </div>
-
           </label>
 
 
           <label>
-
             Confirm new password
-
 
             <div className="reset-password-input">
 
               <LockKeyhole
                 size={17}
               />
-
 
               <input
                 type={
@@ -422,12 +370,11 @@ export default function ResetPassword() {
                 required
               />
 
-
               <button
                 type="button"
                 onClick={() =>
                   setShowConfirmPassword(
-                    (current) =>
+                    current =>
                       !current
                   )
                 }
@@ -437,25 +384,22 @@ export default function ResetPassword() {
                     : "Show confirm password"
                 }
               >
-
                 {
                   showConfirmPassword
                     ? (
-                      <EyeOff
-                        size={17}
-                      />
-                    )
+                        <EyeOff
+                          size={17}
+                        />
+                      )
                     : (
-                      <Eye
-                        size={17}
-                      />
-                    )
+                        <Eye
+                          size={17}
+                        />
+                      )
                 }
-
               </button>
 
             </div>
-
           </label>
 
 
@@ -468,7 +412,10 @@ export default function ResetPassword() {
           {
             error &&
             (
-              <div className="reset-password-error">
+              <div
+                className="reset-password-error"
+                role="alert"
+              >
                 {error}
               </div>
             )
@@ -480,13 +427,11 @@ export default function ResetPassword() {
             className="reset-password-primary"
             disabled={submitting}
           >
-
             {
               submitting
                 ? "Updating password..."
                 : "Save new password"
             }
-
           </button>
 
         </form>

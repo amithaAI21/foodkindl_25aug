@@ -96,3 +96,42 @@ class SOSEventAdmin(
     ordering = (
         "-activated_at",
     )
+    
+from .models import (
+    AdminSystemAlert,
+)
+
+
+@admin.register(AdminSystemAlert)
+class AdminSystemAlertAdmin(
+    admin.ModelAdmin
+):
+
+    list_display = (
+        "title",
+        "source",
+        "level",
+        "balance",
+        "is_read",
+        "created_at",
+    )
+
+    list_filter = (
+        "level",
+        "source",
+        "is_read",
+    )
+
+    search_fields = (
+        "title",
+        "message",
+    )
+
+    readonly_fields = (
+        "source",
+        "level",
+        "title",
+        "message",
+        "balance",
+        "created_at",
+    )
