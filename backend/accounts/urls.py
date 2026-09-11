@@ -16,6 +16,7 @@ from .views import (
     SessionContextView,
 )
 
+from .views import FoodKindlPeopleView
 
 urlpatterns = [
 
@@ -40,6 +41,12 @@ urlpatterns = [
         MeView.as_view(),
         name="me",
     ),
+    
+    path(
+    "people/",
+    FoodKindlPeopleView.as_view(),
+    name="foodkindl-people",
+),
 
 
     # ========================================================

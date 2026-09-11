@@ -1,0 +1,365 @@
+{% extends "admin/base_site.html" %}
+
+
+{% load i18n %}
+
+
+{% block title %}
+Import Restaurants from CSV
+{% endblock %}
+
+
+{% block content %}
+
+<style>
+
+    .foodkindl-import {
+        max-width: 900px;
+
+        margin-top: 20px;
+
+        padding: 26px;
+
+        border-radius: 12px;
+
+        background: var(
+            --body-bg,
+            #ffffff
+        );
+    }
+
+
+    .foodkindl-import h1 {
+        margin-top: 0;
+
+        margin-bottom: 8px;
+    }
+
+
+    .foodkindl-import-intro {
+        max-width: 700px;
+
+        margin-bottom: 24px;
+
+        color: var(
+            --body-quiet-color,
+            #666
+        );
+
+        line-height: 1.6;
+    }
+
+
+    .foodkindl-import-field {
+        margin-bottom: 22px;
+    }
+
+
+    .foodkindl-import-field label {
+        display: block;
+
+        margin-bottom: 7px;
+
+        font-weight: 700;
+    }
+
+
+    .foodkindl-import-field input[type="file"] {
+        width: 100%;
+
+        max-width: 600px;
+
+        padding: 12px;
+
+        border: 1px solid #ccc;
+
+        border-radius: 7px;
+    }
+
+
+    .foodkindl-checkbox {
+        display: flex;
+
+        align-items: flex-start;
+
+        gap: 10px;
+
+        margin-bottom: 14px;
+    }
+
+
+    .foodkindl-checkbox input {
+        margin-top: 3px;
+    }
+
+
+    .foodkindl-checkbox strong {
+        display: block;
+
+        margin-bottom: 3px;
+    }
+
+
+    .foodkindl-checkbox small {
+        display: block;
+
+        color: #777;
+    }
+
+
+    .foodkindl-import-columns {
+        margin-top: 25px;
+
+        padding: 18px;
+
+        border-radius: 9px;
+
+        background: rgba(
+            127,
+            127,
+            127,
+            0.08
+        );
+    }
+
+
+    .foodkindl-import-columns h3 {
+        margin-top: 0;
+    }
+
+
+    .foodkindl-import-columns code {
+        display: block;
+
+        overflow-x: auto;
+
+        white-space: normal;
+
+        line-height: 1.7;
+    }
+
+
+    .foodkindl-import-actions {
+        display: flex;
+
+        align-items: center;
+
+        gap: 12px;
+
+        margin-top: 25px;
+    }
+
+
+    .foodkindl-import-button {
+        padding:
+            11px
+            20px;
+
+        border: 0;
+
+        border-radius: 6px;
+
+        color: #ffffff;
+
+        background: #417690;
+
+        font-weight: 700;
+
+        cursor: pointer;
+    }
+
+
+    .foodkindl-import-button:hover {
+        background: #205067;
+    }
+
+</style>
+
+
+<div class="foodkindl-import">
+
+    <h1>
+        Import Restaurants from CSV
+    </h1>
+
+
+    <p class="foodkindl-import-intro">
+
+        Upload a restaurant CSV to FoodKindl.
+
+        Existing restaurants are matched using
+
+        <strong>
+            Name + Locality + City
+        </strong>.
+
+        Restaurants without coordinates can be
+        automatically geocoded using OpenRouteService.
+
+    </p>
+
+
+    <form
+        method="post"
+        enctype="multipart/form-data"
+    >
+
+        {% csrf_token %}
+
+
+        {% if form.non_field_errors %}
+
+            <div class="errornote">
+
+                {{ form.non_field_errors }}
+
+            </div>
+
+        {% endif %}
+
+
+        <div class="foodkindl-import-field">
+
+            <label for="{{ form.csv_file.id_for_label }}">
+
+                CSV file
+
+            </label>
+
+
+            {{ form.csv_file }}
+
+
+            {% if form.csv_file.errors %}
+
+                <div class="errornote">
+
+                    {{ form.csv_file.errors }}
+
+                </div>
+
+            {% endif %}
+
+        </div>
+
+
+        <div class="foodkindl-checkbox">
+
+            {{ form.update_existing }}
+
+            <div>
+
+                <strong>
+                    Update existing restaurants
+                </strong>
+
+                <small>
+
+                    Match records using
+                    restaurant name, locality and city.
+
+                </small>
+
+            </div>
+
+        </div>
+
+
+        <div class="foodkindl-checkbox">
+
+            {{ form.geocode_missing_coordinates }}
+
+            <div>
+
+                <strong>
+                    Geocode missing coordinates
+                </strong>
+
+                <small>
+
+                    FoodKindl will try to determine
+                    latitude and longitude using
+                    OpenRouteService.
+
+                </small>
+
+            </div>
+
+        </div>
+
+
+        <div class="foodkindl-import-columns">
+
+            <h3>
+                Supported CSV columns
+            </h3>
+
+
+            <code>
+
+                owner,
+                name,
+                restaurant_type,
+                description,
+                cuisine,
+                phone_number,
+                email,
+                website,
+                address,
+                locality,
+                city,
+                pincode,
+                latitude,
+                longitude,
+                rating,
+                price_range,
+                average_cost_for_two,
+                opening_time,
+                closing_time,
+                seating_capacity,
+                has_parking,
+                has_wifi,
+                accepts_cards,
+                family_friendly,
+                outdoor_seating,
+                wheelchair_accessible,
+                serves_vegetarian,
+                serves_non_vegetarian,
+                image_blob_key,
+                image_url,
+                image_original_name,
+                image_content_type,
+                is_foodkindl_partner,
+                accepts_foodkindl_booking,
+                is_active
+
+            </code>
+
+        </div>
+
+
+        <div class="foodkindl-import-actions">
+
+            <button
+                type="submit"
+                class="foodkindl-import-button"
+            >
+
+                Import Restaurants
+
+            </button>
+
+
+            <a
+                href="{% url 'admin:invites_restaurant_changelist' %}"
+            >
+                Cancel
+            </a>
+
+        </div>
+
+    </form>
+
+</div>
+
+{% endblock %}

@@ -1,50 +1,202 @@
 import {
+  lazy,
+  Suspense,
+  useEffect,
+  useState,
+} from "react";
+
+import {
   Navigate,
   Route,
   Routes,
   useLocation,
 } from "react-router-dom";
 
-import {
-  useEffect,
-  useState,
-} from "react";
-
 import Navbar from "./components/Navbar";
-import MessagingDock from "./components/MessagingDock";
-
-import LandingPage from "./pages/LandingPage";
-import Login from "./pages/Login";
-import Register from "./pages/Register";
-import RestaurantPartnerRegister from "./pages/RestaurantPartnerRegister";
-import Dashboard from "./pages/ConnectDashboard";
-import Community from "./pages/Community";
-import CommunityPostDetail from "./pages/CommunityPostDetail";
-import FoodListings from "./pages/FoodListings";
-import Connect from "./pages/Connect";
-import MemberProfile from "./pages/MemberProfile";
-import Profile from "./pages/Profile";
-import VerificationRequired from "./pages/VerificationRequired";
-import AIKitchen from "./pages/AIKitchen";
-import Careers from "./pages/Careers";
-import Contact from "./pages/Contact";
-import CommunityGuidelines from "./pages/CommunityGuidelines";
-import SafetyCentre from "./pages/SafetyCentre";
-import PrivacyPolicy from "./pages/PrivacyPolicy";
-import TermsOfUse from "./pages/TermsOfUse";
-import Settings from "./pages/Settings";
-import SafetyVerification from "./pages/SafetyVerification";
-import SOSSafety from "./pages/SOSSafety";
-
-import FoodInvites from "./pages/FoodInvites";
-import SuggestPlace from "./components/SuggestPlace";
-import ForgotPassword from "./pages/ForgotPassword";
-import ResetPassword from "./pages/ResetPassword";
-import PartnerDashboard from "./pages/PartnerDashboard";
 
 import {
   useAuth,
 } from "./context/AuthContext";
+
+
+// ============================================================
+// LAZY-LOADED COMPONENTS
+// ============================================================
+
+// Public pages
+const LandingPage = lazy(
+  () => import("./pages/LandingPage")
+);
+
+const Login = lazy(
+  () => import("./pages/Login")
+);
+
+const Register = lazy(
+  () => import("./pages/Register")
+);
+
+const RestaurantPartnerRegister = lazy(
+  () =>
+    import(
+      "./pages/RestaurantPartnerRegister"
+    )
+);
+
+const ForgotPassword = lazy(
+  () => import("./pages/ForgotPassword")
+);
+
+const ResetPassword = lazy(
+  () => import("./pages/ResetPassword")
+);
+
+const Careers = lazy(
+  () => import("./pages/Careers")
+);
+
+const Contact = lazy(
+  () => import("./pages/Contact")
+);
+
+const CommunityGuidelines = lazy(
+  () =>
+    import(
+      "./pages/CommunityGuidelines"
+    )
+);
+
+const SafetyCentre = lazy(
+  () => import("./pages/SafetyCentre")
+);
+
+const PrivacyPolicy = lazy(
+  () => import("./pages/PrivacyPolicy")
+);
+
+const TermsOfUse = lazy(
+  () => import("./pages/TermsOfUse")
+);
+
+
+// ============================================================
+// LOGGED-IN APP PAGES
+// ============================================================
+
+const Dashboard = lazy(
+  () => import("./pages/ConnectDashboard")
+);
+
+const Community = lazy(
+  () => import("./pages/Community")
+);
+
+const CommunityPostDetail = lazy(
+  () =>
+    import(
+      "./pages/CommunityPostDetail"
+    )
+);
+
+const FoodListings = lazy(
+  () => import("./pages/FoodListings")
+);
+
+const Connect = lazy(
+  () => import("./pages/Connect")
+);
+
+const MemberProfile = lazy(
+  () => import("./pages/MemberProfile")
+);
+
+const Profile = lazy(
+  () => import("./pages/Profile")
+);
+
+const VerificationRequired = lazy(
+  () =>
+    import(
+      "./pages/VerificationRequired"
+    )
+);
+
+const AIKitchen = lazy(
+  () => import("./pages/AIKitchen")
+);
+
+const Settings = lazy(
+  () => import("./pages/Settings")
+);
+
+const SafetyVerification = lazy(
+  () =>
+    import(
+      "./pages/SafetyVerification"
+    )
+);
+
+const SOSSafety = lazy(
+  () => import("./pages/SOSSafety")
+);
+
+const FoodInvites = lazy(
+  () => import("./pages/FoodInvites")
+);
+
+const FoodInviteDetail = lazy(
+  () => import("./pages/FoodInviteDetail")
+);
+
+const EditFoodInvite = lazy(
+  () => import("./pages/EditFoodInvite")
+);
+
+const CookTogether = lazy(
+  () => import("./pages/CookTogether")
+);
+
+const DineOut = lazy(
+  () => import("./pages/DineOut")
+);
+
+const FoodWalkPlanner = lazy(
+  () => import("./pages/FoodWalkPlanner")
+);
+
+const PartnerDashboard = lazy(
+  () =>
+    import(
+      "./pages/PartnerDashboard"
+    )
+);
+
+
+// ============================================================
+// LAZY COMPONENTS
+// ============================================================
+
+const SuggestPlace = lazy(
+  () =>
+    import(
+      "./components/SuggestPlace"
+    )
+);
+
+
+// ============================================================
+// MESSAGING
+// ============================================================
+
+// Messaging can also be lazy-loaded because it is not required
+// on the public landing page or during first application load.
+
+const MessagingDock = lazy(
+  () =>
+    import(
+      "./components/MessagingDock"
+    )
+);
 
 
 // ============================================================
@@ -56,6 +208,7 @@ const PUBLIC_DARK_PAGES = [
   "/login",
   "/register",
   "/register/restaurant",
+  "/forgot-password",
   "/careers",
   "/contact",
   "/community-guidelines",
@@ -65,14 +218,86 @@ const PUBLIC_DARK_PAGES = [
 ];
 
 
+// ============================================================
+// CHECK PARTNER USER
+// ============================================================
+
 function isPartnerUser(user) {
-  const profile = user?.profile || {};
+
+  const profile =
+    user?.profile || {};
+
 
   return (
-    user?.account_type === "partner" ||
-    profile?.account_type === "partner" ||
-    user?.preferred_portal === "restaurant" ||
-    profile?.preferred_portal === "restaurant"
+
+    user?.account_type ===
+      "partner"
+
+    ||
+
+    profile?.account_type ===
+      "partner"
+
+    ||
+
+    user?.preferred_portal ===
+      "restaurant"
+
+    ||
+
+    profile?.preferred_portal ===
+      "restaurant"
+
+  );
+}
+
+
+// ============================================================
+// GLOBAL PAGE LOADER
+// ============================================================
+
+function AppLoader({
+  message =
+    "Loading FoodKindl...",
+}) {
+
+  return (
+
+    <main
+      className="app-page"
+      style={{
+        minHeight: "55vh",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        padding: "40px 20px",
+      }}
+    >
+
+      <div
+        style={{
+          textAlign: "center",
+        }}
+      >
+
+        <div
+          className="foodkindl-page-loader"
+          aria-label="Loading"
+        />
+
+        <p
+          style={{
+            marginTop: "16px",
+            opacity: 0.75,
+          }}
+        >
+          {message}
+        </p>
+
+      </div>
+
+    </main>
+
   );
 }
 
@@ -122,9 +347,10 @@ function ThemeController() {
     systemDark,
     setSystemDark,
   ] = useState(
-    window.matchMedia(
-      "(prefers-color-scheme: dark)"
-    ).matches
+    () =>
+      window.matchMedia(
+        "(prefers-color-scheme: dark)"
+      ).matches
   );
 
 
@@ -148,6 +374,7 @@ function ThemeController() {
         setSystemDark(
           event.matches
         );
+
       }
 
 
@@ -210,6 +437,7 @@ function ThemeController() {
         );
 
         return;
+
       }
 
 
@@ -236,6 +464,7 @@ function ThemeController() {
           systemDark
             ? "dark"
             : "light";
+
       }
 
 
@@ -280,13 +509,12 @@ function Protected({
 
     return (
 
-      <main className="app-page">
-
-        Loading FoodKindl...
-
-      </main>
+      <AppLoader
+        message="Loading FoodKindl..."
+      />
 
     );
+
   }
 
 
@@ -302,6 +530,7 @@ function Protected({
       />
 
     );
+
   }
 
 
@@ -317,6 +546,7 @@ function Protected({
       />
 
     );
+
   }
 
 
@@ -344,13 +574,12 @@ function VerifiedOnly({
 
     return (
 
-      <main className="app-page">
-
-        Checking verification...
-
-      </main>
+      <AppLoader
+        message="Checking verification..."
+      />
 
     );
+
   }
 
 
@@ -366,6 +595,7 @@ function VerifiedOnly({
       />
 
     );
+
   }
 
 
@@ -381,6 +611,7 @@ function VerifiedOnly({
       />
 
     );
+
   }
 
 
@@ -391,7 +622,8 @@ function VerifiedOnly({
 
     &&
 
-    user?.profile?.verification_status ===
+    user?.profile
+      ?.verification_status ===
       "approved";
 
 
@@ -399,14 +631,18 @@ function VerifiedOnly({
     ? children
     : (
 
-        <Navigate
-          to="/verification-required"
-          replace
-        />
+      <Navigate
+        to="/verification-required"
+        replace
+      />
 
-      );
+    );
 }
 
+
+// ============================================================
+// PARTNER ONLY
+// ============================================================
 
 function PartnerOnly({
   children,
@@ -424,13 +660,14 @@ function PartnerOnly({
 
     return (
 
-      <main className="app-page">
-
-        Loading Restaurant Partner Studio...
-
-      </main>
+      <AppLoader
+        message={
+          "Loading Restaurant Partner Studio..."
+        }
+      />
 
     );
+
   }
 
 
@@ -446,6 +683,7 @@ function PartnerOnly({
       />
 
     );
+
   }
 
 
@@ -461,6 +699,7 @@ function PartnerOnly({
       />
 
     );
+
   }
 
 
@@ -490,12 +729,14 @@ export default function App() {
 
     &&
 
-    user?.profile?.verification_status ===
+    user?.profile
+      ?.verification_status ===
       "approved";
 
+    
 
   // =========================================================
-  // MESSAGING HIDDEN ON PUBLIC PAGES
+  // PARTNER ROUTE
   // =========================================================
 
   const isPartnerRoute =
@@ -504,13 +745,22 @@ export default function App() {
     );
 
 
+  // =========================================================
+  // HIDE MESSAGING
+  // =========================================================
+
   const hideMessaging =
-    isPartnerRoute ||
+
+    isPartnerRoute
+
+    ||
+
     [
       "/",
       "/login",
       "/register",
       "/register/restaurant",
+      "/forgot-password",
       "/careers",
       "/contact",
       "/community-guidelines",
@@ -537,6 +787,9 @@ export default function App() {
 
       {/* =====================================================
           NAVBAR
+
+          Navbar remains eagerly loaded because it appears
+          throughout most of the application.
       ===================================================== */}
 
       {
@@ -548,349 +801,472 @@ export default function App() {
 
 
       {/* =====================================================
-          ROUTES
+          LAZY ROUTES
+
+          Suspense displays the loader while the page's
+          JavaScript chunk is being downloaded.
       ===================================================== */}
 
-      <Routes>
-
-
-        {/* ===================================================
-            PUBLIC WEBSITE
-        =================================================== */}
-
-        <Route
-          path="/"
-          element={
-            <LandingPage />
-          }
-        />
-
-        <Route
-          path="/partner/dashboard"
-          element={
-            <PartnerOnly>
-
-              <PartnerDashboard />
-
-            </PartnerOnly>
-          }
-        />
+      <Suspense
+        fallback={
+          <AppLoader />
+        }
+      >
 
-
-        <Route
-          path="/careers"
-          element={
-            <Careers />
-          }
-        />
+        <Routes>
 
 
-        <Route
-          path="/contact"
-          element={
-            <Contact />
-          }
-        />
+          {/* =================================================
+              PUBLIC WEBSITE
+          ================================================= */}
 
+          <Route
+            path="/"
+            element={
+              <LandingPage />
+            }
+          />
 
-        <Route
-          path="/community-guidelines"
-          element={
-            <CommunityGuidelines />
-          }
-        />
 
+          <Route
+            path="/login"
+            element={
+              <Login />
+            }
+          />
 
-        <Route
-          path="/safety"
-          element={
-            <SafetyCentre />
-          }
-        />
-
-
-        <Route
-          path="/privacy"
-          element={
-            <PrivacyPolicy />
-          }
-        />
 
-
-        <Route
-          path="/terms"
-          element={
-            <TermsOfUse />
-          }
-        />
+          <Route
+            path="/register"
+            element={
+              <Register />
+            }
+          />
 
 
-        <Route
-          path="/login"
-          element={
-            <Login />
-          }
-        />
 
+          <Route
+            path="/register/restaurant"
+            element={
+              <RestaurantPartnerRegister />
+            }
+          />
 
-        <Route
-          path="/register"
-          element={
-            <Register />
-          }
-        />
 
+          <Route
+            path="/forgot-password"
+            element={
+              <ForgotPassword />
+            }
+          />
 
-        <Route
-          path="/register/restaurant"
-          element={
-            <RestaurantPartnerRegister />
-          }
-        />
 
-        <Route
-          path="/forgot-password"
-          element={
-            <ForgotPassword />
-          }
-        />
+          <Route
+            path="/reset-password/:uid/:token"
+            element={
+              <ResetPassword />
+            }
+          />
 
-        <Route
-          path="/reset-password/:uid/:token"
-          element={
-            <ResetPassword />
-          }
-        />
 
+          <Route
+            path="/careers"
+            element={
+              <Careers />
+            }
+          />
 
-        {/* ===================================================
-            DASHBOARD
-        =================================================== */}
 
-        <Route
-          path="/dashboard"
-          element={
-            <Protected>
+          <Route
+            path="/contact"
+            element={
+              <Contact />
+            }
+          />
 
-              <Dashboard />
 
-            </Protected>
-          }
-        />
+          <Route
+            path="/community-guidelines"
+            element={
+              <CommunityGuidelines />
+            }
+          />
 
 
-        {/* ===================================================
-            FOOD INVITES
-            VERIFIED USERS ONLY
-        =================================================== */}
+          <Route
+            path="/safety"
+            element={
+              <SafetyCentre />
+            }
+          />
 
-        <Route
-          path="/food-invites"
-          element={
-            <VerifiedOnly>
 
-              <FoodInvites />
+          <Route
+            path="/privacy"
+            element={
+              <PrivacyPolicy />
+            }
+          />
 
-            </VerifiedOnly>
-          }
-        />
 
+          <Route
+            path="/terms"
+            element={
+              <TermsOfUse />
+            }
+          />
 
-        <Route
-          path="/suggest-place"
-          element={
-            <Protected>
-              <SuggestPlace />
-            </Protected>
-          }
-        />
-        {/* ===================================================
-            SETTINGS
-        =================================================== */}
 
-        <Route
-          path="/settings"
-          element={
-            <Protected>
+          {/* =================================================
+              PARTNER DASHBOARD
+          ================================================= */}
 
-              <Settings />
+          <Route
+            path="/partner/dashboard"
+            element={
 
-            </Protected>
-          }
-        />
+              <PartnerOnly>
 
+                <PartnerDashboard />
 
-        {/* ===================================================
-            SAFETY VERIFICATION
-        =================================================== */}
+              </PartnerOnly>
 
-        <Route
-          path="/safety-verification"
-          element={
-            <Protected>
+            }
+          />
 
-              <SafetyVerification />
 
-            </Protected>
-          }
-        />
+          {/* =================================================
+              DASHBOARD
+          ================================================= */}
 
+          <Route
+            path="/dashboard"
+            element={
 
-        {/* ===================================================
-            SOS SAFETY
-        =================================================== */}
+              <Protected>
 
-        <Route
-          path="/sos-safety"
-          element={
-            <Protected>
+                <Dashboard />
 
-              <SOSSafety />
+              </Protected>
 
-            </Protected>
-          }
-        />
+            }
+          />
 
 
-        {/* ===================================================
-            AI KITCHEN
-        =================================================== */}
+          {/* =================================================
+              FOOD INVITES
+              VERIFIED USERS ONLY
+          ================================================= */}
 
-        <Route
-          path="/ai-kitchen"
-          element={
-            <Protected>
+          <Route
+            path="/food-invites"
+            element={
 
-              <AIKitchen />
+              <VerifiedOnly>
 
-            </Protected>
-          }
-        />
+                <FoodInvites />
 
+              </VerifiedOnly>
 
-        {/* ===================================================
-            VERIFICATION
-        =================================================== */}
+            }
+          />
 
-        <Route
-          path="/verification-required"
-          element={
-            <Protected>
+          <Route
+            path="/food-invites/:inviteId/edit"
+            element={
+              <VerifiedOnly>
+                <EditFoodInvite />
+              </VerifiedOnly>
+            }
+          />
 
-              <VerificationRequired />
 
-            </Protected>
-          }
-        />
+          <Route
+            path="/food-invites/:inviteId"
+            element={
+              <VerifiedOnly>
+                <FoodInviteDetail />
+              </VerifiedOnly>
+            }
+          />
 
 
-        {/* ===================================================
-            COMMUNIQ
-        =================================================== */}
+          <Route
+            path="/cook-together"
+            element={
 
-        <Route
-          path="/community"
-          element={
-            <Protected>
+              <VerifiedOnly>
 
-              <Community />
+                <CookTogether />
 
-            </Protected>
-          }
-        />
+              </VerifiedOnly>
 
+            }
+          />
 
-        <Route
-          path="/community/post/:postId"
-          element={
-            <Protected>
 
-              <CommunityPostDetail />
+          <Route
+            path="/dine-out"
+            element={
 
-            </Protected>
-          }
-        />
+              <VerifiedOnly>
 
+                <DineOut />
 
-        {/* ===================================================
-            CIRCLES
-        =================================================== */}
+              </VerifiedOnly>
 
-        <Route
-          path="/connect"
-          element={
-            <VerifiedOnly>
+            }
+          />
 
-              <Connect />
 
-            </VerifiedOnly>
-          }
-        />
+          <Route
+            path="/food-walk"
+            element={
 
+              <VerifiedOnly>
 
-        <Route
-          path="/connect/member/:memberId"
-          element={
-            <VerifiedOnly>
+                <FoodWalkPlanner />
 
-              <MemberProfile />
+              </VerifiedOnly>
 
-            </VerifiedOnly>
-          }
-        />
+            }
+          />
 
 
-        {/* ===================================================
-            FOOD
-        =================================================== */}
+          {/* =================================================
+              SUGGEST PLACE
+          ================================================= */}
 
-        <Route
-          path="/food"
-          element={
-            <Protected>
+          <Route
+            path="/suggest-place"
+            element={
 
-              <FoodListings />
+              <Protected>
 
-            </Protected>
-          }
-        />
+                <SuggestPlace />
 
+              </Protected>
 
-        {/* ===================================================
-            PROFILE
-        =================================================== */}
+            }
+          />
 
-        <Route
-          path="/profile"
-          element={
-            <Protected>
 
-              <Profile />
+          {/* =================================================
+              SETTINGS
+          ================================================= */}
 
-            </Protected>
-          }
-        />
+          <Route
+            path="/settings"
+            element={
 
+              <Protected>
 
-        {/* ===================================================
-            FALLBACK
-        =================================================== */}
+                <Settings />
 
-        <Route
-          path="*"
-          element={
-            <Navigate
-              to="/"
-              replace
-            />
-          }
-        />
+              </Protected>
 
-      </Routes>
+            }
+          />
+
+
+          {/* =================================================
+              SAFETY VERIFICATION
+          ================================================= */}
+
+          <Route
+            path="/safety-verification"
+            element={
+
+              <Protected>
+
+                <SafetyVerification />
+
+              </Protected>
+
+            }
+          />
+
+
+          {/* =================================================
+              SOS SAFETY
+          ================================================= */}
+
+          <Route
+            path="/sos-safety"
+            element={
+
+              <Protected>
+
+                <SOSSafety />
+
+              </Protected>
+
+            }
+          />
+
+
+          {/* =================================================
+              AI KITCHEN
+          ================================================= */}
+
+          <Route
+            path="/ai-kitchen"
+            element={
+
+              <Protected>
+
+                <AIKitchen />
+
+              </Protected>
+
+            }
+          />
+
+
+          {/* =================================================
+              VERIFICATION
+          ================================================= */}
+
+          <Route
+            path="/verification-required"
+            element={
+
+              <Protected>
+
+                <VerificationRequired />
+
+              </Protected>
+
+            }
+          />
+
+
+          {/* =================================================
+              COMMUNITY
+          ================================================= */}
+
+          <Route
+            path="/community"
+            element={
+
+              <Protected>
+
+                <Community />
+
+              </Protected>
+
+            }
+          />
+
+
+          <Route
+            path="/community/post/:postId"
+            element={
+
+              <Protected>
+
+                <CommunityPostDetail />
+
+              </Protected>
+
+            }
+          />
+
+
+          {/* =================================================
+              CONNECT
+          ================================================= */}
+
+          <Route
+            path="/connect"
+            element={
+
+              <VerifiedOnly>
+
+                <Connect />
+
+              </VerifiedOnly>
+
+            }
+          />
+
+
+          <Route
+            path="/connect/member/:memberId"
+            element={
+
+              <VerifiedOnly>
+
+                <MemberProfile />
+
+              </VerifiedOnly>
+
+            }
+          />
+
+
+          {/* =================================================
+              FOOD
+          ================================================= */}
+
+          <Route
+            path="/food"
+            element={
+
+              <Protected>
+
+                <FoodListings />
+
+              </Protected>
+
+            }
+          />
+
+
+          {/* =================================================
+              PROFILE
+          ================================================= */}
+
+          <Route
+            path="/profile"
+            element={
+
+              <Protected>
+
+                <Profile />
+
+              </Protected>
+
+            }
+          />
+
+
+          {/* =================================================
+              FALLBACK
+          ================================================= */}
+
+          <Route
+            path="*"
+            element={
+
+              <Navigate
+                to="/"
+                replace
+              />
+
+            }
+          />
+
+        </Routes>
+
+      </Suspense>
 
 
       {/* =====================================================
           PRIVATE MESSAGING
+
+          MessagingDock is lazy-loaded and only downloaded
+          when an authenticated verified user actually needs it.
       ===================================================== */}
 
       {
@@ -898,7 +1274,13 @@ export default function App() {
         !hideMessaging &&
         (
 
-          <MessagingDock />
+          <Suspense
+            fallback={null}
+          >
+
+            <MessagingDock />
+
+          </Suspense>
 
         )
       }

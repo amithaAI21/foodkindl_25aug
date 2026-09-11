@@ -9,6 +9,7 @@ from rest_framework_simplejwt.views import (
 
 
 urlpatterns = [
+
     path(
         "admin/",
         admin.site.urls,
@@ -16,7 +17,9 @@ urlpatterns = [
 
     path(
         "api/auth/",
-        include("accounts.urls"),
+        include(
+            "accounts.urls"
+        ),
     ),
 
     path(
@@ -27,52 +30,63 @@ urlpatterns = [
 
     path(
         "api/",
-        include("community.urls"),
+        include(
+            "community.urls"
+        ),
     ),
 
     path(
         "api/website/",
-        include("website.urls"),
+        include(
+            "website.urls"
+        ),
     ),
-    
+
     path(
         "api/safety/",
         include(
             "safety.urls"
         ),
     ),
-    
+
     path(
         "api/",
         include(
             "invites.urls"
         ),
     ),
-    
-     path(
+
+    path(
         "api/commerce/",
         include(
             "commerce.urls"
         ),
     ),
-     
-     path(
-    "api/restaurant-discovery/",
-    include(
-        "restaurant_discovery.urls"
+
+    # ========================================================
+    # RESTAURANT DISCOVERY
+    # ========================================================
+
+    path(
+        "api/",
+        include(
+            "restaurant_discovery.urls"
+        ),
     ),
-),
-     
-     path(
-    "api/partner/",
-    include("invites.partner_urls"),
-),
+
+    path(
+        "api/partner/",
+        include(
+            "invites.partner_urls"
+        ),
+    ),
+
 ]
 
 
-# Local development / legacy media only
 if settings.DEBUG:
     urlpatterns += static(
         settings.MEDIA_URL,
-        document_root=settings.MEDIA_ROOT,
+        document_root=
+            settings.MEDIA_ROOT,
     )

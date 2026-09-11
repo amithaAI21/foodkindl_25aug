@@ -226,6 +226,10 @@ class FoodInviteSerializer(
             "venue_name",
             "location_label",
             "private_address",
+            
+            "latitude",
+            "longitude",
+
 
             "food_walk_stops",
 

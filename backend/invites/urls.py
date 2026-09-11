@@ -8,7 +8,6 @@ from .views import (
     FoodInviteRespondView,
 
     FoodWalkRestaurantRecommendationView,
-
     RecommendedRestaurantListView,
 
     RestaurantBookingCancelView,
@@ -23,10 +22,6 @@ from .views import (
 
     LocationAutocompleteView,
 
-    # ========================================================
-    # CUSTOMER RESTAURANT SUBMISSIONS
-    # ========================================================
-
     RestaurantSubmissionListCreateView,
     RestaurantSubmissionDetailView,
 )
@@ -38,30 +33,39 @@ urlpatterns = [
     # FOOD INVITES
     # ========================================================
 
+    # GET  -> list invites
+    # POST -> create invite
     path(
         "food-invites/",
         FoodInviteListCreateView.as_view(),
         name="food-invite-list-create",
     ),
 
+    # GET    -> view invite
+    # PATCH  -> edit invite
+    # PUT    -> replace invite
+    # DELETE -> delete invite
     path(
         "food-invites/<uuid:id>/",
         FoodInviteDetailView.as_view(),
         name="food-invite-detail",
     ),
 
+    # Accept / decline invitation
     path(
         "food-invites/<uuid:invite_id>/respond/",
         FoodInviteRespondView.as_view(),
         name="food-invite-respond",
     ),
 
+    # Creator cancels invite
     path(
         "food-invites/<uuid:invite_id>/cancel/",
         FoodInviteCancelView.as_view(),
         name="food-invite-cancel",
     ),
 
+    # Creator completes invite
     path(
         "food-invites/<uuid:invite_id>/complete/",
         FoodInviteCompleteView.as_view(),
@@ -71,17 +75,6 @@ urlpatterns = [
 
     # ========================================================
     # CUSTOMER RESTAURANT / CAFE / HOTEL SUBMISSIONS
-    #
-    # Logged-in users:
-    #
-    # POST /restaurant-submissions/
-    #     -> create pending submission
-    #
-    # GET /restaurant-submissions/
-    #     -> user's own submissions
-    #
-    # GET /restaurant-submissions/<id>/
-    #     -> submission detail
     # ========================================================
 
     path(
@@ -99,8 +92,6 @@ urlpatterns = [
 
     # ========================================================
     # FOOD WALK / RESTAURANT RECOMMENDATIONS
-    #
-    # Keep static paths before restaurants/<int:id>/.
     # ========================================================
 
     path(
@@ -183,9 +174,20 @@ urlpatterns = [
     # LOCATION AUTOCOMPLETE
     # ========================================================
 
+    # NEW frontend endpoint
+    # Frontend calls:
+    # /api/geocode/?q=Indiranagar
+    path(
+        "geocode/",
+        LocationAutocompleteView.as_view(),
+        name="location-autocomplete",
+    ),
+
+    # Keep old endpoint also, so older FoodKindl code
+    # does not suddenly break.
     path(
         "locations/autocomplete/",
         LocationAutocompleteView.as_view(),
-        name="location-autocomplete",
+        name="location-autocomplete-legacy",
     ),
 ]

@@ -175,7 +175,52 @@ ORS_API_KEY = (
     .strip()
 )
 
+# ============================================================
+# FOOD WALK - OPENSTREETMAP / OVERPASS / OSRM
+# ============================================================
 
+FOODKINDL_HTTP_USER_AGENT = (
+    "FoodKindl/1.0 "
+    "(contact: support@foodkindl.online)"
+)
+
+# OpenStreetMap restaurant / cafe / food-place discovery
+FOODKINDL_OVERPASS_URL = (
+    "https://overpass-api.de/api/interpreter"
+)
+
+# Route calculation
+FOODKINDL_OSRM_URL = (
+    "https://router.project-osrm.org"
+)
+
+
+FOURSQUARE_API_KEY = os.getenv(
+    "FOURSQUARE_API_KEY",
+    "",
+)
+
+
+FOURSQUARE_API_VERSION = os.getenv(
+    "FOURSQUARE_API_VERSION",
+    "2025-06-17",
+)
+
+
+FOURSQUARE_DETAILS_LIMIT = int(
+    os.getenv(
+        "FOURSQUARE_DETAILS_LIMIT",
+        "6",
+    )
+)
+
+
+FOURSQUARE_PHOTOS_PER_PLACE = int(
+    os.getenv(
+        "FOURSQUARE_PHOTOS_PER_PLACE",
+        "3",
+    )
+)
 # ============================================================
 # NETLIFY BLOB
 # ============================================================

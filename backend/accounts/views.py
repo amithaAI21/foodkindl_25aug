@@ -1479,6 +1479,187 @@ class FoodMatchView(
                 status.HTTP_200_OK,
         )
 
+
+# ============================================================
+# FOODKINDL PEOPLE
+# Registered member recommendations + search for invites
+# ============================================================
+
+class FoodKindlPeopleView(APIView):
+
+    permission_classes = [
+        permissions.IsAuthenticated,
+    ]
+
+    def get(self, request):
+
+        current_user = request.user
+
+        current_profile, _ = (
+            Profile.objects.get_or_create(
+                user=current_user
+            )
+        )
+
+        blocked_by_me_ids = set(
+            current_profile
+            .blocked_users
+            .values_list(
+                "id",
+                flat=True,
+            )
+        )
+
+        blocked_me_ids = set(
+            Profile.objects
+            .filter(
+                blocked_users=current_user
+            )
+            .values_list(
+                "user_id",
+                flat=True,
+            )
+        )
+
+        excluded_ids = (
+            blocked_by_me_ids
+            |
+            blocked_me_ids
+            |
+            {
+                current_user.id
+            }
+        )
+
+        members = (
+            User.objects
+            .filter(
+                is_active=True,
+                is_staff=False,
+                is_superuser=False,
+                profile__isnull=False,
+                profile__account_type="member",
+                profile__member_profile_enabled=True,
+            )
+            .exclude(
+                id__in=excluded_ids
+            )
+            .select_related(
+                "profile"
+            )
+            .distinct()
+        )
+
+        results = []
+
+        for member in members:
+
+            profile = member.profile
+
+            match = calculate_food_match(
+                current_profile,
+                profile,
+            )
+
+            full_name = (
+                member.get_full_name().strip()
+                or member.username
+                or member.email
+                or f"FoodKindl member {member.id}"
+            )
+
+            profile_photo = (
+                profile.profile_image_1_url
+                or ""
+            )
+
+            if (
+                not profile_photo
+                and
+                profile.profile_image_1
+            ):
+                try:
+                    profile_photo = (
+                        request.build_absolute_uri(
+                            profile.profile_image_1.url
+                        )
+                    )
+                except Exception:
+                    profile_photo = ""
+
+            location_parts = [
+                profile.locality,
+                profile.city,
+            ]
+
+            location_label = ", ".join(
+                [
+                    item.strip()
+                    for item in location_parts
+                    if item
+                    and item.strip()
+                ]
+            )
+
+            results.append(
+                {
+                    "id":
+                        member.id,
+
+                    "user_id":
+                        member.id,
+
+                    "full_name":
+                        full_name,
+
+                    "username":
+                        member.username,
+
+                    "profile_photo":
+                        profile_photo,
+
+                    "location_label":
+                        location_label,
+
+                    "is_verified":
+                        bool(
+                            profile.is_verified
+                        ),
+
+                    "food_match_percentage":
+                        match.get(
+                            "score",
+                            0,
+                        ),
+                }
+            )
+
+        results.sort(
+            key=lambda item: (
+                item.get(
+                    "food_match_percentage",
+                    0,
+                ),
+                item.get(
+                    "is_verified",
+                    False,
+                ),
+            ),
+            reverse=True,
+        )
+
+        return Response(
+            {
+                "count":
+                    len(results),
+
+                "results":
+                    results[:20],
+            },
+            status=
+                status.HTTP_200_OK,
+        )
+
 class VerificationStatusView(APIView):
 
     permission_classes = [

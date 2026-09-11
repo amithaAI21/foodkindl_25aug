@@ -21,6 +21,7 @@
         "npm:react-datepicker@^9.1.0",
         "npm:react-dom@19",
         "npm:react-leaflet@5",
+        "npm:react-pageflip@^2.0.3",
         "npm:react-router-dom@^7.1.5",
         "npm:react@19",
         "npm:vite@^6.0.5"

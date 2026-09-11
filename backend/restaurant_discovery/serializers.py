@@ -1,130 +1,266 @@
 from rest_framework import serializers
 
-from invites.models import (
-    Restaurant,
-    RestaurantMenuItem,
-)
-
-
-class RestaurantMenuItemDiscoverySerializer(
-    serializers.ModelSerializer
-):
-
-    class Meta:
-
-        model = RestaurantMenuItem
-
-        fields = [
-            "id",
-            "name",
-            "category",
-            "food_type",
-            "price",
-            "is_popular",
-            "is_available",
-        ]
-
 
 class RestaurantDiscoverySerializer(
-    serializers.ModelSerializer
+    serializers.Serializer
 ):
+    id = serializers.CharField()
 
-    menu_items = (
-        RestaurantMenuItemDiscoverySerializer(
-            many=True,
-            read_only=True,
-        )
+    source = serializers.CharField(
+        required=False,
+        allow_blank=True,
     )
 
-
-    recommendation_reason = (
-        serializers.SerializerMethodField()
+    source_id = serializers.CharField(
+        required=False,
+        allow_blank=True,
+        allow_null=True,
     )
 
-
-    matched_dishes = (
-        serializers.SerializerMethodField()
+    fsq_place_id = serializers.CharField(
+        required=False,
+        allow_blank=True,
+        allow_null=True,
     )
 
+    name = serializers.CharField()
 
-    match_score = (
-        serializers.SerializerMethodField()
+    restaurant_type = serializers.CharField(
+        required=False,
+        allow_blank=True,
+        allow_null=True,
     )
 
+    primary_type = serializers.CharField(
+        required=False,
+        allow_blank=True,
+        allow_null=True,
+    )
 
-    class Meta:
+    primary_type_label = serializers.CharField(
+        required=False,
+        allow_blank=True,
+        allow_null=True,
+    )
 
-        model = Restaurant
+    types = serializers.ListField(
+        child=serializers.CharField(),
+        required=False,
+        default=list,
+    )
 
-        fields = [
+    categories = serializers.ListField(
+        child=serializers.DictField(),
+        required=False,
+        default=list,
+    )
 
-            "id",
+    main_cuisine = serializers.CharField(
+        required=False,
+        allow_blank=True,
+        allow_null=True,
+    )
 
-            "name",
+    cuisine = serializers.CharField(
+        required=False,
+        allow_blank=True,
+        allow_null=True,
+    )
 
-            "restaurant_type",
+    cuisines = serializers.ListField(
+        child=serializers.CharField(),
+        required=False,
+        default=list,
+    )
 
-            "cuisine",
+    locality = serializers.CharField(
+        required=False,
+        allow_blank=True,
+        allow_null=True,
+    )
 
-            "locality",
+    city = serializers.CharField(
+        required=False,
+        allow_blank=True,
+        allow_null=True,
+    )
 
-            "city",
+    latitude = serializers.FloatField()
 
-            "latitude",
+    longitude = serializers.FloatField()
 
-            "longitude",
+    distance_from_search_km = serializers.FloatField(
+        required=False,
+        allow_null=True,
+    )
 
-            "rating",
+    distance_from_route_km = serializers.FloatField(
+        required=False,
+        allow_null=True,
+    )
 
-            "average_cost_for_two",
+    route_position = serializers.FloatField(
+        required=False,
+        allow_null=True,
+    )
 
-            "is_foodkindl_partner",
+    rating = serializers.FloatField(
+        required=False,
+        allow_null=True,
+    )
 
-            "accepts_foodkindl_booking",
+    review_count = serializers.IntegerField(
+        required=False,
+        allow_null=True,
+    )
 
-            "is_active",
+    average_cost_for_two = serializers.FloatField(
+        required=False,
+        allow_null=True,
+    )
 
-            "menu_items",
+    price_level = serializers.CharField(
+        required=False,
+        allow_blank=True,
+        allow_null=True,
+    )
 
-            "recommendation_reason",
+    opening_hours = serializers.CharField(
+        required=False,
+        allow_blank=True,
+        allow_null=True,
+    )
 
-            "matched_dishes",
+    phone = serializers.CharField(
+        required=False,
+        allow_blank=True,
+        allow_null=True,
+    )
 
-            "match_score",
-        ]
+    website = serializers.CharField(
+        required=False,
+        allow_blank=True,
+        allow_null=True,
+    )
 
+    address = serializers.CharField(
+        required=False,
+        allow_blank=True,
+        allow_null=True,
+    )
 
-    def get_recommendation_reason(
-        self,
-        obj,
-    ):
+    photo_url = serializers.CharField(
+        required=False,
+        allow_blank=True,
+        allow_null=True,
+    )
 
-        return getattr(
-            obj,
-            "_recommendation_reason",
-            "",
-        )
+    image = serializers.CharField(
+        required=False,
+        allow_blank=True,
+        allow_null=True,
+    )
 
+    photo = serializers.CharField(
+        required=False,
+        allow_blank=True,
+        allow_null=True,
+    )
 
-    def get_matched_dishes(
-        self,
-        obj,
-    ):
+    image_url = serializers.CharField(
+        required=False,
+        allow_blank=True,
+        allow_null=True,
+    )
 
-        return getattr(
-            obj,
-            "_matched_dishes",
-            [],
-        )
+    photos = serializers.ListField(
+        child=serializers.CharField(),
+        required=False,
+        default=list,
+    )
 
+    description = serializers.CharField(
+        required=False,
+        allow_blank=True,
+        allow_null=True,
+    )
 
-    def get_match_score(
-        self,
-        obj,
-    ):
+    is_foodkindl_partner = serializers.BooleanField(
+        required=False,
+        default=False,
+    )
 
-        return getattr(
-            obj,
-            "_match_score",
-            0,
-        )
+    accepts_foodkindl_booking = serializers.BooleanField(
+        required=False,
+        default=False,
+    )
+
+    is_active = serializers.BooleanField(
+        required=False,
+        default=True,
+    )
+
+    menu_items = serializers.ListField(
+        child=serializers.DictField(),
+        required=False,
+        default=list,
+    )
+
+    recommendation_reason = serializers.CharField(
+        required=False,
+        allow_blank=True,
+        default="",
+    )
+
+    matched_dishes = serializers.ListField(
+        child=serializers.CharField(),
+        required=False,
+        default=list,
+    )
+
+    popular_dishes = serializers.ListField(
+        child=serializers.CharField(),
+        required=False,
+        default=list,
+    )
+
+    match_score = serializers.FloatField(
+        required=False,
+        default=0,
+    )
+
+    matches_preference = serializers.BooleanField(
+        required=False,
+        default=False,
+    )
+
+    matched_fields = serializers.ListField(
+        child=serializers.CharField(),
+        required=False,
+        default=list,
+    )
+
+    preference_match_strength = serializers.IntegerField(
+        required=False,
+        default=0,
+    )
+
+    vegetarian = serializers.BooleanField(
+        required=False,
+        default=False,
+    )
+
+    vegan = serializers.BooleanField(
+        required=False,
+        default=False,
+    )
+
+    halal = serializers.BooleanField(
+        required=False,
+        default=False,
+    )
+
+    osm_tags = serializers.DictField(
+        required=False,
+        default=dict,
+    )

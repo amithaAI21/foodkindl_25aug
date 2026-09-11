@@ -123,6 +123,15 @@ class DineVenueType(
         "Cafe",
     )
 
+    HOTEL = (
+        "hotel",
+        "Hotel",
+    )
+
+    BAKERY = (
+        "bakery",
+        "Bakery",
+    )
 
 # ============================================================
 # INVITE STATUS
@@ -293,6 +302,17 @@ class FoodInvite(
         default="",
     )
 
+    latitude = models.FloatField(
+        blank=True,
+        null=True,
+    )
+
+    longitude = models.FloatField(
+        blank=True,
+        null=True,
+        db_index=True,
+        editable=False,
+    )
 
     # ========================================================
     # FOOD WALK
@@ -523,10 +543,6 @@ class Restaurant(models.Model):
         ("other", "Other"),
     ]
 
-    # ========================================================
-    # OWNER
-    # ========================================================
-
     owner = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
@@ -534,10 +550,6 @@ class Restaurant(models.Model):
         null=True,
         blank=True,
     )
-
-    # ========================================================
-    # BASIC INFORMATION
-    # ========================================================
 
     name = models.CharField(
         max_length=180,
@@ -562,10 +574,6 @@ class Restaurant(models.Model):
         db_index=True,
     )
 
-    # ========================================================
-    # CONTACT
-    # ========================================================
-
     phone_number = models.CharField(
         max_length=30,
         blank=True,
@@ -582,10 +590,6 @@ class Restaurant(models.Model):
         blank=True,
         default="",
     )
-
-    # ========================================================
-    # LOCATION
-    # ========================================================
 
     address = models.TextField(
         blank=True,
@@ -613,27 +617,17 @@ class Restaurant(models.Model):
         db_index=True,
     )
 
-    latitude = models.DecimalField(
-        max_digits=9,
-        decimal_places=6,
+    latitude = models.FloatField(
         blank=True,
         null=True,
         db_index=True,
         editable=False,
     )
 
-    longitude = models.DecimalField(
-        max_digits=9,
-        decimal_places=6,
-        blank=True,
-        null=True,
-        db_index=True,
-        editable=False,
-    )
-
-    # ========================================================
-    # DETAILS
-    # ========================================================
+    longitude = models.FloatField(
+    blank=True,
+    null=True,
+)
 
     rating = models.DecimalField(
         max_digits=2,
@@ -669,22 +663,37 @@ class Restaurant(models.Model):
         null=True,
     )
 
-    # ========================================================
-    # FACILITIES
-    # ========================================================
+    has_parking = models.BooleanField(
+        default=False
+    )
 
-    has_parking = models.BooleanField(default=False)
-    has_wifi = models.BooleanField(default=False)
-    accepts_cards = models.BooleanField(default=True)
-    family_friendly = models.BooleanField(default=True)
-    outdoor_seating = models.BooleanField(default=False)
-    wheelchair_accessible = models.BooleanField(default=False)
-    serves_vegetarian = models.BooleanField(default=True)
-    serves_non_vegetarian = models.BooleanField(default=True)
+    has_wifi = models.BooleanField(
+        default=False
+    )
 
-    # ========================================================
-    # MAIN IMAGE
-    # ========================================================
+    accepts_cards = models.BooleanField(
+        default=True
+    )
+
+    family_friendly = models.BooleanField(
+        default=True
+    )
+
+    outdoor_seating = models.BooleanField(
+        default=False
+    )
+
+    wheelchair_accessible = models.BooleanField(
+        default=False
+    )
+
+    serves_vegetarian = models.BooleanField(
+        default=True
+    )
+
+    serves_non_vegetarian = models.BooleanField(
+        default=True
+    )
 
     image_blob_key = models.CharField(
         max_length=1000,
@@ -710,12 +719,8 @@ class Restaurant(models.Model):
         default="",
     )
 
-    # ========================================================
-    # FOODKINDL
-    # ========================================================
-
     is_foodkindl_partner = models.BooleanField(
-        default=True,
+        default=False,
         db_index=True,
     )
 
@@ -743,20 +748,139 @@ class Restaurant(models.Model):
             "name",
         ]
 
-    def save(self, *args, **kwargs):
+    # ========================================================
+    # GEO LOCATION TEXT
+    # ========================================================
+
+    def get_geocoding_text(self):
+        """
+        Returns the best possible location string for geocoding.
+        """
+
+        parts = [
+            self.name,
+            self.address,
+            self.locality,
+            self.city,
+            self.pincode,
+            "India",
+        ]
+
+        cleaned = []
+
+        seen = set()
+
+        for item in parts:
+
+            value = str(
+                item or ""
+            ).strip()
+
+            if not value:
+                continue
+
+            key = value.lower()
+
+            if key in seen:
+                continue
+
+            seen.add(
+                key
+            )
+
+            cleaned.append(
+                value
+            )
+
+        return ", ".join(
+            cleaned
+        )
+
+    # ========================================================
+    # GEO CODE
+    # ========================================================
+
+    def geocode_location(
+        self,
+        force=False,
+    ):
+        """
+        Automatically determine latitude and longitude.
+
+        Returns True if coordinates were found.
+        Returns False if geocoding failed.
+        """
+
+        if (
+            not force
+            and self.latitude is not None
+            and self.longitude is not None
+        ):
+            return True
+
+        result = geocode_restaurant_location(
+            name=self.name,
+            address=self.address,
+            locality=self.locality,
+            city=self.city,
+            pincode=self.pincode,
+        )
+
+        if not result:
+            return False
+
+        latitude = result.get(
+            "latitude"
+        )
+
+        longitude = result.get(
+            "longitude"
+        )
+
+        if (
+            latitude is None
+            or longitude is None
+        ):
+            return False
+
+        self.latitude = latitude
+        self.longitude = longitude
+
+        return True
+
+    # ========================================================
+    # SAVE
+    # ========================================================
+
+    def save(
+        self,
+        *args,
+        **kwargs,
+    ):
+
         should_geocode = (
             self.latitude is None
             or self.longitude is None
         )
 
+        # ----------------------------------------------------
+        # Existing restaurant:
+        # check whether location changed
+        # ----------------------------------------------------
+
         if self.pk:
+
             try:
-                old = Restaurant.objects.get(
-                    pk=self.pk
+
+                old = (
+                    Restaurant.objects.get(
+                        pk=self.pk
+                    )
                 )
 
                 if (
-                    old.address != self.address
+                    old.name != self.name
+                    or old.address != self.address
                     or old.locality != self.locality
                     or old.city != self.city
                     or old.pincode != self.pincode
@@ -764,40 +888,27 @@ class Restaurant(models.Model):
                     should_geocode = True
 
             except Restaurant.DoesNotExist:
+
                 should_geocode = True
+
+        # ----------------------------------------------------
+        # Auto geocode before save
+        # ----------------------------------------------------
 
         if should_geocode:
 
-            print(
-                "📍 Trying to geocode restaurant:",
-                self.name,
-            )
+            try:
 
-            result = geocode_restaurant_location(
-                address=self.address,
-                locality=self.locality,
-                city=self.city,
-                pincode=self.pincode,
-            )
-
-            if result:
-                self.latitude = result[
-                    "latitude"
-                ]
-
-                self.longitude = result[
-                    "longitude"
-                ]
-
-                print(
-                    "✅ SAVING COORDINATES:",
-                    self.latitude,
-                    self.longitude,
+                self.geocode_location(
+                    force=True
                 )
 
-            else:
+            except Exception as exc:
+
                 print(
-                    "❌ Restaurant geocoding returned no result"
+                    "Restaurant geocoding failed:",
+                    self.name,
+                    repr(exc),
                 )
 
         super().save(
@@ -805,8 +916,9 @@ class Restaurant(models.Model):
             **kwargs,
         )
 
-
-    def __str__(self):
+    def __str__(
+        self,
+    ):
         return self.name
 
 # ============================================================
@@ -1445,26 +1557,14 @@ class RestaurantSubmission(
     )
 
 
-    latitude = models.DecimalField(
-
-        max_digits=9,
-
-        decimal_places=6,
-
+    latitude = models.FloatField(
         blank=True,
-
         null=True,
     )
 
 
-    longitude = models.DecimalField(
-
-        max_digits=9,
-
-        decimal_places=6,
-
+    longitude = models.FloatField(
         blank=True,
-
         null=True,
     )
 

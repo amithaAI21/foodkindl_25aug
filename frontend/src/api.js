@@ -6,7 +6,7 @@ import axios from "axios";
 ============================================================ */
 
 const DEFAULT_BACKEND_URL =
-  "https://foodkindl-25aug.onrender.com";
+  "http://127.0.0.1:8000";
 
 
 const backendUrl = (
@@ -18,19 +18,13 @@ const backendUrl = (
   .replace(/\/api$/, "");
 
 
-/*
- * Final API URL:
- *
- * Production:
- * https://foodkindl-25aug.onrender.com/api
- *
- * Local development can still be configured using:
- * VITE_BACKEND_URL=http://127.0.0.1:8000
- */
-
 const API_BASE_URL =
   `${backendUrl}/api`;
 
+
+/* ============================================================
+   DEBUG
+============================================================ */
 
 console.log(
   "================================="
@@ -77,7 +71,7 @@ const api = axios.create({
 
 api.interceptors.request.use(
 
-  (config) => {
+  config => {
 
     /* ----------------------------------------------------------
        AUTH TOKEN
@@ -97,23 +91,13 @@ api.interceptors.request.use(
 
       config.headers.Authorization =
         `Bearer ${token}`;
+
     }
 
 
     /* ----------------------------------------------------------
-       FORM DATA / JSON HANDLING
+       FORM DATA / JSON
     ---------------------------------------------------------- */
-
-    /*
-     * IMPORTANT:
-     *
-     * Never manually set multipart/form-data.
-     *
-     * Browser must automatically generate:
-     *
-     * multipart/form-data;
-     * boundary=...
-     */
 
     if (
       typeof FormData !== "undefined" &&
@@ -129,6 +113,7 @@ api.interceptors.request.use(
         delete config.headers[
           "content-type"
         ];
+
       }
 
     } else {
@@ -141,6 +126,7 @@ api.interceptors.request.use(
         "Content-Type"
       ] =
         "application/json";
+
     }
 
 
@@ -152,7 +138,8 @@ api.interceptors.request.use(
       "FOODKINDL API REQUEST:",
       {
         method:
-          config.method?.toUpperCase(),
+          config.method
+            ?.toUpperCase(),
 
         baseURL:
           config.baseURL,
@@ -170,7 +157,7 @@ api.interceptors.request.use(
 
   },
 
-  (error) => {
+  error => {
 
     console.error(
       "FOODKINDL REQUEST ERROR:",
@@ -181,6 +168,7 @@ api.interceptors.request.use(
     return Promise.reject(
       error
     );
+
   }
 
 );
@@ -192,7 +180,7 @@ api.interceptors.request.use(
 
 api.interceptors.response.use(
 
-  (response) => {
+  response => {
 
     console.log(
       "FOODKINDL API RESPONSE:",
@@ -210,12 +198,11 @@ api.interceptors.response.use(
 
   },
 
-  (error) => {
+  error => {
 
     console.error(
       "FOODKINDL API ERROR:",
       {
-
         url:
           error.config?.url,
 
@@ -238,7 +225,6 @@ api.interceptors.response.use(
 
         message:
           error.message,
-
       }
     );
 
@@ -246,6 +232,7 @@ api.interceptors.response.use(
     return Promise.reject(
       error
     );
+
   }
 
 );

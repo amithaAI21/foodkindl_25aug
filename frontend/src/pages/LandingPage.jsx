@@ -1,5 +1,7 @@
 import {
   ArrowRight,
+  Bike,
+  Car,
   Check,
   ChefHat,
   Facebook,
@@ -34,6 +36,7 @@ import {
 } from "../context/AuthContext";
 
 import "../styles/landing_page_unique.css";
+import "../styles/landing_sections_unique.css";
 
 
 /* ============================================================
@@ -109,30 +112,30 @@ const HOW_STEPS = [
 
 const FOOD_WALK_STOPS = [
   {
-    name: "Nagasandra",
+    name: "Delhi",
     type: "Start",
-    detail: "Meet your group",
+    detail: "Choose Walk, Drive or Bike",
     partner: false,
   },
 
   {
-    name: "Yeshwanthpur",
+    name: "Keylong",
     type: "Stop 1",
-    detail: "Hotel Rajathithya",
+    detail: "Local breakfast stop",
     partner: true,
   },
 
   {
-    name: "Rajajinagar",
+    name: "Tanglang",
     type: "Stop 2",
-    detail: "Chulha Chauki da Dhaba",
+    detail: "Regional food discovery",
     partner: true,
   },
 
   {
-    name: "Indiranagar",
+    name: "Leh-Ladakh",
     type: "Destination",
-    detail: "Finish your food trail",
+    detail: "Complete your food journey",
     partner: false,
   },
 ];
@@ -155,7 +158,7 @@ const COMMUNITY_ACTIVITY = [
   {
     type: "Food Walk",
     icon: Footprints,
-    title: "Rajajinagar → Malleshwaram",
+    title: "Candolim Beach → Dudhsagar Falls",
     location: "3 partner stops",
     meta: "5 people interested",
     badge: "Food Walk",
@@ -872,261 +875,191 @@ export default function LandingPage() {
 
 
           {/* LEFT */}
-
           <div className="fk-hero-copy">
-
-            <div className="fk-status-pill">
-
-              <span />
-
-              Platform now live
-
-            </div>
-
+            <div className="fk-status-pill">FOODKINDL CONNECT</div>
 
             <h1>
               Meet people
               <br />
-              through{" "}
-              <span>
-                food.
-              </span>
+              through food.
             </h1>
 
-
             <p className="fk-hero-description">
-              Discover people nearby. Cook together,
-              dine out, build Food Walks and turn
-              shared meals into real connections.
+              Discover like-minded people nearby. Connect, dine out and explore
+              Food Walks together.
             </p>
 
-
             <div className="fk-hero-actions">
-
-                                <Link
-                    className="fk-primary-button"
-                    to={
-                      user
-                        ? "/connect-dashboard"
-                        : "/login"
-                    }
-                  >
-                    Explore FoodKindl Connect
-
-                    <ArrowRight size={18} />
-                  </Link>
-
-
-              <a
-                className="fk-secondary-button"
-                href="#how-it-works"
+              <Link
+                className="fk-primary-button"
+                to={user ? "/connect-dashboard" : "/register"}
               >
-                See how it works
+                Join FoodKindl
+                <ArrowRight size={18} />
+              </Link>
+
+              <a className="fk-secondary-button" href="#how-it-works">
+                <Play size={17} />
+                See How It Works
               </a>
-
             </div>
-
 
             <div className="fk-hero-proof">
-
-              <div className="fk-avatar-stack">
-                <span>AK</span>
-                <span>MN</span>
-                <span>RJ</span>
-              </div>
-
-
-              <div>
-                <strong>
-                  Food-first social discovery
-                </strong>
-
-                <small>
-                  Nearby people · verified profiles · real food moments
-                </small>
-              </div>
-
+              <span><Users size={18} /> Real people</span>
+              <span><Utensils size={18} /> Shared experiences</span>
+              <span><Heart size={18} /> A healthier, more connected world</span>
             </div>
-
           </div>
 
-
-          {/* RIGHT — THE EMPTY SEAT */}
-
-          <div className="fk-empty-seat-card">
-
-            <div className="fk-empty-seat-top">
-
-              <span className="fk-empty-seat-kicker">
-                THE FOODKINDL TABLE
-              </span>
-
-              <span className="fk-empty-seat-live">
-                <span />
-                Meet through food
-              </span>
-
+          {/* RIGHT — THREE WAYS TO CONNECT */}
+          <div className="fk-experience-panel">
+            <div className="fk-experience-panel-head">
+              <h2>Three ways to connect through food</h2>
+              <p>People. Places. A healthier you.</p>
             </div>
 
+            <div className="fk-experience-grid">
+              <article className="fk-experience-card fk-experience-connect">
+                <div className="fk-experience-title">
+                  <span><Users size={19} /></span>
+                  <div>
+                    <h3>Connect</h3>
+                    <p>Discover people nearby</p>
+                  </div>
+                </div>
 
-            <div className="fk-empty-seat-promise">
-
-              <span className="fk-empty-seat-promise-dot" />
-
-              <span>
-                One shared taste can start a real conversation.
-              </span>
-
-            </div>
-
-
-            <div className="fk-empty-seat-scene">
-
-              <div className="fk-empty-seat-glow" />
-
-
-              <div className="fk-empty-seat-table">
-
-                <div className="fk-empty-seat-table-ring" />
-
-                <div className="fk-empty-seat-center">
-
-                  <Heart
-                    size={32}
-                    fill="currentColor"
+                <div className="fk-experience-visual fk-people-visual">
+                  <img
+                    src="/images/connect1.webp"
+                    alt="FoodKindl member discovering people nearby"
+                    loading="eager"
+                    decoding="async"
                   />
+                  <div className="fk-card-caption">
+                    <MapPin size={12} /> People nearby
+                  </div>
+                </div>
+              </article>
 
-                  <span>
-                    MEET THROUGH FOOD
-                  </span>
-
+              <article className="fk-experience-card fk-experience-dine">
+                <div className="fk-experience-title">
+                  <span><Utensils size={19} /></span>
+                  <div>
+                    <h3>Dine Out</h3>
+                    <p>Meet over a shared meal</p>
+                  </div>
                 </div>
 
+                <div className="fk-experience-visual fk-dine-visual">
+                  <img
+                    src="/images/dineout1.webp"
+                    alt="FoodKindl members dining out together"
+                    loading="eager"
+                    decoding="async"
+                  />
+                  <div className="fk-card-caption">
+                    <MapPin size={12} />
+                    <span>Great food<strong>Better company</strong></span>
+                  </div>
+                </div>
+              </article>
 
-                <div className="fk-place-setting fk-place-setting-one">
-                  <span className="fk-place-plate" />
-                  <small>Cook Together</small>
+              <article className="fk-experience-card fk-experience-walk">
+                <div className="fk-experience-title">
+                  <span><MapPin size={19} /></span>
+                  <div>
+                    <h3>Food Walk</h3>
+                    <p>Find food along your route</p>
+                  </div>
                 </div>
 
-
-                <div className="fk-place-setting fk-place-setting-two">
-                  <span className="fk-place-plate" />
-                  <small>Dine Out</small>
+                <div className="fk-travel-modes" aria-label="Travel modes">
+                  <span><Footprints size={11} /> Walk</span>
+                  <span className="active"><Car size={11} /> Drive</span>
+                  <span><Bike size={11} /> Bike</span>
                 </div>
 
-
-                <div className="fk-place-setting fk-place-setting-three">
-                  <span className="fk-place-plate" />
-                  <small>Food Walk</small>
+                <div className="fk-experience-visual fk-walk-visual">
+                  <img
+                    src="/images/foodwalk1.webp"
+                    alt="Food journey from Bengaluru to Coorg"
+                    loading="eager"
+                    decoding="async"
+                  />
                 </div>
 
-              </div>
+                <div className="fk-walk-caption">
+                  <Footprints size={12} />
+                  4 food stops along your journey
+                </div>
 
-
-              <div className="fk-seat fk-seat-one">
-                <Users size={18} />
-                <span>Discover</span>
-              </div>
-
-              <div className="fk-seat fk-seat-two">
-                <Utensils size={18} />
-                <span>Share</span>
-              </div>
-
-              <div className="fk-seat fk-seat-three">
-                <ChefHat size={18} />
-                <span>Create</span>
-              </div>
-
-
-              <div className="fk-seat fk-seat-yours">
-
-                <span className="fk-seat-pulse" />
-
-                <Heart size={20} />
-
-                <small>
-                  YOUR SEAT
+                <small className="fk-next-route">
+                  Try next: Delhi → Leh–Ladakh
                 </small>
-
-                <em>
-                  Open
-                </em>
-
-              </div>
-
+              </article>
             </div>
 
-
-            <div className="fk-empty-seat-copy">
-
-              <span>
-                YOUR NEXT CONNECTION COULD START HERE
-              </span>
-
-              <h3>
-                Come for the food.
-                <br />
-                Stay for the people.
-              </h3>
-
-              <p>
-                Discover nearby people with shared tastes,
-                make a plan and turn one meal into
-                a connection worth keeping.
-              </p>
-
+            <div className="fk-experience-footer">
+              <span>Same city</span><i />
+              <span>Shared tables</span><i />
+              <span>Brighter days</span><Heart size={13} />
             </div>
-
-
-            <div className="fk-empty-seat-flow">
-
-              <div>
-                <Users size={14} />
-                <span>Find people</span>
-              </div>
-
-              <i />
-
-              <div>
-                <MessageCircle size={14} />
-                <span>Connect</span>
-              </div>
-
-              <i />
-
-              <div>
-                <Send size={14} />
-                <span>Make a plan</span>
-              </div>
-
-              <i />
-
-              <div>
-                <Utensils size={14} />
-                <span>Meet over food</span>
-              </div>
-
-            </div>
-
-            <div className="fk-empty-seat-footer-note">
-              <Sparkles size={13} />
-              <span>
-                Cook Together · Dine Out · Food Walk
-              </span>
-            </div>
-
-            <div className="fk-empty-seat-trust">
-              <ShieldCheck size={13} />
-              <span>
-                Verified people. Shared interests. Real-world moments.
-              </span>
-            </div>
-
           </div>
 
         </div>
 
+      </section>
+
+      {/* =====================================================
+          AI KITCHEN — PRIMARY USP
+      ====================================================== */}
+
+      <section className="fk-ai-spotlight" id="ai-kitchen-preview">
+        <div className="fk-ai-spotlight-inner">
+          <div className="fk-ai-copy">
+            <span className="fk-section-kicker">FOODKINDL AI KITCHEN</span>
+            <h2>Turn your ingredients into <span>healthier meals.</span></h2>
+            <p>
+              Upload photos or videos of the ingredients you have, or simply ask
+              for a recipe. FoodKindl AI suggests healthier recipes personalised
+              for you.
+            </p>
+            <Link className="fk-primary-button" to={user ? "/ai-kitchen" : "/login"}>
+              Try AI Kitchen <ArrowRight size={17} />
+            </Link>
+            <div className="fk-ai-benefits">
+              <span><Sparkles size={14} /> Healthier recipes</span>
+              <span><ChefHat size={14} /> Cook with what you have</span>
+            </div>
+          </div>
+
+          <div className="fk-ai-demo">
+            <div className="fk-ai-actions">
+              <span className="active">Ask for a Recipe</span>
+              {/* <span>Upload Video</span>
+              <span>Ask for a Recipe</span> */}
+            </div>
+            <div className="fk-ai-demo-grid">
+              <div className="fk-ai-ingredients">
+                <img
+                  src="/images/paneer.webp"
+                  alt="Raw ingredients recognised by FoodKindl AI"
+                />
+                <div><span>Tomato</span><span>Paneer</span><span>Spinach</span></div>
+              </div>
+              <ArrowRight className="fk-ai-arrow" size={22} />
+              <div className="fk-ai-result">
+                <img
+                  src="/images/panner_cooked.webp"
+                  alt="High-protein Palak Paneer suggested by FoodKindl AI"
+                />
+                <small>AI RECIPE SUGGESTION</small>
+                <strong>High-Protein Palak Paneer</strong>
+                <p>A balanced recipe personalised from your ingredients.</p>
+              </div>
+            </div>
+          </div>
+        </div>
       </section>
 
 
@@ -1155,203 +1088,228 @@ export default function LandingPage() {
 
 
           <p>
-            Choose a starting point and destination.
-            Discover FoodKindl partner restaurants
-            along the way and create a multi-stop
-            food experience with friends.
+            From a short neighbourhood walk to a drive or bike journey
+            between cities, choose your route and discover memorable
+            food stops along the way.
           </p>
 
         </div>
 
 
-        <div className="fk-food-walk-shell">
+        <section className="fk-food-walk-shell">
+  <article className="fk-food-walk-route">
+    <header className="fk-food-walk-route-head">
+      <div>
+        <span className="fk-route-eyebrow">
+          LIVE ROUTE PREVIEW
+        </span>
 
-          <div className="fk-food-walk-route">
+        <h3 className="fk-route-title">
+          Delhi
+          <ArrowRight size={18} aria-hidden="true" />
+          Leh–Ladakh
+        </h3>
+      </div>
 
-            <div className="fk-food-walk-route-head">
+      <div className="fk-route-distance">
+        <Car size={16} aria-hidden="true" />
+        <span>1,000+ km Road Food Trail</span>
+      </div>
+    </header>
 
-              <div>
-
-                <span>
-                  LIVE ROUTE PREVIEW
-                </span>
-
-                <strong>
-                  Nagasandra → Indiranagar
-                </strong>
-
-              </div>
-
-
-              <div className="fk-route-distance">
-
-                <Footprints
-                  size={16}
-                />
-
-                17.3 km Food Trail
-
-              </div>
-
-            </div>
-
-
-            <div className="fk-route-line">
-
-              {
-                FOOD_WALK_STOPS.map(
-                  (
-                    stop,
-                    index
-                  ) => (
-
-                    <div
-                      className="fk-route-stop"
-                      key={
-                        stop.name
-                      }
-                    >
-
-                      <div
-                        className={
-                          stop.partner
-                            ? "fk-route-dot partner"
-                            : "fk-route-dot"
-                        }
-                      >
-                        {
-                          index + 1
-                        }
-                      </div>
-
-
-                      <div className="fk-route-stop-copy">
-
-                        <span>
-                          {
-                            stop.type
-                          }
-                        </span>
-
-                        <strong>
-                          {
-                            stop.name
-                          }
-                        </strong>
-
-                        <small>
-                          {
-                            stop.detail
-                          }
-                        </small>
-
-
-                        {
-                          stop.partner &&
-                          (
-
-                            <em>
-
-                              <Check
-                                size={10}
-                              />
-
-                              FoodKindl Partner
-
-                            </em>
-
-                          )
-                        }
-
-                      </div>
-
-
-                      {
-                        index <
-                        FOOD_WALK_STOPS.length -
-                        1 &&
-                        (
-                          <div className="fk-route-connector" />
-                        )
-                      }
-
-                    </div>
-
-                  )
-                )
-              }
-
-            </div>
-
-          </div>
-
-
-          <div className="fk-food-walk-side">
-
-            <div className="fk-food-walk-side-icon">
-
-              <MapPin
-                size={24}
-              />
-
-            </div>
-
-
-            <span>
-              ROUTE-BASED DISCOVERY
-            </span>
-
-
-            <h3>
-              Find food along the way.
-            </h3>
-
-
-            <p>
-              FoodKindl uses restaurant location data
-              to surface partner places close to your route,
-              so the journey itself becomes part of the meal.
-            </p>
-
-
-            <div className="fk-food-walk-benefits">
-
-              <span>
-                <Check size={13} />
-                Partner restaurants first
-              </span>
-
-              <span>
-                <Check size={13} />
-                Choose 2–5 stops
-              </span>
-
-              <span>
-                <Check size={13} />
-                Invite your connections
-              </span>
-
-            </div>
-
-
-            <Link
-              to={
-                user
-                  ? "/food-invites"
-                  : "/register"
-              }
-              className="fk-text-link"
+    <div className="fk-route-content">
+      {/* Animated travelling route */}
+      <div
+        className="fk-animated-route-map"
+        aria-label="Animated food route from Delhi to Leh-Ladakh"
+      >
+        <svg
+          className="fk-route-svg"
+          viewBox="0 0 1000 180"
+          preserveAspectRatio="none"
+          role="img"
+          aria-hidden="true"
+        >
+          <defs>
+            <linearGradient
+              id="fk-food-route-gradient"
+              x1="0%"
+              y1="0%"
+              x2="100%"
+              y2="0%"
             >
-              Build your Food Walk
+              <stop offset="0%" stopColor="#ff4f1f" />
+              <stop offset="50%" stopColor="#ff983f" />
+              <stop offset="100%" stopColor="#ff4f1f" />
+            </linearGradient>
 
-              <ArrowRight
-                size={16}
-              />
-            </Link>
+            <filter
+              id="fk-route-glow"
+              x="-20%"
+              y="-50%"
+              width="140%"
+              height="200%"
+            >
+              <feGaussianBlur stdDeviation="5" result="blur" />
 
+              <feMerge>
+                <feMergeNode in="blur" />
+                <feMergeNode in="SourceGraphic" />
+              </feMerge>
+            </filter>
+          </defs>
+
+          <path
+            className="fk-route-path-shadow"
+            d="M70 88 C180 20 275 150 390 92 S575 25 650 82 S835 155 930 88"
+          />
+
+          <path
+            id="fk-food-route-path"
+            className="fk-route-path-live"
+            d="M70 88 C180 20 275 150 390 92 S575 25 650 82 S835 155 930 88"
+          />
+
+          <path
+            className="fk-route-path-progress"
+            d="M70 88 C180 20 275 150 390 92 S575 25 650 82 S835 155 930 88"
+          />
+
+          <g className="fk-svg-traveller">
+            <circle className="fk-traveller-radar" r="24" />
+            <circle className="fk-traveller-ring" r="13" />
+            <circle className="fk-traveller-core" r="6" />
+
+            <animateMotion
+              dur="9s"
+              begin="0s"
+              repeatCount="indefinite"
+            >
+              <mpath href="#fk-food-route-path" />
+            </animateMotion>
+          </g>
+        </svg>
+
+        <span className="fk-food-map-pin pin-one">
+          <MapPin size={14} />
+          <span>Breakfast</span>
+        </span>
+
+        <span className="fk-food-map-pin pin-two">
+          <MapPin size={14} />
+          <span>Regional meal</span>
+        </span>
+
+        <span className="fk-food-map-pin pin-three">
+          <MapPin size={14} />
+          <span>Local favourite</span>
+        </span>
+      </div>
+
+      {/* Route destinations */}
+      <div className="fk-route-stops">
+        {FOOD_WALK_STOPS.map((stop, index) => (
+          <div
+            className={`fk-route-stop ${
+              stop.partner ? "is-partner" : ""
+            }`}
+            key={stop.name}
+          >
+            <div className="fk-route-stop-marker">
+              <div className="fk-route-dot">
+                {index + 1}
+              </div>
+
+              {index < FOOD_WALK_STOPS.length - 1 && (
+                <div
+                  className="fk-route-connector"
+                  aria-hidden="true"
+                />
+              )}
+            </div>
+
+            <div className="fk-route-stop-copy">
+              <span>{stop.type}</span>
+
+              <strong>{stop.name}</strong>
+
+              <small>{stop.detail}</small>
+
+              {stop.partner && (
+                <em>
+                  <Check size={11} aria-hidden="true" />
+                  FoodKindl Partner
+                </em>
+              )}
+            </div>
           </div>
+        ))}
+      </div>
+    </div>
 
-        </div>
+    <footer className="fk-route-summary">
+      <span>
+        <Car size={14} />
+        Drive
+      </span>
+
+      <span>
+        <Bike size={14} />
+        Bike
+      </span>
+
+      <span>
+        <Utensils size={14} />
+        Regional food stops
+      </span>
+    </footer>
+
+  </article>
+
+  <aside className="fk-connect-steps-panel" id="how-it-works">
+    <div className="fk-connect-steps-head">
+      <span className="fk-section-kicker">
+        FROM DISCOVERY TO THE TABLE
+      </span>
+
+      <h3>
+        How FoodKindl <span>Connect Works</span>
+      </h3>
+
+      <p>
+        Four simple steps turn a shared love of food into meaningful
+        real-world connections.
+      </p>
+    </div>
+
+    <div className="fk-connect-steps-list">
+      {HOW_STEPS.map((step, index) => {
+        const Icon = step.icon;
+
+        return (
+          <article className="fk-connect-step" key={step.number}>
+            <div className="fk-connect-step-rail">
+              <span>{step.number}</span>
+
+              {index < HOW_STEPS.length - 1 && (
+                <i aria-hidden="true" />
+              )}
+            </div>
+
+            <div className="fk-connect-step-icon">
+              <Icon size={18} />
+            </div>
+
+            <div className="fk-connect-step-copy">
+              <h4>{step.title}</h4>
+              <p>{step.text}</p>
+            </div>
+          </article>
+        );
+      })}
+    </div>
+  </aside>
+</section>
 
       </section>
 
@@ -1361,8 +1319,8 @@ export default function LandingPage() {
       ====================================================== */}
 
       <section
-        className="fk-section"
-        id="how-it-works"
+        className="fk-section fk-how-legacy"
+        aria-hidden="true"
       >
 
         <div className="fk-section-heading">
@@ -1663,7 +1621,7 @@ export default function LandingPage() {
           <article className="fk-ecosystem-card">
 
             <img
-              src="/images/food11.webp"
+              src="/images/connect.webp"
               alt="FoodKindl AI recipes"
               loading="lazy"
               decoding="async"
@@ -1734,11 +1692,6 @@ export default function LandingPage() {
 
 
             <div className="fk-ecosystem-content">
-
-              <span className="fk-ecosystem-icon">
-                <Play size={22} />
-              </span>
-
 
               <small>
                 FOOD VIDEOS

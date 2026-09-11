@@ -1,3270 +1,2504 @@
-import {
+
+import React, {
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from "react";
 
 import {
-  ArrowDown,
-  ArrowUp,
-  Check,
-  Footprints,
-  MapPin,
-  Minus,
-  Plus,
-  Search,
-  Star,
-  Utensils,
-  X,
-} from "lucide-react";
+  MapContainer,
+  Marker,
+  Polyline,
+  Popup,
+  TileLayer,
+  useMap,
+} from "react-leaflet";
 
+import L from "leaflet";
+import "leaflet/dist/leaflet.css";
+
+import { useNavigate } from "react-router-dom";
 import api from "../api";
+import PeopleSelector from "./PeopleSelector";
 
-import FoodWalkMap from "../components/FoodWalkMap";
-import LocationAutocomplete from "../components/LocationAutocomplete";
+import "../styles/FoodInvites.css";
+import "../styles/FoodWalkPlanner.css";
 
-import "../styles/food_walk.css";
+const FOOD_WALK_ENDPOINT =
+  "/restaurants/food-walk/";
 
+const GEOCODE_ENDPOINT =
+  "/geocode/";
 
+const INVITES_ENDPOINT =
+  "/food-invites/";
 
-const MAX_STOPS = 5;
-const MIN_STOPS = 2;
+const DEFAULT_CENTER = [
+  12.9716,
+  77.5946,
+];
 
+const TRAVEL_MODES = [
+  {
+    value: "walking",
+    label: "Walk",
+    icon: "🚶",
+  },
+  {
+    value: "cycling",
+    label: "Bike",
+    icon: "🚲",
+  },
+  {
+    value: "driving",
+    label: "Drive",
+    icon: "🚗",
+  },
+  {
+    value: "transit",
+    label: "Transit",
+    icon: "🚆",
+  },
+];
 
-/* ============================================================
-   NORMALIZE STOP
-============================================================ */
+const CATEGORIES = [
+  "All",
+  "Breakfast",
+  "Street Food",
+  "Cafés",
+  "Restaurants",
+  "Desserts",
+  "Bakeries",
+  "Local Specialities",
+  "Vegetarian",
+  "Hidden Gems",
+];
 
-function normalizeStop(
-  stop,
-  index = 0
+function validLocationPoint(
+  point
 ) {
-
-  if (!stop) {
-    return null;
-  }
-
-
-  if (
-    typeof stop === "string"
-  ) {
-
-    const name =
-      stop.trim();
-
-
-    if (!name) {
-      return null;
-    }
+  return (
+    point &&
+    Number.isFinite(
+      Number(
+        point.latitude
+      )
+    ) &&
+    Number.isFinite(
+      Number(
+        point.longitude
+      )
+    )
+  );
+}
 
 
-    return {
-
-      id:
-        `manual-${index}-${name}`,
-
-      restaurant_id:
-        null,
-
-      name,
-
-      cuisine:
-        "",
-
-      locality:
-        "",
-
-      city:
-        "",
-
-      image_url:
-        "",
-
-      rating:
-        null,
-
-      latitude:
-        null,
-
-      longitude:
-        null,
-
-      distance_from_route_km:
-        null,
-
-      route_position:
-        null,
-
-      is_foodkindl_partner:
-        false,
-
-      source:
-        "manual",
-    };
-  }
-
-
-  const name =
+async function geocodeLocation(
+  label
+) {
+  const query =
     String(
-      stop.name ||
-      stop.venue_name ||
-      stop.restaurant_name ||
-      ""
+      label || ""
     ).trim();
 
-
-  if (!name) {
-    return null;
+  if (!query) {
+    throw new Error(
+      "Location is required."
+    );
   }
 
+  const response =
+    await api.get(
+      GEOCODE_ENDPOINT,
+      {
+        params: {
+          q: query,
+        },
+      }
+    );
 
-  return {
+  const data =
+    response?.data;
 
-    id:
-      stop.id ||
-      stop.restaurant_id ||
-      `stop-${index}-${name}`,
+  const raw =
+    Array.isArray(
+      data
+    )
+      ? data
+      : data?.results ||
+        data?.features ||
+        [];
 
-    restaurant_id:
-      stop.restaurant_id ||
-      stop.id ||
-      null,
+  const first =
+    raw?.[0];
 
-    name,
-
-    cuisine:
-      stop.cuisine ||
-      "",
-
-    locality:
-      stop.locality ||
-      "",
-
-    city:
-      stop.city ||
-      "",
-
-    image_url:
-      stop.image_url ||
-      stop.images?.[0]?.image_url ||
-      "",
-
-    rating:
-      stop.rating ??
-      null,
-
-    latitude:
-      stop.latitude ??
-      stop.lat ??
-      stop.restaurant_latitude ??
-      null,
-
-    longitude:
-      stop.longitude ??
-      stop.lng ??
-      stop.lon ??
-      stop.restaurant_longitude ??
-      null,
-
-    distance_from_route_km:
-      stop.distance_from_route_km ??
-      null,
-
-    route_position:
-      stop.route_position ??
-      null,
-
-    is_foodkindl_partner:
-      stop.is_foodkindl_partner === true,
-
-    source:
-      stop.source ||
-      "restaurant",
-  };
-}
-
-
-/* ============================================================
-   NORMALIZE RESTAURANT
-============================================================ */
-
-function normalizeRestaurant(
-  restaurant
-) {
-
-  if (!restaurant) {
-    return null;
+  if (!first) {
+    throw new Error(
+      `Could not find "${query}". Please choose a suggestion from the location list.`
+    );
   }
-
-
-  const rawLatitude =
-    restaurant.latitude ??
-    restaurant.lat ??
-    restaurant.restaurant_latitude ??
-    null;
-
-
-  const rawLongitude =
-    restaurant.longitude ??
-    restaurant.lng ??
-    restaurant.lon ??
-    restaurant.restaurant_longitude ??
-    null;
-
 
   const latitude =
-    rawLatitude !== null &&
-    rawLatitude !== undefined &&
-    rawLatitude !== ""
-      ? Number(rawLatitude)
-      : null;
-
+    Number(
+      first?.latitude ??
+      first?.lat ??
+      first?.geometry
+        ?.coordinates?.[1]
+    );
 
   const longitude =
-    rawLongitude !== null &&
-    rawLongitude !== undefined &&
-    rawLongitude !== ""
-      ? Number(rawLongitude)
-      : null;
+    Number(
+      first?.longitude ??
+      first?.lng ??
+      first?.lon ??
+      first?.geometry
+        ?.coordinates?.[0]
+    );
 
+  if (
+    !Number.isFinite(
+      latitude
+    ) ||
+    !Number.isFinite(
+      longitude
+    )
+  ) {
+    throw new Error(
+      `No usable coordinates were found for "${query}".`
+    );
+  }
 
   return {
+    label:
+      first?.label ??
+      first?.display_name ??
+      first?.name ??
+      first?.properties?.label ??
+      first?.properties?.name ??
+      query,
 
-    ...restaurant,
-
-    latitude:
-      Number.isFinite(latitude)
-        ? latitude
-        : null,
-
-    longitude:
-      Number.isFinite(longitude)
-        ? longitude
-        : null,
-
-    image_url:
-      restaurant.image_url ||
-      restaurant.images?.[0]?.image_url ||
-      "",
-
-    rating:
-      restaurant.rating ??
-      null,
-
-    distance_from_route_km:
-      restaurant.distance_from_route_km ??
-      null,
-
-    route_position:
-      restaurant.route_position ??
-      null,
-
-    is_foodkindl_partner:
-      restaurant.is_foodkindl_partner === true,
+    latitude,
+    longitude,
   };
 }
 
 
-/* ============================================================
-   RESTAURANT → STOP
-============================================================ */
-
-function restaurantToStop(
-  restaurant
+function getFoodWalkSearchParams(
+  category,
+  exploration,
+  travelMode
 ) {
+  const value =
+    String(
+      category || "All"
+    ).trim();
 
+  const params = {
+    travel_mode:
+      travelMode === "walking"
+        ? "walk"
+        : travelMode === "cycling"
+        ? "bike"
+        : travelMode === "driving"
+        ? "drive"
+        : travelMode === "transit"
+        ? "drive"
+        : "walk",
+
+    max_detour_km:
+      exploration === "quick"
+        ? 1.5
+        : exploration === "explorer"
+        ? 5
+        : 3,
+
+    limit: 50,
+  };
+
+  if (
+    value === "Cafés"
+  ) {
+    params.type =
+      "cafe";
+  } else if (
+    value === "Restaurants"
+  ) {
+    params.type =
+      "restaurant";
+  } else if (
+    value === "Hidden Gems"
+  ) {
+    params.hidden_gems =
+      true;
+  } else if (
+    value !== "All"
+  ) {
+    params.food_query =
+      value;
+  }
+
+  return params;
+}
+
+
+function normalizeRestaurant(
+  raw,
+  index
+) {
   return {
-
     id:
-      restaurant.id,
-
-    restaurant_id:
-      restaurant.id,
+      raw?.id ??
+      raw?.place_id ??
+      raw?.external_id ??
+      `place-${index}`,
 
     name:
-      restaurant.name,
+      raw?.name ??
+      raw?.restaurant_name ??
+      "Restaurant",
 
-    cuisine:
-      restaurant.cuisine ||
+    latitude:
+      Number(
+        raw?.latitude ??
+        raw?.lat ??
+        raw?.location?.lat
+      ),
+
+    longitude:
+      Number(
+        raw?.longitude ??
+        raw?.lng ??
+        raw?.lon ??
+        raw?.location?.lng
+      ),
+
+    rating:
+      Number(
+        raw?.rating ??
+        raw?.average_rating ??
+        0
+      ),
+
+    review_count:
+      Number(
+        raw?.review_count ??
+        raw?.reviews_count ??
+        raw?.user_ratings_total ??
+        0
+      ),
+
+    price_level:
+      raw?.price_level ??
+      raw?.price ??
+      "",
+
+    category:
+      raw?.category ??
+      raw?.type ??
+      "Restaurant",
+
+    cuisines:
+      Array.isArray(
+        raw?.cuisines
+      )
+        ? raw.cuisines
+        : raw?.cuisine
+        ? String(
+            raw.cuisine
+          )
+            .split(",")
+            .map((item) =>
+              item.trim()
+            )
+        : [],
+
+    open_now:
+      typeof raw?.open_now ===
+      "boolean"
+        ? raw.open_now
+        : null,
+
+    opening_hours:
+      raw?.opening_hours ??
+      raw?.hours ??
+      "",
+
+    popular_dishes:
+      raw?.popular_dishes ??
+      raw?.menu_highlights ??
+      [],
+
+    description:
+      raw?.description ??
+      raw?.ai_explanation ??
+      raw?.reason ??
+      "",
+
+    image:
+      raw?.image ??
+      raw?.photo_url ??
+      raw?.image_url ??
+      "",
+
+    detour_minutes:
+      Number(
+        raw?.detour_minutes ??
+        raw?.extra_minutes ??
+        0
+      ),
+
+    detour_km:
+      Number(
+        raw?.detour_km ??
+        raw?.distance_from_route_km ??
+        0
+      ),
+
+    source:
+      raw?.source ??
+      "external",
+
+    address:
+      raw?.address ??
+      raw?.formatted_address ??
       "",
 
     locality:
-      restaurant.locality ||
+      raw?.locality ??
+      raw?.location?.locality ??
       "",
 
     city:
-      restaurant.city ||
+      raw?.city ??
+      raw?.location?.city ??
+      raw?.location?.locality ??
       "",
 
-    image_url:
-      restaurant.image_url ||
+    postcode:
+      raw?.postcode ??
+      raw?.location?.postcode ??
       "",
 
-    rating:
-      restaurant.rating ??
-      null,
+    tel:
+      raw?.tel ??
+      raw?.phone ??
+      raw?.phone_number ??
+      "",
 
-    latitude:
-      restaurant.latitude ??
-      null,
+    website:
+      raw?.website ??
+      "",
 
-    longitude:
-      restaurant.longitude ??
-      null,
+    categories:
+      Array.isArray(
+        raw?.categories
+      )
+        ? raw.categories
+        : [],
 
-    distance_from_route_km:
-      restaurant.distance_from_route_km ??
-      null,
-
-    route_position:
-      restaurant.route_position ??
-      null,
-
-    is_foodkindl_partner:
-      restaurant.is_foodkindl_partner === true,
-
-    source:
-      "restaurant",
+    recommendation_reason:
+      raw?.recommendation_reason ??
+      "",
   };
 }
 
+function NumberedMarkerIcon(
+  number,
+  selected
+) {
+  return L.divIcon({
+    className:
+      "fw-marker-wrap",
 
-/* ============================================================
-   FOOD WALK PLANNER
-============================================================ */
+    html:
+      `<div class="fw-marker ${
+        selected
+          ? "selected"
+          : ""
+      }"><span>${number}</span></div>`,
 
-export default function FoodWalkPlanner({
+    iconSize: [36, 36],
+    iconAnchor: [18, 36],
+    popupAnchor: [0, -36],
+  });
+}
 
-  locationLabel = "",
-  destination = "",
-  cuisine = "",
-  stops = [],
-
-  onLocationChange,
-  onDestinationChange,
-  onCuisineChange,
-  onStopsChange,
-
+function MapAutoFit({
+  route,
+  restaurants,
 }) {
+  const map = useMap();
 
+  useEffect(() => {
+    const points = [];
 
-  /* =========================================================
-     STATE
-  ========================================================= */
+    route.forEach((point) => {
+      if (
+        Array.isArray(point) &&
+        point.length >= 2
+      ) {
+        points.push(point);
+      }
+    });
 
-  const [
-    recommendations,
-    setRecommendations,
-  ] = useState([]);
-
-
-  const [
-    loading,
-    setLoading,
-  ] = useState(false);
-
-
-  const [
-    error,
-    setError,
-  ] = useState("");
-
-
-  const [
-    manualStop,
-    setManualStop,
-  ] = useState("");
-
-
-  const [
-    routeInfo,
-    setRouteInfo,
-  ] = useState(null);
-
-
-  /*
-   * Selected autocomplete locations.
-   *
-   * These contain:
-   *
-   * {
-   *   name,
-   *   display_name,
-   *   latitude,
-   *   longitude,
-   *   city,
-   *   state,
-   *   ...
-   * }
-   */
-
-  const [
-    selectedStart,
-    setSelectedStart,
-  ] = useState(null);
-
-
-  const [
-    selectedDestination,
-    setSelectedDestination,
-  ] = useState(null);
-
-
-  const [
-    selectedRestaurantDetail,
-    setSelectedRestaurantDetail,
-  ] = useState(null);
-
-
-  const [
-    restaurantDetailLoading,
-    setRestaurantDetailLoading,
-  ] = useState(false);
-
-
-  /* =========================================================
-     NORMALIZED STOPS
-  ========================================================= */
-
-  const normalizedStops =
-    useMemo(
-      () => {
-
-        const currentStops =
-          Array.isArray(stops)
-            ? stops
-            : [];
-
-
-        return currentStops
-
-          .map(
-            (
-              stop,
-              index
-            ) =>
-              normalizeStop(
-                stop,
-                index
-              )
-          )
-
-          .filter(Boolean);
-
-      },
-      [
-        stops,
-      ]
-    );
-
-
-  /* =========================================================
-     SELECTED RESTAURANT IDS
-  ========================================================= */
-
-  const selectedRestaurantIds =
-    useMemo(
-      () => {
-
-        return new Set(
-
-          normalizedStops
-
-            .map(
-              stop =>
-                stop.restaurant_id
-            )
-
-            .filter(
-              value =>
-                value !== null &&
-                value !== undefined
-            )
-
-            .map(Number)
-
-        );
-
-      },
-      [
-        normalizedStops,
-      ]
-    );
-
-
-  /* =========================================================
-     ESTIMATED TIME
-  ========================================================= */
-
-  const estimatedMinutes =
-    useMemo(
-      () => {
-
+    restaurants.forEach(
+      (place) => {
         if (
-          normalizedStops.length === 0
-        ) {
-
-          return 0;
-        }
-
-
-        const stopMinutes =
-          normalizedStops.length *
-          40;
-
-
-        const movementMinutes =
-          Math.max(
-            0,
-            normalizedStops.length - 1
+          Number.isFinite(
+            place.latitude
+          ) &&
+          Number.isFinite(
+            place.longitude
           )
-          *
-          10;
-
-
-        return (
-          stopMinutes +
-          movementMinutes
-        );
-
-      },
-      [
-        normalizedStops.length,
-      ]
-    );
-
-
-  const estimatedDuration =
-    useMemo(
-      () => {
-
-        if (!estimatedMinutes) {
-
-          return (
-            "Add stops to estimate time"
-          );
-        }
-
-
-        const hours =
-          Math.floor(
-            estimatedMinutes /
-            60
-          );
-
-
-        const minutes =
-          estimatedMinutes %
-          60;
-
-
-        if (
-          hours &&
-          minutes
         ) {
-
-          return (
-            `${hours} hr ${minutes} min`
-          );
+          points.push([
+            place.latitude,
+            place.longitude,
+          ]);
         }
-
-
-        if (hours) {
-
-          return (
-            `${hours} hr`
-          );
-        }
-
-
-        return (
-          `${minutes} min`
-        );
-
-      },
-      [
-        estimatedMinutes,
-      ]
+      }
     );
 
+    if (points.length > 0) {
+      map.fitBounds(
+        L.latLngBounds(points),
+        {
+          padding: [35, 35],
+          maxZoom: 14,
+        }
+      );
+    }
+  }, [
+    map,
+    route,
+    restaurants,
+  ]);
 
-  /* =========================================================
-     LOAD FOOD WALK RECOMMENDATIONS
-  ========================================================= */
+  return null;
+}
 
-  async function loadRecommendations() {
+function LocationInput({
+  value,
+  onChange,
+  placeholder,
+  onSelect,
+}) {
+  const [inputValue, setInputValue] =
+    useState(
+      typeof value === "string"
+        ? value
+        : value?.label || ""
+    );
 
-    const startValue =
-      locationLabel.trim();
+  const [results, setResults] =
+    useState([]);
+
+  const [loading, setLoading] =
+    useState(false);
+
+  const [open, setOpen] =
+    useState(false);
+
+  const [searchError, setSearchError] =
+    useState("");
+
+  const timerRef =
+    useRef(null);
+
+  const wrapperRef =
+    useRef(null);
+
+  const suppressNextSearchRef =
+    useRef(false);
 
 
-    const destinationValue =
-      destination.trim();
+  // Keep local input synchronized when parent changes it.
+  useEffect(() => {
+    const nextValue =
+      typeof value === "string"
+        ? value
+        : value?.label || "";
+
+    setInputValue(
+      nextValue
+    );
+  }, [
+    value,
+  ]);
+
+
+  // Close dropdown when clicking outside.
+  useEffect(() => {
+    function handleClickOutside(
+      event
+    ) {
+      if (
+        wrapperRef.current &&
+        !wrapperRef.current.contains(
+          event.target
+        )
+      ) {
+        setOpen(false);
+      }
+    }
+
+    document.addEventListener(
+      "mousedown",
+      handleClickOutside
+    );
+
+    return () => {
+      document.removeEventListener(
+        "mousedown",
+        handleClickOutside
+      );
+    };
+  }, []);
+
+
+  // Autocomplete search.
+  useEffect(() => {
+    clearTimeout(
+      timerRef.current
+    );
+
+    const query =
+      String(
+        inputValue || ""
+      ).trim();
 
 
     if (
-      !startValue ||
-      !destinationValue
+      suppressNextSearchRef.current
     ) {
+      suppressNextSearchRef.current =
+        false;
 
-      setRecommendations(
-        []
-      );
-
-
-      setRouteInfo(
-        null
-      );
-
-
-      setError(
-        ""
-      );
-
-
+      setResults([]);
+      setOpen(false);
+      setSearchError("");
       return;
     }
 
 
-    try {
+    if (
+      query.length < 2
+    ) {
+      setResults([]);
+      setOpen(false);
+      setSearchError("");
+      return;
+    }
 
-      setLoading(
-        true
+
+    timerRef.current =
+      setTimeout(
+        async () => {
+          setLoading(true);
+          setSearchError("");
+
+          try {
+            const response =
+              await api.get(
+                GEOCODE_ENDPOINT,
+                {
+                  params: {
+                    q: query,
+                  },
+                }
+              );
+
+
+            const raw =
+              Array.isArray(
+                response?.data
+              )
+                ? response.data
+                : response?.data
+                    ?.results ||
+                  response?.data
+                    ?.features ||
+                  [];
+
+
+            const normalized =
+              raw
+                .slice(
+                  0,
+                  8
+                )
+                .map(
+                  (
+                    item,
+                    index
+                  ) => ({
+                    id:
+                      item?.id ??
+                      item?.place_id ??
+                      item?.osm_id ??
+                      `${query}-${index}`,
+
+                    label:
+                      item?.label ??
+                      item?.display_name ??
+                      item?.name ??
+                      item?.properties
+                        ?.label ??
+                      item?.properties
+                        ?.name ??
+                      query,
+
+                    latitude:
+                      Number(
+                        item?.latitude ??
+                        item?.lat ??
+                        item?.geometry
+                          ?.coordinates?.[1]
+                      ),
+
+                    longitude:
+                      Number(
+                        item?.longitude ??
+                        item?.lng ??
+                        item?.lon ??
+                        item?.geometry
+                          ?.coordinates?.[0]
+                      ),
+
+                    locality:
+                      item?.locality ??
+                      item?.properties
+                        ?.locality ??
+                      "",
+
+                    city:
+                      item?.city ??
+                      item?.properties
+                        ?.localadmin ??
+                      item?.properties
+                        ?.county ??
+                      "",
+
+                    state:
+                      item?.state ??
+                      item?.region ??
+                      item?.properties
+                        ?.region ??
+                      "",
+
+                    country:
+                      item?.country ??
+                      item?.properties
+                        ?.country ??
+                      "",
+                  })
+                )
+                .filter(
+                  item =>
+                    Number.isFinite(
+                      item.latitude
+                    ) &&
+                    Number.isFinite(
+                      item.longitude
+                    )
+                );
+
+
+            setResults(
+              normalized
+            );
+
+            setOpen(
+              normalized.length > 0
+            );
+
+
+            if (
+              normalized.length === 0
+            ) {
+              setSearchError(
+                "No matching locations found."
+              );
+            }
+
+          } catch (
+            requestError
+          ) {
+            console.error(
+              "LOCATION SEARCH ERROR:",
+              requestError?.response
+                ?.status,
+              requestError?.response
+                ?.data ||
+                requestError
+            );
+
+            setResults([]);
+            setOpen(false);
+
+            setSearchError(
+              requestError?.response
+                ?.data?.detail ||
+                "Unable to search locations."
+            );
+
+          } finally {
+            setLoading(false);
+          }
+        },
+        350
       );
 
 
+    return () =>
+      clearTimeout(
+        timerRef.current
+      );
+
+  }, [
+    inputValue,
+  ]);
+
+
+  function handleInputChange(
+    event
+  ) {
+    const nextValue =
+      event.target.value;
+
+    setInputValue(
+      nextValue
+    );
+
+    setResults([]);
+    setSearchError("");
+
+    // User edited the text, so old coordinates must be cleared.
+    onChange(
+      nextValue
+    );
+  }
+
+
+  function handleSelect(
+    place
+  ) {
+    const selectedPlace = {
+      ...place,
+
+      label:
+        place.label,
+
+      latitude:
+        Number(
+          place.latitude
+        ),
+
+      longitude:
+        Number(
+          place.longitude
+        ),
+    };
+
+
+    // Prevent a new autocomplete request for the selected label.
+    suppressNextSearchRef.current =
+      true;
+
+    setInputValue(
+      selectedPlace.label
+    );
+
+    setResults([]);
+    setOpen(false);
+    setSearchError("");
+
+    onSelect(
+      selectedPlace
+    );
+  }
+
+
+  return (
+    <div
+      ref={wrapperRef}
+      className="fw-location-autocomplete"
+    >
+      <input
+        type="text"
+        value={inputValue}
+        placeholder={placeholder}
+        autoComplete="off"
+        onChange={
+          handleInputChange
+        }
+        onFocus={() => {
+          if (
+            results.length > 0
+          ) {
+            setOpen(true);
+          }
+        }}
+      />
+
+
+      {loading && (
+        <div className="fw-location-status">
+          Searching locations...
+        </div>
+      )}
+
+
+      {searchError &&
+        !loading && (
+          <div className="fw-location-status fw-location-error">
+            {searchError}
+          </div>
+        )}
+
+
+      {open &&
+        results.length > 0 && (
+          <div className="fw-location-dropdown">
+            {results.map(
+              place => (
+                <button
+                  key={place.id}
+                  type="button"
+                  className="fw-location-option"
+                  onMouseDown={(
+                    event
+                  ) => {
+                    // Prevent blur before selection.
+                    event.preventDefault();
+
+                    handleSelect(
+                      place
+                    );
+                  }}
+                >
+                  <span className="fw-location-pin">
+                    📍
+                  </span>
+
+                  <span className="fw-location-option-text">
+                    {place.label}
+                  </span>
+                </button>
+              )
+            )}
+          </div>
+        )}
+    </div>
+  );
+}
+
+
+export default function FoodWalkPlanner() {
+  const navigate =
+    useNavigate();
+
+  const [start, setStart] =
+    useState({
+      label: "",
+      latitude: null,
+      longitude: null,
+    });
+
+  const [
+    destination,
+    setDestination,
+  ] = useState({
+    label: "",
+    latitude: null,
+    longitude: null,
+  });
+
+  const [waypoints, setWaypoints] =
+    useState([]);
+
+  const [
+    travelMode,
+    setTravelMode,
+  ] = useState("walking");
+
+  const [
+    exploration,
+    setExploration,
+  ] = useState("balanced");
+
+  const [category, setCategory] =
+    useState("All");
+
+  const [route, setRoute] =
+    useState([]);
+
+  const [
+    routeMeta,
+    setRouteMeta,
+  ] = useState(null);
+
+  const [
+    restaurants,
+    setRestaurants,
+  ] = useState([]);
+
+  const [
+    selectedIds,
+    setSelectedIds,
+  ] = useState([]);
+
+  const [
+    activeRestaurantId,
+    setActiveRestaurantId,
+  ] = useState(null);
+
+  const [eventForm, setEventForm] =
+    useState({
+      title: "",
+      start_at: "",
+      max_participants: 4,
+      verified_only: false,
+      women_only: false,
+      recipients: [],
+    });
+
+  const [loading, setLoading] =
+    useState(false);
+
+  const [saving, setSaving] =
+    useState(false);
+
+  const [error, setError] =
+    useState("");
+
+  const cardRefs =
+    useRef({});
+
+  function updateWaypoint(
+    index,
+    patch
+  ) {
+    setWaypoints(
+      (previous) =>
+        previous.map(
+          (item, itemIndex) =>
+            itemIndex === index
+              ? {
+                  ...item,
+                  ...patch,
+                }
+              : item
+        )
+    );
+  }
+
+  function addWaypoint() {
+    setWaypoints(
+      (previous) => [
+        ...previous,
+        {
+          label: "",
+          latitude: null,
+          longitude: null,
+        },
+      ]
+    );
+  }
+
+  function removeWaypoint(index) {
+    setWaypoints(
+      (previous) =>
+        previous.filter(
+          (_, itemIndex) =>
+            itemIndex !== index
+        )
+    );
+  }
+
+  async function findFood() {
+    setError("");
+
+    if (
+      !start.label.trim()
+    ) {
       setError(
-        ""
+        "Please select a starting point from the dropdown."
+      );
+      return;
+    }
+
+    if (
+      !validLocationPoint(
+        start
+      )
+    ) {
+      setError(
+        "Please choose the starting point from the dropdown so FoodKindl gets its exact location."
+      );
+      return;
+    }
+
+    if (
+      !destination.label.trim()
+    ) {
+      setError(
+        "Please select a destination from the dropdown."
+      );
+      return;
+    }
+
+    if (
+      !validLocationPoint(
+        destination
+      )
+    ) {
+      setError(
+        "Please choose the destination from the dropdown so FoodKindl gets its exact location."
+      );
+      return;
+    }
+
+    setLoading(true);
+    setSelectedIds([]);
+    setRestaurants([]);
+    setRoute([]);
+    setRouteMeta(null);
+
+    try {
+      /*
+       * Your backend FoodWalkRecommendationView is a GET endpoint
+       * and requires start_lat/start_lng/destination_lat/
+       * destination_lng as query parameters.
+       *
+       * If the user typed a location but did not click an
+       * autocomplete suggestion, resolve it here automatically.
+       */
+      const resolvedStart =
+        validLocationPoint(
+          start
+        )
+          ? {
+              ...start,
+              latitude:
+                Number(
+                  start.latitude
+                ),
+              longitude:
+                Number(
+                  start.longitude
+                ),
+            }
+          : await geocodeLocation(
+              start.label
+            );
+
+      const resolvedDestination =
+        validLocationPoint(
+          destination
+        )
+          ? {
+              ...destination,
+              latitude:
+                Number(
+                  destination.latitude
+                ),
+              longitude:
+                Number(
+                  destination.longitude
+                ),
+            }
+          : await geocodeLocation(
+              destination.label
+            );
+
+      setStart(
+        resolvedStart
       );
 
+      setDestination(
+        resolvedDestination
+      );
 
-      /* =====================================================
-         BUILD PARAMETERS
+      /*
+       * Resolve optional waypoints too so the UI never keeps
+       * labels with null coordinates. The current backend route
+       * endpoint accepts start + destination; waypoint support
+       * can be added server-side later.
+       */
+      const resolvedWaypoints =
+        [];
 
-         If autocomplete coordinates exist we send them.
-
-         Backend can use coordinates directly instead of
-         geocoding the text again.
-      ===================================================== */
-
-      const params = {
-
-        start:
-          startValue,
-
-        destination:
-          destinationValue,
-
-        cuisine:
-          cuisine.trim(),
-
-        max_detour_km:
-          2,
-      };
-
-
-      if (
-        selectedStart?.latitude !==
-          undefined &&
-        selectedStart?.latitude !==
-          null
+      for (
+        const waypoint
+        of waypoints
       ) {
+        if (
+          !String(
+            waypoint?.label ||
+            ""
+          ).trim()
+        ) {
+          continue;
+        }
 
-        params.start_lat =
-          selectedStart.latitude;
+        const resolved =
+          validLocationPoint(
+            waypoint
+          )
+            ? {
+                ...waypoint,
+                latitude:
+                  Number(
+                    waypoint.latitude
+                  ),
+                longitude:
+                  Number(
+                    waypoint.longitude
+                  ),
+              }
+            : await geocodeLocation(
+                waypoint.label
+              );
+
+        resolvedWaypoints.push(
+          resolved
+        );
       }
 
-
       if (
-        selectedStart?.longitude !==
-          undefined &&
-        selectedStart?.longitude !==
-          null
+        resolvedWaypoints.length
       ) {
-
-        params.start_lng =
-          selectedStart.longitude;
+        setWaypoints(
+          resolvedWaypoints
+        );
       }
 
-
-      if (
-        selectedDestination?.latitude !==
-          undefined &&
-        selectedDestination?.latitude !==
-          null
-      ) {
-
-        params.destination_lat =
-          selectedDestination.latitude;
-      }
-
-
-      if (
-        selectedDestination?.longitude !==
-          undefined &&
-        selectedDestination?.longitude !==
-          null
-      ) {
-
-        params.destination_lng =
-          selectedDestination.longitude;
-      }
-
+      const searchParams =
+        getFoodWalkSearchParams(
+          category,
+          exploration,
+          travelMode
+        );
 
       const response =
         await api.get(
-          "/restaurants/food-walk/",
+          FOOD_WALK_ENDPOINT,
           {
-            params,
+            params: {
+              // Send BOTH readable labels and exact coordinates.
+              // This works with both your current and corrected backend.
+              start:
+                resolvedStart.label,
+
+              destination:
+                resolvedDestination.label,
+
+              start_lat:
+                resolvedStart.latitude,
+
+              start_lng:
+                resolvedStart.longitude,
+
+              destination_lat:
+                resolvedDestination.latitude,
+
+              destination_lng:
+                resolvedDestination.longitude,
+
+              ...searchParams,
+            },
           }
         );
 
-
       const data =
-        response.data ||
+        response?.data ||
         {};
 
-
-      const rawRestaurants =
-        Array.isArray(
-          data.restaurants
-        )
-          ? data.restaurants
-          : [];
-
-
-      const normalizedRestaurants =
-        rawRestaurants
-
-          .map(
-            normalizeRestaurant
-          )
-
-          .filter(Boolean);
-
-
       console.log(
-        "FOOD WALK API:",
+        "FOOD WALK RESPONSE:",
         data
       );
 
+      const rawRestaurants =
+        data?.restaurants ||
+        data?.places ||
+        data?.results ||
+        [];
 
-      console.log(
-        "FOOD WALK START:",
-        data.start
+      const normalized =
+        rawRestaurants
+          .map(
+            normalizeRestaurant
+          )
+          .filter(
+            place =>
+              Number.isFinite(
+                place.latitude
+              ) &&
+              Number.isFinite(
+                place.longitude
+              )
+          );
+
+      setRestaurants(
+        normalized
       );
 
+      /*
+       * Some backend versions expose route geometry while older
+       * versions expose only distance + duration.
+       */
+      const rawRoute =
+        data?.route
+          ?.coordinates ||
+        data?.route_coordinates ||
+        data?.polyline ||
+        data?.route_points ||
+        [];
 
-      console.log(
-        "FOOD WALK DESTINATION:",
-        data.destination
-      );
-
-
-      console.log(
-        "FOOD WALK RESTAURANTS:",
-        normalizedRestaurants
-      );
-
-
-      setRecommendations(
-        normalizedRestaurants
-      );
-
-
-      setRouteInfo(
-        {
-
-          start:
-            data.start ||
-            (
-              selectedStart
-                ? {
-                    name:
-                      selectedStart.name,
-
-                    latitude:
-                      selectedStart.latitude,
-
-                    longitude:
-                      selectedStart.longitude,
-
-                    matched_location:
-                      selectedStart.display_name,
+      const leafletRoute =
+        Array.isArray(
+          rawRoute
+        )
+          ? rawRoute
+              .map(
+                point => {
+                  if (
+                    !Array.isArray(
+                      point
+                    ) ||
+                    point.length <
+                      2
+                  ) {
+                    return null;
                   }
-                : null
-            ),
 
-          destination:
-            data.destination ||
-            (
-              selectedDestination
-                ? {
-                    name:
-                      selectedDestination.name,
+                  const [
+                    a,
+                    b,
+                  ] = point;
 
-                    latitude:
-                      selectedDestination.latitude,
-
-                    longitude:
-                      selectedDestination.longitude,
-
-                    matched_location:
-                      selectedDestination.display_name,
+                  /*
+                   * Backend service generally uses [lat, lng].
+                   * GeoJSON generally uses [lng, lat].
+                   */
+                  if (
+                    Math.abs(
+                      Number(a)
+                    ) > 90
+                  ) {
+                    return [
+                      Number(b),
+                      Number(a),
+                    ];
                   }
-                : null
-            ),
 
-          routeType:
-            data.route_type ||
-            "",
+                  return [
+                    Number(a),
+                    Number(b),
+                  ];
+                }
+              )
+              .filter(
+                point =>
+                  point &&
+                  Number.isFinite(
+                    point[0]
+                  ) &&
+                  Number.isFinite(
+                    point[1]
+                  )
+              )
+          : [];
 
-          routeDistance:
-            data.route_distance_km ??
-            null,
-
-          maxDetour:
-            data.max_detour_km ??
-            null,
-
-          restaurantCount:
-            data.restaurant_count ??
-            normalizedRestaurants.length,
-        }
+      setRoute(
+        leafletRoute
       );
 
-
-    } catch (
-      requestError
-    ) {
-
-      console.error(
-        "Food Walk recommendation error:",
-        requestError.response?.data ||
-        requestError
-      );
-
-
-      setRecommendations(
-        []
-      );
-
-
-      setRouteInfo(
-        null
-      );
-
-
-      setError(
-        requestError
-          ?.response
-          ?.data
-          ?.detail
-        ||
-        "Food Walk recommendations could not be loaded."
-      );
-
-
-    } finally {
-
-      setLoading(
-        false
-      );
-    }
-  }
-
-
-  /* =========================================================
-     AUTO LOAD
-
-     Wait 600ms after typing/selecting.
-  ========================================================= */
-
-  useEffect(
-    () => {
-
-      const timer =
-        window.setTimeout(
-          () => {
-
-            loadRecommendations();
-
-          },
-          600
-        );
-
-
-      return () => {
-
-        window.clearTimeout(
-          timer
-        );
-
-      };
-
-    },
-    [
-      locationLabel,
-      destination,
-      cuisine,
-      selectedStart,
-      selectedDestination,
-    ]
-  );
-
-
-  /* =========================================================
-     START LOCATION CHANGE
-  ========================================================= */
-
-  function handleStartChange(
-    value
-  ) {
-
-    /*
-     * User typed something after previously
-     * selecting a suggestion.
-     *
-     * Clear old coordinates.
-     */
-
-    setSelectedStart(
-      null
-    );
-
-
-    onLocationChange?.(
-      value
-    );
-  }
-
-
-  /* =========================================================
-     START LOCATION SELECT
-  ========================================================= */
-
-  function handleStartSelect(
-    place
-  ) {
-
-    setSelectedStart(
-      place
-    );
-
-
-    onLocationChange?.(
-      place.name ||
-      place.display_name ||
-      ""
-    );
-  }
-
-
-  /* =========================================================
-     DESTINATION CHANGE
-  ========================================================= */
-
-  function handleDestinationChange(
-    value
-  ) {
-
-    setSelectedDestination(
-      null
-    );
-
-
-    onDestinationChange?.(
-      value
-    );
-  }
-
-
-  /* =========================================================
-     DESTINATION SELECT
-  ========================================================= */
-
-  function handleDestinationSelect(
-    place
-  ) {
-
-    setSelectedDestination(
-      place
-    );
-
-
-    onDestinationChange?.(
-      place.name ||
-      place.display_name ||
-      ""
-    );
-  }
-
-
-  /* =========================================================
-     UPDATE STOPS
-  ========================================================= */
-
-  function updateStops(
-    nextStops
-  ) {
-
-    onStopsChange?.(
-      nextStops.slice(
-        0,
-        MAX_STOPS
-      )
-    );
-  }
-
-
-  /* =========================================================
-     ADD RECOMMENDED RESTAURANT
-  ========================================================= */
-
-  function addRestaurant(
-    restaurant
-  ) {
-
-    if (
-      normalizedStops.length >=
-      MAX_STOPS
-    ) {
-
-      setError(
-        `A Food Walk can have up to ${MAX_STOPS} stops.`
-      );
-
-      return;
-    }
-
-
-    const restaurantId =
-      Number(
-        restaurant.id
-      );
-
-
-    if (
-      selectedRestaurantIds.has(
-        restaurantId
-      )
-    ) {
-
-      return;
-    }
-
-
-    const newStop =
-      restaurantToStop(
-        restaurant
-      );
-
-
-    updateStops(
-      [
-        ...normalizedStops,
-        newStop,
-      ]
-    );
-
-
-    setError(
-      ""
-    );
-  }
-
-
-  /* =========================================================
-     ADD MANUAL STOP
-  ========================================================= */
-
-  function addManualStop() {
-
-    const name =
-      manualStop.trim();
-
-
-    if (!name) {
-      return;
-    }
-
-
-    if (
-      normalizedStops.length >=
-      MAX_STOPS
-    ) {
-
-      setError(
-        `A Food Walk can have up to ${MAX_STOPS} stops.`
-      );
-
-      return;
-    }
-
-
-    const newStop = {
-
-      id:
-        `manual-${Date.now()}`,
-
-      restaurant_id:
-        null,
-
-      name,
-
-      cuisine:
-        "",
-
-      locality:
-        "",
-
-      city:
-        "",
-
-      image_url:
-        "",
-
-      rating:
-        null,
-
-      latitude:
-        null,
-
-      longitude:
-        null,
-
-      distance_from_route_km:
-        null,
-
-      route_position:
-        null,
-
-      is_foodkindl_partner:
-        false,
-
-      source:
-        "manual",
-    };
-
-
-    updateStops(
-      [
-        ...normalizedStops,
-        newStop,
-      ]
-    );
-
-
-    setManualStop(
-      ""
-    );
-
-
-    setError(
-      ""
-    );
-  }
-
-
-  /* =========================================================
-     REMOVE STOP
-  ========================================================= */
-
-  function removeStop(
-    index
-  ) {
-
-    const nextStops =
-      normalizedStops.filter(
-        (
-          _,
-          currentIndex
-        ) =>
-          currentIndex !==
-          index
-      );
-
-
-    updateStops(
-      nextStops
-    );
-  }
-
-
-  /* =========================================================
-     MOVE STOP
-  ========================================================= */
-
-  function moveStop(
-    index,
-    direction
-  ) {
-
-    const targetIndex =
-      index +
-      direction;
-
-
-    if (
-      targetIndex < 0 ||
-      targetIndex >=
-      normalizedStops.length
-    ) {
-
-      return;
-    }
-
-
-    const nextStops = [
-      ...normalizedStops,
-    ];
-
-
-    [
-      nextStops[index],
-      nextStops[targetIndex],
-    ] = [
-      nextStops[targetIndex],
-      nextStops[index],
-    ];
-
-
-    updateStops(
-      nextStops
-    );
-  }
-
-
-  /* =========================================================
-     RESTAURANT DETAILS
-  ========================================================= */
-
-  async function openRestaurantDetail(
-    restaurant
-  ) {
-
-    if (!restaurant) {
-      return;
-    }
-
-
-    setSelectedRestaurantDetail(
-      restaurant
-    );
-
-
-    if (!restaurant.id) {
-      return;
-    }
-
-
-    try {
-
-      setRestaurantDetailLoading(
-        true
-      );
-
-
-      const response =
-        await api.get(
-          `/restaurants/${restaurant.id}/`
-        );
-
+      setRouteMeta({
+        duration_minutes:
+          data
+            ?.route_duration_minutes ??
+          data
+            ?.duration_minutes ??
+          data?.route
+            ?.duration_minutes ??
+          null,
+
+        distance_km:
+          data
+            ?.route_distance_km ??
+          data
+            ?.distance_km ??
+          data?.route
+            ?.distance_km ??
+          null,
+      });
 
       if (
-        response?.data
+        normalized.length ===
+        0
       ) {
-
-        setSelectedRestaurantDetail(
-          {
-            ...restaurant,
-            ...response.data,
-          }
+        setError(
+          "The route was found, but no matching food stops were returned. Try All, Restaurants, Cafés, or Balanced."
         );
       }
 
-
     } catch (
       requestError
     ) {
-
       console.error(
-        "Restaurant detail error:",
-        requestError?.response?.data ||
+        "FOOD WALK ERROR:",
+        requestError?.response
+          ?.status,
+        requestError?.response
+          ?.data,
         requestError
       );
 
+      const backend =
+        requestError?.response
+          ?.data;
+
+      setError(
+        (
+          !requestError
+            ?.response &&
+          requestError
+            ?.message
+        )
+          ? requestError.message
+          : backend?.detail ||
+            backend?.error ||
+            backend
+              ?.technical_detail ||
+            "Unable to build your Food Walk."
+      );
 
     } finally {
-
-      setRestaurantDetailLoading(
-        false
-      );
+      setLoading(false);
     }
   }
 
+  const visibleRestaurants =
+    useMemo(() => {
+      return restaurants.filter(
+        (place) => {
+          if (
+            category === "All"
+          ) {
+            return true;
+          }
 
-  function closeRestaurantDetail() {
+          const search = [
+            place.category,
+            ...place.cuisines,
+            place.description,
+          ]
+            .join(" ")
+            .toLowerCase();
 
-    setSelectedRestaurantDetail(
-      null
-    );
+          return search.includes(
+            category.toLowerCase()
+          );
+        }
+      );
+    }, [
+      restaurants,
+      category,
+    ]);
 
-
-    setRestaurantDetailLoading(
-      false
+  function toggleRestaurant(id) {
+    setSelectedIds(
+      (previous) =>
+        previous.includes(id)
+          ? previous.filter(
+              (item) =>
+                item !== id
+            )
+          : [
+              ...previous,
+              id,
+            ]
     );
   }
 
+  function showRestaurant(
+    place
+  ) {
+    setActiveRestaurantId(
+      place.id
+    );
 
-  /* =========================================================
-     ROUTE READY
-  ========================================================= */
+    cardRefs.current[
+      place.id
+    ]?.scrollIntoView({
+      behavior: "smooth",
+      block: "center",
+    });
+  }
 
-  const routeReady =
-    normalizedStops.length >=
-    MIN_STOPS;
+  function buildMyFoodRoute() {
+    const desiredStops =
+      exploration === "quick"
+        ? 2
+        : exploration ===
+          "explorer"
+        ? 5
+        : 3;
 
+    const best =
+      [...visibleRestaurants]
+        .sort(
+          (a, b) =>
+            b.rating -
+              a.rating ||
+            a.detour_minutes -
+              b.detour_minutes
+        )
+        .slice(
+          0,
+          desiredStops
+        );
 
-  /* =========================================================
-     RENDER
-  ========================================================= */
+    setSelectedIds(
+      best.map(
+        (place) =>
+          place.id
+      )
+    );
+  }
+
+  const selectedRestaurants =
+    visibleRestaurants.filter(
+      (place) =>
+        selectedIds.includes(
+          place.id
+        )
+    );
+
+  async function createFoodWalkInvite() {
+    setSaving(true);
+    setError("");
+
+    try {
+      if (
+        selectedRestaurants
+          .length < 1
+      ) {
+        throw new Error(
+          "Please select at least one food stop."
+        );
+      }
+
+      if (
+        !eventForm.title.trim()
+      ) {
+        throw new Error(
+          "Please enter a Food Walk title."
+        );
+      }
+
+      if (
+        !eventForm.start_at
+      ) {
+        throw new Error(
+          "Please select the Food Walk date and time."
+        );
+      }
+
+      if (
+        eventForm.recipients
+          .length < 1
+      ) {
+        throw new Error(
+          "Please invite at least one person."
+        );
+      }
+
+      await api.post(
+        INVITES_ENDPOINT,
+        {
+          invite_type:
+            "food_walk",
+
+          title:
+            eventForm.title.trim(),
+
+          description:
+            `Food Walk from ${start.label} to ${destination.label}`,
+
+          start_at:
+            new Date(
+              eventForm.start_at
+            ).toISOString(),
+
+          location_label:
+            `${start.label} → ${destination.label}`,
+
+          max_participants:
+            Number(
+              eventForm.max_participants
+            ),
+
+          verified_only:
+            eventForm.verified_only,
+
+          women_only:
+            eventForm.women_only,
+
+          recipient_user_ids:
+            eventForm.recipients
+              .map(Number)
+              .filter(Boolean),
+
+          food_walk_stops:
+            selectedRestaurants.map(
+              (place, index) => ({
+                order:
+                  index + 1,
+                place_id:
+                  place.id,
+                name:
+                  place.name,
+                latitude:
+                  place.latitude,
+                longitude:
+                  place.longitude,
+                address:
+                  place.address,
+                detour_minutes:
+                  place.detour_minutes,
+              })
+            ),
+
+          travel_mode:
+            travelMode,
+
+          route_start:
+            start,
+
+          route_destination:
+            destination,
+
+          route_waypoints:
+            waypoints,
+        }
+      );
+
+      navigate(
+        "/food-invites",
+        {
+          replace: true,
+        }
+      );
+    } catch (requestError) {
+      if (
+        !requestError?.response &&
+        requestError?.message
+      ) {
+        setError(
+          requestError.message
+        );
+      } else {
+        setError(
+          requestError?.response
+            ?.data?.detail ||
+          requestError?.response
+            ?.data?.error ||
+          "Unable to create Food Walk invite."
+        );
+      }
+    } finally {
+      setSaving(false);
+    }
+  }
 
   return (
+    <main className="fw-page">
+      <section className="fw-hero">
+        <span className="fw-eyebrow">
+          🚶 FOODKINDL FOOD WALK
+        </span>
 
-    <section className="food-walk-experience">
+        <h1>
+          Find food worth stopping for.
+        </h1>
 
-      <div className="food-walk-workspace">
+        <p>
+          Plan a short walk, city exploration
+          or longer journey and discover food
+          along your actual route.
+        </p>
+      </section>
 
+      <section className="fw-planner">
+        <div className="fw-route-inputs">
+          <div className="fw-location-row">
+            <span className="fw-dot start" />
 
-        {/* =====================================================
-            LEFT SIDE
-        ====================================================== */}
+            <LocationInput
+              value={start.label}
+              onChange={(label) =>
+                setStart(
+                  (previous) => ({
+                    ...previous,
+                    label,
+                    latitude:
+                      null,
+                    longitude:
+                      null,
+                  })
+                )
+              }
+              onSelect={(place) =>
+                setStart({
+                  ...place,
+                  label:
+                    place.label,
+                })
+              }
+              placeholder="Starting point"
+            />
+          </div>
 
-        <div className="food-walk-workspace-left">
+          {waypoints.map(
+            (
+              waypoint,
+              index
+            ) => (
+              <div
+                className="fw-location-row"
+                key={index}
+              >
+                <span className="fw-dot stop" />
 
-
-          {/* ===================================================
-              HERO
-          ==================================================== */}
-
-          <div className="food-walk-hero">
-
-            <div>
-
-              <div className="food-walk-eyebrow">
-
-                <Footprints
-                  size={15}
+                <LocationInput
+                  value={
+                    waypoint.label
+                  }
+                  onChange={(label) =>
+                    updateWaypoint(
+                      index,
+                      {
+                        label,
+                        latitude:
+                          null,
+                        longitude:
+                          null,
+                      }
+                    )
+                  }
+                  onSelect={(place) =>
+                    updateWaypoint(
+                      index,
+                      place
+                    )
+                  }
+                  placeholder={`Stop ${
+                    index + 1
+                  }`}
                 />
 
-                FOODKINDL FOOD WALK
-
+                <button
+                  type="button"
+                  className="fw-remove"
+                  onClick={() =>
+                    removeWaypoint(
+                      index
+                    )
+                  }
+                >
+                  ×
+                </button>
               </div>
+            )
+          )}
 
+          <button
+            type="button"
+            className="fw-add-stop"
+            onClick={addWaypoint}
+          >
+            + Add stop
+          </button>
 
-              <h2>
+          <div className="fw-location-row">
+            <span className="fw-dot destination" />
 
-                Build a food journey,
+            <LocationInput
+              value={
+                destination.label
+              }
+              onChange={(label) =>
+                setDestination(
+                  (previous) => ({
+                    ...previous,
+                    label,
+                    latitude:
+                      null,
+                    longitude:
+                      null,
+                  })
+                )
+              }
+              onSelect={(place) =>
+                setDestination({
+                  ...place,
+                  label:
+                    place.label,
+                })
+              }
+              placeholder="Destination"
+            />
+          </div>
+        </div>
 
+        <div className="fw-mode-row">
+          {TRAVEL_MODES.map(
+            (mode) => (
+              <button
+                type="button"
+                key={
+                  mode.value
+                }
+                className={
+                  travelMode ===
+                  mode.value
+                    ? "active"
+                    : ""
+                }
+                onClick={() =>
+                  setTravelMode(
+                    mode.value
+                  )
+                }
+              >
                 <span>
-                  {" "}
-                  one stop at a time.
+                  {mode.icon}
                 </span>
 
-              </h2>
+                {mode.label}
+              </button>
+            )
+          )}
+        </div>
 
+        <div className="fw-exploration">
+          <span>
+            How adventurous?
+          </span>
 
-              <p>
+          <div>
+            {[
+              [
+                "quick",
+                "Quick",
+              ],
+              [
+                "balanced",
+                "Balanced",
+              ],
+              [
+                "explorer",
+                "Food Explorer",
+              ],
+            ].map(
+              ([
+                value,
+                label,
+              ]) => (
+                <button
+                  type="button"
+                  key={value}
+                  className={
+                    exploration ===
+                    value
+                      ? "active"
+                      : ""
+                  }
+                  onClick={() =>
+                    setExploration(
+                      value
+                    )
+                  }
+                >
+                  {label}
+                </button>
+              )
+            )}
+          </div>
+        </div>
 
-                Choose your starting point and destination.
-                Discover restaurants and cafes along your
-                route, then add your favourite stops.
+        <div className="fw-category-scroll">
+          {CATEGORIES.map(
+            (item) => (
+              <button
+                type="button"
+                key={item}
+                className={
+                  category === item
+                    ? "active"
+                    : ""
+                }
+                onClick={() =>
+                  setCategory(item)
+                }
+              >
+                {item}
+              </button>
+            )
+          )}
+        </div>
 
-              </p>
+        <div className="fw-filter-actions">
+          <button
+            type="button"
+            className="fw-secondary"
+            onClick={() =>
+              navigate(
+                "/food-invites"
+              )
+            }
+          >
+            ← Food Invites
+          </button>
 
-            </div>
+          <button
+            type="button"
+            className="fw-primary"
+            onClick={findFood}
+            disabled={loading}
+          >
+            {loading
+              ? "Finding food..."
+              : "Find Food Along My Route"}
+          </button>
+        </div>
+      </section>
 
+      {error && (
+        <div className="fw-alert">
+          {error}
+        </div>
+      )}
 
-            <div className="food-walk-hero-status">
-
+      {(route.length > 0 ||
+        visibleRestaurants
+          .length > 0) && (
+        <>
+          <section className="fw-summary">
+            <div>
               <strong>
                 {
-                  normalizedStops.length
+                  visibleRestaurants
+                    .length
                 }
               </strong>
 
               <span>
-                of {MAX_STOPS} stops
+                food stops found
               </span>
-
             </div>
 
-          </div>
+            <div>
+              <strong>
+                {routeMeta
+                  ?.duration_minutes
+                  ? `${Math.round(
+                      routeMeta.duration_minutes
+                    )} min`
+                  : "—"}
+              </strong>
 
-
-          {/* ===================================================
-              ROUTE SEARCH
-          ==================================================== */}
-
-          <div className="food-walk-search-card">
-
-
-            {/* START */}
-
-            <div className="food-walk-search-point">
-
-              <div className="food-walk-point-icon">
-
-                <MapPin
-                  size={17}
-                />
-
-              </div>
-
-
-              <label>
-
-                <span>
-                  Start
-                </span>
-
-
-                <LocationAutocomplete
-
-                  value={
-                    locationLabel
-                  }
-
-                  placeholder={
-                    "Search starting point"
-                  }
-
-                  onChange={
-                    handleStartChange
-                  }
-
-                  onSelect={
-                    handleStartSelect
-                  }
-
-                />
-
-              </label>
-
+              <span>
+                base journey
+              </span>
             </div>
 
+            <div>
+              <strong>
+                {routeMeta
+                  ?.distance_km
+                  ? `${Number(
+                      routeMeta.distance_km
+                    ).toFixed(
+                      1
+                    )} km`
+                  : "—"}
+              </strong>
 
-            {/* CONNECTOR */}
-
-            <div className="food-walk-search-line">
-
-              <span />
-
-              <Footprints
-                size={17}
-              />
-
-              <span />
-
+              <span>
+                route distance
+              </span>
             </div>
+          </section>
 
-
-            {/* DESTINATION */}
-
-            <div className="food-walk-search-point">
-
-              <div className="food-walk-point-icon destination">
-
-                <MapPin
-                  size={17}
-                />
-
-              </div>
-
-
-              <label>
-
-                <span>
-                  Destination
-                </span>
-
-
-                <LocationAutocomplete
-
-                  value={
-                    destination
-                  }
-
-                  placeholder={
-                    "Search destination"
-                  }
-
-                  onChange={
-                    handleDestinationChange
-                  }
-
-                  onSelect={
-                    handleDestinationSelect
-                  }
-
-                />
-
-              </label>
-
-            </div>
-
-
-            {/* CUISINE */}
-
-            <div className="food-walk-food-filter">
-
-              <Search
-                size={16}
-              />
-
-
-              <input
-
-                type="text"
-
-                value={
-                  cuisine
+          <section className="fw-results-layout">
+            <div className="fw-map-panel">
+              <MapContainer
+                center={
+                  DEFAULT_CENTER
                 }
-
-                onChange={
-                  event =>
-                    onCuisineChange?.(
-                      event.target.value
-                    )
-                }
-
-                placeholder={
-                  "Kerala, cafe, dessert..."
-                }
-
-              />
-
-            </div>
-
-          </div>
-
-
-          {/* ===================================================
-              SELECTED LOCATION INFO
-          ==================================================== */}
-
-          {
-            (
-              selectedStart ||
-              selectedDestination
-            ) &&
-            (
-
-              <div className="food-walk-route-strip">
-
-                <div>
-
-                  <MapPin
-                    size={14}
-                  />
-
-
-                  <strong>
-
-                    {
-                      selectedStart
-                        ?.name ||
-                      locationLabel
-                    }
-
-                  </strong>
-
-
-                  <span className="food-walk-route-arrow">
-                    →
-                  </span>
-
-
-                  <strong>
-
-                    {
-                      selectedDestination
-                        ?.name ||
-                      destination
-                    }
-
-                  </strong>
-
-                </div>
-
-
-                <div className="food-walk-route-meta">
-
-                  {
-                    selectedStart?.city &&
-                    (
-
-                      <span>
-                        {
-                          selectedStart.city
-                        }
-                      </span>
-
-                    )
-                  }
-
-
-                  {
-                    selectedDestination?.city &&
-                    (
-
-                      <span>
-                        {
-                          selectedDestination.city
-                        }
-                      </span>
-
-                    )
-                  }
-
-                </div>
-
-              </div>
-
-            )
-          }
-
-
-          {/* ===================================================
-              ROUTE SUMMARY
-          ==================================================== */}
-
-          {
-            routeInfo &&
-            (
-
-              <div className="food-walk-route-strip">
-
-                <div>
-
-                  <MapPin
-                    size={14}
-                  />
-
-
-                  <strong>
-                    {
-                      locationLabel
-                    }
-                  </strong>
-
-
-                  <span className="food-walk-route-arrow">
-                    →
-                  </span>
-
-
-                  <strong>
-                    {
-                      destination
-                    }
-                  </strong>
-
-                </div>
-
-
-                <div className="food-walk-route-meta">
-
-                  {
-                    routeInfo.routeDistance !==
-                      null &&
-                    (
-
-                      <span>
-
-                        {
-                          routeInfo.routeDistance
-                        } km
-
-                      </span>
-
-                    )
-                  }
-
-
-                  <span>
-                    {
-                      estimatedDuration
-                    }
-                  </span>
-
-
-                  {
-                    routeInfo.routeType &&
-                    (
-
-                      <span className="highlight">
-
-                        {
-                          routeInfo.routeType ===
-                          "food_trail"
-                            ? "Food Trail"
-                            : "Food Walk"
-                        }
-
-                      </span>
-
-                    )
-                  }
-
-                </div>
-
-              </div>
-
-            )
-          }
-
-
-          {/* ===================================================
-              JOURNEY
-          ==================================================== */}
-
-          <div className="food-walk-main-layout">
-
-            <div className="food-walk-journey">
-
-              <div className="food-walk-section-header">
-
-                <div>
-
-                  <span>
-                    YOUR JOURNEY
-                  </span>
-
-                  <h3>
-                    Build your route
-                  </h3>
-
-                </div>
-
-
-                <small>
-
-                  {
-                    routeReady
-                      ? "Ready"
-                      :
-                      `Add ${Math.max(
-                        MIN_STOPS -
-                        normalizedStops.length,
-                        0
-                      )} more`
-                  }
-
-                </small>
-
-              </div>
-
-
-              {/* START */}
-
-              <div className="food-walk-timeline-point">
-
-                <div className="food-walk-timeline-dot" />
-
-
-                <div>
-
-                  <span>
-                    START
-                  </span>
-
-
-                  <strong>
-
-                    {
-                      selectedStart
-                        ?.display_name ||
-                      locationLabel ||
-                      "Choose starting point"
-                    }
-
-                  </strong>
-
-                </div>
-
-              </div>
-
-
-              {/* =================================================
-                  STOPS
-              ================================================== */}
-
-              <div className="food-walk-timeline">
-
-                {
-                  normalizedStops.length ===
-                  0
-                    ? (
-
-                      <div className="food-walk-empty">
-
-                        <Utensils
-                          size={27}
-                        />
-
-                        <strong>
-                          No food stops yet
-                        </strong>
-
-                        <span>
-                          Add a restaurant or cafe
-                          from the recommendations.
-                        </span>
-
-                      </div>
-
-                    )
-                    : (
-
-                      normalizedStops.map(
-                        (
-                          stop,
-                          index
-                        ) => (
-
-                          <div
-                            className="food-walk-timeline-stop"
-                            key={
-                              `${stop.id}-${index}`
-                            }
-                          >
-
-                            <div className="food-walk-timeline-marker">
-
-                              <span>
-                                {
-                                  index + 1
-                                }
-                              </span>
-
-                            </div>
-
-
-                            <div className="food-walk-stop-card">
-
-                              {
-                                stop.image_url
-                                  ? (
-
-                                    <img
-                                      src={
-                                        stop.image_url
-                                      }
-                                      alt={
-                                        stop.name
-                                      }
-                                    />
-
-                                  )
-                                  : (
-
-                                    <div className="food-walk-stop-placeholder">
-
-                                      <Utensils
-                                        size={21}
-                                      />
-
-                                    </div>
-
-                                  )
-                              }
-
-
-                              <div className="food-walk-stop-info">
-
-                                <div className="food-walk-stop-title">
-
-                                  <strong>
-                                    {
-                                      stop.name
-                                    }
-                                  </strong>
-
-
-                                  {
-                                    stop.is_foodkindl_partner &&
-                                    (
-
-                                      <span className="food-walk-partner">
-
-                                        <Check
-                                          size={10}
-                                        />
-
-                                        Partner
-
-                                      </span>
-
-                                    )
-                                  }
-
-                                </div>
-
-
-                                <span>
-
-                                  {
-                                    [
-                                      stop.cuisine,
-                                      stop.locality,
-                                      stop.city,
-                                    ]
-                                      .filter(Boolean)
-                                      .join(" • ")
-                                    ||
-                                    "Food stop"
-                                  }
-
-                                </span>
-
-
-                                {
-                                  stop.rating !==
-                                    null &&
-                                  (
-
-                                    <small>
-
-                                      <Star
-                                        size={11}
-                                        fill="currentColor"
-                                      />
-
-                                      {
-                                        stop.rating
-                                      }
-
-                                    </small>
-
-                                  )
-                                }
-
-
-                                {
-                                  stop.distance_from_route_km !==
-                                    null &&
-                                  (
-
-                                    <small>
-
-                                      <MapPin
-                                        size={11}
-                                      />
-
-                                      {
-                                        stop.distance_from_route_km
-                                      } km from route
-
-                                    </small>
-
-                                  )
-                                }
-
-                              </div>
-
-
-                              <div className="food-walk-stop-controls">
-
-                                <button
-                                  type="button"
-                                  onClick={() =>
-                                    moveStop(
-                                      index,
-                                      -1
-                                    )
-                                  }
-                                  disabled={
-                                    index === 0
-                                  }
-                                >
-
-                                  <ArrowUp
-                                    size={13}
-                                  />
-
-                                </button>
-
-
-                                <button
-                                  type="button"
-                                  onClick={() =>
-                                    moveStop(
-                                      index,
-                                      1
-                                    )
-                                  }
-                                  disabled={
-                                    index ===
-                                    normalizedStops.length - 1
-                                  }
-                                >
-
-                                  <ArrowDown
-                                    size={13}
-                                  />
-
-                                </button>
-
-
-                                <button
-                                  type="button"
-                                  className="remove"
-                                  onClick={() =>
-                                    removeStop(
-                                      index
-                                    )
-                                  }
-                                >
-
-                                  <Minus
-                                    size={13}
-                                  />
-
-                                </button>
-
-                              </div>
-
-                            </div>
-
-                          </div>
-
-                        )
-                      )
-
-                    )
-                }
-
-              </div>
-
-
-              {/* DESTINATION */}
-
-              <div className="food-walk-timeline-point destination">
-
-                <div className="food-walk-timeline-dot destination" />
-
-
-                <div>
-
-                  <span>
-                    DESTINATION
-                  </span>
-
-
-                  <strong>
-
-                    {
-                      selectedDestination
-                        ?.display_name ||
-                      destination ||
-                      "Choose destination"
-                    }
-
-                  </strong>
-
-                </div>
-
-              </div>
-
-
-              {/* =================================================
-                  MANUAL STOP
-              ================================================== */}
-
-              <div className="food-walk-custom-stop">
-
-                <Plus
-                  size={16}
-                />
-
-
-                <input
-
-                  type="text"
-
-                  value={
-                    manualStop
-                  }
-
-                  onChange={
-                    event =>
-                      setManualStop(
-                        event.target.value
-                      )
-                  }
-
-                  onKeyDown={
-                    event => {
-
-                      if (
-                        event.key ===
-                        "Enter"
-                      ) {
-
-                        event.preventDefault();
-
-                        addManualStop();
-                      }
-
-                    }
-                  }
-
-                  placeholder={
-                    "Add a place manually"
-                  }
-
-                  disabled={
-                    normalizedStops.length >=
-                    MAX_STOPS
-                  }
-
-                />
-
-
-                <button
-
-                  type="button"
-
-                  onClick={
-                    addManualStop
-                  }
-
-                  disabled={
-                    normalizedStops.length >=
-                      MAX_STOPS
-                    ||
-                    !manualStop.trim()
-                  }
-
-                >
-
-                  Add
-
-                </button>
-
-              </div>
-
-
-              {/* READY */}
-
-              <div
-                className={
-                  routeReady
-                    ? "food-walk-ready ready"
-                    : "food-walk-ready"
-                }
+                zoom={11}
+                scrollWheelZoom
+                className="fw-map"
               >
+                <TileLayer
+                  attribution="&copy; OpenStreetMap contributors"
+                  url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                />
 
-                {
-                  routeReady
-                    ? (
+                {route.length > 1 && (
+                  <Polyline
+                    positions={route}
+                    pathOptions={{
+                      weight: 5,
+                    }}
+                  />
+                )}
 
-                      <>
-
-                        <Check
-                          size={16}
-                        />
-
-                        Your Food Walk is ready
-
-                      </>
-
-                    )
-                    : (
-
-                      <>
-
-                        <Footprints
-                          size={16}
-                        />
-
-                        Add at least{" "}
-                        {
-                          MIN_STOPS
-                        } stops
-
-                      </>
-
-                    )
-                }
-
-              </div>
-
-            </div>
-
-          </div>
-
-        </div>
-
-
-        {/* =====================================================
-            RIGHT MAP
-        ====================================================== */}
-
-        <aside className="food-walk-workspace-map">
-
-          <div className="food-walk-map-panel-label">
-
-            <span>
-              LIVE ROUTE
-            </span>
-
-            <strong>
-              Navigation preview
-            </strong>
-
-          </div>
-
-
-          <div className="food-walk-map-section">
-
-            <div className="food-walk-map-heading">
-
-              <MapPin
-                size={16}
-              />
-
-
-              <div>
-
-                <strong>
-                  Route preview
-                </strong>
-
-
-                <span>
-
-                  {
-                    locationLabel &&
-                    destination
-                      ? (
-                        `${locationLabel} → ${destination}`
-                      )
-                      : (
-                        "Enter a start and destination."
-                      )
-                  }
-
-                </span>
-
-              </div>
-
-            </div>
-
-
-            <FoodWalkMap
-
-              start={
-                routeInfo?.start ||
-                (
-                  selectedStart
-                    ? {
-                        name:
-                          selectedStart.name,
-
-                        latitude:
-                          selectedStart.latitude,
-
-                        longitude:
-                          selectedStart.longitude,
-                      }
-                    : null
-                )
-              }
-
-              destination={
-                routeInfo?.destination ||
-                (
-                  selectedDestination
-                    ? {
-                        name:
-                          selectedDestination.name,
-
-                        latitude:
-                          selectedDestination.latitude,
-
-                        longitude:
-                          selectedDestination.longitude,
-                      }
-                    : null
-                )
-              }
-
-              restaurants={
-                recommendations
-              }
-
-              selectedStops={
-                normalizedStops
-              }
-
-              startLabel={
-                locationLabel
-              }
-
-              destinationLabel={
-                destination
-              }
-
-              navigationEnabled={
-                routeReady
-              }
-
-            />
-
-          </div>
-
-
-          {/* ===================================================
-              PLACES WORTH A STOP
-          ==================================================== */}
-
-          <div className="food-walk-map-recommendations">
-
-            <aside className="food-walk-discover">
-
-              <div className="food-walk-section-header">
-
-                <div>
-
-                  <span>
-                    ALONG YOUR ROUTE
-                  </span>
-
-                  <h3>
-                    Places worth a stop
-                  </h3>
-
-                </div>
-
-
-                {
-                  routeInfo &&
+                {visibleRestaurants.map(
                   (
-
-                    <small>
-
-                      {
-                        routeInfo.restaurantCount
-                      } found
-
-                    </small>
-
-                  )
-                }
-
-              </div>
-
-
-              {/* ERROR */}
-
-              {
-                error &&
-                (
-
-                  <div className="food-walk-error">
-
-                    {
-                      error
+                    place,
+                    index
+                  ) => {
+                    if (
+                      !Number.isFinite(
+                        place.latitude
+                      ) ||
+                      !Number.isFinite(
+                        place.longitude
+                      )
+                    ) {
+                      return null;
                     }
 
-                  </div>
+                    const selected =
+                      selectedIds.includes(
+                        place.id
+                      );
 
-                )
-              }
-
-
-              {/* EMPTY */}
-
-              {
-                (
-                  !locationLabel.trim() ||
-                  !destination.trim()
-                )
-                  ? (
-
-                    <div className="food-walk-discover-empty">
-
-                      <MapPin
-                        size={26}
-                      />
-
-                      <strong>
-                        Tell us your route
-                      </strong>
-
-                      <span>
-                        Enter a starting point
-                        and destination.
-                      </span>
-
-                    </div>
-
-                  )
-
-                  : loading
-                    ? (
-
-                      <div className="food-walk-discover-empty">
-
-                        <Footprints
-                          size={25}
-                        />
-
-                        <strong>
-                          Finding nearby places...
-                        </strong>
-
-                      </div>
-
-                    )
-
-                    : recommendations.length ===
-                      0
-                      ? (
-
-                        <div className="food-walk-discover-empty">
-
-                          <Utensils
-                            size={26}
-                          />
-
+                    return (
+                      <Marker
+                        key={
+                          place.id
+                        }
+                        position={[
+                          place.latitude,
+                          place.longitude,
+                        ]}
+                        icon={NumberedMarkerIcon(
+                          index +
+                            1,
+                          selected
+                        )}
+                        eventHandlers={{
+                          click:
+                            () =>
+                              showRestaurant(
+                                place
+                              ),
+                        }}
+                      >
+                        <Popup>
                           <strong>
-                            No places found
+                            {
+                              place.name
+                            }
                           </strong>
 
-                          <span>
-                            Try another route
-                            or cuisine.
-                          </span>
+                          <br />
 
-                        </div>
-
-                      )
-
-                      : (
-
-                        <div className="food-walk-discover-list">
-
+                          ⭐{" "}
+                          {place.rating ||
+                            "—"}{" "}
+                          · +
                           {
-                            recommendations.map(
-                              restaurant => {
-
-                                const selected =
-                                  selectedRestaurantIds.has(
-                                    Number(
-                                      restaurant.id
-                                    )
-                                  );
-
-
-                                const imageUrl =
-                                  restaurant.image_url ||
-                                  "";
-
-
-                                return (
-
-                                  <article
-
-                                    key={
-                                      restaurant.id
-                                    }
-
-                                    className={
-                                      selected
-                                        ? "food-walk-place selected"
-                                        : "food-walk-place"
-                                    }
-
-                                    role="button"
-
-                                    tabIndex={0}
-
-                                    onClick={() =>
-                                      openRestaurantDetail(
-                                        restaurant
-                                      )
-                                    }
-
-                                    onKeyDown={
-                                      event => {
-
-                                        if (
-                                          event.key ===
-                                            "Enter" ||
-                                          event.key ===
-                                            " "
-                                        ) {
-
-                                          event.preventDefault();
-
-                                          openRestaurantDetail(
-                                            restaurant
-                                          );
-                                        }
-
-                                      }
-                                    }
-
-                                  >
-
-
-                                    {/* IMAGE */}
-
-                                    <div className="food-walk-place-image">
-
-                                      {
-                                        imageUrl
-                                          ? (
-
-                                            <img
-                                              src={
-                                                imageUrl
-                                              }
-                                              alt={
-                                                restaurant.name
-                                              }
-                                            />
-
-                                          )
-                                          : (
-
-                                            <Utensils
-                                              size={25}
-                                            />
-
-                                          )
-                                      }
-
-
-                                      {
-                                        restaurant.is_foodkindl_partner &&
-                                        (
-
-                                          <span className="food-walk-place-partner">
-
-                                            <Check
-                                              size={10}
-                                            />
-
-                                            FoodKindl
-
-                                          </span>
-
-                                        )
-                                      }
-
-                                    </div>
-
-
-                                    {/* INFO */}
-
-                                    <div className="food-walk-place-content">
-
-                                      <div>
-
-                                        <strong>
-                                          {
-                                            restaurant.name
-                                          }
-                                        </strong>
-
-
-                                        <span>
-
-                                          {
-                                            [
-                                              restaurant.cuisine,
-                                              restaurant.locality,
-                                              restaurant.city,
-                                            ]
-                                              .filter(Boolean)
-                                              .join(" • ")
-                                            ||
-                                            "FoodKindl place"
-                                          }
-
-                                        </span>
-
-                                      </div>
-
-
-                                      <div className="food-walk-place-meta">
-
-                                        {
-                                          restaurant.rating !==
-                                            null &&
-                                          restaurant.rating !==
-                                            undefined &&
-                                          (
-
-                                            <span>
-
-                                              <Star
-                                                size={11}
-                                                fill="currentColor"
-                                              />
-
-                                              {
-                                                restaurant.rating
-                                              }
-
-                                            </span>
-
-                                          )
-                                        }
-
-
-                                        {
-                                          restaurant.distance_from_route_km !==
-                                            null &&
-                                          restaurant.distance_from_route_km !==
-                                            undefined &&
-                                          (
-
-                                            <span>
-
-                                              <MapPin
-                                                size={11}
-                                              />
-
-                                              {
-                                                restaurant.distance_from_route_km
-                                              } km
-
-                                            </span>
-
-                                          )
-                                        }
-
-                                      </div>
-
-
-                                      <div className="food-walk-place-actions">
-
-                                        <button
-
-                                          type="button"
-
-                                          className="food-walk-place-view"
-
-                                          onClick={
-                                            event => {
-
-                                              event.stopPropagation();
-
-                                              openRestaurantDetail(
-                                                restaurant
-                                              );
-                                            }
-                                          }
-
-                                        >
-
-                                          View details
-
-                                        </button>
-
-
-                                        <button
-
-                                          type="button"
-
-                                          className={
-                                            selected
-                                              ? "food-walk-place-add selected"
-                                              : "food-walk-place-add"
-                                          }
-
-                                          disabled={
-                                            selected ||
-                                            normalizedStops.length >=
-                                            MAX_STOPS
-                                          }
-
-                                          onClick={
-                                            event => {
-
-                                              event.stopPropagation();
-
-                                              addRestaurant(
-                                                restaurant
-                                              );
-                                            }
-                                          }
-
-                                        >
-
-                                          {
-                                            selected
-                                              ? (
-
-                                                <>
-
-                                                  <Check
-                                                    size={14}
-                                                  />
-
-                                                  Added
-
-                                                </>
-
-                                              )
-                                              : (
-
-                                                <>
-
-                                                  <Plus
-                                                    size={14}
-                                                  />
-
-                                                  Add to Walk
-
-                                                </>
-
-                                              )
-                                          }
-
-                                        </button>
-
-                                      </div>
-
-                                    </div>
-
-                                  </article>
-
-                                );
-                              }
-                            )
-                          }
-
-                        </div>
-
-                      )
-              }
-
-
-              {/* =================================================
-                  CUSTOMER PLACE SUBMISSION — CURRENTLY DISABLED
-
-                  The "Suggest place" feature was previously rendered
-                  here. It is intentionally hidden from Food Walk for
-                  now because restaurant/place submission is handled
-                  elsewhere in FoodKindl.
-
-                  IMPORTANT:
-                  Only the feature UI is disabled. The structural
-                  closing tags below must remain active because they
-                  close:
-                  1. food-walk-discover
-                  2. food-walk-map-recommendations
-                  3. food-walk-workspace-map
-                  4. food-walk-workspace
-              ================================================== */}
-
-            </aside>
-
-          </div>
-
-        </aside>
-
-      </div>
-
-
-      {/* =====================================================
-          RESTAURANT DETAIL MODAL
-      ====================================================== */}
-
-      {
-        selectedRestaurantDetail &&
-        (
-
-          <div
-            className="food-walk-restaurant-modal-backdrop"
-            onClick={
-              closeRestaurantDetail
-            }
-          >
-
-            <div
-              className="food-walk-restaurant-modal"
-              onClick={
-                event =>
-                  event.stopPropagation()
-              }
-            >
-
-              <button
-                type="button"
-                className="food-walk-restaurant-modal-close"
-                onClick={
-                  closeRestaurantDetail
-                }
-                aria-label={
-                  "Close restaurant details"
-                }
-              >
-
-                <X
-                  size={18}
+                            place.detour_minutes
+                          }{" "}
+                          min
+                        </Popup>
+                      </Marker>
+                    );
+                  }
+                )}
+
+                <MapAutoFit
+                  route={route}
+                  restaurants={
+                    visibleRestaurants
+                  }
                 />
-
-              </button>
-
-
-              {/* MEDIA */}
-
-              <div className="food-walk-restaurant-modal-media">
-
-                {
-                  (
-                    selectedRestaurantDetail.image_url ||
-                    selectedRestaurantDetail.images?.[0]?.image_url
-                  )
-                    ? (
-
-                      <img
-                        src={
-                          selectedRestaurantDetail.image_url ||
-                          selectedRestaurantDetail.images?.[0]?.image_url
-                        }
-                        alt={
-                          selectedRestaurantDetail.name ||
-                          "Restaurant"
-                        }
-                      />
-
-                    )
-                    : (
-
-                      <div className="food-walk-restaurant-modal-placeholder">
-
-                        <Utensils
-                          size={42}
-                        />
-
-                      </div>
-
-                    )
-                }
-
-
-                {
-                  selectedRestaurantDetail.is_foodkindl_partner &&
-                  (
-
-                    <span className="food-walk-restaurant-modal-partner">
-
-                      <Check
-                        size={12}
-                      />
-
-                      FoodKindl Partner
-
-                    </span>
-
-                  )
-                }
-
-              </div>
-
-
-              {/* CONTENT */}
-
-              <div className="food-walk-restaurant-modal-content">
-
-                {
-                  restaurantDetailLoading &&
-                  (
-
-                    <span className="food-walk-restaurant-loading">
-
-                      Loading latest details...
-
-                    </span>
-
-                  )
-                }
-
-
-                <div className="food-walk-restaurant-modal-head">
-
-                  <div>
-
-                    <span>
-                      FOOD STOP
-                    </span>
-
-
-                    <h3>
-
-                      {
-                        selectedRestaurantDetail.name ||
-                        "Restaurant"
-                      }
-
-                    </h3>
-
-
-                    <p>
-
-                      {
-                        [
-                          selectedRestaurantDetail.cuisine,
-                          selectedRestaurantDetail.locality,
-                          selectedRestaurantDetail.city,
-                        ]
-                          .filter(Boolean)
-                          .join(" • ")
-                        ||
-                        "FoodKindl place"
-                      }
-
-                    </p>
-
-                  </div>
-
-
-                  <div className="food-walk-restaurant-modal-rating">
-
-                    {
-                      selectedRestaurantDetail.rating !==
-                        null &&
-                      selectedRestaurantDetail.rating !==
-                        undefined &&
-                      (
-
-                        <span>
-
-                          <Star
-                            size={14}
-                            fill="currentColor"
-                          />
-
-                          {
-                            selectedRestaurantDetail.rating
-                          }
-
-                        </span>
-
-                      )
-                    }
-
-
-                    {
-                      selectedRestaurantDetail.distance_from_route_km !==
-                        null &&
-                      selectedRestaurantDetail.distance_from_route_km !==
-                        undefined &&
-                      (
-
-                        <span>
-
-                          <MapPin
-                            size={14}
-                          />
-
-                          {
-                            selectedRestaurantDetail.distance_from_route_km
-                          } km
-
-                        </span>
-
-                      )
-                    }
-
-                  </div>
-
-                </div>
-
-
-                {
-                  selectedRestaurantDetail.description &&
-                  (
-
-                    <p className="food-walk-restaurant-description">
-
-                      {
-                        selectedRestaurantDetail.description
-                      }
-
-                    </p>
-
-                  )
-                }
-
-
-                {/* INFO GRID */}
-
-                <div className="food-walk-restaurant-info-grid">
-
-                  <div>
-
-                    <span>
-                      CUISINE
-                    </span>
-
-                    <strong>
-
-                      {
-                        selectedRestaurantDetail.cuisine ||
-                        "Not specified"
-                      }
-
-                    </strong>
-
-                  </div>
-
-
-                  <div>
-
-                    <span>
-                      LOCATION
-                    </span>
-
-                    <strong>
-
-                      {
-                        [
-                          selectedRestaurantDetail.locality,
-                          selectedRestaurantDetail.city,
-                        ]
-                          .filter(Boolean)
-                          .join(", ")
-                        ||
-                        "Not specified"
-                      }
-
-                    </strong>
-
-                  </div>
-
-
-                  {
-                    (
-                      selectedRestaurantDetail.average_cost_for_two ||
-                      selectedRestaurantDetail.price_range
-                    ) &&
-                    (
-
-                      <div>
-
-                        <span>
-                          COST FOR TWO
-                        </span>
-
-                        <strong>
-
-                          {
-                            selectedRestaurantDetail.average_cost_for_two
-                              ? `₹${selectedRestaurantDetail.average_cost_for_two}`
-                              : selectedRestaurantDetail.price_range
-                          }
-
-                        </strong>
-
-                      </div>
-
-                    )
-                  }
-
-
-                  {
-                    selectedRestaurantDetail.restaurant_type &&
-                    (
-
-                      <div>
-
-                        <span>
-                          TYPE
-                        </span>
-
-                        <strong>
-
-                          {
-                            selectedRestaurantDetail.restaurant_type ===
-                            "cafe"
-                              ? "Cafe"
-                              : "Restaurant"
-                          }
-
-                        </strong>
-
-                      </div>
-
-                    )
-                  }
-
-                </div>
-
-
-                {/* MENU */}
-
-                {
-                  Array.isArray(
-                    selectedRestaurantDetail.menu_items
-                  ) &&
-                  selectedRestaurantDetail.menu_items.length >
-                  0 &&
-                  (
-
-                    <div className="food-walk-restaurant-menu">
-
-                      <span>
-                        POPULAR ITEMS
-                      </span>
-
-
-                      <div>
-
-                        {
-                          selectedRestaurantDetail.menu_items
-
-                            .slice(
-                              0,
-                              4
-                            )
-
-                            .map(
-                              (
-                                item,
-                                index
-                              ) => (
-
-                                <div
-                                  key={
-                                    item.id ||
-                                    `${item.name}-${index}`
-                                  }
-                                >
-
-                                  <strong>
-                                    {
-                                      item.name
-                                    }
-                                  </strong>
-
-
-                                  {
-                                    item.price &&
-                                    (
-
-                                      <span>
-                                        ₹{
-                                          item.price
-                                        }
-                                      </span>
-
-                                    )
-                                  }
-
-                                </div>
-
-                              )
-                            )
-                        }
-
-                      </div>
-
-                    </div>
-
-                  )
-                }
-
-
-                {/* ACTIONS */}
-
-                <div className="food-walk-restaurant-modal-actions">
-
-                  <button
-                    type="button"
-                    className="secondary"
-                    onClick={
-                      closeRestaurantDetail
-                    }
-                  >
-
-                    Close
-
-                  </button>
-
-
-                  <button
-
-                    type="button"
-
-                    className="primary"
-
-                    disabled={
-                      selectedRestaurantIds.has(
-                        Number(
-                          selectedRestaurantDetail.id
-                        )
-                      )
-                      ||
-                      normalizedStops.length >=
-                      MAX_STOPS
-                    }
-
-                    onClick={() => {
-
-                      if (
-                        !selectedRestaurantIds.has(
-                          Number(
-                            selectedRestaurantDetail.id
-                          )
-                        )
-                      ) {
-
-                        addRestaurant(
-                          selectedRestaurantDetail
-                        );
-                      }
-
-
-                      closeRestaurantDetail();
-
-                    }}
-
-                  >
-
-                    {
-                      selectedRestaurantIds.has(
-                        Number(
-                          selectedRestaurantDetail.id
-                        )
-                      )
-                        ? "Already added"
-                        : "Add to Food Walk"
-                    }
-
-                  </button>
-
-                </div>
-
-              </div>
-
+              </MapContainer>
             </div>
 
+            <div className="fw-results-panel">
+              <div className="fw-results-heading">
+                <div>
+                  <span className="fw-eyebrow">
+                    YOUR FOOD OPTIONS
+                  </span>
+
+                  <h2>
+                    Choose your stops
+                  </h2>
+                </div>
+
+                <button
+                  type="button"
+                  className="fw-ai-route"
+                  onClick={
+                    buildMyFoodRoute
+                  }
+                >
+                  ✨ Build My Food Route
+                </button>
+              </div>
+
+              <div className="fw-card-list">
+                {visibleRestaurants.map(
+                  (place) => {
+                    const selected =
+                      selectedIds.includes(
+                        place.id
+                      );
+
+                    const active =
+                      activeRestaurantId ===
+                      place.id;
+
+                    return (
+                      <article
+                        key={
+                          place.id
+                        }
+                        ref={(
+                          node
+                        ) => {
+                          cardRefs.current[
+                            place.id
+                          ] =
+                            node;
+                        }}
+                        className={`fw-place-card ${
+                          active
+                            ? "active"
+                            : ""
+                        }`}
+                      >
+                        <div className="fw-place-image">
+                          {place.image ? (
+                            <img
+                              src={
+                                place.image
+                              }
+                              alt={
+                                place.name
+                              }
+                            />
+                          ) : (
+                            <div className="fw-image-fallback">
+                              🍴
+                            </div>
+                          )}
+                        </div>
+
+                        <div className="fw-place-main">
+                          <div className="fw-place-title-row">
+                            <div>
+                              <h4>
+                                {
+                                  place.name
+                                }
+                              </h4>
+
+                              <div className="fw-place-sub">
+                                <span>
+                                  ⭐{" "}
+                                  {place.rating ||
+                                    "New"}
+                                </span>
+
+                                {place.review_count >
+                                  0 && (
+                                  <span>
+                                    {place.review_count.toLocaleString(
+                                      "en-IN"
+                                    )}{" "}
+                                    reviews
+                                  </span>
+                                )}
+
+                                {place.price_level && (
+                                  <span>
+                                    {
+                                      place.price_level
+                                    }
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+
+                            {place.source ===
+                              "foodkindl" && (
+                              <span className="fw-kindl-badge">
+                                FoodKindl
+                                Place ✓
+                              </span>
+                            )}
+                          </div>
+
+                          <div className="fw-tags">
+                            <span>
+                              {
+                                place.category
+                              }
+                            </span>
+
+                            {place.cuisines
+                              .slice(
+                                0,
+                                3
+                              )
+                              .map(
+                                (
+                                  item
+                                ) => (
+                                  <span
+                                    key={
+                                      item
+                                    }
+                                  >
+                                    {
+                                      item
+                                    }
+                                  </span>
+                                )
+                              )}
+                          </div>
+
+                          {(place.address ||
+                            place.locality ||
+                            place.city) && (
+                            <div className="fw-place-location">
+                              <span>
+                                📍
+                              </span>
+
+                              <span>
+                                {place.address ||
+                                  [
+                                    place.locality,
+                                    place.city,
+                                  ]
+                                    .filter(Boolean)
+                                    .join(", ")}
+                              </span>
+                            </div>
+                          )}
+
+                          {(place.tel ||
+                            place.website) && (
+                            <div className="fw-place-contact">
+                              {place.tel && (
+                                <a
+                                  href={`tel:${place.tel}`}
+                                >
+                                  ☎ {place.tel}
+                                </a>
+                              )}
+
+                              {place.website && (
+                                <a
+                                  href={place.website}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                >
+                                  🌐 Website
+                                </a>
+                              )}
+                            </div>
+                          )}
+
+                          {place.opening_hours && (
+                            <div className="fw-place-hours">
+                              🕒{" "}
+                              {Array.isArray(
+                                place.opening_hours
+                              )
+                                ? place.opening_hours
+                                    .map(
+                                      (item) =>
+                                        typeof item ===
+                                        "string"
+                                          ? item
+                                          : item?.display ||
+                                            item?.day ||
+                                            ""
+                                    )
+                                    .filter(Boolean)
+                                    .join(" · ")
+                                : typeof place.opening_hours ===
+                                  "object"
+                                ? JSON.stringify(
+                                    place.opening_hours
+                                  )
+                                : String(
+                                    place.opening_hours
+                                  )}
+                            </div>
+                          )}
+
+                          <div className="fw-route-meta">
+                            <strong>
+                              +
+                              {Math.round(
+                                place.detour_minutes
+                              )}{" "}
+                              min
+                              detour
+                            </strong>
+
+                            {place.open_now ===
+                              true && (
+                              <span className="fw-open">
+                                Open
+                                now
+                              </span>
+                            )}
+                          </div>
+
+                          {place.description && (
+                            <p className="fw-description">
+                              <strong>
+                                Why
+                                stop
+                                here?
+                              </strong>{" "}
+                              {
+                                place.recommendation_reason ||
+                                place.description
+                              }
+                            </p>
+                          )}
+
+                          <div className="fw-place-actions">
+                            <button
+                              type="button"
+                              className="fw-secondary"
+                              onClick={() =>
+                                showRestaurant(
+                                  place
+                                )
+                              }
+                            >
+                              Show on map
+                            </button>
+
+                            <button
+                              type="button"
+                              className={
+                                selected
+                                  ? "fw-remove-route"
+                                  : "fw-primary"
+                              }
+                              onClick={() =>
+                                toggleRestaurant(
+                                  place.id
+                                )
+                              }
+                            >
+                              {selected
+                                ? "Remove stop"
+                                : "+ Add to Food Walk"}
+                            </button>
+                          </div>
+                        </div>
+                      </article>
+                    );
+                  }
+                )}
+              </div>
+            </div>
+          </section>
+        </>
+      )}
+
+      {selectedRestaurants.length >
+        0 && (
+        <section className="fi-create-card">
+          <div className="fi-form-heading">
+            <div>
+              <span className="fi-eyebrow">
+                INVITE PEOPLE
+              </span>
+
+              <h2>
+                Turn this route into a Food Walk
+              </h2>
+            </div>
           </div>
 
-        )
-      }
+          <div className="fi-grid">
+            <label className="fi-field fi-span-2">
+              <span>
+                Food Walk title *
+              </span>
 
-    </section>
+              <input
+                value={
+                  eventForm.title
+                }
+                onChange={(event) =>
+                  setEventForm(
+                    (previous) => ({
+                      ...previous,
+                      title:
+                        event.target
+                          .value,
+                    })
+                  )
+                }
+                placeholder="Saturday Bengaluru Food Walk"
+              />
+            </label>
 
+            <label className="fi-field">
+              <span>
+                Date & time *
+              </span>
+
+              <input
+                type="datetime-local"
+                value={
+                  eventForm.start_at
+                }
+                onChange={(event) =>
+                  setEventForm(
+                    (previous) => ({
+                      ...previous,
+                      start_at:
+                        event.target
+                          .value,
+                    })
+                  )
+                }
+              />
+            </label>
+
+            <label className="fi-field">
+              <span>
+                Maximum participants
+              </span>
+
+              <input
+                type="number"
+                min="2"
+                value={
+                  eventForm.max_participants
+                }
+                onChange={(event) =>
+                  setEventForm(
+                    (previous) => ({
+                      ...previous,
+                      max_participants:
+                        event.target
+                          .value,
+                    })
+                  )
+                }
+              />
+            </label>
+
+            <div className="fi-span-2">
+              <PeopleSelector
+                selectedIds={
+                  eventForm.recipients
+                }
+                onChange={(ids) =>
+                  setEventForm(
+                    (previous) => ({
+                      ...previous,
+                      recipients:
+                        ids,
+                    })
+                  )
+                }
+                maxSelections={
+                  Math.max(
+                    Number(
+                      eventForm.max_participants
+                    ) - 1,
+                    1
+                  )
+                }
+              />
+            </div>
+          </div>
+
+          <div className="fi-options">
+            <label>
+              <input
+                type="checkbox"
+                checked={
+                  eventForm.verified_only
+                }
+                onChange={(event) =>
+                  setEventForm(
+                    (previous) => ({
+                      ...previous,
+                      verified_only:
+                        event.target
+                          .checked,
+                    })
+                  )
+                }
+              />
+
+              Verified profiles only
+            </label>
+
+            <label>
+              <input
+                type="checkbox"
+                checked={
+                  eventForm.women_only
+                }
+                onChange={(event) =>
+                  setEventForm(
+                    (previous) => ({
+                      ...previous,
+                      women_only:
+                        event.target
+                          .checked,
+                    })
+                  )
+                }
+              />
+
+              Women-only invite
+            </label>
+          </div>
+
+          <div className="fi-form-actions">
+            <button
+              type="button"
+              className="fi-primary"
+              disabled={saving}
+              onClick={
+                createFoodWalkInvite
+              }
+            >
+              {saving
+                ? "Creating..."
+                : "Create Food Walk Invite"}
+            </button>
+          </div>
+        </section>
+      )}
+    </main>
   );
 }
