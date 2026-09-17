@@ -1,936 +1,295 @@
-
-/* =========================================================
-   FOODKINDL FOOD WALK — DARK BROWN THEME
-========================================================= */
-
-.fw-page {
-  max-width: 1360px;
-
-  margin: 0 auto;
-
-  padding: 28px 22px 130px;
-
-  color: #fff7ed;
-
-  font-family:
-    Inter,
-    system-ui,
-    -apple-system,
-    BlinkMacSystemFont,
-    "Segoe UI",
-    sans-serif;
-}
-
-/* =========================================================
-   HERO
-========================================================= */
-
-.fw-hero {
-  position: relative;
-
+.food-walk-planner {
+  --orange: #ff5b22;
+  --cream: #fff7ef;
+  display: grid;
+  grid-template-columns: minmax(320px, 390px) 1fr;
+  height: calc(100vh - 108px);
+  min-height: 620px;
   overflow: hidden;
+  background: #0d0907;
+  color: var(--cream);
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+    "Segoe UI", sans-serif;
+}
 
-  padding: 38px;
-
-  border-radius: 28px;
-
-  border:
-    1px solid
-    #5a341d;
-
+.food-walk-sidebar {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 20px;
+  overflow: hidden;
+  padding: 30px 26px 22px;
+  border-right: 1px solid rgba(255, 255, 255, 0.09);
   background:
-    radial-gradient(
-      circle at 78% 42%,
-      rgba(255, 154, 58, 0.11),
-      transparent 31%
-    ),
-    linear-gradient(
-      120deg,
-      #1d0f08,
-      #2a160b 52%,
-      #190d07
-    );
-
-  box-shadow:
-    0 22px 55px
-    rgba(0, 0, 0, 0.28);
+    radial-gradient(circle at 0 0, rgba(255, 91, 34, 0.18), transparent 34%),
+    #100b08;
 }
 
-.fw-eyebrow {
-  color: #ff9f43;
-
-  font-size: 0.76rem;
-
-  font-weight: 900;
-
-  letter-spacing: 0.14em;
+.food-walk-heading h1 {
+  margin: 7px 0 9px;
+  font-size: clamp(30px, 3vw, 46px);
+  line-height: 0.98;
+  letter-spacing: -0.045em;
 }
 
-.fw-hero h1 {
-  max-width: 920px;
-
-  margin: 8px 0 12px;
-
-  color: #fff3df;
-
-  font-family:
-    Georgia,
-    "Times New Roman",
-    serif;
-
-  font-size:
-    clamp(
-      2.5rem,
-      5vw,
-      4.7rem
-    );
-
-  line-height: 1;
-}
-
-.fw-hero p {
-  max-width: 820px;
-
+.food-walk-heading p,
+.food-walk-empty {
   margin: 0;
-
-  color: #dfcdbf;
-
-  line-height: 1.65;
+  color: #bcb1a9;
+  font-size: 14px;
+  line-height: 1.55;
 }
 
-/* =========================================================
-   PLANNER
-========================================================= */
-
-.fw-planner {
-  margin-top: 18px;
-
-  padding: 24px;
-
-  border-radius: 24px;
-
-  border:
-    1px solid
-    #56321d;
-
-  background:
-    linear-gradient(
-      145deg,
-      #150c07,
-      #21130b
-    );
-
-  box-shadow:
-    0 18px 46px
-    rgba(0, 0, 0, 0.24);
+.food-walk-kicker,
+.food-walk-results-title span {
+  color: var(--orange);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.16em;
 }
 
-.fw-route-inputs {
+.food-walk-form {
   display: grid;
-
-  gap: 10px;
-}
-
-.fw-location-row {
-  display: grid;
-
-  grid-template-columns:
-    22px 1fr auto;
-
   gap: 8px;
-
-  align-items: center;
 }
 
-.fw-dot {
-  width: 10px;
-  height: 10px;
-
-  margin: auto;
-
-  border-radius: 50%;
-
-  background: #9b836f;
+.food-walk-form label {
+  margin-top: 3px;
+  color: #d8cec7;
+  font-size: 12px;
+  font-weight: 700;
 }
 
-.fw-dot.start {
-  background: #61ac72;
-}
-
-.fw-dot.stop {
-  background: #e09c3f;
-}
-
-.fw-dot.destination {
-  background: #de6750;
-}
-
-/* =========================================================
-   LOCATION AUTOSUGGEST
-========================================================= */
-
-.fw-location-input {
-  position: relative;
-}
-
-.fw-location-input input {
+.food-walk-form input {
   width: 100%;
-
   box-sizing: border-box;
-
-  padding: 13px 14px;
-
-  border:
-    1px solid
-    #4d2c19;
-
-  border-radius: 14px;
-
+  padding: 12px 13px;
+  border: 1px solid rgba(255, 255, 255, 0.13);
+  border-radius: 10px;
   outline: none;
-
-  color: #fff7ed;
-
-  background: #100805;
-
+  background: rgba(255, 255, 255, 0.06);
+  color: #fff;
   font: inherit;
 }
 
-.fw-location-input input::placeholder {
-  color: #8f7764;
+.food-walk-form input:focus {
+  border-color: var(--orange);
+  box-shadow: 0 0 0 3px rgba(255, 91, 34, 0.14);
 }
 
-.fw-location-input input:focus {
-  border-color: #ff9f43;
-
-  box-shadow:
-    0 0 0 3px
-    rgba(255, 159, 67, 0.09);
-}
-
-.fw-suggestions {
-  position: absolute;
-
-  z-index: 1600;
-
-  top:
-    calc(100% + 6px);
-
-  left: 0;
-  right: 0;
-
-  overflow: hidden;
-
-  border-radius: 15px;
-
-  border:
-    1px solid
-    #603820;
-
-  background: #140b07;
-
-  box-shadow:
-    0 18px 40px
-    rgba(0, 0, 0, 0.38);
-}
-
-.fw-suggestions button,
-.fw-suggestion-muted {
-  display: block;
-
-  width: 100%;
-
-  padding: 12px 13px;
-
+.food-walk-primary {
+  margin-top: 7px;
+  padding: 13px 16px;
   border: 0;
-
-  text-align: left;
-
-  color: #f6e7da;
-
-  background: transparent;
-
+  border-radius: 10px;
+  background: var(--orange);
+  color: white;
+  font: inherit;
+  font-weight: 800;
   cursor: pointer;
 }
 
-.fw-suggestions button:hover {
-  background: #25140c;
+.food-walk-primary:disabled {
+  cursor: wait;
+  opacity: 0.62;
 }
 
-.fw-suggestion-muted {
-  color: #a58e7b;
+.food-walk-message {
+  padding: 10px 12px;
+  border-radius: 9px;
+  font-size: 12px;
+  line-height: 1.4;
 }
 
-.fw-remove {
+.food-walk-message.error {
+  border: 1px solid rgba(255, 79, 79, 0.35);
+  background: rgba(255, 79, 79, 0.12);
+  color: #ffaaa5;
+}
+
+.food-walk-message.warning {
+  border: 1px solid rgba(255, 184, 77, 0.3);
+  background: rgba(255, 184, 77, 0.11);
+  color: #ffd08b;
+}
+
+.food-walk-stats {
   display: grid;
-
-  place-items: center;
-
-  width: 32px;
-  height: 32px;
-
-  border: 0;
-
-  border-radius: 50%;
-
-  color: #e8d5c6;
-
-  background: #2c190f;
-
-  cursor: pointer;
+  grid-template-columns: repeat(3, 1fr);
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.04);
 }
 
-.fw-add-stop {
-  width: fit-content;
-
-  margin-left: 30px;
-
-  padding: 5px 0;
-
-  border: 0;
-
-  color: #ffad5d;
-
-  background: transparent;
-
-  cursor: pointer;
-
-  font-weight: 900;
+.food-walk-stats div {
+  display: grid;
+  gap: 2px;
+  padding: 11px 8px;
+  text-align: center;
 }
 
-/* =========================================================
-   MODE / EXPLORATION / CATEGORY
-========================================================= */
+.food-walk-stats div + div {
+  border-left: 1px solid rgba(255, 255, 255, 0.08);
+}
 
-.fw-mode-row,
-.fw-category-scroll,
-.fw-exploration > div {
+.food-walk-stats strong {
+  font-size: 18px;
+}
+
+.food-walk-stats span {
+  color: #9f948c;
+  font-size: 10px;
+}
+
+.food-walk-results {
   display: flex;
-
-  gap: 8px;
-
-  overflow-x: auto;
+  min-height: 0;
+  flex: 1;
+  flex-direction: column;
+  gap: 12px;
 }
 
-.fw-mode-row {
-  margin-top: 20px;
-}
-
-.fw-mode-row button,
-.fw-category-scroll button,
-.fw-exploration button {
-  padding: 10px 15px;
-
-  border:
-    1px solid
-    #56331f;
-
-  border-radius: 999px;
-
-  color: #e7d6c7;
-
-  background: #1b100a;
-
-  cursor: pointer;
-
-  white-space: nowrap;
-
-  font-weight: 850;
-}
-
-.fw-mode-row button.active,
-.fw-category-scroll button.active,
-.fw-exploration button.active {
-  color: #211006;
-
-  background:
-    linear-gradient(
-      135deg,
-      #ffb85c,
-      #ff9f43
-    );
-
-  border-color: transparent;
-}
-
-.fw-exploration {
+.food-walk-results-title {
   display: flex;
-
+  align-items: flex-end;
   justify-content: space-between;
+}
 
+.food-walk-results-title h2 {
+  margin: 4px 0 0;
+  font-size: 18px;
+}
+
+.food-walk-results-title b {
+  color: var(--orange);
+  font-size: 13px;
+}
+
+.food-walk-place-list {
+  display: grid;
+  gap: 8px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.food-walk-place-card {
+  display: flex;
   align-items: center;
+  gap: 11px;
+  width: 100%;
+  padding: 11px;
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 11px;
+  background: rgba(255, 255, 255, 0.045);
+  color: white;
+  text-align: left;
+  cursor: pointer;
+}
 
-  gap: 14px;
+.food-walk-place-card:hover,
+.food-walk-place-card.selected {
+  border-color: rgba(255, 91, 34, 0.65);
+  background: rgba(255, 91, 34, 0.11);
+}
 
+.food-walk-place-number {
+  display: grid;
+  width: 29px;
+  height: 29px;
+  flex: 0 0 29px;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--orange);
+  font-weight: 800;
+}
+
+.food-walk-place-copy {
+  display: grid;
+  min-width: 0;
+  gap: 3px;
+}
+
+.food-walk-place-copy strong,
+.food-walk-place-copy small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.food-walk-place-copy small {
+  color: #a99d95;
+}
+
+.food-walk-map-wrap,
+.food-walk-map {
+  width: 100%;
+  height: 100%;
+}
+
+.food-walk-popup {
+  display: grid;
+  min-width: 180px;
+  gap: 5px;
+}
+
+.food-walk-popup strong {
+  font-size: 15px;
+}
+
+.food-walk-popup span {
+  color: #615b56;
+  font-size: 12px;
+}
+
+.food-walk-popup button {
+  margin-top: 5px;
+  padding: 8px 10px;
+  border: 0;
+  border-radius: 7px;
+  background: var(--orange);
+  color: white;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+@media (max-width: 800px) {
+  .food-walk-planner {
+    display: flex;
+    height: auto;
+    min-height: 100vh;
+    flex-direction: column;
+    overflow: visible;
+  }
+
+  .food-walk-sidebar {
+    overflow: visible;
+    padding: 24px 18px;
+  }
+
+  .food-walk-results {
+    max-height: 320px;
+  }
+
+  .food-walk-map-wrap {
+    height: 60vh;
+    min-height: 430px;
+  }
+}
+
+.food-walk-route-section {
   margin-top: 16px;
 }
 
-.fw-exploration > span {
-  color: #efddcf;
-
-  font-weight: 900;
-
-  white-space: nowrap;
+.food-walk-route-section-title {
+  margin: 0 0 8px;
+  color: #ff5b22;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
 }
 
-.fw-category-scroll {
-  margin-top: 18px;
-
-  padding-bottom: 3px;
-}
-
-/* =========================================================
-   BUTTONS
-========================================================= */
-
-.fw-filter-actions {
-  display: flex;
-
-  justify-content: space-between;
-
-  gap: 10px;
-
-  margin-top: 18px;
-}
-
-.fw-primary,
-.fw-secondary,
-.fw-ai-route,
-.fw-remove-route {
-  padding: 12px 18px;
-
-  border: 0;
-
-  border-radius: 999px;
-
-  cursor: pointer;
-
-  font: inherit;
-
-  font-weight: 900;
-}
-
-.fw-primary {
-  color: #211006;
-
-  background:
-    linear-gradient(
-      135deg,
-      #ffb85c,
-      #ff9f43
-    );
-}
-
-.fw-secondary {
-  color: #fff0e1;
-
-  background: #27160d;
-
-  border:
-    1px solid
-    #5e3820;
-}
-
-.fw-ai-route {
-  color: #211006;
-
-  background:
-    linear-gradient(
-      135deg,
-      #ffc77d,
-      #ffa749
-    );
-}
-
-.fw-remove-route {
-  color: #ffabab;
-
-  background:
-    rgba(182, 46, 46, 0.15);
-
-  border:
-    1px solid
-    rgba(255, 102, 102, 0.21);
-}
-
-/* =========================================================
-   ALERT
-========================================================= */
-
-.fw-alert {
-  margin-top: 14px;
-
-  padding: 14px 17px;
-
-  border-radius: 15px;
-
-  color: #ff9f9f;
-
-  background:
-    rgba(170, 39, 39, 0.15);
-
-  border:
-    1px solid
-    rgba(255, 93, 93, 0.24);
-
-  font-weight: 850;
-}
-
-/* =========================================================
-   SUMMARY
-========================================================= */
-
-.fw-summary {
-  display: grid;
-
-  grid-template-columns:
-    repeat(3, 1fr);
-
-  gap: 12px;
-
-  margin-top: 18px;
-}
-
-.fw-summary > div {
-  padding: 17px;
-
-  border-radius: 18px;
-
-  border:
-    1px solid
-    #50301d;
-
-  background:
-    #180e08;
-}
-
-.fw-summary strong,
-.fw-summary span {
-  display: block;
-}
-
-.fw-summary strong {
-  color: #fff3df;
-
-  font-size: 1.45rem;
-}
-
-.fw-summary span {
-  margin-top: 4px;
-
-  color: #a99280;
-
-  font-size: 0.86rem;
-}
-
-/* =========================================================
-   MAP + RESULTS
-========================================================= */
-
-.fw-results-layout {
-  display: grid;
-
-  grid-template-columns:
-    minmax(390px, 0.9fr)
-    minmax(0, 1.1fr);
-
-  gap: 18px;
-
-  margin-top: 18px;
-}
-
-.fw-map-panel {
-  position: sticky;
-
-  top: 16px;
-
-  height:
-    calc(100vh - 32px);
-
-  min-height: 620px;
-}
-
-.fw-map {
-  width: 100%;
-  height: 100%;
-
-  overflow: hidden;
-
-  border-radius: 24px;
-
-  border:
-    1px solid
-    #57321d;
-}
-
-.fw-results-panel {
-  min-width: 0;
-}
-
-.fw-results-heading {
-  display: flex;
-
-  align-items: flex-end;
-
-  justify-content: space-between;
-
-  gap: 14px;
-
-  margin-bottom: 16px;
-}
-
-.fw-results-heading h2 {
-  margin: 5px 0 0;
-
-  color: #fff2df;
-
-  font-family:
-    Georgia,
-    "Times New Roman",
-    serif;
-}
-
-/* =========================================================
-   NUMBERED MAP MARKERS
-========================================================= */
-
-.fw-marker-wrap {
-  background: transparent !important;
-
-  border: 0 !important;
-}
-
-.fw-marker {
-  display: grid;
-
-  place-items: center;
-
-  width: 36px;
-  height: 36px;
-
-  border-radius:
-    50% 50% 50% 0;
-
-  transform:
-    rotate(-45deg);
-
-  color: white;
-
-  background:
-    #28140a;
-
-  border:
-    3px solid
-    #fff4e4;
-
-  box-shadow:
-    0 5px 12px
-    rgba(0, 0, 0, 0.32);
-}
-
-.fw-marker span {
-  transform:
-    rotate(45deg);
-
-  font-size: 0.8rem;
-
-  font-weight: 950;
-}
-
-.fw-marker.selected {
-  background:
-    #d76e28;
-}
-
-/* =========================================================
-   RESTAURANT CARDS
-========================================================= */
-
-.fw-card-list {
-  display: grid;
-
-  gap: 12px;
-}
-
-.fw-place-card {
-  display: grid;
-
-  grid-template-columns:
-    150px 1fr;
-
-  overflow: hidden;
-
-  border-radius: 20px;
-
-  border:
-    1px solid
-    #50301d;
-
-  background:
-    linear-gradient(
-      145deg,
-      #160d08,
-      #20120b
-    );
-
-  transition:
-    border-color 0.18s ease,
-    box-shadow 0.18s ease,
-    transform 0.18s ease;
-}
-
-.fw-place-card:hover,
-.fw-place-card.active {
-  border-color:
-    #8c522c;
-
-  box-shadow:
-    0 16px 34px
-    rgba(0, 0, 0, 0.25);
-
-  transform:
-    translateY(-1px);
-}
-
-.fw-place-image {
-  min-height: 190px;
-
-  background: #28180f;
-}
-
-.fw-place-image img {
-  width: 100%;
-  height: 100%;
-
-  object-fit: cover;
-}
-
-.fw-image-fallback {
-  display: grid;
-
-  place-items: center;
-
-  width: 100%;
-  height: 100%;
-
-  min-height: 190px;
-
-  color: #ffae61;
-
-  font-size: 2.4rem;
-}
-
-.fw-place-main {
-  min-width: 0;
-
-  padding: 16px;
-}
-
-.fw-place-title-row {
-  display: flex;
-
-  justify-content: space-between;
-
-  gap: 10px;
-}
-
-.fw-place-title-row h4 {
-  margin: 0;
-
-  color: #fff3df;
-
-  font-size: 1.12rem;
-}
-
-.fw-place-sub {
-  display: flex;
-
-  flex-wrap: wrap;
-
-  gap: 7px;
-
-  margin-top: 5px;
-
-  color: #ad9481;
-
-  font-size: 0.82rem;
-}
-
-.fw-kindl-badge {
-  flex: 0 0 auto;
-
-  height: fit-content;
-
-  padding: 5px 8px;
-
-  border-radius: 999px;
-
-  color: #a3e2ae;
-
-  background:
-    rgba(59, 137, 76, 0.16);
-
-  border:
-    1px solid
-    rgba(91, 184, 111, 0.22);
-
-  font-size: 0.72rem;
-
-  font-weight: 900;
-}
-
-.fw-tags,
-.fw-route-meta {
-  display: flex;
-
-  flex-wrap: wrap;
-
-  gap: 6px;
-
-  margin-top: 10px;
-}
-
-.fw-tags span {
-  padding: 5px 8px;
-
-  border-radius: 999px;
-
-  color: #decbbc;
-
-  background: #2b190f;
-
-  font-size: 0.75rem;
-}
-
-.fw-route-meta {
-  align-items: center;
-
-  color: #d8c5b7;
-
-  font-size: 0.82rem;
-}
-
-.fw-open {
-  color: #8fd79e;
-
-  font-weight: 900;
-}
-
-.fw-description {
-  margin: 10px 0 0;
-
-  color: #bba492;
-
-  line-height: 1.5;
-
-  font-size: 0.9rem;
-}
-
-.fw-description strong {
-  color: #ead8c9;
-}
-
-.fw-place-actions {
-  display: flex;
-
-  justify-content: flex-end;
-
-  flex-wrap: wrap;
-
-  gap: 8px;
-
-  margin-top: 14px;
-}
-
-/* =========================================================
-   LEAFLET DARKER POPUP
-========================================================= */
-
-.fw-map .leaflet-popup-content-wrapper,
-.fw-map .leaflet-popup-tip {
-  color: #fff3df;
-
-  background: #1c1009;
-}
-
-.fw-map .leaflet-popup-content-wrapper {
-  border:
-    1px solid
-    #59331e;
-}
-
-/* =========================================================
-   SCROLLBAR
-========================================================= */
-
-.fw-category-scroll::-webkit-scrollbar,
-.fw-mode-row::-webkit-scrollbar {
-  height: 5px;
-}
-
-.fw-category-scroll::-webkit-scrollbar-thumb,
-.fw-mode-row::-webkit-scrollbar-thumb {
-  border-radius: 999px;
-
-  background:
-    #5e3820;
-}
-
-/* =========================================================
-   RESPONSIVE
-========================================================= */
-
-@media (max-width: 980px) {
-  .fw-results-layout {
-    grid-template-columns: 1fr;
-  }
-
-  .fw-map-panel {
-    position: relative;
-
-    top: auto;
-
-    height: 460px;
-
-    min-height: 0;
-  }
-}
-
-@media (max-width: 720px) {
-  .fw-page {
-    padding-inline: 12px;
-  }
-
-  .fw-hero,
-  .fw-planner {
-    padding: 20px;
-  }
-
-  .fw-exploration,
-  .fw-results-heading {
-    align-items: stretch;
-
-    flex-direction: column;
-  }
-
-  .fw-filter-actions {
-    display: grid;
-  }
-
-  .fw-summary {
-    grid-template-columns: 1fr;
-  }
-
-  .fw-place-card {
-    grid-template-columns: 1fr;
-  }
-
-  .fw-place-image {
-    min-height: 180px;
-
-    max-height: 230px;
-  }
-
-  .fw-place-actions {
-    display: grid;
-  }
+.food-walk-address {
+  color: #786d66;
 }

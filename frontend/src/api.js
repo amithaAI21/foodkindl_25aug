@@ -1,3 +1,5 @@
+// src/api.js
+
 import axios from "axios";
 
 
@@ -9,9 +11,27 @@ const DEFAULT_BACKEND_URL =
   "http://127.0.0.1:8000";
 
 
-const backendUrl = (
+const rawBackendUrl =
   import.meta.env.VITE_BACKEND_URL ||
-  DEFAULT_BACKEND_URL
+  DEFAULT_BACKEND_URL;
+
+
+/*
+ * Remove:
+ * - Trailing slashes
+ * - A trailing /api
+ *
+ * Examples:
+ * http://127.0.0.1:8000/
+ * becomes:
+ * http://127.0.0.1:8000
+ *
+ * http://127.0.0.1:8000/api
+ * becomes:
+ * http://127.0.0.1:8000
+ */
+const backendUrl = String(
+  rawBackendUrl
 )
   .trim()
   .replace(/\/+$/, "")
@@ -26,23 +46,25 @@ const API_BASE_URL =
    DEBUG
 ============================================================ */
 
-console.log(
-  "================================="
-);
+if (import.meta.env.DEV) {
+  console.log(
+    "================================="
+  );
 
-console.log(
-  "FOODKINDL BACKEND:",
-  backendUrl
-);
+  console.log(
+    "FOODKINDL BACKEND:",
+    backendUrl
+  );
 
-console.log(
-  "FOODKINDL API BASE URL:",
-  API_BASE_URL
-);
+  console.log(
+    "FOODKINDL API BASE URL:",
+    API_BASE_URL
+  );
 
-console.log(
-  "================================="
-);
+  console.log(
+    "================================="
+  );
+}
 
 
 /* ============================================================
@@ -50,19 +72,43 @@ console.log(
 ============================================================ */
 
 const api = axios.create({
+  baseURL: API_BASE_URL,
 
-  baseURL:
-    API_BASE_URL,
-
-  timeout:
-    60000,
+  timeout: 60000,
 
   headers: {
-    Accept:
-      "application/json",
+    Accept: "application/json",
   },
 
+  withCredentials: false,
 });
+
+
+/* ============================================================
+   ACCESS TOKEN
+============================================================ */
+
+function getAccessToken() {
+  /*
+   * Keep foodkindl_access first because
+   * this is your current token name.
+   *
+   * The other names are included as
+   * fallbacks.
+   */
+  return (
+    localStorage.getItem(
+      "foodkindl_access"
+    ) ||
+    localStorage.getItem(
+      "access"
+    ) ||
+    localStorage.getItem(
+      "access_token"
+    ) ||
+    ""
+  );
+}
 
 
 /* ============================================================
@@ -70,63 +116,54 @@ const api = axios.create({
 ============================================================ */
 
 api.interceptors.request.use(
-
   config => {
+    const token =
+      getAccessToken();
+
+    config.headers =
+      config.headers || {};
+
 
     /* ----------------------------------------------------------
-       AUTH TOKEN
+       AUTHORIZATION
     ---------------------------------------------------------- */
 
-    const token =
-      localStorage.getItem(
-        "foodkindl_access"
-      );
-
-
     if (token) {
-
-      config.headers =
-        config.headers || {};
-
-
       config.headers.Authorization =
         `Bearer ${token}`;
-
+    } else {
+      delete config.headers.Authorization;
     }
 
 
     /* ----------------------------------------------------------
-       FORM DATA / JSON
+       FORM DATA OR JSON
     ---------------------------------------------------------- */
 
-    if (
+    const isFormData =
       typeof FormData !== "undefined" &&
-      config.data instanceof FormData
+      config.data instanceof FormData;
+
+
+    if (isFormData) {
+      /*
+       * Let the browser automatically set
+       * multipart/form-data and its boundary.
+       */
+      delete config.headers[
+        "Content-Type"
+      ];
+
+      delete config.headers[
+        "content-type"
+      ];
+    } else if (
+      config.data !== undefined &&
+      config.data !== null
     ) {
-
-      if (config.headers) {
-
-        delete config.headers[
-          "Content-Type"
-        ];
-
-        delete config.headers[
-          "content-type"
-        ];
-
-      }
-
-    } else {
-
-      config.headers =
-        config.headers || {};
-
-
       config.headers[
         "Content-Type"
-      ] =
-        "application/json";
-
+      ] = "application/json";
     }
 
 
@@ -134,43 +171,44 @@ api.interceptors.request.use(
        DEBUG REQUEST
     ---------------------------------------------------------- */
 
-    console.log(
-      "FOODKINDL API REQUEST:",
-      {
-        method:
-          config.method
-            ?.toUpperCase(),
+    if (import.meta.env.DEV) {
+      const method =
+        config.method
+          ?.toUpperCase() ||
+        "GET";
 
-        baseURL:
-          config.baseURL,
+      const fullUrl =
+        `${config.baseURL || ""}${config.url || ""}`;
 
-        url:
-          config.url,
-
-        fullUrl:
-          `${config.baseURL || ""}${config.url || ""}`,
-      }
-    );
+      console.log(
+        "FOODKINDL API REQUEST:",
+        {
+          method,
+          fullUrl,
+          authenticated:
+            Boolean(token),
+          data:
+            isFormData
+              ? "FormData"
+              : config.data,
+        }
+      );
+    }
 
 
     return config;
-
   },
 
   error => {
-
     console.error(
       "FOODKINDL REQUEST ERROR:",
       error
     );
 
-
     return Promise.reject(
       error
     );
-
   }
-
 );
 
 
@@ -179,26 +217,38 @@ api.interceptors.request.use(
 ============================================================ */
 
 api.interceptors.response.use(
-
   response => {
+    if (import.meta.env.DEV) {
+      console.log(
+        "FOODKINDL API RESPONSE:",
+        {
+          url:
+            response.config?.url,
 
-    console.log(
-      "FOODKINDL API RESPONSE:",
-      {
-        url:
-          response.config?.url,
+          status:
+            response.status,
 
-        status:
-          response.status,
-      }
-    );
-
+          data:
+            response.data,
+        }
+      );
+    }
 
     return response;
-
   },
 
   error => {
+    const status =
+      error.response?.status;
+
+    const responseData =
+      error.response?.data;
+
+    const fullUrl =
+      error.config
+        ? `${error.config.baseURL || ""}${error.config.url || ""}`
+        : undefined;
+
 
     console.error(
       "FOODKINDL API ERROR:",
@@ -206,22 +256,16 @@ api.interceptors.response.use(
         url:
           error.config?.url,
 
-        baseURL:
-          error.config?.baseURL,
-
-        fullUrl:
-          error.config
-            ? `${error.config.baseURL || ""}${error.config.url || ""}`
-            : undefined,
+        fullUrl,
 
         method:
-          error.config?.method,
+          error.config?.method
+            ?.toUpperCase(),
 
-        status:
-          error.response?.status,
+        status,
 
         response:
-          error.response?.data,
+          responseData,
 
         message:
           error.message,
@@ -229,13 +273,72 @@ api.interceptors.response.use(
     );
 
 
+    /*
+     * The access token is invalid or expired.
+     */
+    if (status === 401) {
+      console.warn(
+        "Authentication failed. The access token may be missing or expired."
+      );
+    }
+
+
+    /*
+     * The requested API endpoint does
+     * not exist.
+     */
+    if (status === 404) {
+      console.warn(
+        `API endpoint not found: ${fullUrl}`
+      );
+    }
+
+
     return Promise.reject(
       error
     );
+  }
+);
 
+
+/* ============================================================
+   AUTHENTICATION HELPERS
+============================================================ */
+
+export function setAccessToken(
+  token
+) {
+  if (!token) {
+    return;
   }
 
-);
+  localStorage.setItem(
+    "foodkindl_access",
+    token
+  );
+}
+
+
+export function clearAccessToken() {
+  localStorage.removeItem(
+    "foodkindl_access"
+  );
+
+  localStorage.removeItem(
+    "access"
+  );
+
+  localStorage.removeItem(
+    "access_token"
+  );
+}
+
+
+export function hasAccessToken() {
+  return Boolean(
+    getAccessToken()
+  );
+}
 
 
 /* ============================================================

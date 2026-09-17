@@ -80,6 +80,10 @@ urlpatterns = [
             "invites.partner_urls"
         ),
     ),
+    
+    path("api/", include("cooktogether.urls")),
+    path("api/dineout/", include("dineout.urls")),
+    path("api/foodwalk/", include("foodwalk.urls")),
 
 ]
 

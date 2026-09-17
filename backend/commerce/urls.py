@@ -1,30 +1,32 @@
 from django.urls import path
 
 from .views import (
-    GroceryPartnerClickHistoryView,
-    GroceryPartnerClickView,
-    GroceryPartnerListView,
+    AIIdentifyIngredientsView,
+    AIIngredientRecipeBookView,
+    AIRecipeGenerateView,
+    AIRecipeVideoGenerateView,
 )
 
 
 urlpatterns = [
-
     path(
-        "partners/",
-        GroceryPartnerListView.as_view(),
-        name="grocery-partner-list",
+        "recipe/",
+        AIRecipeGenerateView.as_view(),
+        name="ai-recipe",
     ),
-
     path(
-        "grocery-click/",
-        GroceryPartnerClickView.as_view(),
-        name="grocery-partner-click",
+        "ingredient-recipe-book/",
+        AIIngredientRecipeBookView.as_view(),
+        name="ai-ingredient-recipe-book",
     ),
-
     path(
-        "my-clicks/",
-        GroceryPartnerClickHistoryView.as_view(),
-        name="grocery-partner-click-history",
+        "identify-ingredients/",
+        AIIdentifyIngredientsView.as_view(),
+        name="ai-identify-ingredients",
     ),
-
+    path(
+        "recipe-video/",
+        AIRecipeVideoGenerateView.as_view(),
+        name="ai-recipe-video",
+    ),
 ]

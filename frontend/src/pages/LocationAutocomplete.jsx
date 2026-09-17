@@ -1,378 +1,325 @@
 import {
-  useEffect,
-  useRef,
-  useState,
-} from "react";
-
-import {
   Loader2,
   MapPin,
   Search,
   X,
 } from "lucide-react";
 
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
+
 import api from "../api";
 
 
-/* ============================================================
-   HELPERS
-============================================================ */
+const MAX_RESULTS = 8;
 
-function cleanText(value) {
+
+/* =========================================================
+   HELPERS
+========================================================= */
+
+function text(value) {
   return String(
     value || ""
   ).trim();
 }
 
 
-function normalizePlace(
-  place,
-  index = 0
-) {
-
-  if (!place) {
-    return null;
-  }
-
-
-  /*
-   * Already-normalized response from Django
-   */
-  if (
-    place.latitude !== undefined &&
-    place.longitude !== undefined
-  ) {
-
-    return {
-      id:
-        place.id ||
-        `place-${index}`,
-
-      name:
-        place.name ||
-        place.display_name ||
-        "",
-
-      display_name:
-        place.display_name ||
-        place.name ||
-        "",
-
-      locality:
-        place.locality ||
-        "",
-
-      county:
-        place.county ||
-        "",
-
-      region:
-        place.region ||
-        "",
-
-      country:
-        place.country ||
-        "",
-
-      latitude:
-        Number(
-          place.latitude
-        ),
-
-      longitude:
-        Number(
-          place.longitude
-        ),
-    };
-
-  }
-
-
-  /*
-   * GeoJSON/OpenRouteService style response
-   */
-  const properties =
-    place.properties ||
-    {};
-
-
-  const coordinates =
-    place.geometry
-      ?.coordinates ||
-    [];
-
-
-  if (
-    coordinates.length <
-    2
-  ) {
-    return null;
-  }
-
-
-  const longitude =
-    Number(
-      coordinates[0]
-    );
-
-
-  const latitude =
-    Number(
-      coordinates[1]
-    );
-
-
-  if (
-    !Number.isFinite(
-      latitude
-    )
-    ||
-    !Number.isFinite(
-      longitude
-    )
-  ) {
-    return null;
-  }
-
-
-  const displayName =
-    properties.label ||
-    properties.name ||
-    "";
-
-
-  if (!displayName) {
-    return null;
-  }
-
-
-  return {
-    id:
-      properties.id ||
-      `place-${index}-${latitude}-${longitude}`,
-
-    name:
-      properties.name ||
-      displayName,
-
-    display_name:
-      displayName,
-
-    locality:
-      properties.locality ||
-      properties.localadmin ||
-      "",
-
-    county:
-      properties.county ||
-      "",
-
-    region:
-      properties.region ||
-      properties.region_a ||
-      "",
-
-    country:
-      properties.country ||
-      "",
-
-    latitude,
-
-    longitude,
-  };
-
+function getPlaceName(place) {
+  return (
+    text(place?.name) ||
+    text(place?.locality) ||
+    text(place?.area) ||
+    text(place?.display_name) ||
+    "Unnamed location"
+  );
 }
 
 
-/* ============================================================
+function getDisplayName(place) {
+  return (
+    text(place?.display_name) ||
+    [
+      place?.name,
+      place?.city,
+      place?.state,
+      place?.country,
+    ]
+      .filter(Boolean)
+      .join(", ")
+  );
+}
+
+
+function getLatitude(place) {
+  const value =
+    place?.latitude ??
+    place?.lat ??
+    place?.properties?.lat;
+
+  const latitude =
+    Number(value);
+
+  return Number.isFinite(latitude)
+    ? latitude
+    : null;
+}
+
+
+function getLongitude(place) {
+  const value =
+    place?.longitude ??
+    place?.lon ??
+    place?.lng ??
+    place?.properties?.lon;
+
+  const longitude =
+    Number(value);
+
+  return Number.isFinite(longitude)
+    ? longitude
+    : null;
+}
+
+
+function makePlaceId(
+  place,
+  index
+) {
+  return (
+    place?.id ||
+    place?.place_id ||
+    place?.osm_id ||
+    `${getLatitude(place)}-${getLongitude(place)}-${index}`
+  );
+}
+
+
+function removeDuplicates(
+  places
+) {
+  const seen =
+    new Set();
+
+  return places.filter(
+    place => {
+      const latitude =
+        getLatitude(place);
+
+      const longitude =
+        getLongitude(place);
+
+      const key = [
+        getPlaceName(place)
+          .toLowerCase(),
+        latitude,
+        longitude,
+      ].join("|");
+
+      if (
+        seen.has(key)
+      ) {
+        return false;
+      }
+
+      seen.add(key);
+
+      return true;
+    }
+  );
+}
+
+
+function locationPriority(
+  place,
+  query
+) {
+  const displayName =
+    getDisplayName(place)
+      .toLowerCase();
+
+  const placeName =
+    getPlaceName(place)
+      .toLowerCase();
+
+  const normalizedQuery =
+    query.toLowerCase();
+
+  let score = 0;
+
+  if (
+    placeName ===
+    normalizedQuery
+  ) {
+    score += 100;
+  }
+
+  if (
+    placeName.startsWith(
+      normalizedQuery
+    )
+  ) {
+    score += 50;
+  }
+
+  if (
+    displayName.includes(
+      "bengaluru"
+    ) ||
+    displayName.includes(
+      "bangalore"
+    )
+  ) {
+    score += 30;
+  }
+
+  if (
+    displayName.includes(
+      "karnataka"
+    )
+  ) {
+    score += 20;
+  }
+
+  if (
+    displayName.includes(
+      "india"
+    )
+  ) {
+    score += 10;
+  }
+
+  return score;
+}
+
+
+/* =========================================================
    COMPONENT
-============================================================ */
+========================================================= */
 
 export default function LocationAutocomplete({
-
   value = "",
-
   placeholder =
-    "Search location",
-
+    "Search area, neighbourhood, landmark or city",
   onChange,
-
   onSelect,
-
 }) {
-
-  const [
-    searchText,
-    setSearchText,
-  ] = useState(
-    value || ""
-  );
-
-
   const [
     suggestions,
     setSuggestions,
   ] = useState([]);
-
 
   const [
     loading,
     setLoading,
   ] = useState(false);
 
-
   const [
     open,
     setOpen,
   ] = useState(false);
 
+  const [
+    searched,
+    setSearched,
+  ] = useState(false);
 
   const [
     error,
     setError,
   ] = useState("");
 
+  const wrapperRef =
+    useRef(null);
 
-  const abortRef =
+  const inputRef =
     useRef(null);
 
 
-  const skipSearchRef =
-    useRef(false);
+  const hasValue =
+    Boolean(
+      text(value)
+    );
 
 
-  const blurTimerRef =
-    useRef(null);
+  const visibleSuggestions =
+    useMemo(
+      () =>
+        suggestions.slice(
+          0,
+          MAX_RESULTS
+        ),
+      [
+        suggestions,
+      ]
+    );
 
 
-  /* ============================================================
-     SYNC VALUE FROM PARENT
-  ============================================================ */
-
-  useEffect(
-    () => {
-
-      const parentValue =
-        String(
-          value || ""
-        );
-
-
-      if (
-        parentValue !==
-        searchText
-      ) {
-
-        setSearchText(
-          parentValue
-        );
-
-      }
-
-    },
-    [
-      value,
-      searchText,
-    ]
-  );
-
-
-  /* ============================================================
-     AUTOCOMPLETE SEARCH
-  ============================================================ */
+  /* =========================================================
+     SEARCH
+  ========================================================= */
 
   useEffect(
     () => {
-
       const query =
-        cleanText(
-          searchText
-        );
+        text(value);
 
-
-      /*
-       * Do not immediately search again
-       * after the user selected a suggestion.
-       */
       if (
-        skipSearchRef.current
+        query.length < 2
       ) {
+        setSuggestions([]);
+        setOpen(false);
+        setSearched(false);
+        setError("");
+        setLoading(false);
 
-        skipSearchRef.current =
-          false;
-
-        return;
-
+        return undefined;
       }
 
 
-      if (
-        query.length <
-        2
-      ) {
-
-        setSuggestions(
-          []
-        );
-
-        setOpen(
-          false
-        );
-
-        setError(
-          ""
-        );
-
-        setLoading(
-          false
-        );
-
-        return;
-
-      }
+      const controller =
+        new AbortController();
 
 
       const timer =
         window.setTimeout(
           async () => {
-
-            /*
-             * Cancel previous request.
-             */
-            if (
-              abortRef.current
-            ) {
-
-              abortRef.current.abort();
-
-            }
-
-
-            const controller =
-              new AbortController();
-
-
-            abortRef.current =
-              controller;
-
+            setLoading(true);
+            setError("");
+            setSearched(false);
 
             try {
-
-              setLoading(
-                true
-              );
-
-              setError(
-                ""
-              );
-
-
               const response =
                 await api.get(
                   "/locations/autocomplete/",
                   {
                     params: {
                       q: query,
+
+                      /*
+                       * Backend should use this value
+                       * to return more suggestions.
+                       */
+                      limit:
+                        MAX_RESULTS,
+
+                      /*
+                       * These parameters can be ignored
+                       * safely if the backend does not
+                       * support them yet.
+                       */
+                      country:
+                        "in",
+
+                      preferred_city:
+                        "Bengaluru",
+
+                      include:
+                        "locality,neighbourhood,suburb,landmark,station,city",
                     },
 
                     signal:
@@ -380,754 +327,467 @@ export default function LocationAutocomplete({
                   }
                 );
 
-              console.log(
-                "LOCATION AUTOCOMPLETE RESPONSE:",
-                response?.data
-              );
+
+              const responseData =
+                response?.data;
 
 
-              /*
-               * Supports:
-               *
-               * {
-               *   results: [...]
-               * }
-               *
-               * OR
-               *
-               * {
-               *   features: [...]
-               * }
-               */
-
-              const rawResults =
+              const results =
                 Array.isArray(
-                  response
-                    ?.data
-                    ?.results
+                  responseData
                 )
-                  ? response
-                      .data
-                      .results
-
+                  ? responseData
                   : Array.isArray(
-                      response
-                        ?.data
-                        ?.features
+                      responseData?.results
                     )
-                    ? response
-                        .data
-                        .features
+                  ? responseData.results
+                  : Array.isArray(
+                      responseData?.data
+                    )
+                  ? responseData.data
+                  : [];
 
-                    : [];
 
-
-              const nextSuggestions =
-                rawResults
-                  .map(
-                    normalizePlace
-                  )
-                  .filter(
-                    Boolean
-                  )
+              const cleanedResults =
+                removeDuplicates(
+                  results
+                )
                   .filter(
                     place =>
-                      place.display_name
+                      getLatitude(place) !==
+                        null &&
+                      getLongitude(place) !==
+                        null
+                  )
+                  .sort(
+                    (
+                      first,
+                      second
+                    ) =>
+                      locationPriority(
+                        second,
+                        query
+                      ) -
+                      locationPriority(
+                        first,
+                        query
+                      )
                   )
                   .slice(
                     0,
-                    20
+                    MAX_RESULTS
                   );
 
 
               setSuggestions(
-                nextSuggestions
+                cleanedResults
               );
 
+              setOpen(true);
 
-              setOpen(
-                true
-              );
-
-
-              if (
-                nextSuggestions.length ===
-                0
-              ) {
-
-                console.warn(
-                  "NO AUTOCOMPLETE RESULTS FOR:",
-                  query
-                );
-
-                setError(
-                  `No places found for "${query}".`
-                );
-
-              } else {
-
-                console.log(
-                  "LOCATION AUTOCOMPLETE SUGGESTIONS:",
-                  nextSuggestions
-                );
-
-              }
-
-
+              setSearched(true);
             } catch (
               requestError
             ) {
-
-              /*
-               * Ignore cancelled requests.
-               */
               if (
                 requestError?.name ===
-                  "CanceledError"
-                ||
+                  "CanceledError" ||
                 requestError?.code ===
                   "ERR_CANCELED"
               ) {
-
                 return;
-
               }
-
 
               console.error(
-                "Location autocomplete error:",
-                requestError
-                  ?.response
-                  ?.data
-                ||
+                "Location suggestion error:",
                 requestError
               );
 
+              setSuggestions([]);
 
-              setSuggestions(
-                []
+              setOpen(true);
+
+              setSearched(true);
+
+              setError(
+                "Unable to search locations. Please try again."
               );
-
-
-              setOpen(
-                false
-              );
-
-
-              const backendMessage =
-                requestError
-                  ?.response
-                  ?.data
-                  ?.detail
-
-                ||
-
-                requestError
-                  ?.response
-                  ?.data
-                  ?.error;
-
-
-              if (
-                requestError
-                  ?.response
-                  ?.status ===
-                401
-              ) {
-
-                setError(
-                  "Please log in again to search locations."
-                );
-
-              } else if (
-                requestError
-                  ?.response
-                  ?.status ===
-                404
-              ) {
-
-                setError(
-                  "Location search endpoint was not found."
-                );
-
-              } else if (
-                requestError
-                  ?.response
-                  ?.status ===
-                503
-              ) {
-
-                setError(
-                  backendMessage ||
-                  "Location search service is temporarily unavailable."
-                );
-
-              } else {
-
-                setError(
-                  backendMessage ||
-                  "Unable to search locations."
-                );
-
-              }
-
-
             } finally {
-
               if (
                 !controller
                   .signal
                   .aborted
               ) {
-
-                setLoading(
-                  false
-                );
-
+                setLoading(false);
               }
-
             }
-
           },
-          300
+          450
         );
 
 
       return () => {
-
         window.clearTimeout(
           timer
         );
 
+        controller.abort();
       };
-
     },
     [
-      searchText,
+      value,
     ]
   );
 
 
-  /* ============================================================
-     CLEANUP
-  ============================================================ */
+  /* =========================================================
+     OUTSIDE CLICK
+  ========================================================= */
 
   useEffect(
     () => {
+      function handleOutside(
+        event
+      ) {
+        if (
+          wrapperRef.current &&
+          !wrapperRef
+            .current
+            .contains(
+              event.target
+            )
+        ) {
+          setOpen(false);
+        }
+      }
+
+
+      document.addEventListener(
+        "mousedown",
+        handleOutside
+      );
+
 
       return () => {
-
-        if (
-          abortRef.current
-        ) {
-
-          abortRef.current.abort();
-
-        }
-
-
-        if (
-          blurTimerRef.current
-        ) {
-
-          window.clearTimeout(
-            blurTimerRef.current
-          );
-
-        }
-
+        document.removeEventListener(
+          "mousedown",
+          handleOutside
+        );
       };
-
     },
     []
   );
 
 
-  /* ============================================================
-     INPUT CHANGE
-  ============================================================ */
+  /* =========================================================
+     SELECT LOCATION
+  ========================================================= */
 
-  function handleChange(
-    event
-  ) {
-
-    const nextValue =
-      event.target.value;
-
-
-    setSearchText(
-      nextValue
-    );
-
-
-    onChange?.(
-      nextValue
-    );
-
-
-    setError(
-      ""
-    );
-
-
-    if (
-      nextValue
-        .trim()
-        .length >=
-      2
-    ) {
-
-      setOpen(
-        true
-      );
-
-    } else {
-
-      setSuggestions(
-        []
-      );
-
-      setOpen(
-        false
-      );
-
-    }
-
-  }
-
-
-  /* ============================================================
-     SELECT PLACE
-  ============================================================ */
-
-  function selectPlace(
+  function choosePlace(
     place
   ) {
-
-    if (!place) {
-      return;
-    }
-
-
-    const label =
-      place.display_name ||
-      place.name ||
-      "";
-
-
-    /*
-     * Prevent another API request
-     * caused by updating searchText.
-     */
-    skipSearchRef.current =
-      true;
-
-
-    setSearchText(
-      label
-    );
-
-
-    setSuggestions(
-      []
-    );
-
-
-    setOpen(
-      false
-    );
-
-
-    setError(
-      ""
-    );
-
-
-    onChange?.(
-      label
-    );
-
-
-    onSelect?.({
+    const normalizedPlace = {
       ...place,
 
+      id:
+        place?.id ||
+        place?.place_id ||
+        place?.osm_id,
+
+      name:
+        getPlaceName(
+          place
+        ),
+
+      display_name:
+        getDisplayName(
+          place
+        ),
+
       latitude:
-        Number(
-          place.latitude
+        getLatitude(
+          place
         ),
 
       longitude:
-        Number(
-          place.longitude
+        getLongitude(
+          place
         ),
-    });
+    };
 
-  }
-
-
-  /* ============================================================
-     CLEAR
-  ============================================================ */
-
-  function clearLocation(
-    event
-  ) {
-
-    event.preventDefault();
-    event.stopPropagation();
-
-
-    if (
-      abortRef.current
-    ) {
-
-      abortRef.current.abort();
-
-    }
-
-
-    setSearchText(
-      ""
-    );
-
-
-    setSuggestions(
-      []
-    );
-
-
-    setOpen(
-      false
-    );
-
-
-    setError(
-      ""
-    );
-
-
-    onChange?.(
-      ""
-    );
-
-  }
-
-
-  /* ============================================================
-     FOCUS
-  ============================================================ */
-
-  function handleFocus() {
-
-    if (
-      suggestions.length >
-      0
-    ) {
-
-      setOpen(
-        true
-      );
-
-    }
-
-  }
-
-
-  /* ============================================================
-     BLUR
-  ============================================================ */
-
-  function handleBlur() {
 
     /*
-     * Delay closing so a suggestion
-     * can still receive its click.
+     * Use the short place name inside the input.
      */
-    blurTimerRef.current =
-      window.setTimeout(
-        () => {
+    onChange?.(
+      normalizedPlace.name
+    );
 
-          setOpen(
-            false
-          );
 
-        },
-        180
-      );
+    /*
+     * Send the complete selected place,
+     * including latitude and longitude,
+     * back to the parent component.
+     */
+    onSelect?.(
+      normalizedPlace
+    );
 
+
+    setSuggestions([]);
+
+    setOpen(false);
+
+    setSearched(false);
   }
 
 
-  /* ============================================================
+  /* =========================================================
+     CLEAR
+  ========================================================= */
+
+  function clearLocation() {
+    onChange?.("");
+
+    onSelect?.(null);
+
+    setSuggestions([]);
+
+    setOpen(false);
+
+    setSearched(false);
+
+    setError("");
+
+    window.setTimeout(
+      () =>
+        inputRef
+          .current
+          ?.focus(),
+      0
+    );
+  }
+
+
+  /* =========================================================
      KEYBOARD
-  ============================================================ */
+  ========================================================= */
 
   function handleKeyDown(
     event
   ) {
+    if (
+      event.key ===
+        "Escape"
+    ) {
+      setOpen(false);
+    }
+
 
     if (
       event.key ===
-      "Escape"
+        "Enter" &&
+      visibleSuggestions.length ===
+        1
     ) {
+      event.preventDefault();
 
-      setOpen(
-        false
+      choosePlace(
+        visibleSuggestions[0]
       );
-
     }
-
   }
 
 
-  /* ============================================================
-     RENDER
-  ============================================================ */
+  /* =========================================================
+     UI
+  ========================================================= */
 
   return (
-
     <div
+      ref={wrapperRef}
       className="fk-location-autocomplete"
     >
 
-
       <div
         className={
-          open
-            ? "fk-location-input active"
-            : "fk-location-input"
+          `fk-location-input ${
+            open
+              ? "active"
+              : ""
+          }`
         }
       >
 
         <Search
-          size={17}
+          size={19}
+          aria-hidden="true"
         />
 
 
         <input
+          ref={inputRef}
           type="text"
-          value={
-            searchText
-          }
-          placeholder={
-            placeholder
-          }
+          value={value}
+          placeholder={placeholder}
           autoComplete="off"
           spellCheck="false"
-          onChange={
-            handleChange
-          }
-          onFocus={
-            handleFocus
-          }
-          onBlur={
-            handleBlur
-          }
+          aria-label="Search location"
+          aria-expanded={open}
           onKeyDown={
             handleKeyDown
           }
-          aria-autocomplete="list"
-          aria-expanded={
-            open
+          onFocus={() => {
+            if (
+              suggestions.length >
+                0 ||
+              searched
+            ) {
+              setOpen(true);
+            }
+          }}
+          onChange={
+            event => {
+              onChange?.(
+                event
+                  .target
+                  .value
+              );
+            }
           }
         />
 
 
-        {
-          loading
-            ? (
+        {loading && (
+          <Loader2
+            size={18}
+            className="fk-location-loading"
+            aria-label="Searching"
+          />
+        )}
 
-              <Loader2
-                size={16}
-                className="fk-location-loading"
-              />
 
-            )
-            : searchText
-              ? (
-
-                <button
-                  type="button"
-                  className="fk-location-clear"
-                  onMouseDown={
-                    event =>
-                      event.preventDefault()
-                  }
-                  onClick={
-                    clearLocation
-                  }
-                  aria-label="Clear location"
-                >
-
-                  <X
-                    size={15}
-                  />
-
-                </button>
-
-              )
-              : null
-        }
+        {!loading &&
+          hasValue && (
+            <button
+              type="button"
+              className="fk-location-clear"
+              aria-label="Clear location"
+              onClick={
+                clearLocation
+              }
+            >
+              <X size={17} />
+            </button>
+          )}
 
       </div>
 
 
-      {/* ======================================================
-          ERROR
-      ====================================================== */}
+      {open && (
+        <div
+          className="fk-location-suggestions"
+          role="listbox"
+        >
 
-      {
-        error &&
-        (
+          {loading && (
+            <div className="fk-location-message">
+              <Loader2
+                size={17}
+                className="fk-location-loading"
+              />
 
-          <small
-            className="fk-location-error"
-          >
-            {
-              error
-            }
-          </small>
-
-        )
-      }
+              Searching places near you…
+            </div>
+          )}
 
 
-      {/* ======================================================
-          SUGGESTIONS
-      ====================================================== */}
-
-      {
-        open &&
-        suggestions.length >
-        0 &&
-        (
-
-          <div
-            className="fk-location-suggestions"
-            role="listbox"
-          >
-
-            {
-              suggestions.map(
-                (
-                  place,
-                  index
-                ) => {
-
-                  const secondaryText =
-                    [
-                      place.locality,
-                      place.county,
-                      place.region,
-                      place.country,
-                    ]
-                      .filter(
-                        Boolean
-                      )
-                      .filter(
-                        (
-                          item,
-                          itemIndex,
-                          items
-                        ) =>
-                          items.indexOf(
-                            item
-                          ) ===
-                          itemIndex
-                      )
-                      .join(
-                        ", "
-                      );
+          {!loading &&
+            error && (
+              <div className="fk-location-message is-error">
+                {error}
+              </div>
+            )}
 
 
-                  return (
-
-                    <button
-                      type="button"
-                      role="option"
-                      className="fk-location-suggestion"
-                      key={
-                        place.id ||
-                        `${place.display_name}-${index}`
-                      }
-                      onMouseDown={
-                        event => {
-
-                          /*
-                           * Prevent blur before
-                           * onClick executes.
-                           */
-                          event.preventDefault();
-
-                        }
-                      }
-                      onClick={() =>
-                        selectPlace(
-                          place
-                        )
-                      }
-                    >
-
-                      <span
-                        className="fk-location-suggestion-icon"
-                      >
-
-                        <MapPin
-                          size={17}
-                        />
-
-                      </span>
+          {!loading &&
+            !error &&
+            searched &&
+            visibleSuggestions.length ===
+              0 && (
+              <div className="fk-location-message">
+                No places found for
+                “{value}”. Try adding the
+                city, for example
+                “Indiranagar, Bengaluru”.
+              </div>
+            )}
 
 
-                      <span
-                        className="fk-location-suggestion-copy"
-                      >
-
-                        <strong>
-                          {
-                            place.name ||
-                            place.display_name
-                          }
-                        </strong>
-
-
-                        {
-                          secondaryText &&
-                          (
-
-                            <small>
-                              {
-                                secondaryText
-                              }
-                            </small>
-
-                          )
-                        }
-
-
-                        <span className="fk-location-full-label">
-                          {
-                            place.display_name
-                          }
-                        </span>
-
-                      </span>
-
-                    </button>
-
+          {!loading &&
+            visibleSuggestions.map(
+              (
+                place,
+                index
+              ) => {
+                const placeName =
+                  getPlaceName(
+                    place
                   );
 
-                }
-              )
-            }
+                const displayName =
+                  getDisplayName(
+                    place
+                  );
 
-          </div>
+                return (
+                  <button
+                    key={makePlaceId(
+                      place,
+                      index
+                    )}
+                    type="button"
+                    role="option"
+                    className="fk-location-suggestion"
+                    onClick={() =>
+                      choosePlace(
+                        place
+                      )
+                    }
+                  >
 
-        )
-      }
+                    <span className="fk-location-suggestion-icon">
+                      <MapPin
+                        size={17}
+                      />
+                    </span>
+
+
+                    <span className="fk-location-suggestion-copy">
+
+                      <strong>
+                        {placeName}
+                      </strong>
+
+
+                      {displayName &&
+                        displayName !==
+                          placeName && (
+                          <small>
+                            {displayName}
+                          </small>
+                        )}
+
+                    </span>
+
+                  </button>
+                );
+              }
+            )}
+
+        </div>
+      )}
 
     </div>
-
   );
-
 }

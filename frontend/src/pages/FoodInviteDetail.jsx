@@ -1,5 +1,5 @@
-
-import React, {
+import {
+  useCallback,
   useEffect,
   useState,
 } from "react";
@@ -9,50 +9,131 @@ import {
   useParams,
 } from "react-router-dom";
 
-import {
-  MapContainer,
-  Marker,
-  Popup,
-  TileLayer,
-} from "react-leaflet";
-
-import L from "leaflet";
-
 import api from "../api";
-
-import "leaflet/dist/leaflet.css";
 import "../styles/FoodInvites.css";
 
 
-// ============================================================
-// FOODKINDL OPENSTREETMAP MARKER
-// ============================================================
-
-const foodKindlMarker = L.divIcon({
-  className: "foodkindl-map-marker",
-
-  html: `
-    <div class="foodkindl-map-pin">
-      📍
-    </div>
-  `,
-
-  iconSize: [44, 44],
-  iconAnchor: [22, 42],
-  popupAnchor: [0, -38],
-});
+const ENDPOINT =
+  "/cook-togethers/";
 
 
-// ============================================================
-// MAIN COMPONENT
-// ============================================================
+function backendError(
+  error,
+  fallback
+) {
+  const data =
+    error?.response?.data;
+
+  if (
+    typeof data?.detail ===
+    "string"
+  ) {
+    return data.detail;
+  }
+
+  if (
+    typeof data?.error ===
+    "string"
+  ) {
+    return data.error;
+  }
+
+  if (
+    data &&
+    typeof data === "object"
+  ) {
+    const firstValue =
+      Object.values(data)[0];
+
+    if (
+      Array.isArray(firstValue)
+    ) {
+      return firstValue.join(" ");
+    }
+
+    if (
+      typeof firstValue ===
+      "string"
+    ) {
+      return firstValue;
+    }
+  }
+
+  return fallback;
+}
+
+
+function formatDate(value) {
+  if (!value) {
+    return "Date to be confirmed";
+  }
+
+  const date = new Date(
+    `${value}T00:00:00`
+  );
+
+  if (
+    Number.isNaN(
+      date.getTime()
+    )
+  ) {
+    return value;
+  }
+
+  return date.toLocaleDateString(
+    "en-IN",
+    {
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+    }
+  );
+}
+
+
+function formatTime(value) {
+  if (!value) {
+    return "Time to be confirmed";
+  }
+
+  const parts =
+    String(value).split(":");
+
+  if (parts.length < 2) {
+    return value;
+  }
+
+  const date = new Date();
+
+  date.setHours(
+    Number(parts[0]),
+    Number(parts[1]),
+    0,
+    0
+  );
+
+  return date.toLocaleTimeString(
+    "en-IN",
+    {
+      hour: "numeric",
+      minute: "2-digit",
+      hour12: true,
+    }
+  );
+}
+
 
 export default function FoodInviteDetail() {
-  const navigate = useNavigate();
+  const navigate =
+    useNavigate();
 
   const {
-    inviteId,
+    id,
+    inviteId: routeInviteId,
   } = useParams();
+
+  const inviteId =
+    routeInviteId || id;
 
   const [
     invite,
@@ -65,67 +146,84 @@ export default function FoodInviteDetail() {
   ] = useState(true);
 
   const [
+    actionLoading,
+    setActionLoading,
+  ] = useState(false);
+
+  const [
     error,
     setError,
   ] = useState("");
 
   const [
-    actionLoading,
-    setActionLoading,
-  ] = useState(false);
+    message,
+    setMessage,
+  ] = useState("");
 
 
-  // ==========================================================
-  // LOAD INVITE
-  // ==========================================================
+  const loadInvite =
+    useCallback(
+      async () => {
+        if (!inviteId) {
+          setError(
+            "Invitation ID is missing."
+          );
 
-  useEffect(() => {
-    loadInvite();
-  }, [inviteId]);
+          setLoading(false);
+
+          return;
+        }
+
+        setLoading(true);
+        setError("");
+
+        try {
+          const response =
+            await api.get(
+              `${ENDPOINT}${inviteId}/`
+            );
+
+          setInvite(
+            response.data
+          );
+        } catch (
+          requestError
+        ) {
+          console.error(
+            "COOK TOGETHER DETAIL ERROR:",
+            requestError
+              ?.response
+              ?.status,
+            requestError
+              ?.response
+              ?.data
+          );
+
+          setError(
+            backendError(
+              requestError,
+              "Unable to load this Cook Together."
+            )
+          );
+        } finally {
+          setLoading(false);
+        }
+      },
+      [
+        inviteId,
+      ]
+    );
 
 
-  async function loadInvite() {
-    setLoading(true);
-    setError("");
+  useEffect(
+    () => {
+      loadInvite();
+    },
+    [
+      loadInvite,
+    ]
+  );
 
-    try {
-      const response =
-        await api.get(
-          `/food-invites/${inviteId}/`
-        );
-
-      console.log(
-        "FOOD INVITE DETAIL RESPONSE:",
-        response?.data
-      );
-
-      setInvite(
-        response?.data || null
-      );
-    } catch (
-      requestError
-    ) {
-      console.error(
-        "FOOD INVITE DETAIL ERROR:",
-        requestError?.response?.status,
-        requestError?.response?.data,
-        requestError
-      );
-
-      setError(
-        requestError?.response?.data?.detail ||
-        requestError?.response?.data?.error ||
-        "Unable to load this Food Invite."
-      );
-    } finally {
-      setLoading(false);
-    }
-  }
-
-
-  // ==========================================================
-  // ACCEPT / DECLINE
-  // ==========================================================
 
   async function respond(
     action
@@ -134,42 +232,52 @@ export default function FoodInviteDetail() {
       return;
     }
 
+    const actionEndpoint =
+      action === "accept"
+        ? "accept-invitation"
+        : "decline-invitation";
+
     setActionLoading(true);
     setError("");
+    setMessage("");
 
     try {
       await api.post(
-        `/food-invites/${inviteId}/respond/`,
-        {
-          action,
-        }
+        `${ENDPOINT}${inviteId}/${actionEndpoint}/`
+      );
+
+      if (
+        action === "decline"
+      ) {
+        navigate(
+          "/food-invites",
+          {
+            replace: true,
+          }
+        );
+
+        return;
+      }
+
+      setMessage(
+        "Invitation accepted."
       );
 
       await loadInvite();
     } catch (
       requestError
     ) {
-      console.error(
-        "FOOD INVITE RESPONSE ERROR:",
-        requestError?.response?.status,
-        requestError?.response?.data,
-        requestError
-      );
-
       setError(
-        requestError?.response?.data?.detail ||
-        requestError?.response?.data?.error ||
-        "Unable to update this invite."
+        backendError(
+          requestError,
+          "Unable to update this invitation."
+        )
       );
     } finally {
       setActionLoading(false);
     }
   }
 
-
-  // ==========================================================
-  // DELETE INVITE
-  // ==========================================================
 
   async function deleteInvite() {
     if (actionLoading) {
@@ -178,7 +286,7 @@ export default function FoodInviteDetail() {
 
     const confirmed =
       window.confirm(
-        "Delete this Food Invite? This cannot be undone."
+        "Delete this Cook Together? This cannot be undone."
       );
 
     if (!confirmed) {
@@ -190,7 +298,7 @@ export default function FoodInviteDetail() {
 
     try {
       await api.delete(
-        `/food-invites/${inviteId}/`
+        `${ENDPOINT}${inviteId}/`
       );
 
       navigate(
@@ -202,17 +310,11 @@ export default function FoodInviteDetail() {
     } catch (
       requestError
     ) {
-      console.error(
-        "DELETE FOOD INVITE ERROR:",
-        requestError?.response?.status,
-        requestError?.response?.data,
-        requestError
-      );
-
       setError(
-        requestError?.response?.data?.detail ||
-        requestError?.response?.data?.error ||
-        "Unable to delete this Food Invite."
+        backendError(
+          requestError,
+          "Unable to delete this Cook Together."
+        )
       );
     } finally {
       setActionLoading(false);
@@ -220,112 +322,16 @@ export default function FoodInviteDetail() {
   }
 
 
-  // ==========================================================
-  // FORMAT DATE
-  // ==========================================================
-
-  function formatDateTime(
-    value
-  ) {
-    if (!value) {
-      return "Not specified";
-    }
-
-    try {
-      return new Intl.DateTimeFormat(
-        "en-IN",
-        {
-          dateStyle:
-            "medium",
-
-          timeStyle:
-            "short",
-        }
-      ).format(
-        new Date(value)
-      );
-    } catch {
-      return String(value);
-    }
-  }
-
-
-  // ==========================================================
-  // INVITE TYPE
-  // ==========================================================
-
-  function getTypeMeta(
-    value
-  ) {
-    if (
-      value ===
-      "cook_together"
-    ) {
-      return {
-        icon:
-          "🍳",
-
-        label:
-          "Cook Together",
-      };
-    }
-
-    if (
-      value ===
-      "dine_out"
-    ) {
-      return {
-        icon:
-          "🍽️",
-
-        label:
-          "Dine Out",
-      };
-    }
-
-    if (
-      value ===
-      "food_walk"
-    ) {
-      return {
-        icon:
-          "🚶",
-
-        label:
-          "Food Walk",
-      };
-    }
-
-    return {
-      icon:
-        "🍴",
-
-      label:
-        "Food Invite",
-    };
-  }
-
-
-  // ==========================================================
-  // LOADING
-  // ==========================================================
-
   if (loading) {
     return (
       <main className="fi-page">
-
         <div className="fi-empty">
-          Loading Food Invite...
+          Loading Cook Together...
         </div>
-
       </main>
     );
   }
 
-
-  // ==========================================================
-  // ERROR
-  // ==========================================================
 
   if (
     error &&
@@ -333,7 +339,6 @@ export default function FoodInviteDetail() {
   ) {
     return (
       <main className="fi-page">
-
         <div className="fi-alert fi-error">
           {error}
         </div>
@@ -349,720 +354,510 @@ export default function FoodInviteDetail() {
         >
           ← Back to Food Invites
         </button>
-
       </main>
     );
   }
 
-
-  // ==========================================================
-  // NOT FOUND
-  // ==========================================================
 
   if (!invite) {
     return (
       <main className="fi-page">
-
         <div className="fi-empty">
-          Invite not found.
+          Cook Together not found.
         </div>
-
       </main>
     );
   }
 
 
-  // ==========================================================
-  // DERIVED VALUES
-  // ==========================================================
-
-  const meta =
-    getTypeMeta(
-      invite.invite_type
-    );
-
-
   const myStatus =
     String(
-      invite.my_participant_status ||
+      invite
+        .my_invitation_status ||
       invite.status ||
-      ""
+      "open"
     ).toLowerCase();
 
-
-  const isCreator =
+  const isHost =
     Boolean(
-      invite.is_creator ||
-      invite.created_by_me ||
-      invite.creator_is_me
+      invite.is_host
     );
 
+  const isPendingInvitation =
+    Boolean(
+      !isHost &&
+      invite.is_invited &&
+      invite
+        .my_invitation_status ===
+        "pending"
+    );
 
   const invitedCount =
-    invite.invited_count ??
+    invite
+      .invited_members
+      ?.length ||
+    0;
+
+  const approvedCount =
+    invite
+      .approved_guest_count ||
     0;
 
 
-  const acceptedCount =
-    invite.accepted_count ??
-    0;
+  /*
+   * Exact-location map
+   *
+   * The backend can return any one of these:
+   *
+   * latitude and longitude
+   * lat and lng
+   * venue_latitude and venue_longitude
+   *
+   * If coordinates are unavailable, the map searches
+   * using exact_address and location_name.
+   */
 
+  const latitude = Number(
+    invite.latitude ??
+    invite.lat ??
+    invite.venue_latitude
+  );
 
-  const declinedCount =
-    invite.declined_count ??
-    0;
+  const longitude = Number(
+    invite.longitude ??
+    invite.lng ??
+    invite.lon ??
+    invite.venue_longitude
+  );
 
+  const hasCoordinates =
+    Number.isFinite(latitude) &&
+    Number.isFinite(longitude);
 
-  // ==========================================================
-  // LATITUDE / LONGITUDE
-  // ==========================================================
+  const addressQuery = [
+    invite.exact_address,
+    invite.location_name,
+  ]
+    .filter(Boolean)
+    .join(", ");
 
-  const latitude =
-    Number(
-      invite.latitude ??
-      invite.lat ??
-      invite.venue_latitude
-    );
-
-
-  const longitude =
-    Number(
-      invite.longitude ??
-      invite.lng ??
-      invite.lon ??
-      invite.venue_longitude
-    );
-
+  const mapQuery =
+    hasCoordinates
+      ? `${latitude},${longitude}`
+      : addressQuery;
 
   const hasMapLocation =
-    Number.isFinite(
-      latitude
-    )
-    &&
-    Number.isFinite(
-      longitude
-    );
+    Boolean(mapQuery);
 
-
-  // ==========================================================
-  // PRIVACY
-  //
-  // Creator: exact map
-  // Accepted invitee: exact map
-  // Pending invitee: do not reveal private address / exact map
-  // ==========================================================
-
-  const canSeeExactLocation =
-    isCreator ||
-    myStatus ===
-      "accepted";
-
-
-  const shouldShowMap =
-    hasMapLocation &&
-    canSeeExactLocation;
-
-
-  // ==========================================================
-  // OPENSTREETMAP URL
-  // ==========================================================
-
-  const openStreetMapUrl =
+  const mapEmbedUrl =
     hasMapLocation
-      ? (
-          "https://www.openstreetmap.org/" +
-          `?mlat=${latitude}` +
-          `&mlon=${longitude}` +
-          `#map=17/${latitude}/${longitude}`
-        )
+      ? `https://www.google.com/maps?q=${encodeURIComponent(
+          mapQuery
+        )}&z=16&output=embed`
+      : "";
+
+  const mapOpenUrl =
+    hasMapLocation
+      ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+          mapQuery
+        )}`
       : "";
 
 
-  // ==========================================================
-  // UI
-  // ==========================================================
-
   return (
-    <main className="fi-page">
+    <main className="fi-page fi-detail-page">
 
-      {/* ======================================================
-          HERO
-      ======================================================= */}
-
-      <section className="fi-hero">
-
-        <div>
-
-          <span className="fi-eyebrow">
-            {meta.icon}{" "}
-            {meta.label}
-          </span>
-
-          <h1>
-            {invite.title ||
-              meta.label}
-          </h1>
-
-          <p>
-            {invite.description ||
-              "A FoodKindl food experience."}
-          </p>
-
-        </div>
-
+      <section className="fi-detail-hero">
 
         <button
           type="button"
-          className="fi-secondary"
+          className="fi-detail-back"
           onClick={() =>
             navigate(
               "/food-invites"
             )
           }
         >
-          ← Food Invites
+          ← All invitations
         </button>
+
+
+        <div className="fi-detail-hero-copy">
+
+          <span className="fi-eyebrow">
+            🍳 COOK TOGETHER
+          </span>
+
+          <h1>
+            {
+              invite.title ||
+              invite.dish ||
+              "Cook Together"
+            }
+          </h1>
+
+          <p>
+            {
+              invite.description ||
+              `Join ${
+                invite.host_name ||
+                "a FoodKindl member"
+              } for a shared cooking experience.`
+            }
+          </p>
+
+
+          <div className="fi-detail-hero-meta">
+
+            <span>
+              🗓 {
+                formatDate(
+                  invite.event_date
+                )
+              }
+            </span>
+
+            <span>
+              ◷ {
+                formatTime(
+                  invite.start_time
+                )
+              }
+            </span>
+
+            <span>
+              ⌂ {
+                invite.location_name ||
+                "Location to be set"
+              }
+            </span>
+
+          </div>
+
+        </div>
+
+
+        <div
+          className="fi-detail-dish-mark"
+          aria-hidden="true"
+        >
+          <span>
+            🍲
+          </span>
+
+          <small>
+            {
+              invite.dish ||
+              "A shared meal"
+            }
+          </small>
+        </div>
 
       </section>
 
 
-      {/* ======================================================
-          DETAILS
-      ======================================================= */}
-
-      <section className="fi-create-card">
-
-        <div className="fi-form-heading">
-
-          <div>
-
-            <span className="fi-eyebrow">
-              INVITE DETAILS
-            </span>
-
-            <h2>
-              About this food moment
-            </h2>
-
-          </div>
-
-
-          <span
-            className={`fi-status fi-status-${myStatus}`}
-          >
-            {myStatus ||
-              "open"}
-          </span>
-
+      {error && (
+        <div className="fi-alert fi-error">
+          {error}
         </div>
+      )}
 
 
-        <div className="fi-grid">
-
-          {/* TYPE */}
-
-          <div className="fi-field">
-
-            <span>
-              Type
-            </span>
-
-            <div>
-              {meta.icon}{" "}
-              {meta.label}
-            </div>
-
-          </div>
+      {message && (
+        <div
+          className="fi-alert fi-success"
+          role="status"
+        >
+          {message}
+        </div>
+      )}
 
 
-          {/* CUISINE */}
+      <section className="fi-detail-layout">
 
-          <div className="fi-field">
+        <div className="fi-detail-main">
 
-            <span>
-              Cuisine
-            </span>
+          <div className="fi-detail-heading">
 
             <div>
-              {invite.cuisine ||
-                "Not specified"}
-            </div>
-
-          </div>
-
-
-          {/* START */}
-
-          <div className="fi-field">
-
-            <span>
-              Starts
-            </span>
-
-            <div>
-              {formatDateTime(
-                invite.start_at
-              )}
-            </div>
-
-          </div>
-
-
-          {/* END */}
-
-          <div className="fi-field">
-
-            <span>
-              Ends
-            </span>
-
-            <div>
-              {formatDateTime(
-                invite.end_at
-              )}
-            </div>
-
-          </div>
-
-
-          {/* VENUE */}
-
-          <div className="fi-field">
-
-            <span>
-              Venue
-            </span>
-
-            <div>
-              {invite.venue_name ||
-                "Not specified"}
-            </div>
-
-          </div>
-
-
-          {/* PUBLIC LOCATION */}
-
-          <div className="fi-field">
-
-            <span>
-              Public location
-            </span>
-
-            <div>
-              {invite.location_label ||
-                "Not specified"}
-            </div>
-
-          </div>
-
-
-          {/* PEOPLE */}
-
-          <div className="fi-field">
-
-            <span>
-              People
-            </span>
-
-            <div>
-              Invited:{" "}
-              {invitedCount}
-            </div>
-
-            <div>
-              Accepted:{" "}
-              {acceptedCount}
-            </div>
-
-            <div>
-              Declined:{" "}
-              {declinedCount}
-            </div>
-
-            <div>
-              Capacity:{" "}
-              {invite.max_participants ||
-                "—"}
-            </div>
-
-          </div>
-
-
-          {/* CONTRIBUTION */}
-
-          <div className="fi-field">
-
-            <span>
-              Contribution
-            </span>
-
-            <div>
-              {Number(
-                invite.kitchen_contribution ||
-                0
-              ) > 0
-                ? `₹${invite.kitchen_contribution}`
-                : "No contribution"}
-            </div>
-
-          </div>
-
-
-          {/* SAFETY */}
-
-          {invite.verified_only && (
-
-            <div className="fi-field">
-
-              <span>
-                Safety preference
+              <span className="fi-eyebrow">
+                INVITATION DETAILS
               </span>
 
-              <div>
-                ✓ Verified profiles only
-              </div>
-
+              <h2>
+                Everything you need to know
+              </h2>
             </div>
 
-          )}
+
+            <span
+              className={
+                `fi-status fi-status-${myStatus}`
+              }
+            >
+              {myStatus}
+            </span>
+
+          </div>
 
 
-          {invite.women_only && (
+          <div className="fi-detail-grid">
 
-            <div className="fi-field">
-
-              <span>
-                Invite preference
-              </span>
-
-              <div>
-                ♀ Women only
-              </div>
-
-            </div>
-
-          )}
+            <DetailItem
+              icon="♥"
+              label="Hosted by"
+              value={
+                invite.host_name ||
+                "FoodKindl member"
+              }
+            />
 
 
-          {/* PRIVATE ADDRESS */}
+            <DetailItem
+              icon="🍛"
+              label="What we're cooking"
+              value={
+                invite.dish ||
+                "Not specified"
+              }
+            />
 
-          {
-            invite.private_address &&
-            canSeeExactLocation &&
-            (
 
-              <div className="fi-field fi-span-2">
+            <DetailItem
+              icon="🗓"
+              label="Date"
+              value={
+                formatDate(
+                  invite.event_date
+                )
+              }
+            />
 
-                <span>
-                  Exact address
-                </span>
+
+            <DetailItem
+              icon="◷"
+              label="Time"
+              value={
+                formatTime(
+                  invite.start_time
+                )
+              }
+            />
+
+
+            <DetailItem
+              icon="⌂"
+              label="Area or venue"
+              value={
+                invite.location_name ||
+                "Not specified"
+              }
+              wide
+            />
+
+
+            <DetailItem
+              icon="📍"
+              label="Exact address"
+              value={
+                invite.exact_address ||
+                "The host has not added an exact address yet."
+              }
+              wide
+              accent
+            />
+
+
+            <DetailItem
+              icon="👥"
+              label="Confirmed guests"
+              value={
+                `${approvedCount}/${
+                  invite.maximum_guests ||
+                  "—"
+                }`
+              }
+            />
+
+
+            <DetailItem
+              icon="✦"
+              label="People invited"
+              value={
+                String(
+                  invitedCount
+                )
+              }
+            />
+
+
+            {invite.dietary_notes && (
+              <DetailItem
+                icon="🌿"
+                label="Dietary notes"
+                value={
+                  invite.dietary_notes
+                }
+                wide
+              />
+            )}
+
+          </div>
+
+
+          {hasMapLocation && (
+            <section className="fi-detail-map">
+
+              <div className="fi-detail-map-heading">
 
                 <div>
-                  {String(
-                    invite.private_address
-                  )}
-                </div>
-
-              </div>
-
-            )
-          }
-
-
-          {/* LATITUDE / LONGITUDE */}
-
-          {
-            hasMapLocation &&
-            canSeeExactLocation &&
-            (
-
-              <>
-                <div className="fi-field">
-
-                  <span>
-                    Latitude
-                  </span>
-
-                  <div>
-                    {latitude}
-                  </div>
-
-                </div>
-
-
-                <div className="fi-field">
-
-                  <span>
-                    Longitude
-                  </span>
-
-                  <div>
-                    {longitude}
-                  </div>
-
-                </div>
-              </>
-
-            )
-          }
-
-        </div>
-
-
-        {/* ====================================================
-            LOCATION PRIVACY MESSAGE
-        ===================================================== */}
-
-        {
-          hasMapLocation &&
-          !canSeeExactLocation &&
-          (
-
-            <div className="fi-alert fi-location-private">
-
-              📍 Exact meeting location will be shown after
-              you accept this Food Invite.
-
-            </div>
-
-          )
-        }
-
-
-        {/* ====================================================
-            OPENSTREETMAP
-        ===================================================== */}
-
-        {
-          shouldShowMap &&
-          (
-
-            <section className="fi-location-section">
-
-              <div className="fi-location-header">
-
-                <div>
-
                   <span className="fi-eyebrow">
                     MEETING LOCATION
                   </span>
 
-                  <h2>
-                    Where you'll meet
-                  </h2>
+                  <h3>
+                    Find the exact place
+                  </h3>
 
                   <p>
-                    {invite.venue_name ||
-                      invite.location_label ||
-                      "FoodKindl meeting point"}
-                  </p>
-
-                </div>
-
-              </div>
-
-
-              <div className="fi-osm-container">
-
-                <MapContainer
-                  center={[
-                    latitude,
-                    longitude,
-                  ]}
-                  zoom={16}
-                  scrollWheelZoom={false}
-                  className="fi-osm-map"
-                >
-
-                  <TileLayer
-                    attribution="&copy; OpenStreetMap contributors"
-                    url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                  />
-
-
-                  <Marker
-                    position={[
-                      latitude,
-                      longitude,
-                    ]}
-                    icon={
-                      foodKindlMarker
+                    {
+                      invite.exact_address ||
+                      invite.location_name
                     }
-                  >
-
-                    <Popup>
-
-                      <strong>
-                        {invite.venue_name ||
-                          "FoodKindl meetup"}
-                      </strong>
-
-                      {
-                        invite.location_label &&
-                        (
-                          <>
-                            <br />
-
-                            {
-                              invite.location_label
-                            }
-                          </>
-                        )
-                      }
-
-                      {
-                        invite.private_address &&
-                        canSeeExactLocation &&
-                        (
-                          <>
-                            <br />
-
-                            {
-                              invite.private_address
-                            }
-                          </>
-                        )
-                      }
-
-                    </Popup>
-
-                  </Marker>
-
-                </MapContainer>
-
-              </div>
-
-
-              <div className="fi-location-footer">
-
-                <div>
-                  📍{" "}
-                  {invite.location_label ||
-                    invite.venue_name ||
-                    "Meeting location"}
+                  </p>
                 </div>
 
 
                 <a
-                  className="fi-secondary"
-                  href={
-                    openStreetMapUrl
-                  }
+                  className="fi-map-link"
+                  href={mapOpenUrl}
                   target="_blank"
                   rel="noopener noreferrer"
                 >
-                  View on OpenStreetMap ↗
+                  Open in Google Maps ↗
                 </a>
 
               </div>
 
+
+              <div className="fi-map-frame">
+                <iframe
+                  title="Cook Together meeting location"
+                  src={mapEmbedUrl}
+                  loading="lazy"
+                  referrerPolicy="no-referrer-when-downgrade"
+                  allowFullScreen
+                />
+              </div>
+
+
+              <div className="fi-map-coordinate-note">
+
+                <span>
+                  📍 {
+                    hasCoordinates
+                      ? "Pinned using exact coordinates"
+                      : "Located using the address"
+                  }
+                </span>
+
+                {hasCoordinates && (
+                  <small>
+                    {latitude.toFixed(6)},{" "}
+                    {longitude.toFixed(6)}
+                  </small>
+                )}
+
+              </div>
+
             </section>
-
-          )
-        }
+          )}
 
 
-        {/* ====================================================
-            ERROR
-        ===================================================== */}
+          <div className="fi-detail-badges">
 
-        {
-          error &&
-          (
+            {invite.verified_only && (
+              <span>
+                ✓ Verified profiles only
+              </span>
+            )}
 
-            <div className="fi-alert fi-error">
-              {error}
-            </div>
+            {invite.women_only && (
+              <span>
+                ♀ Women-only gathering
+              </span>
+            )}
 
-          )
-        }
+          </div>
+
+        </div>
 
 
-        {/* ====================================================
-            ACTIONS
-        ===================================================== */}
+        <aside className="fi-rsvp-card">
 
-        <div className="fi-form-actions">
+          {/* <span className="fi-rsvp-kicker">
+            YOUR INVITATION
+          </span>
 
-          <button
-            type="button"
-            className="fi-secondary"
-            onClick={() =>
-              navigate(
-                "/food-invites"
-              )
+          <h2>
+            {
+              isHost
+                ? "You’re hosting this table"
+                : myStatus === "approved"
+                ? "Your seat is confirmed"
+                : "Will you join the table?"
             }
-          >
-            Back
-          </button>
+          </h2>
+
+          <p>
+            {
+              isHost
+                ? "Manage this invitation and keep an eye on confirmed guests."
+                : "Good food tastes better with good company."
+            }
+          </p> */}
 
 
-          {/* CREATOR ACTIONS */}
+          {/* <div className="fi-rsvp-count">
 
-          {
-            isCreator &&
-            (
-              <>
+            <strong>
+              {approvedCount}
+            </strong>
 
-                <button
-                  type="button"
-                  className="fi-secondary"
-                  onClick={() =>
-                    navigate(
-                      `/food-invites/${inviteId}/edit`
-                    )
-                  }
-                >
-                  Edit Invite
-                </button>
+            <span>
+              of {
+                invite.maximum_guests ||
+                "—"
+              } seats confirmed
+            </span>
+
+          </div> */}
 
 
-                <button
-                  type="button"
-                  className="fi-decline"
-                  disabled={
-                    actionLoading
-                  }
-                  onClick={
-                    deleteInvite
-                  }
-                >
-                  {actionLoading
+          <div className="fi-rsvp-actions">
+
+            {isHost && (
+              <button
+                type="button"
+                className="fi-decline"
+                disabled={
+                  actionLoading
+                }
+                onClick={
+                  deleteInvite
+                }
+              >
+                {
+                  actionLoading
                     ? "Please wait..."
-                    : "Delete Invite"}
-                </button>
-
-              </>
-            )
-          }
+                    : "Delete invitation"
+                }
+              </button>
+            )}
 
 
-          {/* INVITEE ACTIONS */}
-
-          {
-            !isCreator &&
-            myStatus ===
-              "invited" &&
-            (
+            {isPendingInvitation && (
               <>
-
-                <button
-                  type="button"
-                  className="fi-decline"
-                  disabled={
-                    actionLoading
-                  }
-                  onClick={() =>
-                    respond(
-                      "decline"
-                    )
-                  }
-                >
-                  Decline
-                </button>
-
-
                 <button
                   type="button"
                   className="fi-primary"
@@ -1070,22 +865,99 @@ export default function FoodInviteDetail() {
                     actionLoading
                   }
                   onClick={() =>
-                    respond(
-                      "accept"
+                    respond("accept")
+                  }
+                >
+                  {
+                    actionLoading
+                      ? "Please wait..."
+                      : "Accept invitation"
+                  }
+                </button>
+
+                <button
+                  type="button"
+                  className="fi-decline"
+                  disabled={
+                    actionLoading
+                  }
+                  onClick={() =>
+                    respond("decline")
+                  }
+                >
+                  Decline
+                </button>
+              </>
+            )}
+
+
+            {!isHost &&
+              !isPendingInvitation && (
+                <button
+                  type="button"
+                  className="fi-secondary"
+                  onClick={() =>
+                    navigate(
+                      "/food-invites"
                     )
                   }
                 >
-                  Accept Invite
+                  Back to invitations
                 </button>
+              )}
 
-              </>
-            )
-          }
+          </div>
 
-        </div>
+
+          <small>
+            FoodKindl · Meet people through food
+          </small>
+
+        </aside>
 
       </section>
 
     </main>
+  );
+}
+
+
+function DetailItem({
+  icon,
+  label,
+  value,
+  wide = false,
+  accent = false,
+}) {
+  const className = [
+    "fi-detail-item",
+    wide
+      ? "is-wide"
+      : "",
+    accent
+      ? "is-accent"
+      : "",
+  ]
+    .filter(Boolean)
+    .join(" ");
+
+  return (
+    <div className={className}>
+
+      <span className="fi-detail-item-icon">
+        {icon}
+      </span>
+
+      <div>
+        <small>
+          {label}
+        </small>
+
+        <strong>
+          {value}
+        </strong>
+      </div>
+
+    </div>
   );
 }

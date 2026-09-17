@@ -1,116 +1,71 @@
-
 import React, {
+  useCallback,
   useEffect,
   useMemo,
   useState,
 } from "react";
 
-import {
-  useNavigate,
-} from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 
 import api from "../api";
 import "../styles/FoodInvites.css";
 
-const INVITES_ENDPOINT =
-  "/food-invites/";
+
+const COOK_TOGETHER_ENDPOINT =
+  "/cook-togethers/";
+
+const DINE_OUT_ENDPOINT =
+  "/dineout/dine-outs/";
+
 
 const INVITE_TYPES = [
   {
-    value:
-      "cook_together",
-
-    label:
-      "Cook Together",
-
-    icon:
-      "🍳",
-
+    value: "cook_together",
+    number: "01",
+    label: "Cook Together",
+    icon: "🍳",
     description:
       "Invite people nearby to cook and share a meal together at home, a clubhouse or another venue.",
-
-    buttonText:
-      "Create Cook Together",
-
-    route:
-      "/cook-together",
+    buttonText: "Create Cook Together",
+    route: "/cook-together",
   },
-
   {
-    value:
-      "dine_out",
-
-    label:
-      "Dine Out",
-
-    icon:
-      "🍽️",
-
+    value: "dine_out",
+    number: "02",
+    label: "Dine Out",
+    icon: "🍽️",
     description:
       "Choose a restaurant or café, invite people and turn dining out into a shared experience.",
-
-    buttonText:
-      "Plan a Dine Out",
-
-    route:
-      "/dine-out",
+    buttonText: "Plan a Dine Out",
+    route: "/dine-out",
   },
-
   {
-    value:
-      "food_walk",
-
-    label:
-      "Food Walk",
-
-    icon:
-      "🚶",
-
+    value: "food_walk",
+    number: "03",
+    label: "Food Walk",
+    icon: "🚶",
     description:
       "Discover great food along a walk, drive or journey and invite others to join your route.",
-
-    buttonText:
-      "Plan a Food Walk",
-
-    route:
-      "/food-walk",
+    buttonText: "Plan a Food Walk",
+    route: "/food-walk",
   },
 ];
 
-function formatDateTime(
-  value
-) {
-  if (!value) {
-    return "Time not set";
+
+function extractResults(response) {
+  const data = response?.data;
+
+  if (Array.isArray(data)) {
+    return data;
   }
 
-  try {
-    return new Intl.DateTimeFormat(
-      "en-IN",
-      {
-        dateStyle:
-          "medium",
-
-        timeStyle:
-          "short",
-      }
-    ).format(
-      new Date(value)
-    );
-  } catch {
-    return value;
+  if (Array.isArray(data?.results)) {
+    return data.results;
   }
+
+  return [];
 }
 
-function getStatus(
-  invite
-) {
-  return String(
-    invite?.my_status ||
-      invite?.status ||
-      "pending"
-  ).toLowerCase();
-}
 
 function backendError(
   error,
@@ -119,82 +74,189 @@ function backendError(
   const data =
     error?.response?.data;
 
-  if (
-    typeof data?.detail ===
-    "string"
-  ) {
-    return data.detail;
-  }
-
-  if (
-    typeof data?.error ===
-    "string"
-  ) {
-    return data.error;
-  }
-
-  if (
-    typeof data?.message ===
-    "string"
-  ) {
-    return data.message;
-  }
-
-  if (
-    Array.isArray(
-      data?.non_field_errors
-    ) &&
-    data.non_field_errors
-      .length > 0
-  ) {
-    return data
-      .non_field_errors[0];
-  }
-
-  if (
-    data &&
-    typeof data ===
-      "object"
-  ) {
-    const first =
-      Object.entries(
-        data
-      )[0];
-
-    if (first) {
-      const [
-        key,
-        value,
-      ] = first;
-
-      if (
-        Array.isArray(
-          value
-        )
-      ) {
-        return `${key}: ${value.join(
-          ", "
-        )}`;
-      }
-
-      if (
-        typeof value ===
-        "string"
-      ) {
-        return `${key}: ${value}`;
-      }
-    }
-  }
-
-  if (
-    error?.message ===
-    "Network Error"
-  ) {
-    return "Unable to connect to the FoodKindl server.";
-  }
-
-  return fallback;
+  return (
+    data?.detail ||
+    data?.error ||
+    data?.message ||
+    fallback
+  );
 }
+
+
+function formatDateTime(invite) {
+  const dateValue =
+    invite?.starts_at ||
+    (
+      invite?.event_date
+        ? `${invite.event_date}T${
+            invite.start_time ||
+            "00:00:00"
+          }`
+        : null
+    );
+
+  if (!dateValue) {
+    return "Date not specified";
+  }
+
+  try {
+    return new Intl.DateTimeFormat(
+      "en-IN",
+      {
+        dateStyle: "medium",
+        timeStyle: "short",
+      }
+    ).format(
+      new Date(dateValue)
+    );
+  } catch {
+    return dateValue;
+  }
+}
+
+
+function inviteDateValue(invite) {
+  if (invite?.starts_at) {
+    const value =
+      new Date(
+        invite.starts_at
+      ).getTime();
+
+    return Number.isNaN(value)
+      ? null
+      : value;
+  }
+
+  if (!invite?.event_date) {
+    return null;
+  }
+
+  const value =
+    new Date(
+      `${invite.event_date}T${
+        invite.start_time ||
+        "00:00:00"
+      }`
+    ).getTime();
+
+  return Number.isNaN(value)
+    ? null
+    : value;
+}
+
+
+function getStatus(invite) {
+  return String(
+    invite?.display_status ||
+    invite?.my_invitation_status ||
+    invite?.status ||
+    "pending"
+  ).toLowerCase();
+}
+
+
+function normalizeCookTogether(
+  invite
+) {
+  return {
+    ...invite,
+
+    invite_type:
+      "cook_together",
+
+    unique_key:
+      `cook-${invite.id}`,
+
+    details_route:
+      `/food-invites/${invite.id}`,
+
+    type_label:
+      "Cook Together",
+
+    type_icon:
+      "🍳",
+
+    display_status:
+      getStatus(invite),
+  };
+}
+
+
+function normalizeDineOut(invite) {
+  const isHost =
+    Boolean(
+      invite.is_host
+    );
+
+  const isPublic =
+    invite.visibility ===
+    "public";
+
+  const responseStatus =
+    invite.my_response_status;
+
+  return {
+    ...invite,
+
+    invite_type:
+      "dine_out",
+
+    unique_key:
+      `dine-${invite.id}`,
+
+    details_route:
+      `/dine-out/${invite.id}`,
+
+    type_label:
+      "Dine Out",
+
+    type_icon:
+      "🍽️",
+
+    location_name:
+      invite.restaurant_address ||
+      invite.restaurant_name,
+
+    dish:
+      invite.restaurant_cuisine ||
+      invite.restaurant_name,
+
+    approved_guest_count:
+      Number(
+        invite.accepted_guests ||
+        0
+      ),
+
+    host_name:
+      invite.host?.name ||
+      invite.host?.username ||
+      "FoodKindl member",
+
+    is_host:
+      isHost,
+
+    is_invited:
+      !isHost &&
+      !isPublic &&
+      responseStatus !== null &&
+      responseStatus !== undefined,
+
+    my_invitation_status:
+      responseStatus,
+
+    display_status:
+      isHost
+        ? "hosting"
+        : isPublic
+          ? responseStatus ===
+            "accepted"
+            ? "joined"
+            : "open"
+          : responseStatus ||
+            "pending",
+  };
+}
+
 
 export default function FoodInvites() {
   const navigate =
@@ -218,53 +280,234 @@ export default function FoodInvites() {
   ] = useState(true);
 
   const [
-    message,
-    setMessage,
-  ] = useState("");
+    actionId,
+    setActionId,
+  ] = useState(null);
 
   const [
     error,
     setError,
   ] = useState("");
 
-  // =========================================================
-  // LOAD INVITES
-  // =========================================================
+  const [
+    message,
+    setMessage,
+  ] = useState("");
 
-  async function loadInvites() {
+
+  const loadInvites = useCallback(async (
+    tab
+  ) => {
     setLoading(true);
     setError("");
 
     try {
-      const response =
-        await api.get(
-          INVITES_ENDPOINT
+      let cookUrls = [];
+      let dineUrls = [];
+
+      if (tab === "pending") {
+        cookUrls = [
+          `${COOK_TOGETHER_ENDPOINT}` +
+          "my-invitations/?status=pending",
+        ];
+
+        dineUrls = [
+          `${DINE_OUT_ENDPOINT}invitations/`,
+        ];
+      } else if (tab === "created") {
+        cookUrls = [
+          `${COOK_TOGETHER_ENDPOINT}created-by-me/`,
+        ];
+
+        dineUrls = [
+          `${DINE_OUT_ENDPOINT}mine/`,
+        ];
+      } else if (tab === "past") {
+        cookUrls = [
+          `${COOK_TOGETHER_ENDPOINT}` +
+          "my-invitations/?status=approved",
+          `${COOK_TOGETHER_ENDPOINT}created-by-me/`,
+        ];
+
+        dineUrls = [
+          `${DINE_OUT_ENDPOINT}mine/`,
+        ];
+      } else {
+        /*
+         * UPCOMING:
+         *
+         * Load approved Cook Together
+         * invitations and the main Dine
+         * Out endpoint.
+         *
+         * The main Dine Out endpoint
+         * returns:
+         * - All public events
+         * - Private events shared with
+         *   the logged-in member
+         * - Events hosted by the member
+         */
+        cookUrls = [
+          `${COOK_TOGETHER_ENDPOINT}` +
+          "my-invitations/?status=approved",
+        ];
+
+        dineUrls = [
+          DINE_OUT_ENDPOINT,
+        ];
+      }
+
+      const requests = [
+        ...cookUrls.map(url => ({
+          type: "cook",
+          url,
+        })),
+        ...dineUrls.map(url => ({
+          type: "dine",
+          url,
+        })),
+      ];
+
+      const settledResponses =
+        await Promise.allSettled(
+          requests.map(request =>
+            api.get(request.url)
+          )
         );
 
-      const data =
-        response?.data;
+      const cookResponses = [];
+      const dineResponses = [];
+      const failedRequests = [];
 
-      setInvites(
-        Array.isArray(
-          data
-        )
-          ? data
-          : Array.isArray(
-              data?.results
-            )
-          ? data.results
-          : []
+      settledResponses.forEach(
+        (result, index) => {
+          const request = requests[index];
+
+          if (result.status === "fulfilled") {
+            if (request.type === "cook") {
+              cookResponses.push(result.value);
+            } else {
+              dineResponses.push(result.value);
+            }
+
+            return;
+          }
+
+          failedRequests.push({
+            ...request,
+            error: result.reason,
+          });
+
+          console.error("FOOD INVITES REQUEST ERROR:", {
+            url: request.url,
+            status: result.reason?.response?.status,
+            data: result.reason?.response?.data,
+            message: result.reason?.message,
+          });
+        }
       );
-    } catch (
-      requestError
-    ) {
+
+      if (
+        requests.length > 0 &&
+        failedRequests.length === requests.length
+      ) {
+        throw failedRequests[0].error;
+      }
+
+      const cookInvites =
+        cookResponses
+          .flatMap(
+            extractResults
+          )
+          .map(
+            normalizeCookTogether
+          );
+
+      let dineInvites =
+        dineResponses
+          .flatMap(
+            extractResults
+          )
+          .map(
+            normalizeDineOut
+          );
+
+      if (tab === "pending") {
+        dineInvites =
+          dineInvites.filter(
+            invite =>
+              invite
+                .my_invitation_status ===
+              "pending"
+          );
+      }
+
+      if (tab === "created") {
+        dineInvites =
+          dineInvites.filter(
+            invite =>
+              invite.is_host
+          );
+      }
+
+      const combined = [
+        ...cookInvites,
+        ...dineInvites,
+      ];
+
+      const unique =
+        Array.from(
+          new Map(
+            combined.map(
+              invite => [
+                invite.unique_key,
+                invite,
+              ]
+            )
+          ).values()
+        );
+
+      unique.sort(
+        (
+          first,
+          second
+        ) => {
+          const firstDate =
+            inviteDateValue(first);
+
+          const secondDate =
+            inviteDateValue(second);
+
+          if (
+            firstDate === null &&
+            secondDate === null
+          ) {
+            return 0;
+          }
+
+          if (firstDate === null) {
+            return 1;
+          }
+
+          if (secondDate === null) {
+            return -1;
+          }
+
+          return (
+            firstDate -
+            secondDate
+          );
+        }
+      );
+
+      setInvites(unique);
+    } catch (requestError) {
       console.error(
-        "FOOD INVITES LOAD ERROR:",
+        "FOOD INVITES ERROR:",
         requestError?.response
           ?.status,
         requestError?.response
-          ?.data,
-        requestError
+          ?.data
       );
 
       setError(
@@ -276,242 +519,290 @@ export default function FoodInvites() {
     } finally {
       setLoading(false);
     }
-  }
-
-  useEffect(() => {
-    loadInvites();
   }, []);
 
-  // =========================================================
-  // FILTER INVITES
-  // =========================================================
 
-  const filteredInvites =
-    useMemo(() => {
-      const now =
-        Date.now();
+  useEffect(
+    () => {
+      loadInvites(
+        activeTab
+      );
+    },
+    [activeTab, loadInvites]
+  );
 
-      if (
-        activeTab ===
-        "pending"
-      ) {
-        return invites.filter(
-          (invite) =>
-            getStatus(
-              invite
-            ) ===
-            "pending"
-        );
-      }
 
-      if (
-        activeTab ===
-        "past"
-      ) {
-        return invites.filter(
-          (invite) => {
-            const time =
-              invite.end_at ||
-              invite.start_at;
-
-            if (!time) {
-              return false;
-            }
-
-            return (
-              new Date(
-                time
-              ).getTime() <
-              now
-            );
-          }
-        );
-      }
-
-      if (
-        activeTab ===
-        "created"
-      ) {
-        return invites.filter(
-          (invite) =>
-            invite.is_creator ||
-            invite.created_by_me ||
-            invite.creator_is_me
-        );
-      }
-
-      return invites.filter(
-        (invite) => {
-          const time =
-            invite.end_at ||
-            invite.start_at;
-
-          if (!time) {
-            return true;
-          }
-
-          return (
-            new Date(
-              time
-            ).getTime() >=
-            now
+  useEffect(
+    () => {
+      function refreshUpcoming() {
+        if (
+          activeTab ===
+          "upcoming"
+        ) {
+          loadInvites(
+            "upcoming"
           );
         }
-      );
-    }, [
-      invites,
-      activeTab,
-    ]);
+      }
 
-  // =========================================================
-  // OPEN SEPARATE PAGE
-  // =========================================================
-
-  function openInviteType(
-    typeValue
-  ) {
-    const inviteType =
-      INVITE_TYPES.find(
-        (item) =>
-          item.value ===
-          typeValue
+      window.addEventListener(
+        "focus",
+        refreshUpcoming
       );
 
-    if (
-      !inviteType
-        ?.route
-    ) {
-      return;
-    }
+      return () => {
+        window.removeEventListener(
+          "focus",
+          refreshUpcoming
+        );
+      };
+    },
+    [activeTab, loadInvites]
+  );
 
+
+  const filteredInvites =
+    useMemo(
+      () => {
+        const now =
+          Date.now();
+
+        if (
+          activeTab ===
+          "past"
+        ) {
+          return invites.filter(
+            invite => {
+              const value =
+                inviteDateValue(
+                  invite
+                );
+
+              return (
+                value !== null &&
+                value < now
+              );
+            }
+          );
+        }
+
+        if (
+          activeTab ===
+          "upcoming"
+        ) {
+          return invites.filter(
+            invite => {
+              const value =
+                inviteDateValue(
+                  invite
+                );
+
+              return (
+                value === null ||
+                value >= now
+              );
+            }
+          );
+        }
+
+        return invites;
+      },
+      [
+        activeTab,
+        invites,
+      ]
+    );
+
+
+  function openInviteType(type) {
     navigate(
-      inviteType.route
+      type.route
     );
   }
 
-  // =========================================================
-  // ACCEPT / DECLINE
-  // =========================================================
 
   async function respondToInvite(
-    inviteId,
+    invite,
     action
   ) {
+    if (actionId) {
+      return;
+    }
+
+    setActionId(
+      invite.unique_key
+    );
+
     setError("");
     setMessage("");
 
     try {
-      await api.post(
-        `${INVITES_ENDPOINT}${inviteId}/respond/`,
-        {
-          action,
-        }
-      );
+      if (
+        invite.invite_type ===
+        "dine_out"
+      ) {
+        await api.post(
+          `${DINE_OUT_ENDPOINT}` +
+          `${invite.id}/` +
+          `${action}/`
+        );
+      } else {
+        const endpoint =
+          action === "accept"
+            ? "accept-invitation"
+            : "decline-invitation";
 
-      setMessage(
-        action ===
-          "accept"
-          ? "Invite accepted."
-          : "Invite declined."
-      );
+        await api.post(
+          `${COOK_TOGETHER_ENDPOINT}` +
+          `${invite.id}/` +
+          `${endpoint}/`
+        );
+      }
 
-      await loadInvites();
-    } catch (
-      requestError
-    ) {
-      console.error(
-        "RESPOND FOOD INVITE ERROR:",
-        requestError?.response
-          ?.status,
-        requestError?.response
-          ?.data,
-        requestError
-      );
+      if (action === "join") {
+        setMessage(
+          "You joined the Dine Out."
+        );
+      } else if (
+        action === "accept"
+      ) {
+        setMessage(
+          "Invitation accepted."
+        );
+      } else if (
+        invite.visibility ===
+        "public"
+      ) {
+        setMessage(
+          "You left the Dine Out."
+        );
+      } else {
+        setMessage(
+          "Invitation declined."
+        );
+      }
 
+      await loadInvites(
+        activeTab
+      );
+    } catch (requestError) {
       setError(
         backendError(
           requestError,
-          "Unable to update this Food Invite."
+          "Unable to update this invitation."
         )
       );
+    } finally {
+      setActionId(null);
     }
   }
 
-  function inviteTypeMeta(
-    value
-  ) {
-    return (
-      INVITE_TYPES.find(
-        (item) =>
-          item.value ===
-          value
-      ) || {
-        label:
-          "Food Invite",
-
-        icon:
-          "🍴",
-      }
-    );
-  }
-
-  // =========================================================
-  // UI
-  // =========================================================
 
   return (
     <main className="fi-page">
+      <div
+        className={
+          "fi-ambient " +
+          "fi-ambient-one"
+        }
+        aria-hidden="true"
+      />
+
+      <div
+        className={
+          "fi-ambient " +
+          "fi-ambient-two"
+        }
+        aria-hidden="true"
+      />
+
+
       {/* HERO */}
 
       <section className="fi-hero">
-        <div>
+        <div className="fi-hero-copy">
           <span className="fi-eyebrow">
-            FOODKINDL INVITES
+            ✦ FOODKINDL INVITES
           </span>
 
           <h1>
             Turn a meal into
-            a real
-            connection.
+            a real connection.
           </h1>
 
           <p>
-            Cook together,
-            dine out or
-            explore a Food
-            Walk — and turn
-            shared food
-            experiences into
-            real
+            Cook together, dine out
+            or explore a Food Walk—and
+            turn shared food experiences
+            into genuine human
             connections.
           </p>
+
+          <div className="fi-hero-notes">
+            <span>
+              Real people
+            </span>
+
+            <i />
+
+            <span>
+              Shared tables
+            </span>
+
+            <i />
+
+            <span>
+              Safer meetups
+            </span>
+          </div>
         </div>
 
-        <button
-          type="button"
-          className="fi-primary"
-          onClick={() =>
-            navigate(
-              "/cook-together"
-            )
-          }
-        >
-          + Create an
-          Invite
-        </button>
+
+        <div className="fi-hero-action">
+          <div
+            className="fi-hero-rings"
+            aria-hidden="true"
+          >
+            <span>
+              🍲
+            </span>
+          </div>
+
+          <button
+            type="button"
+            className="fi-primary"
+            onClick={() =>
+              navigate(
+                "/cook-together"
+              )
+            }
+          >
+            + Create an Invite
+          </button>
+
+          <small>
+            No fees. Just good company.
+          </small>
+        </div>
       </section>
 
-      {/* THREE EXPERIENCES */}
+
+      {/* INVITE TYPES */}
 
       <section className="fi-main-options">
         {INVITE_TYPES.map(
-          (type) => (
+          type => (
             <article
-              key={
-                type.value
+              key={type.value}
+              className={
+                "fi-main-option " +
+                `fi-option-${type.value}`
               }
-              className={`fi-main-option fi-option-${type.value}`}
             >
+              <span className="fi-card-index">
+                {type.number}
+              </span>
+
               <div className="fi-main-icon">
                 {type.icon}
               </div>
@@ -522,9 +813,7 @@ export default function FoodInvites() {
                 </h2>
 
                 <p>
-                  {
-                    type.description
-                  }
+                  {type.description}
                 </p>
 
                 <button
@@ -532,14 +821,11 @@ export default function FoodInvites() {
                   className="fi-option-button"
                   onClick={() =>
                     openInviteType(
-                      type.value
+                      type
                     )
                   }
                 >
-                  {
-                    type.buttonText
-                  }{" "}
-                  →
+                  {type.buttonText} →
                 </button>
               </div>
             </article>
@@ -547,58 +833,63 @@ export default function FoodInvites() {
         )}
       </section>
 
-      {/* HOW IT WORKS */}
+
+      {/* STEPS */}
 
       <section className="fi-how">
         <div>
-          <strong>
-            1
-          </strong>
+          <strong>1</strong>
 
           <span>
-            Choose the food
-            moment
+            Choose the food moment
           </span>
         </div>
 
         <div>
-          <strong>
-            2
-          </strong>
+          <strong>2</strong>
 
           <span>
-            Set place, time
-            and preferences
+            Set place, time and
+            preferences
           </span>
         </div>
 
         <div>
-          <strong>
-            3
-          </strong>
+          <strong>3</strong>
 
           <span>
-            Invite people
-            and meet
+            Invite people and meet
           </span>
         </div>
       </section>
 
-      {/* MESSAGES */}
+
+      {/* ALERTS */}
 
       {error && (
-        <div className="fi-alert fi-error">
+        <div
+          className={
+            "fi-alert fi-error"
+          }
+          role="alert"
+        >
           {error}
         </div>
       )}
 
       {message && (
-        <div className="fi-alert fi-success">
+        <div
+          className={
+            "fi-alert fi-success"
+          }
+          role="status"
+        >
           {message}
         </div>
       )}
 
-      {/* INVITE LIST */}
+
+      {/* INVITATIONS */}
 
       <section className="fi-content">
         <div className="fi-tabs">
@@ -607,17 +898,14 @@ export default function FoodInvites() {
               "upcoming",
               "Upcoming",
             ],
-
             [
               "pending",
               "Pending",
             ],
-
             [
               "created",
               "Created by me",
             ],
-
             [
               "past",
               "Past",
@@ -631,8 +919,7 @@ export default function FoodInvites() {
                 type="button"
                 key={value}
                 className={
-                  activeTab ===
-                  value
+                  activeTab === value
                     ? "active"
                     : ""
                 }
@@ -648,153 +935,247 @@ export default function FoodInvites() {
           )}
         </div>
 
+
         {loading ? (
           <div className="fi-empty">
-            Loading Food
-            Invites...
-          </div>
-        ) : filteredInvites
-            .length ===
-          0 ? (
-          <div className="fi-empty">
-            <span>
-              🍴
-            </span>
+            <span>🍲</span>
 
             <h3>
-              No invites
-              here yet
+              Loading invites...
+            </h3>
+          </div>
+        ) : filteredInvites.length ===
+          0 ? (
+          <div className="fi-empty">
+            <span>🍴</span>
+
+            <h3>
+              No invites here yet
             </h3>
 
             <p>
-              Create a food
-              moment or
-              accept an
-              invite when
+              Create a food moment or
+              accept an invitation when
               one arrives.
             </p>
           </div>
         ) : (
           <div className="fi-card-grid">
             {filteredInvites.map(
-              (invite) => {
-                const meta =
-                  inviteTypeMeta(
-                    invite.invite_type
-                  );
-
+              invite => {
                 const status =
                   getStatus(
                     invite
                   );
 
-                const participantCount =
-                  invite.participant_count ??
-                  invite.accepted_count ??
+                const isHost =
+                  Boolean(
+                    invite.is_host
+                  );
+
+                const isPending =
+                  !isHost &&
+                  invite.is_invited &&
                   invite
-                    .participants
-                    ?.length ??
-                  1;
+                    .my_invitation_status ===
+                    "pending";
+
+                const isDineOut =
+                  invite.invite_type ===
+                  "dine_out";
+
+                const isPublicDineOut =
+                  isDineOut &&
+                  invite.visibility ===
+                    "public";
+
+                const isPrivateDineOut =
+                  isDineOut &&
+                  invite.visibility ===
+                    "invited_only";
+
+                const acceptedGuests =
+                  Number(
+                    invite
+                      .approved_guest_count ||
+                    0
+                  );
+
+                const maximumGuests =
+                  Number(
+                    invite.maximum_guests ||
+                    0
+                  );
+
+                const isFull =
+                  maximumGuests > 0 &&
+                  acceptedGuests >=
+                    maximumGuests;
+
+                const hasJoined =
+                  isPublicDineOut &&
+                  invite
+                    .my_response_status ===
+                    "accepted";
+
+                const remainingPlaces =
+                  Math.max(
+                    maximumGuests -
+                    acceptedGuests,
+                    0
+                  );
 
                 return (
                   <article
-                    className="fi-invite-card"
+                    className={
+                      "fi-invite-card"
+                    }
                     key={
-                      invite.id
+                      invite.unique_key
                     }
                   >
                     <div className="fi-card-top">
                       <span className="fi-type-pill">
-                        {
-                          meta.icon
-                        }{" "}
-                        {
-                          meta.label
-                        }
+                        {invite.type_icon}
+                        {" "}
+                        {invite.type_label}
                       </span>
 
                       <span
-                        className={`fi-status fi-status-${status}`}
-                      >
-                        {
-                          status
+                        className={
+                          "fi-status " +
+                          `fi-status-${status}`
                         }
+                      >
+                        {status}
                       </span>
                     </div>
 
+
                     <h3>
-                      {invite.title ||
-                        meta.label}
+                      {
+                        invite.title ||
+                        invite.dish ||
+                        "Food invitation"
+                      }
                     </h3>
+
+
+                    {invite.host_name && (
+                      <p className="fi-host-name">
+                        Hosted by{" "}
+                        {invite.host_name}
+                      </p>
+                    )}
+
 
                     {invite.description && (
                       <p>
-                        {
-                          invite.description
-                        }
+                        {invite.description}
                       </p>
                     )}
+
 
                     <div className="fi-meta-list">
                       <span>
                         🗓️{" "}
-                        {formatDateTime(
-                          invite.start_at
-                        )}
+                        {
+                          formatDateTime(
+                            invite
+                          )
+                        }
                       </span>
 
                       <span>
                         📍{" "}
-                        {invite.location_label ||
-                          invite.venue_name ||
-                          "Location shared after acceptance"}
+                        {
+                          invite
+                            .location_name ||
+                          "Location not specified"
+                        }
                       </span>
 
-                      {invite.cuisine && (
-                        <span>
-                          🍛{" "}
-                          {
-                            invite.cuisine
-                          }
-                        </span>
-                      )}
+                      <span>
+                        🍛{" "}
+                        {
+                          invite.dish ||
+                          "Food not specified"
+                        }
+                      </span>
 
                       <span>
                         👥{" "}
-                        {
-                          participantCount
-                        }
+                        {acceptedGuests}
                         /
-                        {invite.max_participants ||
-                          "—"}
+                        {
+                          maximumGuests ||
+                          "—"
+                        }
                       </span>
+
+                      {
+                        isPublicDineOut &&
+                        !isFull &&
+                        (
+                          <span>
+                            ✅{" "}
+                            {remainingPlaces}
+                            {" "}
+                            {
+                              remainingPlaces ===
+                              1
+                                ? "place"
+                                : "places"
+                            }
+                            {" "}available
+                          </span>
+                        )
+                      }
+
+                      {
+                        isPublicDineOut &&
+                        isFull &&
+                        (
+                          <span>
+                            ⛔ Dine Out is full
+                          </span>
+                        )
+                      }
                     </div>
+
 
                     <div className="fi-badges">
-                      {invite.verified_only && (
+                      {isPublicDineOut && (
                         <span>
-                          ✓ Verified
-                          only
+                          ◎ Everyone can join
                         </span>
                       )}
 
-                      {invite.women_only && (
+                      {isPrivateDineOut && (
                         <span>
-                          ♀ Women
-                          only
+                          🔒 Selected guests only
                         </span>
                       )}
 
-                      {invite.kitchen_contribution ? (
-                        <span>
-                          ₹
-                          {
-                            invite.kitchen_contribution
-                          }{" "}
-                          contribution
-                        </span>
-                      ) : null}
+                      {
+                        invite.verified_only &&
+                        (
+                          <span>
+                            ✓ Verified only
+                          </span>
+                        )
+                      }
+
+                      {
+                        invite.women_only &&
+                        (
+                          <span>
+                            ♀ Women only
+                          </span>
+                        )
+                      }
                     </div>
+
 
                     <div className="fi-card-actions">
                       <button
@@ -802,46 +1183,139 @@ export default function FoodInvites() {
                         className="fi-secondary"
                         onClick={() =>
                           navigate(
-                            `/food-invites/${invite.id}`
+                            invite
+                              .details_route
                           )
                         }
                       >
-                        View
-                        details
+                        View details
                       </button>
 
-                      {!invite.is_creator &&
-                        !invite.created_by_me &&
-                        status ===
-                          "pending" && (
-                          <>
-                            <button
-                              type="button"
-                              className="fi-decline"
-                              onClick={() =>
-                                respondToInvite(
-                                  invite.id,
-                                  "decline"
-                                )
-                              }
-                            >
-                              Decline
-                            </button>
 
-                            <button
-                              type="button"
-                              className="fi-primary"
-                              onClick={() =>
-                                respondToInvite(
-                                  invite.id,
-                                  "accept"
-                                )
-                              }
-                            >
-                              Accept
-                            </button>
-                          </>
-                        )}
+                      {/* PRIVATE INVITATION */}
+
+                      {isPending && (
+                        <>
+                          <button
+                            type="button"
+                            className="fi-decline"
+                            disabled={
+                              actionId ===
+                              invite.unique_key
+                            }
+                            onClick={() =>
+                              respondToInvite(
+                                invite,
+                                "decline"
+                              )
+                            }
+                          >
+                            Decline
+                          </button>
+
+                          <button
+                            type="button"
+                            className="fi-primary"
+                            disabled={
+                              actionId ===
+                              invite.unique_key
+                            }
+                            onClick={() =>
+                              respondToInvite(
+                                invite,
+                                "accept"
+                              )
+                            }
+                          >
+                            {
+                              actionId ===
+                              invite.unique_key
+                                ? "Please wait..."
+                                : "Accept"
+                            }
+                          </button>
+                        </>
+                      )}
+
+
+                      {/* EVERYONE / PUBLIC */}
+
+                      {
+                        isPublicDineOut &&
+                        !isHost &&
+                        !hasJoined &&
+                        (
+                          <button
+                            type="button"
+                            className="fi-primary"
+                            disabled={
+                              isFull ||
+                              actionId ===
+                              invite.unique_key
+                            }
+                            onClick={() =>
+                              respondToInvite(
+                                invite,
+                                "join"
+                              )
+                            }
+                          >
+                            {
+                              actionId ===
+                              invite.unique_key
+                                ? "Joining..."
+                                : isFull
+                                  ? "Dine Out is full"
+                                  : (
+                                      `Join (` +
+                                      `${acceptedGuests}/` +
+                                      `${maximumGuests})`
+                                    )
+                            }
+                          </button>
+                        )
+                      }
+
+
+                      {
+                        isPublicDineOut &&
+                        !isHost &&
+                        hasJoined &&
+                        (
+                          <button
+                            type="button"
+                            className="fi-decline"
+                            disabled={
+                              actionId ===
+                              invite.unique_key
+                            }
+                            onClick={() =>
+                              respondToInvite(
+                                invite,
+                                "decline"
+                              )
+                            }
+                          >
+                            {
+                              actionId ===
+                              invite.unique_key
+                                ? "Please wait..."
+                                : "Leave Dine Out"
+                            }
+                          </button>
+                        )
+                      }
+
+
+                      {
+                        isPublicDineOut &&
+                        isHost &&
+                        (
+                          <span className="fi-host-label">
+                            You are hosting
+                          </span>
+                        )
+                      }
                     </div>
                   </article>
                 );

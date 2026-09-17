@@ -1,0 +1,98 @@
+:root {
+  --dine-bg: #0f0503;
+  --dine-panel: #21100b;
+  --dine-panel-soft: #2b140d;
+  --dine-line: rgba(255, 160, 105, 0.18);
+  --dine-orange: #ff783f;
+  --dine-orange-light: #ffad7d;
+  --dine-cream: #fff4eb;
+  --dine-muted: #caaea0;
+}
+
+.dineout-details-page {
+  min-height: 100vh;
+  padding: 72px 24px;
+  color: var(--dine-cream);
+  background:
+    radial-gradient(circle at 15% 0%, rgba(255, 120, 63, 0.16), transparent 32%),
+    linear-gradient(rgba(255,255,255,.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,.025) 1px, transparent 1px),
+    var(--dine-bg);
+  background-size: auto, 42px 42px, 42px 42px, auto;
+}
+
+.dineout-details-card {
+  width: min(920px, 100%);
+  margin: 0 auto;
+  padding: clamp(24px, 5vw, 52px);
+  border: 1px solid var(--dine-line);
+  border-radius: 28px;
+  background: linear-gradient(145deg, rgba(48, 22, 14, .97), rgba(25, 10, 7, .98));
+  box-shadow: 0 30px 80px rgba(0, 0, 0, .42);
+}
+
+.dineout-details-state { text-align: center; }
+.dineout-details-loader { display: inline-block; width: 30px; height: 30px; border: 3px solid #5c3021; border-top-color: var(--dine-orange); border-radius: 50%; animation: dine-spin .8s linear infinite; }
+@keyframes dine-spin { to { transform: rotate(360deg); } }
+
+.dineout-details-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 24px; }
+.dineout-details-eyebrow, .dineout-section-heading small, .dineout-response-panel small { margin: 0 0 8px; color: var(--dine-orange); font-size: 11px; font-weight: 800; letter-spacing: .15em; }
+.dineout-details-header h1 { margin: 0; max-width: 650px; font-size: clamp(34px, 6vw, 62px); line-height: 1; letter-spacing: -.045em; }
+.dineout-details-description { max-width: 660px; margin: 18px 0 0; color: var(--dine-muted); font-size: 17px; line-height: 1.65; }
+
+.dineout-visibility-badge { display: inline-flex; align-items: center; gap: 7px; flex: 0 0 auto; padding: 9px 12px; border-radius: 999px; font-size: 12px; font-weight: 750; }
+.dineout-visibility-badge.public { color: #ffd9c3; background: rgba(255,120,63,.12); border: 1px solid rgba(255,120,63,.3); }
+.dineout-visibility-badge.private { color: #ffe5ba; background: rgba(240,170,65,.12); border: 1px solid rgba(240,170,65,.3); }
+
+.dineout-details-restaurant { display: flex; align-items: center; gap: 15px; margin: 34px 0 20px; padding: 20px; border: 1px solid var(--dine-line); border-radius: 18px; background: rgba(255,120,63,.07); }
+.dineout-details-icon { display: grid; place-items: center; width: 48px; height: 48px; border-radius: 14px; color: #241008; background: var(--dine-orange); }
+.dineout-details-restaurant div { display: grid; gap: 3px; }
+.dineout-details-restaurant small, .dineout-details-grid small, .dineout-details-note small, .dineout-guest small { color: var(--dine-muted); }
+.dineout-details-restaurant strong { font-size: 19px; }
+.dineout-details-restaurant span:not(.dineout-details-icon) { color: var(--dine-orange-light); font-size: 13px; }
+
+.dineout-details-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+.dineout-details-grid article { display: flex; gap: 12px; min-height: 92px; padding: 18px; border: 1px solid rgba(255,255,255,.08); border-radius: 16px; background: rgba(255,255,255,.035); }
+.dineout-details-grid article > svg { flex: 0 0 auto; color: var(--dine-orange); }
+.dineout-details-grid article div { display: grid; align-content: start; gap: 6px; }
+.dineout-details-grid strong { line-height: 1.45; }
+
+.dineout-invited-section { margin-top: 26px; padding-top: 26px; border-top: 1px solid var(--dine-line); }
+.dineout-section-heading { display: flex; justify-content: space-between; align-items: end; gap: 20px; margin-bottom: 14px; }
+.dineout-section-heading h2 { margin: 0; font-size: 24px; }
+.dineout-section-heading > span { color: var(--dine-orange-light); font-size: 13px; }
+.dineout-guest-list { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+.dineout-guest { display: flex; align-items: center; gap: 12px; padding: 13px; border: 1px solid rgba(255,255,255,.08); border-radius: 14px; background: var(--dine-panel-soft); }
+.dineout-guest-avatar { display: grid; place-items: center; width: 42px; height: 42px; border-radius: 50%; color: #271009; background: linear-gradient(135deg, #ffb27e, #ff7139); font-weight: 850; }
+.dineout-guest div { display: grid; gap: 3px; }
+.dineout-empty-guests { padding: 16px; color: var(--dine-muted); border: 1px dashed var(--dine-line); border-radius: 14px; }
+
+.dineout-details-note { margin-top: 18px; padding: 18px; border-left: 3px solid var(--dine-orange); border-radius: 0 14px 14px 0; background: rgba(255,255,255,.035); }
+.dineout-details-note p { margin: 6px 0 0; line-height: 1.6; }
+
+.dineout-response-panel { display: flex; justify-content: space-between; align-items: center; gap: 20px; margin-top: 22px; padding: 18px; border: 1px solid var(--dine-line); border-radius: 16px; background: rgba(255,120,63,.06); }
+.dineout-response-panel > div:first-child { display: grid; gap: 3px; }
+.response-pending { color: #ffc078; }
+.response-accepted { color: #7be3a0; }
+.response-declined { color: #ff8c82; }
+.dineout-response-actions { display: flex; gap: 8px; }
+.dineout-response-actions button { display: inline-flex; align-items: center; gap: 6px; padding: 10px 15px; border: 0; border-radius: 10px; color: #221008; background: var(--dine-orange); font-weight: 800; cursor: pointer; }
+.dineout-response-actions button.decline { color: var(--dine-cream); background: #4a261d; }
+.dineout-response-actions button:disabled { opacity: .55; cursor: wait; }
+.dineout-response-message { color: var(--dine-orange-light); }
+
+.dineout-details-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 28px; }
+.dineout-details-button { display: inline-flex; align-items: center; justify-content: center; padding: 12px 18px; border: 1px solid var(--dine-orange); border-radius: 12px; color: #1d0c07; background: var(--dine-orange); font-weight: 800; text-decoration: none; transition: transform .18s ease, background .18s ease; }
+.dineout-details-button:hover { transform: translateY(-2px); background: #ff8b56; }
+.dineout-details-button--secondary { color: var(--dine-cream); background: transparent; border-color: rgba(255,255,255,.16); }
+.dineout-details-error { color: #ff9a8f; }
+
+@media (max-width: 700px) {
+  .dineout-details-page { padding: 28px 14px; }
+  .dineout-details-card { padding: 24px 18px; border-radius: 20px; }
+  .dineout-details-header, .dineout-response-panel { flex-direction: column; align-items: stretch; }
+  .dineout-visibility-badge { align-self: flex-start; }
+  .dineout-details-grid, .dineout-guest-list { grid-template-columns: 1fr; }
+  .dineout-response-actions button { flex: 1; justify-content: center; }
+  .dineout-details-actions { flex-direction: column; }
+}

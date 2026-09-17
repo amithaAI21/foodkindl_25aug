@@ -1354,208 +1354,169 @@ if (
                   return (
 
                     <article
-                      key={
-                        place.id
-                      }
+  key={place.id}
+  className={[
+    "fk-dine-list-card",
 
-                      className={
-                        detailsActive
-                          ? "fk-dine-list-card active"
-                          : "fk-dine-list-card"
-                      }
-                    >
+    detailsActive
+      ? "active"
+      : "",
 
-                      {/* IMAGE */}
+    place.image
+      ? "has-image"
+      : "no-image",
+  ]
+    .filter(Boolean)
+    .join(" ")}
+>
 
-                      <div className="fk-dine-list-thumb">
+  {place.image && (
+    <div className="fk-dine-list-thumb">
 
-                        {place.image ? (
+      <img
+        src={place.image}
+        alt={place.name}
+        loading="lazy"
+        onError={event => {
+          const image =
+            event.currentTarget;
 
-                          <img
-                            src={
-                              place.image
-                            }
+          const imageContainer =
+            image.closest(
+              ".fk-dine-list-thumb"
+            );
 
-                            alt={
-                              place.name
-                            }
+          const card =
+            image.closest(
+              ".fk-dine-list-card"
+            );
 
-                            loading="lazy"
+          imageContainer?.remove();
 
-                            onError={
-                              event => {
-                                event
-                                  .currentTarget
-                                  .style
-                                  .display =
-                                  "none";
-                              }
-                            }
-                          />
+          card?.classList.remove(
+            "has-image"
+          );
 
-                        ) : (
+          card?.classList.add(
+            "no-image"
+          );
+        }}
+      />
 
-                          <div className="fk-dine-thumb-placeholder">
+      <span className="fk-dine-rank">
+        {index + 1}
+      </span>
 
-                            <Utensils
-                              size={22}
-                            />
-
-                          </div>
-
-                        )}
-
-
-                        <span className="fk-dine-rank">
-                          {
-                            index + 1
-                          }
-                        </span>
-
-                      </div>
+    </div>
+  )}
 
 
-                      {/* CONTENT */}
+  <div className="fk-dine-list-content">
 
-                      <div className="fk-dine-list-content">
-
-                        {(place
-                          .matchesPreference ||
-                          index < 3) && (
-
-                          <span className="fk-dine-pick">
-                            ✨ FoodKindl Pick
-                          </span>
-
-                        )}
+    {(place.matchesPreference ||
+      index < 3) && (
+      <span className="fk-dine-pick">
+        ✨ FoodKindl Pick
+      </span>
+    )}
 
 
-                        <h4>
-                          {
-                            place.name
-                          }
-                        </h4>
+    <h4>
+      {place.name}
+    </h4>
 
 
-                        <p className="fk-dine-cuisine">
-
-                          {
-                            place.mainCuisine ||
-                            place.cuisine ||
-                            place.primaryTypeLabel ||
-                            formatRestaurantType(
-                              place.category
-                            )
-                          }
-
-                        </p>
+    <p className="fk-dine-cuisine">
+      {place.mainCuisine ||
+        place.cuisine ||
+        place.primaryTypeLabel ||
+        formatRestaurantType(
+          place.category
+        )}
+    </p>
 
 
-                        <div className="fk-dine-meta">
+    <div className="fk-dine-meta">
 
-                          {place.distanceKm >
-                            0 && (
+      {place.distanceKm > 0 && (
+        <span>
+          <MapPin size={12} />
 
-                            <span>
-                              <MapPin
-                                size={12}
-                              />
-
-                              {
-                                place
-                                  .distanceKm
-                                  .toFixed(
-                                    1
-                                  )
-                              }{" "}
-                              km
-                            </span>
-
-                          )}
+          {place.distanceKm.toFixed(
+            1
+          )} km
+        </span>
+      )}
 
 
-                          {place.rating >
-                            0 && (
+      {place.rating > 0 && (
+        <span>
+          <Star
+            size={12}
+            fill="currentColor"
+          />
 
-                            <span>
+          {place.rating}
 
-                              <Star
-                                size={12}
-                                fill="currentColor"
-                              />
+          {place.reviewCount >
+            0 && (
+            <>
+              {" "}
+              ({place.reviewCount.toLocaleString()})
+            </>
+          )}
+        </span>
+      )}
 
-                              {
-                                place.rating
-                              }
-
-                              {place.reviewCount > 0 && (
-                                <>
-                                  {" "}
-                                  ({place.reviewCount.toLocaleString()})
-                                </>
-                              )}
-
-                            </span>
-
-                          )}
-
-                        </div>
+    </div>
 
 
-                        <div className="fk-dine-card-actions">
+    <div className="fk-dine-card-actions">
 
-                          <button
-                            type="button"
-                            className="fk-view-details"
-                            onClick={() =>
-                              viewDetails(
-                                place
-                              )
-                            }
-                          >
+      <button
+        type="button"
+        className="fk-view-details"
+        onClick={() =>
+          viewDetails(
+            place
+          )
+        }
+      >
+        View details
 
-                            View details
-
-                            <ChevronRight
-                              size={14}
-                            />
-
-                          </button>
+        <ChevronRight size={14} />
+      </button>
 
 
-                          <button
-                            type="button"
-                            className={
-                              selected
-                                ? "fk-quick-select selected"
-                                : "fk-quick-select"
-                            }
-                            onClick={() =>
-                              choosePlace(
-                                place
-                              )
-                            }
-                          >
+      <button
+        type="button"
+        className={
+          selected
+            ? "fk-quick-select selected"
+            : "fk-quick-select"
+        }
+        onClick={() =>
+          choosePlace(
+            place
+          )
+        }
+      >
+        {selected ? (
+          <>
+            <Check size={14} />
 
-                            {selected ? (
-                              <>
-                                <Check
-                                  size={14}
-                                />
+            Selected
+          </>
+        ) : (
+          "Choose"
+        )}
+      </button>
 
-                                Selected
-                              </>
-                            ) : (
-                              "Choose"
-                            )}
+    </div>
 
-                          </button>
+  </div>
 
-                        </div>
-
-                      </div>
-
-                    </article>
+</article>
 
                   );
 

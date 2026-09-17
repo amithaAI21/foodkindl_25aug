@@ -1,2960 +1,2424 @@
+// src/pages/DineOut.jsx
+
 import React, {
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from "react";
 
 import {
-  CalendarDays,
-  CheckCircle2,
-  Clock3,
+  MapContainer,
+  Marker,
+  Popup,
+  TileLayer,
+  useMap,
+} from "react-leaflet";
+
+import L from "leaflet";
+
+import {
+  ExternalLink,
   MapPin,
+  Phone,
   Search,
-  Users,
+  Sparkles,
   Utensils,
+  X,
 } from "lucide-react";
 
 import {
   useNavigate,
 } from "react-router-dom";
 
+import "leaflet/dist/leaflet.css";
+import "../styles/DineOutOriginal.css";
+import "../styles/DineOutDetails.css";
+import "../styles/DineOutVisibility.css";
+
 import api from "../api";
 
-import PeopleSelector from "./PeopleSelector";
 
-import LocationAutocomplete from "./LocationAutocomplete";
+/* ============================================================
+   LEAFLET MARKER FIX
+============================================================ */
 
-import DineOutInvite from "./DineOutInvite";
+delete L.Icon.Default.prototype._getIconUrl;
 
-import DineOutRestaurantMap from "../components/DineOutRestaurantMap";
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl:
+    "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png",
 
-import "../styles/FoodInvites.css";
-import "../styles/dineout_unique.css";
+  iconUrl:
+    "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png",
 
-
-const INVITES_ENDPOINT =
-  "/food-invites/";
-
-const RESTAURANT_SEARCH_ENDPOINT =
-  "/restaurants/recommendations/";
-
-
-// ============================================================
-// INITIAL FORM
-// ============================================================
-
-const INITIAL_FORM = {
-  title: "",
-
-  description: "",
-
-  // ----------------------------------------------------------
-  // LOCATION SEARCH
-  // ----------------------------------------------------------
-
-  city: "",
-
-  search_latitude: null,
-
-  search_longitude: null,
-
-  // ----------------------------------------------------------
-  // RESTAURANT DISCOVERY
-  // ----------------------------------------------------------
-
-  food_query: "",
-
-  cuisine: "",
-
-  dine_venue_type: "",
-
-  // ----------------------------------------------------------
-  // SELECTED RESTAURANT
-  // ----------------------------------------------------------
-
-  venue_name: "",
-
-  restaurant_name: "",
-
-  restaurant_address: "",
-
-  location_label: "",
-
-  latitude: null,
-
-  longitude: null,
-
-  // ----------------------------------------------------------
-  // INVITE
-  // ----------------------------------------------------------
-
-  start_date: "",
-  start_hour: "07",
-  start_minute: "00",
-  start_ampm: "PM",
-
-  end_date: "",
-  end_hour: "09",
-  end_minute: "00",
-  end_ampm: "PM",
-
-  max_participants: 4,
-
-  budget_level: "₹₹",
-
-  dietary_notes: "",
-
-  booking_status:
-    "not_booked",
-
-  table_notes: "",
-
-  verified_only: false,
-
-  women_only: false,
-
-  recipients: [],
-};
+  shadowUrl:
+    "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png",
+});
 
 
-// ============================================================
-// ERROR HELPER
-// ============================================================
+/* ============================================================
+   CONSTANTS
+============================================================ */
 
-function readError(
-  error,
-  fallback =
-    "Something went wrong."
+const DEFAULT_CENTER = [
+  12.9716,
+  77.5946,
+];
+
+
+const CUISINES = [
+  "All cuisines",
+  "Indian",
+  "Kerala",
+  "South Indian",
+  "North Indian",
+  "Biryani",
+  "Chinese",
+  "Italian",
+  "Mexican",
+  "Japanese",
+  "Mediterranean",
+];
+
+
+/* ============================================================
+   HELPERS
+============================================================ */
+
+function getLatitude(
+  restaurant
 ) {
-  const data =
-    error?.response?.data;
+  return Number(
+    restaurant?.latitude ??
+    restaurant?.lat
+  );
+}
 
+
+function getLongitude(
+  restaurant
+) {
+  return Number(
+    restaurant?.longitude ??
+    restaurant?.lon
+  );
+}
+
+
+function hasValidCoordinates(
+  restaurant
+) {
+  return (
+    Number.isFinite(
+      getLatitude(restaurant)
+    ) &&
+    Number.isFinite(
+      getLongitude(restaurant)
+    )
+  );
+}
+
+
+function getPopularityScore(
+  restaurant
+) {
+  const rating = Number(
+    restaurant.rating || 0
+  );
+
+  const reviews = Number(
+    restaurant.review_count ||
+    restaurant.user_ratings_total ||
+    0
+  );
+
+  const distance = Number(
+    restaurant.distance_km || 99
+  );
+
+  return (
+    rating * 100 +
+    Math.log10(reviews + 1) * 20 -
+    distance
+  );
+}
+
+
+/* ============================================================
+   MAP CONTROLLER
+============================================================ */
+
+function MapController({
+  center,
+  restaurants,
+}) {
+  const map = useMap();
+
+  useEffect(
+    () => {
+      const locations =
+        restaurants
+          .filter(
+            hasValidCoordinates
+          )
+          .map(
+            restaurant => [
+              getLatitude(
+                restaurant
+              ),
+              getLongitude(
+                restaurant
+              ),
+            ]
+          );
+
+      const timer =
+        window.setTimeout(
+          () => {
+            map.invalidateSize();
+
+            if (
+              locations.length > 1
+            ) {
+              map.fitBounds(
+                locations,
+                {
+                  padding: [
+                    35,
+                    35,
+                  ],
+                  maxZoom: 15,
+                }
+              );
+            } else if (
+              locations.length === 1
+            ) {
+              map.setView(
+                locations[0],
+                15
+              );
+            } else {
+              map.setView(
+                center,
+                14
+              );
+            }
+          },
+          150
+        );
+
+      return () => {
+        window.clearTimeout(
+          timer
+        );
+      };
+    },
+    [
+      map,
+      center,
+      restaurants,
+    ]
+  );
+
+  return null;
+}
+
+
+/* ============================================================
+   RESTAURANT IMAGE
+============================================================ */
+
+function RestaurantImage({
+  restaurant,
+  className =
+    "restaurant-image",
+}) {
+  const [
+    failed,
+    setFailed,
+  ] = useState(false);
+
+  const image =
+    restaurant.image_url ||
+    restaurant.image ||
+    restaurant.photo_url ||
+    restaurant.cover_photo;
 
   if (
-    typeof data?.detail ===
-    "string"
-  ) {
-    return data.detail;
-  }
-
-
-  if (
-    typeof data?.error ===
-    "string"
-  ) {
-    return data.error;
-  }
-
-
-  if (
-    typeof data?.message ===
-    "string"
-  ) {
-    return data.message;
-  }
-
-
-  if (
-    data &&
-    typeof data ===
-      "object"
-  ) {
-
-    const first =
-      Object.entries(
-        data
-      )[0];
-
-
-    if (first) {
-
-      const [
-        key,
-        value,
-      ] = first;
-
-
-      if (
-        Array.isArray(
-          value
-        )
-      ) {
-        return `${key}: ${value.join(
-          ", "
-        )}`;
-      }
-
-
-      return `${key}: ${String(
-        value
-      )}`;
-    }
-  }
-
-
-  if (
-    error?.message ===
-    "Network Error"
+    !image ||
+    failed
   ) {
     return (
-      "Unable to connect to " +
-      "the FoodKindl server."
+      <div
+        className={
+          `${className} restaurant-image-empty`
+        }
+      >
+        <Utensils size={28} />
+
+        <span>
+          Photo unavailable
+        </span>
+      </div>
     );
   }
 
-
-  return fallback;
+  return (
+    <img
+      className={className}
+      src={image}
+      alt={
+        restaurant.name ||
+        "Restaurant"
+      }
+      onError={() =>
+        setFailed(true)
+      }
+    />
+  );
 }
 
 
-// ============================================================
-// DATE / TIME HELPERS
-// ============================================================
+/* ============================================================
+   RESTAURANT DETAILS MODAL
+============================================================ */
 
-function buildDateTime(
-  date,
-  hour,
-  minute,
-  ampm
-) {
-  if (!date) {
+function RestaurantDetailsModal({
+  restaurant,
+  onClose,
+  onChoose,
+}) {
+  if (!restaurant) {
     return null;
   }
 
-  let hour24 =
-    Number(hour);
+  const latitude =
+    getLatitude(restaurant);
 
-  const minuteNumber =
-    Number(minute);
+  const longitude =
+    getLongitude(restaurant);
 
-  if (
-    !Number.isFinite(hour24) ||
-    hour24 < 1 ||
-    hour24 > 12 ||
-    !Number.isFinite(minuteNumber) ||
-    minuteNumber < 0 ||
-    minuteNumber > 59
-  ) {
-    return null;
-  }
+  return (
+    <div
+      className="restaurant-modal-backdrop"
+      role="presentation"
+      onMouseDown={onClose}
+    >
+      <article
+        className="restaurant-modal"
+        role="dialog"
+        aria-modal="true"
+        aria-label={
+          `${restaurant.name} details`
+        }
+        onMouseDown={
+          event =>
+            event.stopPropagation()
+        }
+      >
+        <button
+          type="button"
+          className="restaurant-modal-close"
+          onClick={onClose}
+          aria-label="Close details"
+        >
+          <X size={20} />
+        </button>
 
-  if (
-    ampm === "AM" &&
-    hour24 === 12
-  ) {
-    hour24 = 0;
-  }
+        <RestaurantImage
+          restaurant={restaurant}
+          className="restaurant-modal-image"
+        />
 
-  if (
-    ampm === "PM" &&
-    hour24 !== 12
-  ) {
-    hour24 += 12;
-  }
+        <div className="restaurant-modal-content">
+          <p className="eyebrow">
+            RESTAURANT DETAILS
+          </p>
 
-  const formattedHour =
-    String(hour24)
-      .padStart(2, "0");
+          <h2>
+            {restaurant.name}
+          </h2>
 
-  const formattedMinute =
-    String(minuteNumber)
-      .padStart(2, "0");
+          <p className="restaurant-modal-cuisine">
+            {
+              restaurant.cuisine ||
+              "Cuisine unavailable"
+            }
+          </p>
 
-  const value =
-    `${date}T${formattedHour}:${formattedMinute}:00`;
+          <dl className="restaurant-facts">
+            <div>
+              <dt>
+                Address
+              </dt>
 
-  const parsed =
-    new Date(value);
+              <dd>
+                {
+                  restaurant.address ||
+                  restaurant.location_label ||
+                  "Address unavailable"
+                }
+              </dd>
+            </div>
 
-  if (
-    Number.isNaN(
-      parsed.getTime()
-    )
-  ) {
-    return null;
-  }
+            <div>
+              <dt>
+                Distance
+              </dt>
 
-  return parsed;
+              <dd>
+                {
+                  restaurant.distance_km !=
+                  null
+                    ? `${restaurant.distance_km} km away`
+                    : "Not available"
+                }
+              </dd>
+            </div>
+
+            <div>
+              <dt>
+                Opening hours
+              </dt>
+
+              <dd>
+                {
+                  restaurant.opening_hours ||
+                  "Contact restaurant"
+                }
+              </dd>
+            </div>
+
+            <div>
+              <dt>
+                Rating
+              </dt>
+
+              <dd>
+                {
+                  restaurant.rating
+                    ? `${restaurant.rating} / 5`
+                    : "Not available"
+                }
+              </dd>
+            </div>
+          </dl>
+
+          <div className="restaurant-contact-actions">
+            {
+              restaurant.phone &&
+              (
+                <a
+                  href={
+                    `tel:${restaurant.phone}`
+                  }
+                >
+                  <Phone size={16} />
+
+                  Call
+                </a>
+              )
+            }
+
+            {
+              restaurant.website &&
+              (
+                <a
+                  href={
+                    restaurant.website
+                  }
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  <ExternalLink
+                    size={16}
+                  />
+
+                  Website
+                </a>
+              )
+            }
+
+            {
+              hasValidCoordinates(
+                restaurant
+              ) &&
+              (
+                <a
+                  href={
+                    `https://www.google.com/maps/search/?api=1&query=${latitude},${longitude}`
+                  }
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  <MapPin size={16} />
+
+                  Directions
+                </a>
+              )
+            }
+          </div>
+
+          <button
+            type="button"
+            className="primary-button restaurant-modal-choose"
+            onClick={() =>
+              onChoose(
+                restaurant
+              )
+            }
+          >
+            Choose this restaurant
+          </button>
+        </div>
+      </article>
+    </div>
+  );
 }
 
 
-// ============================================================
-// DINE OUT
-// ============================================================
+/* ============================================================
+   DINE OUT PAGE
+============================================================ */
 
 export default function DineOut() {
-
   const navigate =
     useNavigate();
 
+  const skipAutocompleteRef =
+    useRef(false);
 
-  // =========================================================
-  // FORM
-  // =========================================================
+  const autocompleteRequestRef =
+    useRef(0);
+
+
+  /* ----------------------------------------------------------
+     LOCATION AND RESTAURANTS
+  ---------------------------------------------------------- */
 
   const [
-    form,
-    setForm,
+    location,
+    setLocation,
   ] = useState(
-    INITIAL_FORM
+    "Indiranagar"
   );
 
-
-  // =========================================================
-  // PROFILE
-  // =========================================================
+  const [
+    cuisine,
+    setCuisine,
+  ] = useState(
+    "All cuisines"
+  );
 
   const [
-    profile,
-    setProfile,
-  ] = useState(null);
+    searchText,
+    setSearchText,
+  ] = useState("");
 
-
-  // =========================================================
-  // RESTAURANT RESULTS
-  // =========================================================
+  const [
+    locationSuggestions,
+    setLocationSuggestions,
+  ] = useState([]);
 
   const [
     restaurants,
     setRestaurants,
   ] = useState([]);
 
-
-  const [
-    restaurantsLoading,
-    setRestaurantsLoading,
-  ] = useState(false);
-
-
-  const [
-    restaurantsError,
-    setRestaurantsError,
-  ] = useState("");
-
-
-  const [
-    restaurantSearchDone,
-    setRestaurantSearchDone,
-  ] = useState(false);
-
-
-  // =========================================================
-  // SELECTED RESTAURANT
-  // =========================================================
-
   const [
     selectedRestaurant,
     setSelectedRestaurant,
   ] = useState(null);
 
-
-  // =========================================================
-  // SAVE
-  // =========================================================
+  const [
+    detailsRestaurant,
+    setDetailsRestaurant,
+  ] = useState(null);
 
   const [
-    saving,
-    setSaving,
+    coordinates,
+    setCoordinates,
+  ] = useState({
+    latitude:
+      DEFAULT_CENTER[0],
+
+    longitude:
+      DEFAULT_CENTER[1],
+  });
+
+  const [
+    mapCenter,
+    setMapCenter,
+  ] = useState(
+    DEFAULT_CENTER
+  );
+
+
+  /* ----------------------------------------------------------
+     LOADING AND MESSAGES
+  ---------------------------------------------------------- */
+
+  const [
+    locationLoading,
+    setLocationLoading,
   ] = useState(false);
 
+  const [
+    restaurantLoading,
+    setRestaurantLoading,
+  ] = useState(false);
 
   const [
-    error,
-    setError,
+    creating,
+    setCreating,
+  ] = useState(false);
+
+  const [
+    pageError,
+    setPageError,
+  ] = useState("");
+
+  const [
+    createError,
+    setCreateError,
+  ] = useState("");
+
+  const [
+    createSuccess,
+    setCreateSuccess,
+  ] = useState("");
+
+  const [
+    createdInviteId,
+    setCreatedInviteId,
+  ] = useState(null);
+
+
+  /* ----------------------------------------------------------
+     DINE OUT FORM
+  ---------------------------------------------------------- */
+
+  const [
+    meetupTitle,
+    setMeetupTitle,
+  ] = useState("");
+
+  const [
+    meetupNotes,
+    setMeetupNotes,
+  ] = useState("");
+
+  const [
+    eventDate,
+    setEventDate,
+  ] = useState("");
+
+  const [
+    eventTime,
+    setEventTime,
+  ] = useState("");
+
+  const [
+    maximumGuests,
+    setMaximumGuests,
+  ] = useState(2);
+
+  const [
+    bookingStatus,
+    setBookingStatus,
+  ] = useState(
+    "not_booked"
+  );
+
+  const [
+    dietaryNotes,
+    setDietaryNotes,
+  ] = useState("");
+
+  const [
+    visibility,
+    setVisibility,
+  ] = useState("public");
+
+  const [
+    availableMembers,
+    setAvailableMembers,
+  ] = useState([]);
+
+  const [
+    selectedMemberIds,
+    setSelectedMemberIds,
+  ] = useState([]);
+
+  const [
+    membersLoading,
+    setMembersLoading,
+  ] = useState(false);
+
+  const [
+    membersError,
+    setMembersError,
   ] = useState("");
 
 
-  const [
-    message,
-    setMessage,
-  ] = useState("");
+  /* ----------------------------------------------------------
+     LOAD MEMBERS FOR PRIVATE INVITATIONS
+
+     Change VITE_MEMBER_DIRECTORY_ENDPOINT in .env only if your
+     existing member/profile-list endpoint uses a different URL.
+  ---------------------------------------------------------- */
+
+  useEffect(() => {
+    if (visibility !== "invited_only") {
+      return;
+    }
+
+    if (availableMembers.length > 0) {
+      return;
+    }
+
+    let cancelled = false;
+
+    async function loadMembers() {
+      setMembersLoading(true);
+      setMembersError("");
+
+      try {
+        const endpoint =
+            import.meta.env.VITE_MEMBER_DIRECTORY_ENDPOINT ||
+            "/dineout/members/";
+
+        const response = await api.get(endpoint);
+
+        const rawMembers = Array.isArray(response.data)
+          ? response.data
+          : (
+              response.data?.results ||
+              response.data?.members ||
+              response.data?.profiles ||
+              []
+            );
+
+        const normalizedMembers = rawMembers
+          .map(item => {
+            const user = item.user || item;
+            const id = user.id || item.user_id;
+            const name =
+              user.name ||
+              user.full_name ||
+              [user.first_name, user.last_name]
+                .filter(Boolean)
+                .join(" ") ||
+              user.username ||
+              item.display_name ||
+              user.email;
+
+            if (!id || !name) {
+              return null;
+            }
+
+            return {
+              id: Number(id),
+              name,
+              email: user.email || "",
+            };
+          })
+          .filter(Boolean);
+
+        if (!cancelled) {
+          setAvailableMembers(normalizedMembers);
+        }
+      } catch (error) {
+        if (!cancelled) {
+          setMembersError(
+            "Could not load FoodKindl members. Check the member-directory API endpoint."
+          );
+        }
+      } finally {
+        if (!cancelled) {
+          setMembersLoading(false);
+        }
+      }
+    }
+
+    loadMembers();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [visibility, availableMembers.length]);
 
 
-  // =========================================================
-  // LOAD PROFILE
-  // =========================================================
+  function toggleInvitedMember(memberId) {
+    setSelectedMemberIds(current =>
+      current.includes(memberId)
+        ? current.filter(id => id !== memberId)
+        : [...current, memberId]
+    );
+  }
+
+
+  /* ----------------------------------------------------------
+     POPULAR RESTAURANTS
+  ---------------------------------------------------------- */
+
+  const visibleRestaurants =
+    useMemo(
+      () => {
+        const query =
+          searchText
+            .trim()
+            .toLowerCase();
+
+        const filtered =
+          restaurants.filter(
+            restaurant => {
+              if (!query) {
+                return true;
+              }
+
+              return [
+                restaurant.name,
+                restaurant.cuisine,
+                restaurant.address,
+                restaurant.location_label,
+              ]
+                .filter(Boolean)
+                .join(" ")
+                .toLowerCase()
+                .includes(query);
+            }
+          );
+
+        return [
+          ...filtered,
+        ]
+          .sort(
+            (
+              first,
+              second
+            ) =>
+              getPopularityScore(
+                second
+              ) -
+              getPopularityScore(
+                first
+              )
+          )
+          .slice(
+            0,
+            10
+          );
+      },
+      [
+        restaurants,
+        searchText,
+      ]
+    );
+
+
+  /* ----------------------------------------------------------
+     AUTOCOMPLETE
+  ---------------------------------------------------------- */
 
   useEffect(
     () => {
+      const query =
+        location.trim();
 
-      let cancelled =
-        false;
+      /*
+       * A location was selected.
+       * Do not search for it again.
+       */
+      if (
+        skipAutocompleteRef.current
+      ) {
+        skipAutocompleteRef.current =
+          false;
 
+        setLocationSuggestions([]);
 
-      async function loadProfile() {
-
-        try {
-
-          const response =
-            await api.get(
-              "/accounts/profile/"
-            );
-
-
-          if (
-            !cancelled
-          ) {
-
-            setProfile(
-              response?.data ||
-              null
-            );
-
-          }
-
-        } catch (
-          profileError
-        ) {
-
-          /*
-           * Restaurant discovery must still
-           * work even if profile retrieval
-           * fails.
-           */
-
-          console.warn(
-            "DINE OUT PROFILE LOAD ERROR:",
-            profileError?.response
-              ?.status,
-            profileError?.response
-              ?.data
-          );
-
-        }
-
+        return undefined;
       }
 
+      if (
+        query.length < 2
+      ) {
+        setLocationSuggestions([]);
+        setLocationLoading(false);
 
-      loadProfile();
+        return undefined;
+      }
 
+      const requestNumber =
+        ++autocompleteRequestRef.current;
+
+      const timer =
+        window.setTimeout(
+          async () => {
+            try {
+              setLocationLoading(
+                true
+              );
+
+              const response =
+                await api.get(
+                  "/dineout/locations/autocomplete/",
+                  {
+                    params: {
+                      q: query,
+                      limit: 8,
+                    },
+                  }
+                );
+
+              if (
+                requestNumber !==
+                autocompleteRequestRef.current
+              ) {
+                return;
+              }
+
+              const results =
+                Array.isArray(
+                  response.data
+                )
+                  ? response.data
+                  : response.data
+                      ?.results ||
+                    [];
+
+              setLocationSuggestions(
+                results
+              );
+            } catch (
+              requestError
+            ) {
+              console.error(
+                "Location autocomplete error:",
+                requestError
+              );
+
+              if (
+                requestNumber ===
+                autocompleteRequestRef.current
+              ) {
+                setLocationSuggestions(
+                  []
+                );
+              }
+            } finally {
+              if (
+                requestNumber ===
+                autocompleteRequestRef.current
+              ) {
+                setLocationLoading(
+                  false
+                );
+              }
+            }
+          },
+          350
+        );
 
       return () => {
-
-        cancelled = true;
-
+        window.clearTimeout(
+          timer
+        );
       };
-
     },
-    []
+    [
+      location,
+    ]
   );
 
 
-  // =========================================================
-  // UPDATE FIELD
-  // =========================================================
+  /* ----------------------------------------------------------
+     FETCH RESTAURANTS
+  ---------------------------------------------------------- */
 
-  function updateField(
-    field,
-    value
+  async function fetchRestaurants(
+    latitude =
+      coordinates.latitude,
+
+    longitude =
+      coordinates.longitude,
+
+    selectedCuisine =
+      cuisine
   ) {
-
-    setForm(
-      previous => ({
-        ...previous,
-
-        [field]:
-          value,
-      })
-    );
-
-
-    if (error) {
-      setError("");
-    }
-
-
-    if (message) {
-      setMessage("");
-    }
-
-  }
-
-
-  // =========================================================
-  // PROFILE PREFERENCE
-  // =========================================================
-
-  const dietaryPreference =
-    useMemo(
-      () => {
-
-        return String(
-          profile
-            ?.dietary_preference ||
-
-          profile
-            ?.dietary_preferences ||
-
-          ""
-        ).trim();
-
-      },
-      [
-        profile,
-      ]
-    );
-
-
-  const preferredCuisine =
-    useMemo(
-      () => {
-
-        if (
-          Array.isArray(
-            profile
-              ?.preferred_cuisines
-          )
-        ) {
-
-          return (
-            profile
-              .preferred_cuisines[0] ||
-            ""
-          );
-
-        }
-
-
-        return String(
-          profile
-            ?.cuisine ||
-
-          profile
-            ?.preferred_cuisine ||
-
-          ""
-        ).trim();
-
-      },
-      [
-        profile,
-      ]
-    );
-
-
-  // =========================================================
-  // LOCATION TEXT CHANGE
-  // =========================================================
-
-  function handleLocationChange(
-    value
-  ) {
-
-    setForm(
-      previous => ({
-        ...previous,
-
-        city:
-          value,
-
-        /*
-         * User changed the text.
-         * Old coordinates can no longer
-         * be trusted until they select
-         * another autocomplete result.
-         */
-
-        search_latitude:
-          null,
-
-        search_longitude:
-          null,
-
-        venue_name: "",
-
-        restaurant_name: "",
-
-        restaurant_address: "",
-
-        location_label: "",
-
-        latitude: null,
-
-        longitude: null,
-      })
-    );
-
-
-    setSelectedRestaurant(
-      null
-    );
-
-
-    setRestaurants(
-      []
-    );
-
-
-    setRestaurantsError(
-      ""
-    );
-
-
-    setRestaurantSearchDone(
-      false
-    );
-
-  }
-
-
-  // =========================================================
-  // LOCATION SELECTED FROM AUTOCOMPLETE
-  // =========================================================
-
-  async function handleLocationSelect(
-    place
-  ) {
-
-    if (!place) {
-      return;
-    }
-
-
-    const latitude =
-      Number(
-        place.latitude
+    try {
+      setRestaurantLoading(
+        true
       );
 
+      setPageError("");
+
+      const response =
+        await api.get(
+          "/dineout/restaurants/recommendations/",
+          {
+            params: {
+              latitude,
+              longitude,
+
+              cuisine:
+                selectedCuisine ===
+                "All cuisines"
+                  ? undefined
+                  : selectedCuisine,
+
+              limit: 10,
+            },
+          }
+        );
+
+      const results =
+        Array.isArray(
+          response.data
+        )
+          ? response.data
+          : response.data
+              ?.results ||
+            response.data
+              ?.restaurants ||
+            [];
+
+      setRestaurants(
+        results
+      );
+
+      setSelectedRestaurant(
+        results[0] || null
+      );
+
+      if (
+        results.length === 0
+      ) {
+        setPageError(
+          "No restaurants found in this area."
+        );
+      }
+    } catch (
+      requestError
+    ) {
+      console.error(
+        "Restaurant search error:",
+        requestError.response
+          ?.data ||
+        requestError
+      );
+
+      setRestaurants([]);
+      setSelectedRestaurant(null);
+
+      setPageError(
+        requestError.response
+          ?.data
+          ?.detail ||
+        "Unable to load restaurants."
+      );
+    } finally {
+      setRestaurantLoading(
+        false
+      );
+    }
+  }
+
+
+  /* ----------------------------------------------------------
+     SELECT LOCATION
+  ---------------------------------------------------------- */
+
+  async function selectLocation(
+    place
+  ) {
+    const latitude =
+      Number(
+        place.latitude ??
+        place.lat
+      );
 
     const longitude =
       Number(
-        place.longitude
+        place.longitude ??
+        place.lon
       );
 
-
     if (
-      !Number.isFinite(
-        latitude
-      ) ||
-      !Number.isFinite(
-        longitude
-      )
+      !Number.isFinite(latitude) ||
+      !Number.isFinite(longitude)
     ) {
-
-      setRestaurantsError(
-        "The selected location does not contain valid coordinates."
+      setPageError(
+        "This location has invalid coordinates."
       );
 
       return;
-
     }
 
-
-    const locationLabel =
-      place.display_name ||
+    const locationName =
       place.name ||
-      "";
+      place.display_name ||
+      place.location_label ||
+      "Selected location";
 
+    autocompleteRequestRef.current += 1;
 
-    setForm(
-      previous => ({
-        ...previous,
+    skipAutocompleteRef.current =
+      true;
 
-        city:
-          locationLabel,
-
-        search_latitude:
-          latitude,
-
-        search_longitude:
-          longitude,
-
-        venue_name: "",
-
-        restaurant_name: "",
-
-        restaurant_address: "",
-
-        location_label: "",
-
-        latitude: null,
-
-        longitude: null,
-      })
+    setLocation(
+      locationName
     );
 
+    setLocationSuggestions([]);
+    setLocationLoading(false);
 
-    setSelectedRestaurant(
-      null
+    setCoordinates({
+      latitude,
+      longitude,
+    });
+
+    setMapCenter([
+      latitude,
+      longitude,
+    ]);
+
+    await fetchRestaurants(
+      latitude,
+      longitude,
+      cuisine
     );
-
-
-    setRestaurantsError(
-      ""
-    );
-
-
-    /*
-     * Do not automatically load every restaurant.
-     * The user first chooses cuisine / food / place type,
-     * then FoodKindl sends a focused recommendation request.
-     */
-
-    setRestaurants([]);
-
-    setRestaurantSearchDone(
-      false
-    );
-
   }
 
 
-  // =========================================================
-  // CURRENT LOCATION
-  // =========================================================
+  /* ----------------------------------------------------------
+     LOCATION INPUT
+  ---------------------------------------------------------- */
+
+  function handleLocationChange(
+    event
+  ) {
+    skipAutocompleteRef.current =
+      false;
+
+    setLocation(
+      event.target.value
+    );
+  }
+
+
+  function clearLocation() {
+    autocompleteRequestRef.current += 1;
+
+    skipAutocompleteRef.current =
+      false;
+
+    setLocation("");
+    setLocationSuggestions([]);
+    setLocationLoading(false);
+  }
+
+
+  /* ----------------------------------------------------------
+     CURRENT LOCATION
+  ---------------------------------------------------------- */
 
   function useCurrentLocation() {
-
-    setRestaurantsError(
-      ""
-    );
-
-
     if (
       !navigator.geolocation
     ) {
-
-      setRestaurantsError(
-        "Your browser does not support location access."
+      setPageError(
+        "Location is not supported by this browser."
       );
 
       return;
-
     }
-
 
     navigator.geolocation
       .getCurrentPosition(
-
-        async position => {
-
+        async ({
+          coords,
+        }) => {
           const latitude =
-            Number(
-              position.coords
-                .latitude
-            );
-
+            coords.latitude;
 
           const longitude =
-            Number(
-              position.coords
-                .longitude
-            );
+            coords.longitude;
 
+          autocompleteRequestRef.current += 1;
 
-          setForm(
-            previous => ({
-              ...previous,
+          skipAutocompleteRef.current =
+            true;
 
-              city:
-                "Current location",
-
-              search_latitude:
-                latitude,
-
-              search_longitude:
-                longitude,
-
-              venue_name: "",
-
-              restaurant_name: "",
-
-              restaurant_address: "",
-
-              location_label: "",
-
-              latitude: null,
-
-              longitude: null,
-            })
+          setLocation(
+            "Current location"
           );
 
+          setLocationSuggestions([]);
 
-          setSelectedRestaurant(
-            null
+          setCoordinates({
+            latitude,
+            longitude,
+          });
+
+          setMapCenter([
+            latitude,
+            longitude,
+          ]);
+
+          await fetchRestaurants(
+            latitude,
+            longitude,
+            cuisine
           );
-
-
-          setRestaurants([]);
-
-          setRestaurantSearchDone(
-            false
-          );
-
         },
 
-
-        geoError => {
-
-          console.error(
-            "GEOLOCATION ERROR:",
-            geoError
+        () => {
+          setPageError(
+            "Unable to access your current location."
           );
-
-
-          if (
-            geoError.code ===
-            geoError.PERMISSION_DENIED
-          ) {
-
-            setRestaurantsError(
-              "Location permission was denied. Search an area instead."
-            );
-
-            return;
-
-          }
-
-
-          setRestaurantsError(
-            "FoodKindl could not detect your current location."
-          );
-
-        },
-
-
-        {
-          enableHighAccuracy:
-            true,
-
-          timeout:
-            12000,
-
-          maximumAge:
-            60000,
-        }
-
-      );
-
-  }
-
-
-  // =========================================================
-  // SEARCH RESTAURANTS
-  // =========================================================
-
-  async function searchRestaurants(
-  explicitLatitude,
-  explicitLongitude,
-  overrides = {}
-) {
-  const latitude =
-    Number(
-      explicitLatitude ??
-      form.search_latitude
-    );
-
-  const longitude =
-    Number(
-      explicitLongitude ??
-      form.search_longitude
-    );
-
-  console.log(
-    "DINE OUT SEARCH COORDINATES:",
-    {
-      latitude,
-      longitude,
-      city: form.city,
-    }
-  );
-
-  if (
-    !Number.isFinite(latitude) ||
-    !Number.isFinite(longitude)
-  ) {
-    setRestaurantsError(
-      "Please select a location from the suggestions."
-    );
-
-    return;
-  }
-
-  setRestaurantsLoading(true);
-  setRestaurantsError("");
-  setRestaurantSearchDone(true);
-
-  try {
-    const params = {
-      latitude,
-      longitude,
-
-      query:
-        String(
-          overrides.food_query ??
-          form.food_query ??
-          ""
-        ).trim(),
-
-      cuisine:
-        String(
-          overrides.cuisine ??
-          form.cuisine ??
-          ""
-        ).trim(),
-
-      radius_km: 4,
-      limit: 12,
-      smart_match: true,
-    };
-
-    const venueType =
-      String(
-        overrides.dine_venue_type ??
-        form.dine_venue_type ??
-        ""
-      ).trim();
-
-    if (venueType) {
-      params.type =
-        venueType;
-    }
-
-    if (dietaryPreference) {
-      params.dietary_preference =
-        dietaryPreference;
-    }
-
-    console.log(
-      "DINE OUT REQUEST PARAMS:",
-      params
-    );
-
-    const response =
-      await api.get(
-        "/restaurants/recommendations/",
-        {
-          params,
         }
       );
-
-    console.log(
-      "DINE OUT RESPONSE:",
-      response?.data
-    );
-
-    const results =
-      response?.data?.results;
-
-    setRestaurants(
-      Array.isArray(results)
-        ? results
-        : []
-    );
-
-  } catch (requestError) {
-    console.error(
-      "DINE OUT SEARCH FAILED",
-      {
-        status:
-          requestError?.response
-            ?.status,
-
-        data:
-          requestError?.response
-            ?.data,
-
-        message:
-          requestError?.message,
-
-        url:
-          requestError?.config
-            ?.url,
-
-        params:
-          requestError?.config
-            ?.params,
-      }
-    );
-
-    setRestaurants([]);
-
-    const backendData =
-      requestError?.response
-        ?.data;
-
-    let message =
-      "Unable to find restaurants around this location.";
-
-    if (
-      typeof backendData?.detail ===
-      "string"
-    ) {
-      message =
-        backendData.detail;
-    } else if (
-      typeof backendData?.error ===
-      "string"
-    ) {
-      message =
-        backendData.error;
-    } else if (
-      typeof backendData
-        ?.technical_detail ===
-      "string"
-    ) {
-      message =
-        backendData
-          .technical_detail;
-    } else if (
-      requestError?.message
-    ) {
-      message =
-        requestError.message;
-    }
-
-    setRestaurantsError(
-      message
-    );
-
-  } finally {
-    setRestaurantsLoading(false);
-  }
-}
-
-
-  // =========================================================
-  // SEARCH AFTER FOOD / FILTER CHANGE
-  // =========================================================
-
-  async function handleRestaurantSearch(
-    overrides = {}
-  ) {
-
-    await searchRestaurants(
-      form.search_latitude,
-      form.search_longitude,
-      overrides
-    );
-
   }
 
 
-  // =========================================================
-  // VENUE TYPE
-  // =========================================================
+  /* ----------------------------------------------------------
+     CHOOSE RESTAURANT
+  ---------------------------------------------------------- */
 
-  async function handleVenueTypeChange(
-    type
-  ) {
-
-    updateField(
-      "dine_venue_type",
-      type
-    );
-
-
-    if (
-      Number.isFinite(
-        Number(
-          form.search_latitude
-        )
-      ) &&
-      Number.isFinite(
-        Number(
-          form.search_longitude
-        )
-      )
-    ) {
-
-      await searchRestaurants(
-        form.search_latitude,
-        form.search_longitude,
-        {
-          dine_venue_type:
-            type,
-        }
-      );
-
-    }
-
-  }
-
-
-  // =========================================================
-  // SELECT RESTAURANT
-  // =========================================================
-
-  function selectRestaurant(
+  function chooseRestaurant(
     restaurant
   ) {
-
-    if (!restaurant) {
-      return;
-    }
-
-
-    const latitude =
-      Number(
-        restaurant.latitude
-      );
-
-
-    const longitude =
-      Number(
-        restaurant.longitude
-      );
-
-
-    const address =
-      String(
-        restaurant.address ||
-
-        restaurant.locality ||
-
-        restaurant.city ||
-
-        ""
-      ).trim();
-
-
     setSelectedRestaurant(
       restaurant
     );
 
+    setDetailsRestaurant(
+      null
+    );
 
-    setForm(
-      previous => ({
-        ...previous,
+    if (
+      hasValidCoordinates(
+        restaurant
+      )
+    ) {
+      setMapCenter([
+        getLatitude(
+          restaurant
+        ),
+        getLongitude(
+          restaurant
+        ),
+      ]);
+    }
 
-        venue_name:
-          restaurant.name ||
-          "",
-
-        restaurant_name:
-          restaurant.name ||
-          "",
-
-        restaurant_address:
-          address,
-
-        location_label:
-          restaurant.locality ||
-          restaurant.city ||
-          address,
-
-        latitude:
-          Number.isFinite(
-            latitude
+    window.setTimeout(
+      () => {
+        document
+          .getElementById(
+            "plan-meetup"
           )
-            ? latitude
-            : null,
-
-        longitude:
-          Number.isFinite(
-            longitude
-          )
-            ? longitude
-            : null,
-
-        cuisine:
-          restaurant.main_cuisine ||
-          restaurant.cuisine ||
-          previous.cuisine,
-
-        dine_venue_type:
-          restaurant.restaurant_type ||
-          previous.dine_venue_type ||
-          "restaurant",
-      })
+          ?.scrollIntoView({
+            behavior: "smooth",
+            block: "start",
+          });
+      },
+      100
     );
-
-
-    setMessage(
-      `${restaurant.name} selected.`
-    );
-
-
-    setError(
-      ""
-    );
-
   }
 
 
-  // =========================================================
-  // VALIDATION
-  // =========================================================
+  /* ----------------------------------------------------------
+     CREATE ERROR
+  ---------------------------------------------------------- */
 
-  function validateForm() {
-
-    if (
-      !String(
-        form.title
-      ).trim()
-    ) {
-
-      throw new Error(
-        "Please enter an invite title."
-      );
-
-    }
-
-
-    if (
-      !String(
-        form.venue_name
-      ).trim()
-    ) {
-
-      throw new Error(
-        "Please choose a restaurant, café, hotel or bakery from the recommendations."
-      );
-
-    }
-
-
-    if (
-      !form.start_date
-    ) {
-
-      throw new Error(
-        "Please choose the start date."
-      );
-
-    }
-
-
-    const startDate =
-      buildDateTime(
-        form.start_date,
-        form.start_hour,
-        form.start_minute,
-        form.start_ampm
-      );
-
-
-    if (!startDate) {
-
-      throw new Error(
-        "Please select a valid start date and time."
-      );
-
-    }
-
-
-    if (
-      startDate.getTime() <
-      Date.now() - 60000
-    ) {
-
-      throw new Error(
-        "Dine Out cannot start in the past."
-      );
-
-    }
-
-
-    if (
-      form.end_date
-    ) {
-
-      const endDate =
-        buildDateTime(
-          form.end_date,
-          form.end_hour,
-          form.end_minute,
-          form.end_ampm
-        );
-
-
-      if (!endDate) {
-
-        throw new Error(
-          "Please select a valid end date and time."
-        );
-
-      }
-
-
-      if (
-        endDate <=
-        startDate
-      ) {
-
-        throw new Error(
-          "End time must be after the start time."
-        );
-
-      }
-
-    }
-
-
-    const participantLimit =
-      Number(
-        form.max_participants
-      );
-
-
-    if (
-      !Number.isFinite(
-        participantLimit
-      ) ||
-      participantLimit < 2
-    ) {
-
-      throw new Error(
-        "Maximum participants must be at least 2."
-      );
-
-    }
-
-
-    if (
-      form.recipients.length ===
-      0
-    ) {
-
-      throw new Error(
-        "Please invite at least one person."
-      );
-
-    }
-
-
-    if (
-      form.recipients.length >
-      participantLimit - 1
-    ) {
-
-      throw new Error(
-        `You can invite a maximum of ${
-          participantLimit - 1
-        } people.`
-      );
-
-    }
-
-  }
-
-
-  // =========================================================
-  // SUBMIT
-  // =========================================================
-
-  async function submit(
-    event
+  function showCreateError(
+    message
   ) {
+    setCreateError(message);
+    setCreateSuccess("");
 
-    event.preventDefault();
+    document
+      .getElementById(
+        "plan-meetup"
+      )
+      ?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+  }
 
 
-    if (saving) {
+  /* ----------------------------------------------------------
+     CREATE DINE OUT
+  ---------------------------------------------------------- */
+
+  async function createDineOut() {
+    setCreateError("");
+    setCreateSuccess("");
+    setCreatedInviteId(null);
+
+    if (!selectedRestaurant) {
+      showCreateError(
+        "Please choose a restaurant."
+      );
+
       return;
     }
 
+    if (
+      !meetupTitle.trim()
+    ) {
+      showCreateError(
+        "Please enter a meetup title."
+      );
 
-    setSaving(
-      true
-    );
+      return;
+    }
 
+    if (
+      !eventDate ||
+      !eventTime
+    ) {
+      showCreateError(
+        "Please choose a valid date and time."
+      );
 
-    setError(
-      ""
-    );
+      return;
+    }
 
+    const startsAt =
+      new Date(
+        `${eventDate}T${eventTime}:00`
+      );
+
+    if (
+      Number.isNaN(
+        startsAt.getTime()
+      )
+    ) {
+      showCreateError(
+        "The selected date or time is invalid."
+      );
+
+      return;
+    }
+
+    if (
+      startsAt <= new Date()
+    ) {
+      showCreateError(
+        "Please choose a future date and time."
+      );
+
+      return;
+    }
+
+    const guestCount =
+      Number(
+        maximumGuests
+      );
+
+    if (
+      !Number.isInteger(
+        guestCount
+      ) ||
+      guestCount < 1 ||
+      guestCount > 20
+    ) {
+      showCreateError(
+        "Maximum guests must be between 1 and 20."
+      );
+
+      return;
+    }
+
+    if (
+      visibility === "invited_only" &&
+      selectedMemberIds.length === 0
+    ) {
+      showCreateError(
+        "Please select at least one guest for a private Dine Out."
+      );
+
+      return;
+    }
+
+    if (selectedMemberIds.length > guestCount) {
+      showCreateError(
+        `You selected ${selectedMemberIds.length} guests, but the maximum is ${guestCount}.`
+      );
+
+      return;
+    }
+
+    const latitude =
+      getLatitude(
+        selectedRestaurant
+      );
+
+    const longitude =
+      getLongitude(
+        selectedRestaurant
+      );
+
+    if (
+      !Number.isFinite(latitude) ||
+      !Number.isFinite(longitude)
+    ) {
+      showCreateError(
+        "The selected restaurant has invalid coordinates."
+      );
+
+      return;
+    }
+
+    const payload = {
+      title:
+        meetupTitle.trim(),
+
+      description:
+        meetupNotes.trim(),
+
+      restaurant_external_id:
+        String(
+          selectedRestaurant.id ||
+          ""
+        ),
+
+      restaurant_name:
+        selectedRestaurant.name,
+
+      restaurant_address:
+        selectedRestaurant.address ||
+        selectedRestaurant.location_label ||
+        "",
+
+      restaurant_cuisine:
+        selectedRestaurant.cuisine ||
+        "",
+
+      restaurant_phone:
+        selectedRestaurant.phone ||
+        "",
+
+      restaurant_website:
+        selectedRestaurant.website ||
+        "",
+
+      latitude,
+      longitude,
+
+      starts_at:
+        startsAt.toISOString(),
+
+      maximum_guests:
+        guestCount,
+
+      budget_label: "",
+
+      booking_status:
+        bookingStatus,
+
+      dietary_notes:
+        dietaryNotes.trim(),
+
+      meetup_notes:
+        meetupNotes.trim(),
+
+      verified_only: false,
+
+      women_only: false,
+
+      visibility,
+
+      invited_member_ids:
+        visibility === "invited_only"
+          ? selectedMemberIds
+          : [],
+
+      status: "published",
+    };
 
     try {
-
-      validateForm();
-
-
-      const startDate =
-        buildDateTime(
-          form.start_date,
-          form.start_hour,
-          form.start_minute,
-          form.start_ampm
-        );
-
-
-      const endDate =
-        form.end_date
-          ? buildDateTime(
-              form.end_date,
-              form.end_hour,
-              form.end_minute,
-              form.end_ampm
-            )
-          : null;
-
-
-      const latitude =
-        Number(
-          form.latitude
-        );
-
-
-      const longitude =
-        Number(
-          form.longitude
-        );
-
-
-      const payload = {
-
-        invite_type:
-          "dine_out",
-
-
-        title:
-          form.title.trim(),
-
-
-        description:
-          form.description.trim(),
-
-
-        cuisine:
-          String(
-            form.cuisine ||
-            ""
-          ).trim(),
-
-
-        dine_venue_type:
-          String(
-            form.dine_venue_type ||
-            selectedRestaurant
-              ?.restaurant_type ||
-            "restaurant"
-          ).trim(),
-
-
-        start_at:
-          startDate.toISOString(),
-
-
-        end_at:
-          endDate
-            ? endDate.toISOString()
-            : null,
-
-
-        // ---------------------------------------------------
-        // ONLY THE CHOSEN PLACE BECOMES PART OF THE INVITE
-        // ---------------------------------------------------
-
-        venue_name:
-          form.venue_name.trim(),
-
-
-        location_label:
-          String(
-            form.location_label ||
-            form.restaurant_address ||
-            ""
-          ).trim(),
-
-
-        private_address:
-          String(
-            form.restaurant_address ||
-            ""
-          ).trim(),
-
-
-        latitude:
-          Number.isFinite(
-            latitude
-          )
-            ? latitude
-            : null,
-
-
-        longitude:
-          Number.isFinite(
-            longitude
-          )
-            ? longitude
-            : null,
-
-
-        max_participants:
-          Number(
-            form.max_participants
-          ),
-
-
-        recipient_user_ids:
-          form.recipients
-            .map(Number)
-            .filter(Boolean),
-
-
-        verified_only:
-          Boolean(
-            form.verified_only
-          ),
-
-
-        women_only:
-          Boolean(
-            form.women_only
-          ),
-
-
-        restaurant_name:
-          form.venue_name.trim(),
-
-
-        restaurant_address:
-          String(
-            form.restaurant_address ||
-            ""
-          ).trim(),
-
-
-        budget_level:
-          form.budget_level,
-
-
-        dietary_notes:
-          String(
-            form.dietary_notes ||
-            ""
-          ).trim(),
-
-
-        booking_status:
-          form.booking_status,
-
-
-        table_notes:
-          String(
-            form.table_notes ||
-            ""
-          ).trim(),
-      };
-
-
-      /*
-       * Restaurant discovery never POSTs
-       * anything.
-       *
-       * This POST creates only the
-       * Food Invite.
-       */
+      setCreating(true);
 
       console.log(
-        "DINE OUT INVITE PAYLOAD:",
+        "CREATE DINE OUT PAYLOAD:",
         payload
       );
 
       const response =
         await api.post(
-          INVITES_ENDPOINT,
+          "/dineout/dine-outs/",
           payload
         );
 
       console.log(
-        "DINE OUT INVITE CREATED:",
-        response?.data
+        "CREATE DINE OUT SUCCESS:",
+        response.data
       );
 
-
-      navigate(
-        "/food-invites",
-        {
-          replace: true,
-        }
+      setCreateSuccess(
+        "Dine Out invitation created successfully."
       );
 
+      setCreatedInviteId(
+        response.data?.id || null
+      );
 
+      document
+        .getElementById(
+          "plan-meetup"
+        )
+        ?.scrollIntoView({
+          behavior: "smooth",
+          block: "start",
+        });
+
+      setMeetupTitle("");
+      setMeetupNotes("");
+      setEventDate("");
+      setEventTime("");
+      setMaximumGuests(2);
+      setBookingStatus("not_booked");
+      setDietaryNotes("");
+      setVisibility("public");
+      setSelectedMemberIds([]);
     } catch (
       requestError
     ) {
+      console.error(
+        "CREATE DINE OUT FAILED:",
+        {
+          status:
+            requestError.response
+              ?.status,
 
-      if (
-        !requestError
-          ?.response &&
-        requestError
-          ?.message
-      ) {
+          response:
+            requestError.response
+              ?.data,
 
-        setError(
-          requestError.message
-        );
-
-      } else {
-
-        setError(
-          readError(
-            requestError,
-            "Unable to create Dine Out invite."
-          )
-        );
-
-      }
-
-
-    } finally {
-
-      setSaving(
-        false
+          message:
+            requestError.message,
+        }
       );
 
-    }
+      const responseStatus =
+        requestError.response
+          ?.status;
 
+      const responseData =
+        requestError.response
+          ?.data;
+
+      if (
+        responseStatus === 401
+      ) {
+        showCreateError(
+          "Your login session has expired. Please log in again."
+        );
+
+        return;
+      }
+
+      if (
+        responseStatus === 403
+      ) {
+        showCreateError(
+          "You do not have permission to create this invitation."
+        );
+
+        return;
+      }
+
+      if (
+        responseStatus === 404
+      ) {
+        showCreateError(
+          "The Dine Out API was not found. Check your Django URLs."
+        );
+
+        return;
+      }
+
+      if (
+        responseData &&
+        typeof responseData ===
+          "object"
+      ) {
+        const backendError =
+          Object.entries(
+            responseData
+          )
+            .map(
+              ([
+                field,
+                value,
+              ]) => {
+                const message =
+                  Array.isArray(
+                    value
+                  )
+                    ? value.join(" ")
+                    : String(value);
+
+                return (
+                  `${field}: ${message}`
+                );
+              }
+            )
+            .join(" ");
+
+        showCreateError(
+          backendError ||
+          "Unable to create the invitation."
+        );
+
+        return;
+      }
+
+      showCreateError(
+        "Unable to create the Dine Out invitation."
+      );
+    } finally {
+      setCreating(false);
+    }
   }
 
 
-  // =========================================================
-  // UI
-  // =========================================================
+  const today =
+    new Date()
+      .toISOString()
+      .split("T")[0];
+
+
+  /* ============================================================
+     JSX
+  ============================================================ */
 
   return (
-
-    <main className="fi-page fk-dineout-page">
-
-      {/* =====================================================
-          HERO
-      ====================================================== */}
-
-      <section className="fi-hero">
-
+    <main className="dineout-page">
+      <section className="dineout-hero">
         <div>
-
-          <span className="fi-eyebrow">
-            🍽️ DINE OUT
-          </span>
-
+          <p className="eyebrow">
+            FOODKINDL DINE OUT
+          </p>
 
           <h1>
             Find a place.
+            <br />
             Meet over food.
           </h1>
 
-
-          <p>
-            Search an area,
-            discover restaurants
-            and cafés matched to
-            your food preferences,
-            choose a place and
-            invite people.
+          <p className="hero-text">
+            Discover restaurants,
+            choose a place and invite
+            people.
           </p>
-
         </div>
 
+        <div className="hero-card">
+          <span>
+            MEET OVER FOOD
+          </span>
 
-        <button
-          type="button"
-          className="fi-secondary"
-          onClick={() =>
-            navigate(
-              "/food-invites"
-            )
-          }
-        >
-          ← Food Invites
-        </button>
-
+          <strong>
+            Pick a place.
+            Invite your people.
+          </strong>
+        </div>
       </section>
 
 
-      {/* =====================================================
-          LOCATION
-      ====================================================== */}
-
-      <section className="fk-dineout-location-panel">
-
-  <div className="fk-dineout-location-layout">
-
-    {/* =================================================
-        LEFT SIDE
-    ================================================== */}
-
-    <div className="fk-dineout-location-main">
-
-      <div className="fk-dineout-location-heading">
-
-        <div>
-
-          <span className="fi-eyebrow">
+      <section className="location-card">
+        <div className="section-heading">
+          <p className="eyebrow">
             FIND AN AREA
-          </span>
+          </p>
 
           <h2>
             Where do you want to dine?
           </h2>
 
           <p>
-            Start with an area,
-            neighbourhood,
-            landmark or city.
+            Search a locality,
+            neighbourhood, landmark
+            or city.
           </p>
-
         </div>
 
-      </div>
-
-
-      {/* =================================================
-          LOCATION AUTOCOMPLETE
-      ================================================== */}
-
-      <LocationAutocomplete
-        value={
-          form.city
-        }
-
-        placeholder=
-          "Try Indiranagar, Koramangala, Nagasandra..."
-
-        onChange={
-          handleLocationChange
-        }
-
-        onSelect={
-          handleLocationSelect
-        }
-      />
-
-
-      {/* =================================================
-          CURRENT LOCATION
-      ================================================== */}
-
-      <button
-        type="button"
-        className="fk-dineout-current-location"
-        onClick={
-          useCurrentLocation
-        }
-      >
-
-        <MapPin
-          size={16}
-        />
-
-        Use my current location
-
-      </button>
-
-
-      {/* =================================================
-          LOCATION SELECTED
-      ================================================== */}
-
-      {form.search_latitude &&
-        form.search_longitude && (
-
-        <div className="fk-location-selected">
-
-          <CheckCircle2
-            size={17}
-          />
-
-          <span>
-            Location selected.
-            FoodKindl is searching
-            places around this area.
-          </span>
-
-        </div>
-
-      )}
-
-    </div>
-
-
-    {/* =================================================
-        RIGHT SIDE IMAGE
-    ================================================== */}
-
-    <div className="fk-dineout-location-art">
-
-      <img
-        src="/images/vidan.png"
-        alt="Explore great food near you"
-      />
-
-    </div>
-
-  </div>
-
-</section>
-
-
-      {/* =====================================================
-          FOOD / RESTAURANT DISCOVERY
-      ====================================================== */}
-
-      <DineOutInvite
-
-        form={
-          form
-        }
-
-        updateField={
-          updateField
-        }
-
-        restaurants={
-          restaurants
-        }
-
-        restaurantsLoading={
-          restaurantsLoading
-        }
-
-        restaurantsError={
-          restaurantsError
-        }
-
-        onSearchRestaurants={
-          handleRestaurantSearch
-        }
-
-        onSelectRestaurant={
-          selectRestaurant
-        }
-
-        selectedRestaurant={
-          selectedRestaurant
-        }
-
-        userPreferences={
-          profile || {}
-        }
-
-        restaurantSearchDone={
-          restaurantSearchDone
-        }
-
-        onVenueTypeChange={
-          handleVenueTypeChange
-        }
-
-        hideLocationSearch={
-          true
-        }
-
-      />
-
-
-      {/* =====================================================
-          MAP
-      ====================================================== */}
-
-      {Number.isFinite(
-        Number(
-          form.search_latitude
-        )
-      ) &&
-        Number.isFinite(
-          Number(
-            form.search_longitude
-          )
-        ) && (
-
-        <section className="fk-dineout-map-section">
-
-          <div className="fk-dineout-map-heading">
-
-            <div>
-
-              <span className="fi-eyebrow">
-                FOOD MAP
-              </span>
-
-
-              <h2>
-                Explore places
-                around{" "}
-                {
-                  form.city
-                }
-              </h2>
-
-            </div>
-
-
-            <MapPin
-              size={22}
-            />
-
-          </div>
-
-
-          <DineOutRestaurantMap
-
-            restaurants={
-              restaurants
-            }
-
-            centerLatitude={
-              form
-                .search_latitude
-            }
-
-            centerLongitude={
-              form
-                .search_longitude
-            }
-
-            selectedRestaurant={
-              selectedRestaurant
-            }
-
-            onSelectRestaurant={
-              selectRestaurant
-            }
-
-          />
-
-        </section>
-
-      )}
-
-
-      {/* =====================================================
-          SELECTED PLACE
-      ====================================================== */}
-
-      {selectedRestaurant && (
-
-        <section className="fi-create-card">
-
-          <div className="fi-form-heading">
-
-            <div>
-
-              <span className="fi-eyebrow">
-                YOUR DINE OUT PLACE
-              </span>
-
-
-              <h2>
-                {
-                  selectedRestaurant
-                    .name
-                }
-              </h2>
-
-            </div>
-
-
-            <CheckCircle2
-              size={26}
-            />
-
-          </div>
-
-
-          <div className="fi-grid">
-
-            <div className="fi-field">
-
-              <span>
-                Place type
-              </span>
-
-              <strong>
-                {
-                  selectedRestaurant
-                    .primary_type_label ||
-                  selectedRestaurant
-                    .primary_type ||
-                  selectedRestaurant
-                    .restaurant_type ||
-                  "Restaurant"
-                }
-              </strong>
-
-            </div>
-
-
-            <div className="fi-field">
-
-              <span>
-                Main cuisine
-              </span>
-
-              <strong>
-                {
-                  selectedRestaurant
-                    .main_cuisine ||
-                  selectedRestaurant
-                    .cuisine ||
-                  "Not specified"
-                }
-              </strong>
-
-            </div>
-
-
-            <div className="fi-field">
-
-              <span>
-                Rating
-              </span>
-
-              <strong>
-                {
-                  selectedRestaurant.rating
-                    ? `★ ${selectedRestaurant.rating}`
-                    : "Not available"
-                }
-              </strong>
-
-            </div>
-
-
-            <div className="fi-field">
-
-              <span>
-                Reviews
-              </span>
-
-              <strong>
-                {
-                  selectedRestaurant.review_count
-                    ? Number(
-                        selectedRestaurant.review_count
-                      ).toLocaleString()
-                    : "Not available"
-                }
-              </strong>
-
-            </div>
-
-
-            <div className="fi-field fi-span-2">
-
-              <span>
-                Address
-              </span>
-
-              <strong>
-                {
-                  selectedRestaurant
-                    .address ||
-
-                  selectedRestaurant
-                    .locality ||
-
-                  form.city
-                }
-              </strong>
-
-            </div>
-
-
-            {selectedRestaurant
-              .phone && (
-
-              <div className="fi-field">
-
-                <span>
-                  Phone
-                </span>
-
-                <strong>
-                  {
-                    selectedRestaurant
-                      .phone
-                  }
-                </strong>
-
-              </div>
-
-            )}
-
-
-            {selectedRestaurant
-              .opening_hours && (
-
-              <div className="fi-field">
-
-                <span>
-                  Opening hours
-                </span>
-
-                <strong>
-                  {
-                    selectedRestaurant
-                      .opening_hours
-                  }
-                </strong>
-
-              </div>
-
-            )}
-
-
-            {selectedRestaurant
-              .website && (
-
-              <div className="fi-field fi-span-2">
-
-                <span>
-                  Website
-                </span>
-
-                <a
-                  href={
-                    selectedRestaurant
-                      .website
-                  }
-                  target="_blank"
-                  rel="noreferrer"
-                >
-                  {
-                    selectedRestaurant
-                      .website
-                  }
-                </a>
-
-              </div>
-
-            )}
-
-
-            {selectedRestaurant
-              .recommendation_reason && (
-
-              <div className="fi-field fi-span-2">
-
-                <span>
-                  Why this place?
-                </span>
-
-                <strong>
-                  {
-                    selectedRestaurant
-                      .recommendation_reason
-                  }
-                </strong>
-
-              </div>
-
-            )}
-
-          </div>
-
-        </section>
-
-      )}
-
-
-      {/* =====================================================
-          INVITE FORM
-      ====================================================== */}
-
-      <form
-        className="fi-create-card"
-        onSubmit={
-          submit
-        }
-      >
-
-        <div className="fi-form-heading">
-
-          <div>
-
-            <span className="fi-eyebrow">
-              CREATE DINE OUT
-            </span>
-
-
-            <h2>
-              Plan the meetup
-            </h2>
-
-          </div>
-
-
-          <Utensils
-            size={23}
-          />
-
-        </div>
-
-
-        <div className="fi-grid">
-
-
-          {/* TITLE */}
-
-          <label className="fi-field fi-span-2">
-
-            <span>
-              Invite title *
-            </span>
-
+        <div className="location-search">
+          <div className="location-input-wrap">
+            <Search size={20} />
 
             <input
-              required
-
-              value={
-                form.title
-              }
-
+              type="text"
+              value={location}
               onChange={
-                event =>
-                  updateField(
-                    "title",
-                    event.target.value
-                  )
+                handleLocationChange
               }
-
-              placeholder=
-                "Friday dinner at Indiranagar"
+              placeholder="Search locality, area or city"
+              autoComplete="off"
             />
 
-          </label>
-
-
-          {/* DESCRIPTION */}
-
-          <label className="fi-field fi-span-2">
-
-            <span>
-              Description
-            </span>
-
-
-            <textarea
-              rows={4}
-
-              value={
-                form.description
-              }
-
-              onChange={
-                event =>
-                  updateField(
-                    "description",
-                    event.target.value
-                  )
-              }
-
-              placeholder=
-                "What kind of Dine Out are you planning?"
-            />
-
-          </label>
-
-
-          {/* SELECTED PLACE */}
-
-          <div className="fi-field fi-span-2">
-
-            <span>
-              <MapPin
-                size={15}
-              />
-
-              Selected restaurant
-            </span>
-
-
-            <strong>
-              {
-                form.venue_name ||
-                "Choose a place from the recommendations above"
-              }
-            </strong>
-
-          </div>
-
-
-          {/* START DATE + TIME */}
-
-          <div className="fi-field">
-
-            <span>
-              <CalendarDays
-                size={15}
-              />
-
-              Starts *
-            </span>
-
-
-            <div className="fk-date-time-field">
-
-              <div className="fk-date-picker-field">
-
-                <CalendarDays
-                  size={16}
-                />
-
-                <input
-                  required
-                  type="date"
-
-                  value={
-                    form.start_date
+            {
+              location &&
+              (
+                <button
+                  type="button"
+                  className="icon-button"
+                  onClick={
+                    clearLocation
                   }
-
-                  onChange={
-                    event =>
-                      updateField(
-                        "start_date",
-                        event.target.value
-                      )
-                  }
-                />
-
-              </div>
-
-
-              <div className="fk-time-picker-field">
-
-                <Clock3
-                  size={16}
-                />
-
-                <select
-                  aria-label="Start hour"
-
-                  value={
-                    form.start_hour
-                  }
-
-                  onChange={
-                    event =>
-                      updateField(
-                        "start_hour",
-                        event.target.value
-                      )
-                  }
+                  aria-label="Clear location"
                 >
-
-                  {Array.from(
-                    {
-                      length: 12,
-                    },
-                    (_, index) => {
-
-                      const value =
-                        String(
-                          index + 1
-                        ).padStart(
-                          2,
-                          "0"
-                        );
-
-                      return (
-                        <option
-                          key={
-                            value
-                          }
-                          value={
-                            value
-                          }
-                        >
-                          {index + 1}
-                        </option>
-                      );
-
-                    }
-                  )}
-
-                </select>
-
-
-                <span className="fk-time-colon">
-                  :
-                </span>
-
-
-                <select
-                  aria-label="Start minutes"
-
-                  value={
-                    form.start_minute
-                  }
-
-                  onChange={
-                    event =>
-                      updateField(
-                        "start_minute",
-                        event.target.value
-                      )
-                  }
-                >
-
-                  {[
-                    "00",
-                    "15",
-                    "30",
-                    "45",
-                  ].map(
-                    minute => (
-                      <option
-                        key={
-                          minute
-                        }
-                        value={
-                          minute
-                        }
-                      >
-                        {minute}
-                      </option>
-                    )
-                  )}
-
-                </select>
-
-
-                <select
-                  aria-label="Start AM or PM"
-                  className="fk-ampm-select"
-
-                  value={
-                    form.start_ampm
-                  }
-
-                  onChange={
-                    event =>
-                      updateField(
-                        "start_ampm",
-                        event.target.value
-                      )
-                  }
-                >
-
-                  <option value="AM">
-                    AM
-                  </option>
-
-                  <option value="PM">
-                    PM
-                  </option>
-
-                </select>
-
-              </div>
-
-            </div>
-
+                  <X size={18} />
+                </button>
+              )
+            }
           </div>
-
-
-          {/* END DATE + TIME */}
-
-          <div className="fi-field">
-
-            <span>
-              <Clock3
-                size={15}
-              />
-
-              Ends
-            </span>
-
-
-            <div className="fk-date-time-field">
-
-              <div className="fk-date-picker-field">
-
-                <CalendarDays
-                  size={16}
-                />
-
-                <input
-                  type="date"
-
-                  value={
-                    form.end_date
-                  }
-
-                  onChange={
-                    event =>
-                      updateField(
-                        "end_date",
-                        event.target.value
-                      )
-                  }
-                />
-
-              </div>
-
-
-              <div className="fk-time-picker-field">
-
-                <Clock3
-                  size={16}
-                />
-
-                <select
-                  aria-label="End hour"
-
-                  value={
-                    form.end_hour
-                  }
-
-                  onChange={
-                    event =>
-                      updateField(
-                        "end_hour",
-                        event.target.value
-                      )
-                  }
-                >
-
-                  {Array.from(
-                    {
-                      length: 12,
-                    },
-                    (_, index) => {
-
-                      const value =
-                        String(
-                          index + 1
-                        ).padStart(
-                          2,
-                          "0"
-                        );
-
-                      return (
-                        <option
-                          key={
-                            value
-                          }
-                          value={
-                            value
-                          }
-                        >
-                          {index + 1}
-                        </option>
-                      );
-
-                    }
-                  )}
-
-                </select>
-
-
-                <span className="fk-time-colon">
-                  :
-                </span>
-
-
-                <select
-                  aria-label="End minutes"
-
-                  value={
-                    form.end_minute
-                  }
-
-                  onChange={
-                    event =>
-                      updateField(
-                        "end_minute",
-                        event.target.value
-                      )
-                  }
-                >
-
-                  {[
-                    "00",
-                    "15",
-                    "30",
-                    "45",
-                  ].map(
-                    minute => (
-                      <option
-                        key={
-                          minute
-                        }
-                        value={
-                          minute
-                        }
-                      >
-                        {minute}
-                      </option>
-                    )
-                  )}
-
-                </select>
-
-
-                <select
-                  aria-label="End AM or PM"
-                  className="fk-ampm-select"
-
-                  value={
-                    form.end_ampm
-                  }
-
-                  onChange={
-                    event =>
-                      updateField(
-                        "end_ampm",
-                        event.target.value
-                      )
-                  }
-                >
-
-                  <option value="AM">
-                    AM
-                  </option>
-
-                  <option value="PM">
-                    PM
-                  </option>
-
-                </select>
-
-              </div>
-
-            </div>
-
-          </div>
-
-
-          {/* MAX PEOPLE */}
-
-          <label className="fi-field">
-
-            <span>
-              <Users
-                size={15}
-              />
-
-              Maximum
-              participants
-            </span>
-
-
-            <input
-              type="number"
-
-              min="2"
-
-              max="100"
-
-              value={
-                form.max_participants
-              }
-
-              onChange={
-                event =>
-                  updateField(
-                    "max_participants",
-                    event.target.value
-                  )
-              }
-            />
-
-          </label>
-
-
-          {/* BUDGET */}
-
-          <label className="fi-field">
-
-            <span>
-              Budget
-            </span>
-
-
-            <select
-              value={
-                form.budget_level
-              }
-
-              onChange={
-                event =>
-                  updateField(
-                    "budget_level",
-                    event.target.value
-                  )
-              }
-            >
-
-              <option value="₹">
-                ₹ Budget
-              </option>
-
-
-              <option value="₹₹">
-                ₹₹ Moderate
-              </option>
-
-
-              <option value="₹₹₹">
-                ₹₹₹ Premium
-              </option>
-
-            </select>
-
-          </label>
-
-
-          {/* BOOKING */}
-
-          <label className="fi-field">
-
-            <span>
-              Booking status
-            </span>
-
-
-            <select
-              value={
-                form.booking_status
-              }
-
-              onChange={
-                event =>
-                  updateField(
-                    "booking_status",
-                    event.target.value
-                  )
-              }
-            >
-
-              <option value="not_booked">
-                Not booked yet
-              </option>
-
-
-              <option value="planned">
-                Planning to book
-              </option>
-
-
-              <option value="booked">
-                Table booked
-              </option>
-
-
-              <option value="walk_in">
-                Walk-in
-              </option>
-
-            </select>
-
-          </label>
-
-
-          {/* DIET */}
-
-          <label className="fi-field fi-span-2">
-
-            <span>
-              Dietary notes
-            </span>
-
-
-            <textarea
-              rows={3}
-
-              value={
-                form.dietary_notes
-              }
-
-              onChange={
-                event =>
-                  updateField(
-                    "dietary_notes",
-                    event.target.value
-                  )
-              }
-
-              placeholder=
-                "Vegetarian, vegan, allergies, halal..."
-            />
-
-          </label>
-
-
-          {/* TABLE NOTES */}
-
-          <label className="fi-field fi-span-2">
-
-            <span>
-              Meetup / table
-              notes
-            </span>
-
-
-            <textarea
-              rows={3}
-
-              value={
-                form.table_notes
-              }
-
-              onChange={
-                event =>
-                  updateField(
-                    "table_notes",
-                    event.target.value
-                  )
-              }
-
-              placeholder=
-                "Meet near entrance, reservation under my name..."
-            />
-
-          </label>
-
-
-          {/* PEOPLE */}
-
-          <div className="fi-span-2">
-
-            <PeopleSelector
-
-              selectedIds={
-                form.recipients
-              }
-
-              onChange={
-                ids =>
-                  updateField(
-                    "recipients",
-                    ids
-                  )
-              }
-
-              maxSelections={
-                Math.max(
-                  Number(
-                    form.max_participants
-                  ) - 1,
-                  1
-                )
-              }
-
-            />
-
-          </div>
-
-        </div>
-
-
-        {/* =================================================
-            OPTIONS
-        ================================================== */}
-
-        <div className="fi-options">
-
-          <label>
-
-            <input
-              type="checkbox"
-
-              checked={
-                form.verified_only
-              }
-
-              onChange={
-                event =>
-                  updateField(
-                    "verified_only",
-                    event.target.checked
-                  )
-              }
-            />
-
-            Verified profiles
-            only
-
-          </label>
-
-
-          <label>
-
-            <input
-              type="checkbox"
-
-              checked={
-                form.women_only
-              }
-
-              onChange={
-                event =>
-                  updateField(
-                    "women_only",
-                    event.target.checked
-                  )
-              }
-            />
-
-            Women-only invite
-
-          </label>
-
-        </div>
-
-
-        {/* =================================================
-            MESSAGES
-        ================================================== */}
-
-        {message && (
-
-          <div className="fi-alert fi-success">
-            {message}
-          </div>
-
-        )}
-
-
-        {error && (
-
-          <div className="fi-alert fi-error">
-            {error}
-          </div>
-
-        )}
-
-
-        {/* =================================================
-            ACTIONS
-        ================================================== */}
-
-        <div className="fi-form-actions">
 
           <button
             type="button"
-
-            className="fi-secondary"
-
-            onClick={() =>
-              navigate(
-                "/food-invites"
-              )
+            className="secondary-button"
+            onClick={
+              useCurrentLocation
             }
           >
-            Cancel
+            <MapPin size={17} />
+
+            Use my current location
           </button>
 
+          {
+            locationLoading &&
+            (
+              <p className="search-status">
+                Searching locations...
+              </p>
+            )
+          }
 
-          <button
-            type="submit"
+          {
+            locationSuggestions.length >
+              0 &&
+            (
+              <div className="location-suggestions">
+                {
+                  locationSuggestions.map(
+                    (
+                      place,
+                      index
+                    ) => (
+                      <button
+                        key={
+                          place.id ||
+                          index
+                        }
+                        type="button"
+                        className="location-suggestion"
+                        onClick={() =>
+                          selectLocation(
+                            place
+                          )
+                        }
+                      >
+                        <MapPin size={18} />
 
-            className="fi-primary"
+                        <span>
+                          <strong>
+                            {
+                              place.name ||
+                              place.display_name
+                            }
+                          </strong>
 
-            disabled={
-              saving ||
-              !form.venue_name
-            }
-          >
+                          <small>
+                            {
+                              place.display_name ||
+                              ""
+                            }
+                          </small>
+                        </span>
+                      </button>
+                    )
+                  )
+                }
+              </div>
+            )
+          }
+        </div>
+      </section>
 
-            {
-              saving
-                ? "Creating..."
-                : "Create Dine Out"
-            }
 
-          </button>
+      <section className="mood-card">
+        <div className="mood-header">
+          <div>
+            <p className="eyebrow">
+              FOODKINDL DINE OUT
+            </p>
 
+            <h2>
+              What are you in the mood for?
+            </h2>
+
+            <p>
+              Showing 10 popular
+              restaurants around{" "}
+              <strong>
+                {location}
+              </strong>.
+            </p>
+          </div>
+
+          <Sparkles size={26} />
         </div>
 
-      </form>
+        <div className="filters">
+          <input
+            type="text"
+            value={searchText}
+            onChange={
+              event =>
+                setSearchText(
+                  event.target.value
+                )
+            }
+            placeholder="Restaurant, dish or craving"
+          />
 
+          <select
+            value={cuisine}
+            onChange={
+              event =>
+                setCuisine(
+                  event.target.value
+                )
+            }
+          >
+            {
+              CUISINES.map(
+                item => (
+                  <option
+                    key={item}
+                    value={item}
+                  >
+                    {item}
+                  </option>
+                )
+              )
+            }
+          </select>
+
+          <button
+            type="button"
+            className="primary-button"
+            onClick={() =>
+              fetchRestaurants()
+            }
+            disabled={
+              restaurantLoading
+            }
+          >
+            <Search size={17} />
+
+            {
+              restaurantLoading
+                ? "Searching..."
+                : "Find places"
+            }
+          </button>
+        </div>
+      </section>
+
+
+      {
+        pageError &&
+        (
+          <div
+            className="error-message"
+            role="alert"
+          >
+            {pageError}
+          </div>
+        )
+      }
+
+
+      <section className="results-layout">
+        <div className="restaurant-list">
+          <div className="results-heading">
+            <div>
+              <p className="eyebrow">
+                POPULAR NEAR YOU
+              </p>
+
+              <h2>
+                Places around {location}
+              </h2>
+            </div>
+
+            <span>
+              {
+                visibleRestaurants.length
+              }{" "}
+              places
+            </span>
+          </div>
+
+          {
+            restaurantLoading &&
+            (
+              <div className="empty-state">
+                Loading restaurants...
+              </div>
+            )
+          }
+
+          {
+            !restaurantLoading &&
+            visibleRestaurants.length ===
+              0 &&
+            (
+              <div className="empty-state">
+                Search an area to see
+                restaurants.
+              </div>
+            )
+          }
+
+          {
+            visibleRestaurants.map(
+              (
+                restaurant,
+                index
+              ) => (
+                <article
+                  key={
+                    restaurant.id ||
+                    index
+                  }
+                  className={
+                    `restaurant-card ${
+                      selectedRestaurant
+                        ?.id ===
+                      restaurant.id
+                        ? "selected"
+                        : ""
+                    }`
+                  }
+                  onClick={() =>
+                    setSelectedRestaurant(
+                      restaurant
+                    )
+                  }
+                >
+                  <RestaurantImage
+                    restaurant={
+                      restaurant
+                    }
+                  />
+
+                  <div className="restaurant-content">
+                    <p className="restaurant-number">
+                      {index + 1}
+                    </p>
+
+                    <p className="eyebrow">
+                      POPULAR PICK
+                    </p>
+
+                    <h3>
+                      {restaurant.name}
+                    </h3>
+
+                    <p>
+                      {
+                        restaurant.cuisine ||
+                        "Cuisine unavailable"
+                      }
+                    </p>
+
+                    <small>
+                      {
+                        restaurant.address ||
+                        restaurant.location_label ||
+                        "Address unavailable"
+                      }
+                    </small>
+
+                    <div className="restaurant-actions">
+                      <button
+                        type="button"
+                        className="secondary-button"
+                        onClick={
+                          event => {
+                            event.stopPropagation();
+
+                            setDetailsRestaurant(
+                              restaurant
+                            );
+                          }
+                        }
+                      >
+                        View details
+                      </button>
+
+                      <button
+                        type="button"
+                        className="primary-button"
+                        onClick={
+                          event => {
+                            event.stopPropagation();
+
+                            chooseRestaurant(
+                              restaurant
+                            );
+                          }
+                        }
+                      >
+                        Choose
+                      </button>
+                    </div>
+                  </div>
+                </article>
+              )
+            )
+          }
+        </div>
+
+
+        <aside className="map-panel">
+          <MapContainer
+            center={mapCenter}
+            zoom={14}
+            scrollWheelZoom
+            className="restaurant-map"
+          >
+            <MapController
+              center={mapCenter}
+              restaurants={
+                visibleRestaurants
+              }
+            />
+
+            <TileLayer
+              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+              attribution="&copy; OpenStreetMap contributors"
+            />
+
+            {
+              visibleRestaurants.map(
+                (
+                  restaurant,
+                  index
+                ) => {
+                  if (
+                    !hasValidCoordinates(
+                      restaurant
+                    )
+                  ) {
+                    return null;
+                  }
+
+                  return (
+                    <Marker
+                      key={
+                        restaurant.id ||
+                        index
+                      }
+                      position={[
+                        getLatitude(
+                          restaurant
+                        ),
+                        getLongitude(
+                          restaurant
+                        ),
+                      ]}
+                    >
+                      <Popup>
+                        <strong>
+                          {
+                            restaurant.name
+                          }
+                        </strong>
+
+                        <br />
+
+                        {
+                          restaurant.cuisine ||
+                          "Restaurant"
+                        }
+
+                        <br />
+
+                        {
+                          restaurant.address ||
+                          restaurant.location_label ||
+                          ""
+                        }
+                      </Popup>
+                    </Marker>
+                  );
+                }
+              )
+            }
+          </MapContainer>
+        </aside>
+      </section>
+
+
+      {
+        selectedRestaurant &&
+        (
+          <section className="restaurant-details">
+            <p className="eyebrow">
+              SELECTED RESTAURANT
+            </p>
+
+            <h2>
+              {
+                selectedRestaurant.name
+              }
+            </h2>
+
+            <p>
+              {
+                selectedRestaurant.address ||
+                selectedRestaurant.location_label ||
+                "Address unavailable"
+              }
+            </p>
+
+            <button
+              type="button"
+              className="primary-button"
+              onClick={() =>
+                chooseRestaurant(
+                  selectedRestaurant
+                )
+              }
+            >
+              Plan the meetup
+            </button>
+          </section>
+        )
+      }
+
+
+      <section
+        id="plan-meetup"
+        className="plan-meetup"
+      >
+        <p className="eyebrow">
+          NEXT STEP
+        </p>
+
+        <h2>
+          Plan the meetup
+        </h2>
+
+        {
+          selectedRestaurant &&
+          (
+            <div className="selected-place">
+              <MapPin size={18} />
+
+              <span>
+                <small>
+                  Selected restaurant
+                </small>
+
+                <strong>
+                  {
+                    selectedRestaurant.name
+                  }
+                </strong>
+              </span>
+            </div>
+          )
+        }
+
+        {
+          createError &&
+          (
+            <div
+              className="error-message"
+              role="alert"
+            >
+              {createError}
+            </div>
+          )
+        }
+
+        {
+          createSuccess &&
+          (
+            <div
+              className="success-message"
+              role="status"
+              aria-live="polite"
+            >
+              <strong>
+                {createSuccess}
+              </strong>
+
+              {
+                createdInviteId &&
+                (
+                  <button
+                    type="button"
+                    className="secondary-button"
+                    onClick={() =>
+                      navigate(
+                        `/dine-out/${createdInviteId}`
+                      )
+                    }
+                  >
+                    View invitation
+                  </button>
+                )
+              }
+            </div>
+          )
+        }
+
+        <label>
+          Meetup title
+
+          <input
+            type="text"
+            value={meetupTitle}
+            onChange={
+              event =>
+                setMeetupTitle(
+                  event.target.value
+                )
+            }
+            placeholder="Meetup title"
+          />
+        </label>
+
+        <label>
+          Notes
+
+          <textarea
+            rows={4}
+            value={meetupNotes}
+            onChange={
+              event =>
+                setMeetupNotes(
+                  event.target.value
+                )
+            }
+            placeholder="Add notes for your guests"
+          />
+        </label>
+
+        <div className="plan-grid">
+          <label>
+            Date
+
+            <input
+              type="date"
+              value={eventDate}
+              min={today}
+              onChange={
+                event =>
+                  setEventDate(
+                    event.target.value
+                  )
+              }
+            />
+          </label>
+
+          <label>
+            Time
+
+            <input
+              type="time"
+              value={eventTime}
+              onChange={
+                event =>
+                  setEventTime(
+                    event.target.value
+                  )
+              }
+            />
+          </label>
+
+          <label>
+            Maximum guests
+
+            <input
+              type="number"
+              min="1"
+              max="20"
+              value={maximumGuests}
+              onChange={
+                event =>
+                  setMaximumGuests(
+                    event.target.value
+                  )
+              }
+            />
+          </label>
+        </div>
+
+        <label>
+          Booking status
+
+          <select
+            value={bookingStatus}
+            onChange={
+              event =>
+                setBookingStatus(
+                  event.target.value
+                )
+            }
+          >
+            <option value="not_booked">
+              Not booked yet
+            </option>
+
+            <option value="booked">
+              Table booked
+            </option>
+
+            <option value="walk_in">
+              Walk in
+            </option>
+          </select>
+        </label>
+
+        <label>
+          Dietary preferences
+
+          <textarea
+            rows={2}
+            value={dietaryNotes}
+            onChange={
+              event =>
+                setDietaryNotes(
+                  event.target.value
+                )
+            }
+            placeholder="Dietary preferences or allergies"
+          />
+        </label>
+
+        <fieldset className="dineout-visibility-fieldset">
+          <legend>Who can see this Dine Out?</legend>
+
+          <label className="dineout-visibility-option">
+            <input
+              type="radio"
+              name="dineout-visibility"
+              value="public"
+              checked={visibility === "public"}
+              onChange={() => {
+                setVisibility("public");
+                setSelectedMemberIds([]);
+              }}
+            />
+
+            <span>
+              <strong>Everyone</strong>
+              <small>Visible to all FoodKindl members.</small>
+            </span>
+          </label>
+
+          <label className="dineout-visibility-option">
+            <input
+              type="radio"
+              name="dineout-visibility"
+              value="invited_only"
+              checked={visibility === "invited_only"}
+              onChange={() => setVisibility("invited_only")}
+            />
+
+            <span>
+              <strong>Selected guests only</strong>
+              <small>Only you and selected guests can see it.</small>
+            </span>
+          </label>
+        </fieldset>
+
+        {
+          visibility === "invited_only" &&
+          (
+            <section className="dineout-member-picker">
+              <div className="dineout-member-picker__heading">
+                <strong>Select guests</strong>
+                <span>
+                  {selectedMemberIds.length}/{maximumGuests} selected
+                </span>
+              </div>
+
+              {membersLoading && <p>Loading members...</p>}
+              {membersError && <p className="error-message">{membersError}</p>}
+
+              {!membersLoading && !membersError && availableMembers.length === 0 && (
+                <p>No members are available to invite.</p>
+              )}
+
+              <div className="dineout-member-picker__list">
+                {availableMembers.map(member => (
+                  <label key={member.id} className="dineout-member-option">
+                    <input
+                      type="checkbox"
+                      checked={selectedMemberIds.includes(member.id)}
+                      disabled={
+                        !selectedMemberIds.includes(member.id) &&
+                        selectedMemberIds.length >= Number(maximumGuests)
+                      }
+                      onChange={() => toggleInvitedMember(member.id)}
+                    />
+
+                    <span>
+                      <strong>{member.name}</strong>
+                      {member.email && <small>{member.email}</small>}
+                    </span>
+                  </label>
+                ))}
+              </div>
+            </section>
+          )
+        }
+
+        <button
+          type="button"
+          className="primary-button"
+          onClick={
+            createDineOut
+          }
+          disabled={creating}
+        >
+          {
+            creating
+              ? "Creating invitation..."
+              : "Create Dine Out invite"
+          }
+        </button>
+      </section>
+
+
+      <RestaurantDetailsModal
+        restaurant={
+          detailsRestaurant
+        }
+        onClose={() =>
+          setDetailsRestaurant(
+            null
+          )
+        }
+        onChoose={
+          chooseRestaurant
+        }
+      />
     </main>
-
   );
-
 }

@@ -22,7 +22,7 @@ import api from "../api";
 import PeopleSelector from "./PeopleSelector";
 
 import "leaflet/dist/leaflet.css";
-import "../styles/FoodInvites.css";
+import "../styles/FoodInvite_cook.css";
 
 const INVITES_ENDPOINT =
   "/food-invites/";
@@ -779,9 +779,9 @@ export default function CookTogether() {
 
       <section className="fi-hero">
 
-        <div>
+        <div className="fi-hero-copy">
           <span className="fi-eyebrow">
-            🍳 COOK TOGETHER
+            COOK TOGETHER
           </span>
 
           <h1>
@@ -789,10 +789,24 @@ export default function CookTogether() {
           </h1>
 
           <p>
-            Plan what you will cook,
-            choose the venue and invite
-            FoodKindl members.
+            Turn a recipe into a real connection. Set the table,
+            choose your menu and invite people who love food as much as you do.
           </p>
+
+          <div className="fi-hero-pills" aria-label="Invite steps">
+            <span><b>01</b> Pick a dish</span>
+            <span><b>02</b> Set the table</span>
+            <span><b>03</b> Meet & cook</span>
+          </div>
+        </div>
+
+        <div className="fi-hero-art" aria-hidden="true">
+          <span className="fi-art-leaf fi-art-leaf-one">🌿</span>
+          <div className="fi-art-plate">
+            <span>🍲</span>
+          </div>
+          <span className="fi-art-note">Made for sharing</span>
+          <span className="fi-art-leaf fi-art-leaf-two">🍋</span>
         </div>
 
         <button
@@ -824,8 +838,10 @@ export default function CookTogether() {
             </span>
 
             <h2>
-              Plan the cooking experience
+              Let’s plan your table
             </h2>
+
+            <p>Start with the essentials. You can refine the details before publishing.</p>
           </div>
 
           <span className="fi-private-note">

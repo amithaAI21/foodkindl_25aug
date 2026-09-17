@@ -370,6 +370,10 @@ INSTALLED_APPS = [
     "invites",
     "commerce",
     "restaurant_discovery",
+    "aikitchen",
+    "cooktogether",
+    "dineout",
+    "foodwalk",
 ]
 
 
@@ -378,11 +382,12 @@ INSTALLED_APPS = [
 # ============================================================
 
 MIDDLEWARE = [
+    # Keep CORS before middleware that can generate responses.
+    "corsheaders.middleware.CorsMiddleware",
+
     "django.middleware.security.SecurityMiddleware",
 
     "whitenoise.middleware.WhiteNoiseMiddleware",
-
-    "corsheaders.middleware.CorsMiddleware",
 
     "django.contrib.sessions.middleware.SessionMiddleware",
 
@@ -603,18 +608,12 @@ CSRF_TRUSTED_ORIGINS = get_env_list(
 
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": (
-        (
-            "rest_framework_simplejwt."
-            "authentication."
-            "JWTAuthentication"
-        ),
+        "rest_framework_simplejwt.authentication.JWTAuthentication",
+        "rest_framework.authentication.SessionAuthentication",
     ),
 
     "DEFAULT_PERMISSION_CLASSES": (
-        (
-            "rest_framework.permissions."
-            "IsAuthenticatedOrReadOnly"
-        ),
+        "rest_framework.permissions.IsAuthenticatedOrReadOnly",
     ),
 
     "DEFAULT_PAGINATION_CLASS": (
@@ -638,6 +637,14 @@ SIMPLE_JWT = {
     "ROTATE_REFRESH_TOKENS": True,
 
     "BLACKLIST_AFTER_ROTATION": False,
+
+    # Frontend requests must send:
+    # Authorization: Bearer <access-token>
+    "AUTH_HEADER_TYPES": ("Bearer",),
+
+    "AUTH_HEADER_NAME": "HTTP_AUTHORIZATION",
+
+    "UPDATE_LAST_LOGIN": True,
 }
 
 
