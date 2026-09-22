@@ -61,7 +61,9 @@ const SuggestPlace = lazy(() => import("./components/SuggestPlace"));
 const MessagingDock = lazy(() => import("./components/MessagingDock"));
 
 // Lazy FoodWalkOSMPlanner
-const FoodWalkPlanner = lazy(() => import("./components/FoodWalkOSMPlanner"));
+const FoodWalkDashboard = lazy(() =>
+  import("./components/FoodWalkDashboard")
+);
 
 // ============================================================
 // PUBLIC DARK PAGES
@@ -289,7 +291,7 @@ export default function App() {
       <ScrollToTop />
       <ThemeController />
 
-      {!isPartnerRoute && <Navbar />}
+      {!isPartnerRoute && location.pathname !== "/food-walk" && <Navbar />}
 
       <Suspense fallback={<AppLoader />}>
         <Routes>
@@ -326,7 +328,14 @@ export default function App() {
           <Route path="/dine-out/:dineOutId" element={<VerifiedOnly><DineOutDetails /></VerifiedOnly>} />
 
           {/* Food Walk */}
-          <Route path="/food-walk" element={<VerifiedOnly><FoodWalkPlanner /></VerifiedOnly>} />
+          <Route
+                  path="/food-walk"
+                  element={
+                    <VerifiedOnly>
+                      <FoodWalkDashboard />
+                    </VerifiedOnly>
+                  }
+                />
 
           {/* Suggest Place */}
           <Route path="/suggest-place" element={<Protected><SuggestPlace /></Protected>} />

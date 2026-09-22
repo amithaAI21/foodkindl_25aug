@@ -5,13 +5,12 @@ from pathlib import Path
 import dj_database_url
 from dotenv import load_dotenv
 
-
+from decouple import config
 # ============================================================
 # BASE
 # ============================================================
 
 BASE_DIR = Path(__file__).resolve().parent.parent
-
 
 # ============================================================
 # LOAD ENVIRONMENT
@@ -27,6 +26,23 @@ load_dotenv(
 load_dotenv(
     BASE_DIR.parent / ".env",
     override=False,
+)
+
+
+# ============================================================
+# EXTERNAL MAP / PLACES API KEYS
+# ============================================================
+
+# These must be read only after load_dotenv() has loaded the local .env files.
+# On Render, the same names are read from the service Environment settings.
+GOOGLE_MAPS_API_KEY = config(
+    "GOOGLE_MAPS_API_KEY",
+    default="",
+)
+
+GEOAPIFY_API_KEY = config(
+    "GEOAPIFY_API_KEY",
+    default="",
 )
 
 
@@ -790,6 +806,10 @@ if DEBUG:
     print(
         "ORS API KEY LOADED:",
         bool(ORS_API_KEY),
+    )
+    print(
+        "GEOAPIFY API KEY LOADED:",
+        bool(GEOAPIFY_API_KEY),
     )
     print(
         "SECURE_SSL_REDIRECT:",

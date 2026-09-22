@@ -960,63 +960,40 @@ def build_overpass_query(
     radius_m,
 ):
     """
-    Build an efficient Overpass query.
-
-    Used by both:
-    - Dine Out nearby discovery
-    - Food Walk discovery
-
-    nwr = node + way + relation
+    Create one efficient Overpass query for food places
+    near evenly distributed route points.
     """
 
     clauses = []
 
-
-    for (
-        latitude,
-        longitude,
-    ) in sample_points:
-
+    for latitude, longitude in sample_points:
         around = (
             f"(around:{int(radius_m)},"
             f"{float(latitude):.6f},"
             f"{float(longitude):.6f})"
         )
 
-
-        # Restaurants, cafes, fast food,
-        # food courts and ice cream.
         clauses.append(
             (
-                'nwr'
+                f'nwr{around}'
                 '["amenity"~'
-                '"^(restaurant|cafe|fast_food|food_court|ice_cream)$"]'
-                f'{around};'
+                '"^(restaurant|cafe|fast_food|food_court|ice_cream)$"];'
             )
         )
 
-
-        # Bakeries
         clauses.append(
             (
-                'nwr'
-                '["shop"="bakery"]'
-                f'{around};'
+                f'nwr{around}'
+                '["shop"="bakery"];'
             )
         )
-
 
     return (
-        "[out:json]"
-        "[timeout:18];"
+        "[out:json][timeout:12];"
         "("
-        +
-        "".join(
-            clauses
-        )
-        +
-        ");"
-        "out center tags;"
+        + "".join(clauses)
+        + ");"
+        "out body center 300;"
     )
 
 
@@ -2686,7 +2663,7 @@ def discover_restaurants_along_route(
     food_query="",
     cuisine="",
     restaurant_type="",
-    max_detour_km=3,
+    max_detour_km=2,
     highly_rated=False,
     hidden_gems=False,
     limit=30,
@@ -2746,15 +2723,7 @@ def discover_restaurants_along_route(
 
     accepted = []
 
-    max_distance = max(
-        float(
-            max_detour_km
-            or 3
-        ),
-        radius_m
-        /
-        1000,
-    )
+    max_distance = float(max_detour_km or 2)
 
     for place in places:
         latitude = safe_float(
