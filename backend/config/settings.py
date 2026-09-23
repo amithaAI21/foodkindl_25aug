@@ -615,7 +615,7 @@ CSRF_TRUSTED_ORIGINS = get_env_list(
         "https://foodkindl-25aug.onrender.com,"
         "https://foodkindl.org,"
         "https://www.foodkindl.org"
-    ),
+    ),  "https://www.foodkindl.online"
 )
 
 

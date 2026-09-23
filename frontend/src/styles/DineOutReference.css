@@ -1,0 +1,567 @@
+/* FoodKindl Dine Out: warm editorial layout inspired by the supplied image.
+   Use this after the existing DineOutSearch.css, or append it to that file. */
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Serif+Display&display=swap');
+
+.dineout-page {
+  --do-bg: #241812;
+  --do-bg-soft: #302019;
+  --do-card: #493027;
+  --do-card-2: #56392f;
+  --do-text: #f7f0e8;
+  --do-muted: #c5b6ad;
+  --do-orange: #e95d30;
+  --do-orange-2: #f08257;
+  --do-border: rgba(237, 185, 158, .16);
+  display: grid;
+  grid-template-columns: minmax(0, 1.3fr) minmax(0, 1.8fr) minmax(165px, .9fr) minmax(150px, .85fr);
+  gap: 12px 14px;
+  width: 100%;
+  max-width: none;
+  padding: 30px clamp(20px, 3vw, 54px) 80px;
+  color: var(--do-text);
+  background: radial-gradient(ellipse at 50% 48%, #38251d 0, #291b15 52%, #211712 100%);
+  font-family: 'DM Sans', sans-serif;
+}
+
+.dineout-page > section,
+.dineout-page > .error-message { width: 100%; max-width: none; margin-inline: 0; }
+
+.dineout-hero {
+  grid-column: 1 / -1;
+  display: block;
+  min-height: 0;
+  margin: 0 0 2px;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+}
+.dineout-hero::before, .dineout-hero .hero-card,
+.dineout-hero .eyebrow, .dineout-hero .hero-text { display: none; }
+.dineout-hero h1 {
+  margin: 0;
+  color: var(--do-text);
+  font: 400 clamp(34px, 3.6vw, 54px)/1.05 'DM Serif Display', Georgia, serif;
+  letter-spacing: -.025em;
+}
+.dineout-hero h1 br { display: none; }
+.dineout-hero h1 br::after { content: ' '; }
+
+/* Flatten the two existing search sections into one horizontal control row. */
+.location-card, .mood-card, .filters { display: contents; }
+.location-card .section-heading,
+.mood-card .mood-header { display: none; }
+.location-search { grid-column: 1; position: relative; min-width: 0; margin: 0; }
+.location-input-wrap,
+.filters input,
+.filters select {
+  width: 100%;
+  height: 58px;
+  min-height: 58px;
+  border: 1px solid rgba(235, 189, 166, .22);
+  border-radius: 13px;
+  color: var(--do-text);
+  background: rgba(93, 65, 53, .36);
+  box-shadow: 0 10px 22px rgba(17, 9, 6, .08);
+}
+.location-input-wrap { padding: 5px 12px 5px 18px; }
+.location-input-wrap > svg { flex: none; color: #eab19a; }
+.location-input-wrap input { min-width: 0; color: var(--do-text); }
+.filters input { grid-column: 2; padding: 0 18px; }
+.filters select { grid-column: 3; max-width: none; padding: 0 16px; cursor: pointer; }
+.filters .primary-button {
+  grid-column: 4;
+  width: 100%;
+  height: 58px;
+  border-radius: 13px;
+  color: #fff9f3;
+  background: #e65f32;
+  box-shadow: 0 12px 25px rgba(142, 53, 28, .17);
+}
+.filters input::placeholder, .location-input-wrap input::placeholder { color: #bea99e; }
+.location-suggestions { z-index: 1100; }
+.search-status { position: absolute; top: 58px; left: 5px; z-index: 10; }
+
+.dineout-page > .error-message,
+.dineout-page > .success-message { grid-column: 1 / -1; }
+.results-layout {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: minmax(0, .98fr) minmax(0, 1fr);
+  gap: 14px;
+  align-items: start;
+  margin-top: 23px !important;
+}
+.results-heading { min-height: 64px; margin-bottom: 6px; align-items: center; }
+.results-heading .eyebrow { display: none; }
+.results-heading h2 {
+  margin: 0;
+  color: var(--do-text);
+  font: 400 clamp(26px, 2.8vw, 42px)/1.12 'DM Serif Display', Georgia, serif;
+}
+.results-heading span {
+  padding: 0;
+  color: #d4c6bd;
+  background: none;
+  font-size: 13px;
+  font-weight: 400;
+}
+.restaurant-card {
+  grid-template-columns: 78px minmax(0, 1fr);
+  align-items: center;
+  gap: 13px;
+  min-height: 162px;
+  margin-bottom: 10px;
+  padding: 15px 18px;
+  border: 1px solid rgba(246, 205, 183, .06);
+  border-radius: 11px;
+  background: linear-gradient(115deg, #5a3a2f, #4a3028 75%);
+  box-shadow: 0 14px 25px rgba(20, 10, 7, .15);
+}
+.restaurant-card.selected { border-color: #ee8b63; box-shadow: 0 0 0 2px rgba(236, 110, 64, .22); }
+.restaurant-image, .restaurant-image-empty {
+  width: 68px;
+  height: 68px;
+  min-height: 68px;
+  border-radius: 50%;
+  object-fit: cover;
+  background: #3c251e;
+}
+.restaurant-image-empty { font-size: 9px; text-align: center; }
+.restaurant-content {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(125px, 168px);
+  gap: 3px 12px;
+  align-content: center;
+  padding: 0;
+}
+.restaurant-content .eyebrow, .restaurant-number { display: none; }
+.restaurant-content h3 {
+  grid-column: 1;
+  margin: 0 0 3px;
+  overflow: visible;
+  color: #fff9f3;
+  font: 400 clamp(19px, 1.7vw, 27px)/1.15 'DM Serif Display', Georgia, serif;
+  white-space: normal;
+}
+.restaurant-content p:not(.eyebrow),
+.restaurant-content small {
+  grid-column: 1;
+  display: block;
+  margin: 0;
+  overflow: hidden;
+  color: #d9c7bd;
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.restaurant-actions {
+  grid-column: 2;
+  grid-row: 1 / span 4;
+  display: flex;
+  flex-direction: column-reverse;
+  align-items: stretch;
+  justify-content: center;
+  gap: 8px;
+  margin: 0;
+}
+.restaurant-actions button { width: 100%; min-height: 42px; padding: 7px 9px; font-size: 12px; }
+.restaurant-actions .primary-button { color: #fff; background: #e65f32; box-shadow: none; }
+.restaurant-actions .secondary-button { border: 0; background: none; box-shadow: none; }
+.map-panel {
+  position: sticky;
+  top: 18px;
+  height: min(68vh, 650px);
+  min-height: 510px;
+  border: 1px solid rgba(242, 207, 187, .2);
+  border-radius: 12px;
+  box-shadow: 0 18px 35px rgba(18, 9, 5, .23);
+}
+.restaurant-map { width: 100%; height: 100%; }
+.dineout-page > .restaurant-details,
+.dineout-page > .plan-meetup { grid-column: 1 / -1; }
+
+@media (max-width: 1050px) {
+  .dineout-page { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(160px, .75fr); }
+  .location-search { grid-column: 1; }
+  .filters input { grid-column: 2; }
+  .filters select { grid-column: 3; }
+  .filters .primary-button { grid-column: 1 / -1; }
+  .results-layout { grid-template-columns: 1fr; }
+  .map-panel { position: relative; top: auto; height: 420px; min-height: 0; }
+}
+@media (max-width: 700px) {
+  .dineout-page { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 22px 14px 60px; }
+  .dineout-hero { grid-column: 1 / -1; margin-bottom: 8px; }
+  .dineout-hero h1 { font-size: clamp(32px, 8vw, 45px); }
+  .location-search, .filters input { grid-column: 1 / -1; }
+  .filters select { grid-column: 1; }
+  .filters .primary-button { grid-column: 2; }
+  .location-input-wrap, .filters input, .filters select, .filters .primary-button { height: 54px; min-height: 54px; }
+  .results-layout { grid-column: 1 / -1; grid-template-columns: 1fr; margin-top: 12px !important; }
+  .results-heading h2 { font-size: 29px; }
+  .restaurant-card { grid-template-columns: 55px minmax(0, 1fr); gap: 9px; min-height: 145px; padding: 12px; }
+  .restaurant-image, .restaurant-image-empty { width: 50px; height: 50px; min-height: 50px; }
+  .restaurant-content { grid-template-columns: minmax(0, 1fr) 105px; gap: 3px 8px; }
+  .restaurant-content h3 { font-size: 18px; }
+  .restaurant-actions { display: flex; grid-template-columns: none; }
+  .restaurant-actions button { min-height: 38px; font-size: 11px; }
+  .map-panel { height: 360px; }
+}
+
+/* Invitation form */
+.dineout-page .plan-meetup > label,
+.dineout-page .plan-meetup .plan-grid > label {
+  display: grid;
+  gap: 9px;
+  color: #f6e9df;
+  font-size: 13px;
+  font-weight: 600;
+}
+.dineout-page .plan-meetup input:not([type="radio"]):not([type="checkbox"]),
+.dineout-page .plan-meetup textarea,
+.dineout-page .plan-meetup select {
+  width: 100%;
+  min-width: 0;
+  border: 1px solid rgba(237,185,158,.27);
+  border-radius: 10px;
+  color: #fff8f2;
+}
+.dineout-page .plan-meetup :is(input, textarea, select):focus-visible {
+  outline: 2px solid #ff9568;
+  outline-offset: 2px;
+}
+.dineout-page .dineout-visibility-fieldset {
+  min-width: 0;
+  margin: 14px 0 0;
+  padding: 18px;
+  border: 1px solid rgba(255,255,255,.16);
+  border-radius: 14px;
+}
+.dineout-page .dineout-visibility-fieldset legend {
+  padding: 0 8px;
+  color: #fff2e8;
+  font-weight: 700;
+}
+.dineout-page .dineout-visibility-option,
+.dineout-page .dineout-member-option {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 13px;
+  cursor: pointer;
+}
+.dineout-page .dineout-visibility-option {
+  margin-top: 8px;
+  border: 1px solid rgba(255,255,255,.13);
+  border-radius: 11px;
+  background: rgba(255,255,255,.035);
+}
+.dineout-page .dineout-visibility-option:has(input:checked),
+.dineout-page .dineout-member-option:has(input:checked) {
+  border-color: #ff8856;
+  background: rgba(255,111,60,.15);
+}
+.dineout-page .dineout-visibility-option span,
+.dineout-page .dineout-member-option span {
+  display: grid;
+  min-width: 0;
+  gap: 4px;
+}
+.dineout-page .dineout-visibility-option strong,
+.dineout-page .dineout-member-option strong { color: #fff6ef; }
+.dineout-page .dineout-visibility-option small,
+.dineout-page .dineout-member-option small {
+  color: #d8bfb2;
+  font-weight: 400;
+  overflow-wrap: anywhere;
+}
+.dineout-page .dineout-visibility-option input[type="radio"],
+.dineout-page .dineout-member-option input[type="checkbox"] {
+  flex: 0 0 18px;
+  width: 18px !important;
+  height: 18px !important;
+  min-width: 18px;
+  padding: 0 !important;
+  margin: 3px 0 0 !important;
+  accent-color: #ff7138;
+}
+.dineout-page .dineout-member-picker {
+  min-width: 0;
+  margin: 4px 0 12px;
+  padding: 18px;
+  border: 1px solid rgba(255,111,60,.36);
+  border-radius: 14px;
+  background: rgba(255,111,60,.07);
+}
+.dineout-page .dineout-member-picker__heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px 14px;
+  margin-bottom: 14px;
+  color: #fff2e8;
+}
+.dineout-page .dineout-member-picker__heading span {
+  color: #d8bfb2;
+  font-size: .88rem;
+}
+.dineout-page .dineout-member-picker__list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  max-height: 300px;
+  overflow-y: auto;
+}
+.dineout-page .dineout-member-option {
+  min-width: 0;
+  border: 1px solid rgba(255,255,255,.13);
+  border-radius: 10px;
+  background: rgba(255,255,255,.04);
+}
+.dineout-page .dineout-member-option:has(input:disabled) {
+  cursor: not-allowed;
+  opacity: .55;
+}
+@media (max-width: 640px) {
+  .dineout-page .dineout-member-picker__list { grid-template-columns: 1fr; }
+  .dineout-page .dineout-visibility-fieldset,
+  .dineout-page .dineout-member-picker { padding: 14px; }
+}
+
+/* Calendar and clock in the invite form */
+.dineout-page .invite-schedule {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+  gap: 14px;
+}
+.dineout-page .plan-meetup .plan-grid { grid-template-columns: minmax(0, 1fr); }
+.dineout-page .invite-calendar,
+.dineout-page .invite-clock {
+  min-width: 0;
+  padding: 18px;
+  border: 1px solid rgba(237,185,158,.24);
+  border-radius: 14px;
+  background: rgba(27,16,12,.38);
+}
+.dineout-page .invite-picker-heading {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin-bottom: 18px;
+  color: #fff3e9;
+}
+.dineout-page .invite-picker-heading svg { color: #ff8b59; }
+.dineout-page .invite-calendar-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 12px;
+  color: #fff3e9;
+}
+.dineout-page .invite-calendar-nav button,
+.dineout-page .invite-date-shortcuts button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 38px;
+  min-height: 38px;
+  border: 1px solid rgba(237,185,158,.25);
+  border-radius: 9px;
+  background: #37231b;
+  color: #f7e6da;
+  cursor: pointer;
+}
+.dineout-page .invite-calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 4px;
+  text-align: center;
+}
+.dineout-page .invite-calendar-grid .invite-weekday {
+  padding: 8px 0;
+  color: #cfb4a4;
+  font-size: 12px;
+}
+.dineout-page .invite-calendar-grid button {
+  aspect-ratio: 1;
+  min-width: 0;
+  border: 1px solid transparent;
+  border-radius: 9px;
+  background: transparent;
+  color: #fff3e9;
+  cursor: pointer;
+}
+.dineout-page .invite-calendar-grid button:hover:not(:disabled),
+.dineout-page .invite-calendar-nav button:hover:not(:disabled),
+.dineout-page .invite-date-shortcuts button:hover { border-color: #ff8b59; }
+.dineout-page .invite-calendar-grid button.is-active {
+  background: #ef7040;
+  color: #24130c;
+  font-weight: 800;
+}
+.dineout-page .invite-calendar-grid button:disabled,
+.dineout-page .invite-calendar-nav button:disabled {
+  opacity: .33;
+  cursor: not-allowed;
+}
+.dineout-page .invite-date-shortcuts { display: flex; gap: 8px; margin-top: 14px; }
+.dineout-page .invite-date-shortcuts button { padding: 0 12px; font-size: 12px; }
+.dineout-page .invite-clock-controls { display: flex; align-items: end; gap: 8px; }
+.dineout-page .invite-clock-controls label {
+  display: grid;
+  min-width: 0;
+  flex: 1;
+  gap: 8px;
+  color: #d8bfb2;
+  font-size: 12px;
+}
+.dineout-page .invite-clock-controls select { padding: 10px 6px; }
+.dineout-page .invite-clock-controls > span { padding-bottom: 12px; }
+.dineout-page .invite-time-hint { margin: 18px 0 0; color: #d8bfb2; font-size: 12px; line-height: 1.5; }
+.dineout-page .invite-schedule-summary {
+  margin: 16px 0 0;
+  padding: 12px;
+  border-radius: 9px;
+  background: rgba(255,111,60,.15);
+  color: #fff3e9;
+  font-size: 13px;
+}
+.dineout-page .invite-schedule button:focus-visible,
+.dineout-page .invite-schedule select:focus-visible { outline: 2px solid #ff9568; outline-offset: 2px; }
+@media (max-width: 700px) {
+  .dineout-page .invite-schedule { grid-template-columns: 1fr; }
+  .dineout-page .invite-calendar,
+  .dineout-page .invite-clock { padding: 14px; }
+}
+
+/* All result markers remain mounted; the focused restaurant gets an orange pin. */
+.fk-restaurant-marker { background: transparent; border: 0; }
+.fk-restaurant-pin {
+  display: block;
+  width: 27px;
+  height: 27px;
+  border: 3px solid #fff8ee;
+  border-radius: 50% 50% 50% 4px;
+  background: #653c30;
+  box-shadow: 0 3px 10px rgba(27, 14, 9, .38);
+  transform: rotate(-45deg);
+}
+.fk-restaurant-pin::after {
+  content: '';
+  display: block;
+  width: 7px;
+  height: 7px;
+  margin: 7px;
+  border-radius: 50%;
+  background: #fff8ee;
+}
+.fk-restaurant-pin.is-selected {
+  width: 35px;
+  height: 35px;
+  background: #ed6332;
+  box-shadow: 0 0 0 5px rgba(237, 99, 50, .2), 0 6px 15px rgba(27, 14, 9, .4);
+}
+.fk-restaurant-pin.is-selected::after { width: 9px; height: 9px; margin: 10px; }
+.dineout-map-legend {
+  position: absolute;
+  bottom: 16px;
+  left: 16px;
+  z-index: 1000;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  color: #34251e;
+  background: rgba(255, 250, 243, .96);
+  box-shadow: 0 6px 18px rgba(31, 19, 14, .16);
+  font: 500 12px/1.2 'DM Sans', sans-serif;
+  pointer-events: none;
+}
+.dineout-map-legend span { display: inline-flex; align-items: center; gap: 8px; }
+.dineout-map-legend .legend-pin {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #653c30;
+}
+.dineout-map-legend .legend-pin.is-selected { background: #ed6332; }
+@media (max-width: 420px) {
+  .restaurant-card { grid-template-columns: 1fr; }
+  .restaurant-image, .restaurant-image-empty { display: none; }
+  .restaurant-content { grid-template-columns: minmax(0, 1fr) 100px; }
+}
+
+/* Latest component: location, cuisine, Search; restaurant actions. */
+@media (min-width: 1051px) {
+  .dineout-page .location-search { grid-column: 1 / 3; }
+  .dineout-page .filters select { grid-column: 3; }
+  .dineout-page .filters .primary-button { grid-column: 4; }
+}
+.dineout-page .location-search > .secondary-button {
+  display: inline-flex;
+  margin-top: 9px;
+  min-height: 36px;
+  padding: 6px 10px;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  color: #d8bdae;
+  font-size: 12px;
+}
+.dineout-page .restaurant-card { cursor: default; }
+.dineout-page .restaurant-actions { flex-direction: column; }
+.dineout-page .restaurant-actions .primary-button {
+  color: #fff;
+  background: #e65f32;
+  white-space: nowrap;
+}
+.dineout-page .restaurant-actions .secondary-button {
+  color: #e4ccc0;
+  background: none;
+  white-space: nowrap;
+}
+.dineout-page .restaurant-actions .secondary-button:hover { color: #fff; }
+.dineout-page .restaurant-actions button:focus-visible,
+.dineout-page .location-input-wrap input:focus-visible,
+.dineout-page .filters select:focus-visible {
+  outline: 2px solid #f39469;
+  outline-offset: 3px;
+}
+.dineout-page .plan-meetup {
+  grid-column: 1 / -1;
+  width: min(900px, 100%);
+  margin: 24px auto 0;
+  padding: clamp(24px, 4vw, 46px);
+  border: 1px solid rgba(237,185,158,.2);
+  border-radius: 17px;
+  background: linear-gradient(130deg, #4b3027, #39241d);
+  box-shadow: 0 20px 45px rgba(17,9,6,.2);
+}
+.dineout-page .plan-meetup h2 {
+  font: 400 clamp(29px, 3vw, 40px)/1.1 'DM Serif Display', Georgia, serif;
+}
+.dineout-page .plan-meetup input,
+.dineout-page .plan-meetup textarea,
+.dineout-page .plan-meetup select,
+.dineout-page .selected-place {
+  background: #241711;
+  border-color: rgba(237,185,158,.2);
+}
+@media (max-width: 1050px) and (min-width: 701px) {
+  .dineout-page .location-search { grid-column: 1; }
+  .dineout-page .filters select { grid-column: 2; }
+  .dineout-page .filters .primary-button { grid-column: 3; }
+}
+@media (max-width: 700px) {
+  .dineout-page .location-search { grid-column: 1 / -1; }
+  .dineout-page .filters select { grid-column: 1; }
+  .dineout-page .filters .primary-button { grid-column: 2; }
+  .dineout-page .restaurant-actions { grid-template-columns: none; }
+  .dineout-page .restaurant-actions button { white-space: normal; }
+  .dineout-page .plan-meetup { margin-top: 8px; padding: 22px 16px; }
+}

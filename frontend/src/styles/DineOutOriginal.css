@@ -708,3 +708,198 @@
 .success-message{width:min(1180px,100%);margin:18px auto 0;padding:14px 18px;border:1px solid rgba(88,202,139,.35);border-radius:12px;color:#c8f5dc;background:rgba(27,115,69,.25)}
 .selected-place{display:flex;align-items:center;gap:11px;padding:13px 15px;border:1px solid rgba(255,171,112,.26);border-radius:11px;background:#160905}.selected-place span{display:grid}.selected-place small{color:#b99684}.selected-place strong{color:#fff}.plan-meetup select{width:100%;padding:14px 15px;border:1px solid rgba(255,171,112,.27);border-radius:11px;color:#fff;background:#160905}
 @media(max-width:650px){.restaurant-modal-backdrop{padding:10px}.restaurant-modal{border-radius:18px}.restaurant-modal-image{height:210px}.restaurant-modal-content{padding:20px}.restaurant-modal-content h2{font-size:31px}.restaurant-facts{grid-template-columns:1fr}}
+
+/* FoodKindl Dine Out: warm editorial layout inspired by the supplied image.
+   Use this after the existing DineOutSearch.css, or append it to that file. */
+/* @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Serif+Display&display=swap'); */
+
+.dineout-page {
+  --do-bg: #241812;
+  --do-bg-soft: #302019;
+  --do-card: #493027;
+  --do-card-2: #56392f;
+  --do-text: #f7f0e8;
+  --do-muted: #c5b6ad;
+  --do-orange: #e95d30;
+  --do-orange-2: #f08257;
+  --do-border: rgba(237, 185, 158, .16);
+  display: grid;
+  grid-template-columns: minmax(0, 1.3fr) minmax(0, 1.8fr) minmax(165px, .9fr) minmax(150px, .85fr);
+  gap: 12px 14px;
+  width: 100%;
+  max-width: none;
+  padding: 30px clamp(20px, 3vw, 54px) 80px;
+  color: var(--do-text);
+  background: radial-gradient(ellipse at 50% 48%, #38251d 0, #291b15 52%, #211712 100%);
+  font-family: 'DM Sans', sans-serif;
+}
+
+.dineout-page > section,
+.dineout-page > .error-message { width: 100%; max-width: none; margin-inline: 0; }
+
+.dineout-hero {
+  grid-column: 1 / -1;
+  display: block;
+  min-height: 0;
+  margin: 0 0 2px;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+}
+.dineout-hero::before, .dineout-hero .hero-card,
+.dineout-hero .eyebrow, .dineout-hero .hero-text { display: none; }
+.dineout-hero h1 {
+  margin: 0;
+  color: var(--do-text);
+  font: 400 clamp(34px, 3.6vw, 54px)/1.05 'DM Serif Display', Georgia, serif;
+  letter-spacing: -.025em;
+}
+.dineout-hero h1 br { display: none; }
+.dineout-hero h1 br::after { content: ' '; }
+
+/* Flatten the two existing search sections into one horizontal control row. */
+.location-card, .mood-card, .filters { display: contents; }
+.location-card .section-heading,
+.mood-card .mood-header { display: none; }
+.location-search { grid-column: 1; position: relative; min-width: 0; margin: 0; }
+.location-input-wrap,
+.filters input,
+.filters select {
+  width: 100%;
+  height: 58px;
+  min-height: 58px;
+  border: 1px solid rgba(235, 189, 166, .22);
+  border-radius: 13px;
+  color: var(--do-text);
+  background: rgba(93, 65, 53, .36);
+  box-shadow: 0 10px 22px rgba(17, 9, 6, .08);
+}
+.location-input-wrap { padding: 5px 12px 5px 18px; }
+.location-input-wrap > svg { flex: none; color: #eab19a; }
+.location-input-wrap input { min-width: 0; color: var(--do-text); }
+.filters input { grid-column: 2; padding: 0 18px; }
+.filters select { grid-column: 3; max-width: none; padding: 0 16px; cursor: pointer; }
+.filters .primary-button {
+  grid-column: 4;
+  width: 100%;
+  height: 58px;
+  border-radius: 13px;
+  color: #fff9f3;
+  background: #e65f32;
+  box-shadow: 0 12px 25px rgba(142, 53, 28, .17);
+}
+.filters input::placeholder, .location-input-wrap input::placeholder { color: #bea99e; }
+.location-suggestions { z-index: 1100; }
+.search-status { position: absolute; top: 58px; left: 5px; z-index: 10; }
+
+.dineout-page > .error-message,
+.dineout-page > .success-message { grid-column: 1 / -1; }
+.results-layout {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: minmax(0, .98fr) minmax(0, 1fr);
+  gap: 14px;
+  align-items: start;
+  margin-top: 23px !important;
+}
+.results-heading { min-height: 64px; margin-bottom: 6px; align-items: center; }
+
+
+/* FoodKindl Dine Out: warm editorial layout inspired by the supplied image.
+   Use this after the existing DineOutSearch.css, or append it to that file. */
+/* @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Serif+Display&display=swap'); */
+
+.dineout-page {
+  --do-bg: #241812;
+  --do-bg-soft: #302019;
+  --do-card: #493027;
+  --do-card-2: #56392f;
+  --do-text: #f7f0e8;
+  --do-muted: #c5b6ad;
+  --do-orange: #e95d30;
+  --do-orange-2: #f08257;
+  --do-border: rgba(237, 185, 158, .16);
+  display: grid;
+  grid-template-columns: minmax(0, 1.3fr) minmax(0, 1.8fr) minmax(165px, .9fr) minmax(150px, .85fr);
+  gap: 12px 14px;
+  width: 100%;
+  max-width: none;
+  padding: 30px clamp(20px, 3vw, 54px) 80px;
+  color: var(--do-text);
+  background: radial-gradient(ellipse at 50% 48%, #38251d 0, #291b15 52%, #211712 100%);
+  font-family: 'DM Sans', sans-serif;
+}
+
+.dineout-page > section,
+.dineout-page > .error-message { width: 100%; max-width: none; margin-inline: 0; }
+
+.dineout-hero {
+  grid-column: 1 / -1;
+  display: block;
+  min-height: 0;
+  margin: 0 0 2px;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+}
+.dineout-hero::before, .dineout-hero .hero-card,
+.dineout-hero .eyebrow, .dineout-hero .hero-text { display: none; }
+.dineout-hero h1 {
+  margin: 0;
+  color: var(--do-text);
+  font: 400 clamp(34px, 3.6vw, 54px)/1.05 'DM Serif Display', Georgia, serif;
+  letter-spacing: -.025em;
+}
+.dineout-hero h1 br { display: none; }
+.dineout-hero h1 br::after { content: ' '; }
+
+/* Flatten the two existing search sections into one horizontal control row. */
+.location-card, .mood-card, .filters { display: contents; }
+.location-card .section-heading,
+.mood-card .mood-header { display: none; }
+.location-search { grid-column: 1; position: relative; min-width: 0; margin: 0; }
+.location-input-wrap,
+.filters input,
+.filters select {
+  width: 100%;
+  height: 58px;
+  min-height: 58px;
+  border: 1px solid rgba(235, 189, 166, .22);
+  border-radius: 13px;
+  color: var(--do-text);
+  background: rgba(93, 65, 53, .36);
+  box-shadow: 0 10px 22px rgba(17, 9, 6, .08);
+}
+.location-input-wrap { padding: 5px 12px 5px 18px; }
+.location-input-wrap > svg { flex: none; color: #eab19a; }
+.location-input-wrap input { min-width: 0; color: var(--do-text); }
+.filters input { grid-column: 2; padding: 0 18px; }
+.filters select { grid-column: 3; max-width: none; padding: 0 16px; cursor: pointer; }
+.filters .primary-button {
+  grid-column: 4;
+  width: 100%;
+  height: 58px;
+  border-radius: 13px;
+  color: #fff9f3;
+  background: #e65f32;
+  box-shadow: 0 12px 25px rgba(142, 53, 28, .17);
+}
+.filters input::placeholder, .location-input-wrap input::placeholder { color: #bea99e; }
+.location-suggestions { z-index: 1100; }
+.search-status { position: absolute; top: 58px; left: 5px; z-index: 10; }
+
+.dineout-page > .error-message,
+.dineout-page > .success-message { grid-column: 1 / -1; }
+.results-layout {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: minmax(0, .98fr) minmax(0, 1fr);
+  gap: 14px;
+  align-items: start;
+  margin-top: 23px !important;
+}
+.results-heading { min-height: 64px; margin-bottom: 6px; align-items: center; }
