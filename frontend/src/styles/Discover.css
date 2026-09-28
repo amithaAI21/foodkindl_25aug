@@ -1,0 +1,823 @@
+/* ============================================================
+   FOODKINDL DISCOVER
+   Dark brown premium theme
+============================================================ */
+
+
+/* ============================================================
+   PAGE
+============================================================ */
+
+.discover-page {
+  width: 100%;
+  max-width: none;
+  min-width: 0;
+  min-height: 100vh;
+
+  margin: 0;
+  padding: 0 0 80px;
+
+  box-sizing: border-box;
+
+  color: #fff8f3;
+
+  background:
+    radial-gradient(
+      circle at 10% 4%,
+      rgba(132, 56, 27, 0.18),
+      transparent 28%
+    ),
+    radial-gradient(
+      circle at 90% 15%,
+      rgba(105, 43, 20, 0.12),
+      transparent 30%
+    ),
+    linear-gradient(
+      180deg,
+      #100906 0%,
+      #090504 42%,
+      #050302 100%
+    );
+
+  overflow-x: hidden;
+}
+
+
+/* ============================================================
+   HEADER
+============================================================ */
+
+.discover-header {
+  width: 100%;
+
+  margin: 0;
+
+  padding:
+    46px
+    clamp(24px, 5vw, 80px)
+    24px;
+
+  box-sizing: border-box;
+}
+
+
+.discover-header-inner {
+  width: 100%;
+  max-width: 1500px;
+
+  margin: 0 auto;
+
+  box-sizing: border-box;
+}
+
+
+/* ============================================================
+   EYEBROW
+============================================================ */
+
+.discover-eyebrow {
+  display: inline-block;
+
+  margin: 0 0 10px;
+
+  color: #ff7b43;
+
+  font-size: 11px;
+  font-weight: 800;
+
+  letter-spacing: 0.18em;
+
+  text-transform: uppercase;
+}
+
+
+/* ============================================================
+   TITLE
+============================================================ */
+
+.discover-header h1 {
+  max-width: 900px;
+
+  margin: 0;
+
+  color: #ffffff;
+
+  font-size: clamp(
+    36px,
+    4vw,
+    56px
+  );
+
+  font-weight: 850;
+
+  line-height: 1.05;
+
+  letter-spacing: -0.045em;
+
+  word-break: normal;
+  overflow-wrap: normal;
+}
+
+
+/* ============================================================
+   DESCRIPTION
+============================================================ */
+
+.discover-header p {
+  max-width: 720px;
+
+  margin: 14px 0 0;
+
+  color:
+    rgba(
+      255,
+      255,
+      255,
+      0.60
+    );
+
+  font-size: 16px;
+
+  line-height: 1.65;
+}
+
+
+/* ============================================================
+   COMMUNITY / CONNECT SWITCH AREA
+============================================================ */
+
+.discover-switch-wrapper {
+  width: 100%;
+
+  margin: 0;
+
+  padding:
+    0
+    clamp(24px, 5vw, 80px)
+    24px;
+
+  box-sizing: border-box;
+}
+
+
+/*
+   This makes the switch line up exactly
+   with the Discover heading.
+*/
+
+.discover-switch-wrapper > * {
+  box-sizing: border-box;
+}
+
+
+/* ============================================================
+   SWITCH
+============================================================ */
+
+.discover-switch {
+  width: fit-content;
+
+  display: inline-flex;
+
+  align-items: center;
+
+  gap: 5px;
+
+  padding: 5px;
+
+  border:
+    1px solid
+    rgba(
+      255,
+      132,
+      72,
+      0.15
+    );
+
+  border-radius: 15px;
+
+  background:
+    rgba(
+      32,
+      18,
+      12,
+      0.90
+    );
+
+  box-shadow:
+    0 10px 32px
+    rgba(
+      0,
+      0,
+      0,
+      0.22
+    );
+
+  backdrop-filter: blur(12px);
+
+  -webkit-backdrop-filter:
+    blur(12px);
+}
+
+
+/* ============================================================
+   SWITCH BUTTON
+============================================================ */
+
+.discover-switch-button {
+  min-width: 160px;
+  min-height: 46px;
+
+  display: inline-flex;
+
+  align-items: center;
+  justify-content: center;
+
+  gap: 8px;
+
+  padding:
+    10px
+    22px;
+
+  border: 0;
+
+  border-radius: 11px;
+
+  outline: none;
+
+  background: transparent;
+
+  color:
+    rgba(
+      255,
+      255,
+      255,
+      0.60
+    );
+
+  font: inherit;
+
+  font-size: 14px;
+  font-weight: 700;
+
+  cursor: pointer;
+
+  transition:
+    background 0.2s ease,
+    color 0.2s ease,
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+
+/* ============================================================
+   SWITCH HOVER
+============================================================ */
+
+.discover-switch-button:hover {
+  color: #ffffff;
+
+  background:
+    rgba(
+      255,
+      255,
+      255,
+      0.045
+    );
+
+  transform:
+    translateY(-1px);
+}
+
+
+/* ============================================================
+   ACTIVE SWITCH
+============================================================ */
+
+.discover-switch-button.active {
+  color: #ffffff;
+
+  background:
+    linear-gradient(
+      135deg,
+      #e45c2d,
+      #ad3516
+    );
+
+  box-shadow:
+    0 8px 22px
+    rgba(
+      183,
+      57,
+      22,
+      0.28
+    ),
+    inset
+      0 1px 0
+      rgba(
+        255,
+        255,
+        255,
+        0.12
+      );
+}
+
+
+/* ============================================================
+   ACCESSIBILITY
+============================================================ */
+
+.discover-switch-button:focus-visible {
+  outline:
+    2px solid
+    rgba(
+      255,
+      123,
+      67,
+      0.75
+    );
+
+  outline-offset: 2px;
+}
+
+
+/* ============================================================
+   CONTENT
+
+   IMPORTANT:
+   Do NOT limit this to 94% / 1500px.
+
+   Community.jsx already controls its own internal max-width.
+============================================================ */
+
+.discover-content {
+  position: relative;
+
+  width: 100%;
+  max-width: none;
+  min-width: 0;
+
+  margin: 0;
+
+  padding: 0;
+
+  box-sizing: border-box;
+}
+
+
+/* ============================================================
+   SEPARATOR
+============================================================ */
+
+.discover-content::before {
+  content: "";
+
+  display: block;
+
+  width:
+    calc(
+      100% -
+      clamp(48px, 10vw, 160px)
+    );
+
+  max-width: 1500px;
+
+  height: 1px;
+
+  margin:
+    0 auto
+    0;
+
+  background:
+    linear-gradient(
+      90deg,
+      transparent 0%,
+      rgba(
+        255,
+        126,
+        67,
+        0.18
+      ) 18%,
+      rgba(
+        255,
+        126,
+        67,
+        0.18
+      ) 82%,
+      transparent 100%
+    );
+}
+
+
+/* ============================================================
+   DIRECT CHILD PAGES
+
+   This prevents old .app-page styles from
+   shrinking Community or Connect.
+============================================================ */
+
+.discover-content > .app-page {
+  width: 100% !important;
+
+  max-width: none !important;
+  min-width: 0 !important;
+
+  min-height: auto !important;
+
+  margin: 0 !important;
+
+  box-sizing: border-box !important;
+
+  background: transparent !important;
+}
+
+
+/* ============================================================
+   COMMUNITY PAGE
+============================================================ */
+
+.discover-content > .community-page,
+.discover-content .community-page {
+  width: 100% !important;
+
+  max-width: none !important;
+  min-width: 0 !important;
+
+  margin: 0 !important;
+
+  box-sizing: border-box !important;
+
+  background: transparent !important;
+}
+
+
+/* ============================================================
+   EMBEDDED COMMUNITY
+============================================================ */
+
+.discover-content
+.community-page-embedded {
+  width: 100% !important;
+
+  max-width: none !important;
+  min-width: 0 !important;
+
+  margin: 0 !important;
+
+  box-sizing: border-box !important;
+
+  background: transparent !important;
+}
+
+
+/* ============================================================
+   CONNECT PAGE
+============================================================ */
+
+.discover-content > .connect-page,
+.discover-content .connect-page {
+  width: 100% !important;
+
+  max-width: none !important;
+  min-width: 0 !important;
+
+  margin: 0 !important;
+
+  box-sizing: border-box !important;
+
+  background: transparent !important;
+}
+
+
+/* ============================================================
+   EMBEDDED CONNECT
+============================================================ */
+
+.discover-content
+.connect-page-embedded {
+  width: 100% !important;
+
+  max-width: none !important;
+  min-width: 0 !important;
+
+  min-height: auto !important;
+
+  margin: 0 !important;
+
+  padding-top: 0 !important;
+
+  box-sizing: border-box !important;
+
+  background: transparent !important;
+}
+
+
+/* ============================================================
+   REMOVE CHILD PAGE BACKGROUNDS
+============================================================ */
+
+.discover-page .community-page,
+.discover-page .connect-page {
+  background: transparent !important;
+}
+
+
+/* ============================================================
+   IMPORTANT COMMUNITY WIDTH FIX
+
+   Community.css handles the actual 1500px layout.
+   Discover should NOT squeeze it.
+============================================================ */
+
+.discover-page
+.community-page
+.fk-community-hero,
+
+.discover-page
+.community-page
+.fk-community-toolbar,
+
+.discover-page
+.community-page
+.fk-status-area,
+
+.discover-page
+.community-page
+.fk-community-content {
+  width: 100% !important;
+
+  max-width: 1500px !important;
+
+  margin-left: auto !important;
+  margin-right: auto !important;
+
+  box-sizing: border-box !important;
+}
+
+
+/* ============================================================
+   COMMUNITY MAIN GRID SAFETY
+============================================================ */
+
+.discover-page
+.community-page
+.fk-community-content {
+  min-width: 0 !important;
+}
+
+
+/* ============================================================
+   COMMUNITY FEED SAFETY
+============================================================ */
+
+.discover-page
+.community-page
+.fk-feed-column {
+  width: 100% !important;
+
+  max-width: none !important;
+  min-width: 0 !important;
+}
+
+
+/* ============================================================
+   COMMUNITY SIDEBAR SAFETY
+============================================================ */
+
+.discover-page
+.community-page
+.fk-community-sidebar {
+  min-width: 0 !important;
+
+  max-width: none !important;
+}
+
+
+/* ============================================================
+   PREVENT OLD GLOBAL CSS FROM BREAKING TEXT
+============================================================ */
+
+.discover-page h1,
+.discover-page h2,
+.discover-page h3,
+.discover-page p,
+.discover-page span,
+.discover-page strong {
+  word-break: normal;
+}
+
+
+/* ============================================================
+   LARGE DESKTOP
+============================================================ */
+
+@media (min-width: 1600px) {
+
+  .discover-header,
+  .discover-switch-wrapper {
+    padding-left:
+      max(
+        70px,
+        calc(
+          (
+            100vw - 1660px
+          ) / 2
+        )
+      );
+
+    padding-right:
+      max(
+        70px,
+        calc(
+          (
+            100vw - 1660px
+          ) / 2
+        )
+      );
+  }
+
+}
+
+
+/* ============================================================
+   TABLET / SMALL LAPTOP
+============================================================ */
+
+@media (max-width: 1000px) {
+
+  .discover-header {
+    padding:
+      38px
+      24px
+      22px;
+  }
+
+
+  .discover-switch-wrapper {
+    padding:
+      0
+      24px
+      22px;
+  }
+
+
+  .discover-header h1 {
+    font-size:
+      clamp(
+        34px,
+        5vw,
+        48px
+      );
+  }
+
+
+  .discover-content::before {
+    width:
+      calc(
+        100% - 48px
+      );
+  }
+
+}
+
+
+/* ============================================================
+   MOBILE
+============================================================ */
+
+@media (max-width: 700px) {
+
+  .discover-page {
+    padding-bottom: 50px;
+  }
+
+
+  /* HEADER */
+
+  .discover-header {
+    padding:
+      28px
+      14px
+      18px;
+  }
+
+
+  .discover-header-inner {
+    width: 100%;
+
+    max-width: none;
+  }
+
+
+  .discover-eyebrow {
+    margin-bottom: 8px;
+
+    font-size: 10px;
+  }
+
+
+  .discover-header h1 {
+    font-size: 34px;
+
+    line-height: 1.07;
+  }
+
+
+  .discover-header p {
+    margin-top: 11px;
+
+    font-size: 14px;
+
+    line-height: 1.6;
+  }
+
+
+  /* SWITCH */
+
+  .discover-switch-wrapper {
+    width: 100%;
+
+    padding:
+      0
+      14px
+      18px;
+
+    margin: 0;
+
+    box-sizing: border-box;
+  }
+
+
+  .discover-switch {
+    width: 100%;
+
+    display: flex;
+
+    box-sizing: border-box;
+  }
+
+
+  .discover-switch-button {
+    flex: 1;
+
+    min-width: 0;
+    min-height: 45px;
+
+    padding:
+      10px
+      10px;
+
+    font-size: 13px;
+  }
+
+
+  /* CONTENT */
+
+  .discover-content {
+    width: 100%;
+
+    max-width: none;
+
+    margin: 0;
+
+    padding: 0;
+  }
+
+
+  .discover-content::before {
+    width:
+      calc(
+        100% - 28px
+      );
+  }
+
+}
+
+
+/* ============================================================
+   VERY SMALL MOBILE
+============================================================ */
+
+@media (max-width: 430px) {
+
+  .discover-header h1 {
+    font-size: 31px;
+  }
+
+
+  .discover-header p {
+    font-size: 13px;
+  }
+
+
+  .discover-switch-button {
+    gap: 6px;
+
+    padding:
+      9px
+      7px;
+
+    font-size: 12px;
+  }
+
+}

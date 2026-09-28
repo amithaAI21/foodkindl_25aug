@@ -1,13 +1,17 @@
 import {
   useEffect,
+  useMemo,
   useState,
 } from "react";
 
 import {
+  BriefcaseBusiness,
   Check,
+  ChevronDown,
   Clock3,
   MapPin,
-  Search,
+  RefreshCw,
+  SlidersHorizontal,
   Sparkles,
   UserCheck,
   UserMinus,
@@ -17,147 +21,161 @@ import {
   X,
 } from "lucide-react";
 
-import {
-  Link,
-} from "react-router-dom";
+import { Link } from "react-router-dom";
 
 import api from "../api";
+import { useAuth } from "../context/AuthContext";
 
-import {
-  useAuth,
-} from "../context/AuthContext";
-
-
-// ============================================================
-// FOOD MATCH LEVEL
-// ============================================================
-
-function getMatchLevel(
-  score
-) {
-
-  const numericScore =
-    Number(score) || 0;
+import "../styles/Connect.css";
 
 
-  if (
-    numericScore >= 80
-  ) {
+/* =========================================================
+   OPTIONS
+========================================================= */
 
+const FOOD_OPTIONS = [
+  "All",
+  "Vegetarian",
+  "Non Vegetarian",
+  "Vegan",
+  "Eggetarian",
+];
+
+const LOCATION_OPTIONS = [
+  "All",
+  "Bengaluru",
+  "Mumbai",
+  "Delhi",
+  "Hyderabad",
+  "Chennai",
+  "Pune",
+  "Kochi",
+];
+
+const ROLE_OPTIONS = [
+  "All",
+  "Student",
+  "Professional",
+  "Founder",
+  "Creator",
+  "Home Cook",
+  "Foodie",
+];
+
+const WORKPLACE_OPTIONS = [
+  "All",
+  "Technology",
+  "Startup",
+  "Education",
+  "Healthcare",
+  "Finance",
+  "Hospitality",
+  "Other",
+];
+
+
+/* =========================================================
+   MATCH LEVEL
+========================================================= */
+
+function getMatchLevel(score) {
+  const value = Number(score) || 0;
+
+  if (value >= 80) {
     return {
-      label:
-        "Excellent Match",
-
-      className:
-        "excellent",
+      label: "Excellent Match",
+      className: "excellent",
     };
   }
 
-
-  if (
-    numericScore >= 60
-  ) {
-
+  if (value >= 60) {
     return {
-      label:
-        "Great Match",
-
-      className:
-        "great",
+      label: "Great Match",
+      className: "great",
     };
   }
 
-
-  if (
-    numericScore >= 40
-  ) {
-
+  if (value >= 40) {
     return {
-      label:
-        "Good Match",
-
-      className:
-        "good",
+      label: "Good Match",
+      className: "good",
     };
   }
-
 
   return {
-    label:
-      "Potential Match",
-
-    className:
-      "potential",
+    label: "Potential Match",
+    className: "potential",
   };
 }
 
 
-// ============================================================
-// CONNECT
-// ============================================================
+/* =========================================================
+   CONNECT
+========================================================= */
 
-export default function Connect() {
+export default function Connect({
+  embedded = false,
+}) {
+  const { user } = useAuth();
 
-  const {
-    user,
-  } = useAuth();
+  const [activeTab, setActiveTab] =
+    useState("discover");
 
+  const [members, setMembers] =
+    useState([]);
 
-  const [
-    activeTab,
-    setActiveTab,
-  ] = useState(
-    "discover"
-  );
-
-
-  const [
-    members,
-    setMembers,
-  ] = useState([]);
-
-
-  const [
-    foodMatches,
-    setFoodMatches,
-  ] = useState([]);
-
+  const [foodMatches, setFoodMatches] =
+    useState([]);
 
   const [
     incomingRequests,
     setIncomingRequests,
   ] = useState([]);
 
-
   const [
     sentRequests,
     setSentRequests,
   ] = useState([]);
-
 
   const [
     connections,
     setConnections,
   ] = useState([]);
 
+  const [
+    selectedFood,
+    setSelectedFood,
+  ] = useState("All");
 
   const [
-    searchValue,
-    setSearchValue,
-  ] = useState("");
+    selectedLocation,
+    setSelectedLocation,
+  ] = useState("All");
 
+  const [
+    selectedRole,
+    setSelectedRole,
+  ] = useState("All");
+
+  const [
+    selectedWorkplace,
+    setSelectedWorkplace,
+  ] = useState("All");
+
+  const [
+    filtersOpen,
+    setFiltersOpen,
+  ] = useState(true);
 
   const [
     loading,
     setLoading,
   ] = useState(true);
 
-
   const [
     error,
     setError,
   ] = useState("");
-
 
   const [
     message,
@@ -165,170 +183,130 @@ export default function Connect() {
   ] = useState("");
 
 
+  /* =========================================================
+     API BASE
+  ========================================================= */
+
   const API_BASE = (
     import.meta.env.VITE_BACKEND_URL ||
     "http://127.0.0.1:8000"
-  ).replace(
-    /\/+$/,
-    ""
-  );
+  ).replace(/\/+$/, "");
 
 
-  // =========================================================
-  // MEDIA URL
-  // =========================================================
+  /* =========================================================
+     MEDIA
+  ========================================================= */
 
-  function getMediaUrl(
-    path
-  ) {
-
-    if (!path) {
-      return "";
-    }
-
+  function getMediaUrl(path) {
+    if (!path) return "";
 
     if (
-      path.startsWith(
-        "http://"
-      ) ||
-      path.startsWith(
-        "https://"
-      ) ||
-      path.startsWith(
-        "blob:"
-      )
+      path.startsWith("http://") ||
+      path.startsWith("https://") ||
+      path.startsWith("blob:")
     ) {
-
       return path;
     }
 
-
-    if (
-      path.startsWith(
-        "/.netlify/"
-      )
-    ) {
-
-      return (
-        `${window.location.origin}${path}`
-      );
+    if (path.startsWith("/.netlify/")) {
+      return `${window.location.origin}${path}`;
     }
 
-
-    return (
-      `${API_BASE}${path}`
-    );
+    return `${API_BASE}${path}`;
   }
 
 
-  // =========================================================
-  // MEMBER HELPERS
-  // =========================================================
+  /* =========================================================
+     MEMBER HELPERS
+  ========================================================= */
 
-  function getMemberName(
-    member
-  ) {
-
+  function getMemberName(member) {
     return (
       member?.full_name ||
-
       [
         member?.first_name,
         member?.last_name,
       ]
         .filter(Boolean)
         .join(" ") ||
-
+      member?.username ||
       member?.email ||
-
       "FoodKindl Member"
     );
   }
 
 
-  function getMemberInitial(
-    member
-  ) {
-
-    return (
-      getMemberName(
-        member
-      )
-        .charAt(0)
-        .toUpperCase()
-    );
+  function getMemberInitial(member) {
+    return getMemberName(member)
+      .charAt(0)
+      .toUpperCase();
   }
 
 
-  function getMemberPhoto(
-    member
-  ) {
-
+  function getMemberPhoto(member) {
     return getMediaUrl(
-
-      member
-        ?.profile
-        ?.profile_image_1_url
-      ||
-
-      member
-        ?.profile
-        ?.profile_image_1
+      member?.profile?.profile_image_1_url ||
+      member?.profile?.profile_image_1 ||
+      member?.profile_image_1_url ||
+      member?.profile_image_1 ||
+      ""
     );
   }
 
 
-  function getOtherMember(
-    connection
-  ) {
-
+  function getOtherMember(connection) {
     if (
-      Number(
-        connection
-          ?.sender
-          ?.id
-      ) ===
-      Number(
-        user?.id
-      )
+      Number(connection?.sender?.id) ===
+      Number(user?.id)
     ) {
-
-      return (
-        connection.receiver
-      );
+      return connection?.receiver;
     }
 
-
-    return (
-      connection.sender
-    );
+    return connection?.sender;
   }
 
 
-  // =========================================================
-  // FOOD MATCH ID
-  // =========================================================
-
-  function getFoodMatchMemberIds(
-    match
-  ) {
+  function getLocation(member) {
+    const profile =
+      member?.profile || {};
 
     return [
+      profile.locality,
+      profile.city,
+    ]
+      .filter(Boolean)
+      .join(", ");
+  }
 
+
+  function getDiet(member) {
+    const value =
+      member?.profile
+        ?.dietary_preference || "";
+
+    if (!value) return "";
+
+    return value
+      .replaceAll("_", " ")
+      .replace(/\b\w/g, char =>
+        char.toUpperCase()
+      );
+  }
+
+
+  /* =========================================================
+     FOOD MATCH
+  ========================================================= */
+
+  function getFoodMatchMemberIds(match) {
+    return [
       match?.id,
-
       match?.user_id,
-
       match?.member_id,
-
       match?.user?.id,
-
       match?.member?.id,
-
       match?.profile?.user_id,
-
       match?.profile?.user?.id,
-
     ]
       .filter(
         value =>
@@ -336,518 +314,379 @@ export default function Connect() {
           value !== null &&
           value !== ""
       )
-      .map(
-        value =>
-          Number(value)
-      )
+      .map(value => Number(value))
       .filter(
         value =>
-          !Number.isNaN(
-            value
-          )
+          !Number.isNaN(value)
       );
   }
 
 
-  // =========================================================
-  // FOOD MATCH FOR MEMBER
-  // =========================================================
+  function getFoodMatch(memberId) {
+    const id =
+      Number(memberId);
 
-  function getFoodMatch(
-    memberId
-  ) {
-
-    const normalizedMemberId =
-      Number(
-        memberId
-      );
-
-
-    if (
-      Number.isNaN(
-        normalizedMemberId
-      )
-    ) {
-
+    if (Number.isNaN(id)) {
       return null;
     }
 
-
-    const match =
-      foodMatches.find(
-        item => {
-
-          const possibleIds =
-            getFoodMatchMemberIds(
-              item
-            );
-
-
-          return (
-            possibleIds.includes(
-              normalizedMemberId
-            )
-          );
-        }
-      );
-
-
     return (
-      match || null
+      foodMatches.find(match =>
+        getFoodMatchMemberIds(
+          match
+        ).includes(id)
+      ) || null
     );
   }
 
 
-  // =========================================================
-  // FOOD MATCH SCORE
-  // =========================================================
-
-  function getFoodMatchScore(
-    foodMatch
-  ) {
-
-    if (!foodMatch) {
-      return null;
-    }
-
+  function getFoodMatchScore(match) {
+    if (!match) return null;
 
     const rawScore =
-      foodMatch?.food_match ??
-      foodMatch?.match_score ??
-      foodMatch?.score ??
-      foodMatch?.percentage ??
-      foodMatch?.match_percentage ??
+      match?.food_match ??
+      match?.match_score ??
+      match?.score ??
+      match?.percentage ??
+      match?.match_percentage ??
       null;
-
 
     if (
       rawScore === null ||
       rawScore === undefined ||
       rawScore === ""
     ) {
-
       return null;
     }
 
+    const score =
+      Number(rawScore);
 
-    const numericScore =
-      Number(
-        rawScore
-      );
-
-
-    if (
-      Number.isNaN(
-        numericScore
-      )
-    ) {
-
+    if (Number.isNaN(score)) {
       return null;
     }
-
 
     return Math.max(
       0,
       Math.min(
-        Math.round(
-          numericScore
-        ),
+        Math.round(score),
         100
       )
     );
   }
 
 
-  // =========================================================
-  // CONNECTION STATE
-  // =========================================================
+  /* =========================================================
+     CONNECTION STATE
+  ========================================================= */
 
   function getMemberConnectionState(
     member
   ) {
-
     const memberId =
-      Number(
-        member?.id
-      );
+      Number(member?.id);
 
-
-    const acceptedConnection =
+    const accepted =
       connections.find(
         connection => {
-
           const senderId =
             Number(
-              connection
-                ?.sender
-                ?.id
+              connection?.sender?.id
             );
-
 
           const receiverId =
             Number(
-              connection
-                ?.receiver
-                ?.id
+              connection?.receiver?.id
             );
 
-
           return (
-            senderId ===
-              memberId
-            ||
-            receiverId ===
-              memberId
+            senderId === memberId ||
+            receiverId === memberId
           );
         }
       );
 
-
-    if (
-      acceptedConnection
-    ) {
-
+    if (accepted) {
       return {
-        status:
-          "connected",
-
+        status: "connected",
         connectionId:
-          acceptedConnection.id,
+          accepted.id,
       };
     }
 
 
-    const sentConnection =
+    const sent =
       sentRequests.find(
         connection =>
           Number(
             connection
               ?.receiver
               ?.id
-          ) ===
-          memberId
+          ) === memberId
       );
 
-
-    if (
-      sentConnection
-    ) {
-
+    if (sent) {
       return {
-        status:
-          "request_sent",
-
+        status: "request_sent",
         connectionId:
-          sentConnection.id,
+          sent.id,
       };
     }
 
 
-    const incomingConnection =
+    const incoming =
       incomingRequests.find(
         connection =>
           Number(
             connection
               ?.sender
               ?.id
-          ) ===
-          memberId
+          ) === memberId
       );
 
-
-    if (
-      incomingConnection
-    ) {
-
+    if (incoming) {
       return {
         status:
           "request_received",
-
         connectionId:
-          incomingConnection.id,
+          incoming.id,
       };
     }
 
 
     const apiStatus =
-      member
-        ?.connection_status;
-
+      member?.connection_status;
 
     if (
+      apiStatus === "connected" ||
       apiStatus ===
-        "connected"
-      ||
-      apiStatus ===
-        "request_sent"
-      ||
+        "request_sent" ||
       apiStatus ===
         "request_received"
     ) {
-
       return {
-        status:
-          apiStatus,
-
+        status: apiStatus,
         connectionId:
-          member
-            ?.connection_id ||
+          member?.connection_id ||
           null,
       };
     }
 
 
     return {
-      status:
-        "none",
-
-      connectionId:
-        null,
+      status: "none",
+      connectionId: null,
     };
   }
 
 
-  // =========================================================
-  // ERROR MESSAGE
-  // =========================================================
+  /* =========================================================
+     ERROR
+  ========================================================= */
 
-  function getErrorMessage(
-    data
-  ) {
-
+  function getErrorMessage(data) {
     if (!data) {
-
-      return (
-        "The request could not be completed."
-      );
+      return "The request could not be completed.";
     }
 
-
     if (
-      typeof data ===
-      "string"
+      typeof data === "string"
     ) {
-
       return data;
     }
 
-
     return (
       data?.receiver_id?.[0] ||
-      data?.non_field_errors?.[0] ||
+      data
+        ?.non_field_errors?.[0] ||
       data?.detail ||
+      data?.message ||
       "The request could not be completed."
     );
   }
 
 
-  // =========================================================
-  // LOAD MEMBERS
-  // =========================================================
+  /* =========================================================
+     LOAD MEMBERS
+  ========================================================= */
 
-  async function loadMembers(
-    query = ""
-  ) {
-
+  async function loadMembers() {
     try {
-
       const response =
         await api.get(
-          "/members/",
-          {
-            params: {
-              q:
-                query.trim(),
-            },
-          }
+          "/members/"
         );
 
+      const result =
+        response.data?.results ||
+        response.data ||
+        [];
 
-      const memberList =
-            response.data?.results ||
-            response.data;
+      const list =
+        Array.isArray(result)
+          ? result
+          : [];
 
-          const memberOnlyList =
-            Array.isArray(memberList)
-              ? memberList.filter(
-                  (member) =>
-                    member?.profile?.account_type !== "partner" &&
-                    member?.account_type !== "partner"
-                )
-              : [];
+      const memberOnly =
+        list.filter(member => {
+          const accountType =
+            member?.profile
+              ?.account_type ||
+            member?.account_type;
 
-          setMembers(memberOnlyList);
+          return (
+            accountType !==
+            "partner"
+          );
+        });
 
-    } catch (
-      requestError
-    ) {
-
+      setMembers(memberOnly);
+    } catch (requestError) {
       console.error(
         "Unable to load members:",
-        requestError.response?.status,
-        requestError.response?.data ||
         requestError
       );
 
-
-      const data =
-        requestError
-          .response
-          ?.data;
-
-
       setError(
-        data?.detail ||
-        data?.message ||
-        (
-          typeof data ===
-          "string"
-            ? data
-            : ""
-        ) ||
-        "Registered members could not be loaded."
+        requestError
+          ?.response
+          ?.data
+          ?.detail ||
+          "Registered members could not be loaded."
       );
     }
   }
 
 
-  // =========================================================
-  // LOAD FOOD MATCHES
-  // =========================================================
+  /* =========================================================
+     LOAD FOOD MATCHES
+  ========================================================= */
 
   async function loadFoodMatches() {
-
     try {
-
       const response =
         await api.get(
           "/auth/food-matches/"
         );
 
-
-      console.log(
-        "FOOD MATCH API RESPONSE:",
-        response.data
-      );
-
-
-      const results =
+      const result =
         response.data?.results ||
         response.data ||
         [];
 
-
-      const normalizedResults =
-        Array.isArray(
-          results
-        )
-          ? results
-          : [];
-
-
-      console.log(
-        "FOOD MATCH RESULTS:",
-        normalizedResults
-      );
-
-
       setFoodMatches(
-        normalizedResults
+        Array.isArray(result)
+          ? result
+          : []
       );
-
-
-    } catch (
-      requestError
-    ) {
-
+    } catch (requestError) {
       console.error(
-        "Unable to load Food Matches:",
-        requestError.response?.data ||
+        "Food Match error:",
         requestError
       );
-
 
       setFoodMatches([]);
     }
   }
 
 
-  // =========================================================
-  // LOAD CONNECTIONS
-  // =========================================================
+  /* =========================================================
+     LOAD CONNECTIONS
+  ========================================================= */
 
   async function loadConnections() {
-
     try {
-
       const [
         incomingResponse,
         sentResponse,
         acceptedResponse,
-      ] = await Promise.all([
+      ] =
+        await Promise.all([
+          api.get(
+            "/connections/incoming/"
+          ),
 
-        api.get(
-          "/connections/incoming/"
-        ),
+          api.get(
+            "/connections/sent/"
+          ),
 
-        api.get(
-          "/connections/sent/"
-        ),
+          api.get(
+            "/connections/accepted/"
+          ),
+        ]);
 
-        api.get(
-          "/connections/accepted/"
-        ),
-      ]);
+
+      const incoming =
+        incomingResponse
+          .data?.results ||
+        incomingResponse.data ||
+        [];
+
+
+      const sent =
+        sentResponse
+          .data?.results ||
+        sentResponse.data ||
+        [];
+
+
+      const accepted =
+        acceptedResponse
+          .data?.results ||
+        acceptedResponse.data ||
+        [];
 
 
       setIncomingRequests(
-        incomingResponse.data
-          ?.results ||
-        incomingResponse.data ||
-        []
+        Array.isArray(incoming)
+          ? incoming
+          : []
       );
 
 
       setSentRequests(
-        sentResponse.data
-          ?.results ||
-        sentResponse.data ||
-        []
+        Array.isArray(sent)
+          ? sent
+          : []
       );
 
 
-      const acceptedConnections =
-  acceptedResponse.data?.results ||
-  acceptedResponse.data ||
-  [];
+      setConnections(
+        Array.isArray(accepted)
+          ? accepted.filter(
+              connection => {
+                const other =
+                  Number(
+                    connection
+                      ?.sender
+                      ?.id
+                  ) ===
+                  Number(user?.id)
+                    ? connection
+                        ?.receiver
+                    : connection
+                        ?.sender;
 
-setConnections(
-  Array.isArray(acceptedConnections)
-    ? acceptedConnections.filter(
-        (connection) => {
-          const otherMember =
-            Number(connection?.sender?.id) === Number(user?.id)
-              ? connection?.receiver
-              : connection?.sender;
+                const type =
+                  other
+                    ?.profile
+                    ?.account_type ||
+                  other
+                    ?.account_type;
 
-          return (
-            otherMember?.profile?.account_type !== "partner" &&
-            otherMember?.account_type !== "partner"
-          );
-        }
-      )
-    : []
-);
-
-    } catch (
-      requestError
-    ) {
-
+                return (
+                  type !==
+                  "partner"
+                );
+              }
+            )
+          : []
+      );
+    } catch (requestError) {
       console.error(
-        "Unable to load connections:",
+        "Connection loading error:",
         requestError
       );
-
 
       setError(
         "Connection details could not be loaded."
@@ -856,16 +695,13 @@ setConnections(
   }
 
 
-  // =========================================================
-  // LOAD PAGE
-  // =========================================================
+  /* =========================================================
+     LOAD PAGE
+  ========================================================= */
 
   async function loadPage() {
-
     setLoading(true);
-
     setError("");
-
 
     await Promise.all([
       loadMembers(),
@@ -873,102 +709,240 @@ setConnections(
       loadConnections(),
     ]);
 
-
     setLoading(false);
   }
 
 
-  useEffect(
-    () => {
-
-      loadPage();
-
-    },
-    []
-  );
+  useEffect(() => {
+    loadPage();
+    // eslint-disable-next-line
+  }, []);
 
 
-  // =========================================================
-  // SEARCH
-  // =========================================================
+  /* =========================================================
+     RESET FILTERS
+  ========================================================= */
 
-  async function searchMembers(
-    event
-  ) {
-
-    event.preventDefault();
-
-
-    setLoading(true);
-
-    setError("");
-
-    setMessage("");
+  function resetFilters() {
+    setSelectedFood("All");
+    setSelectedLocation("All");
+    setSelectedRole("All");
+    setSelectedWorkplace("All");
+  }
 
 
-    await Promise.all([
+  /* =========================================================
+     FILTER
+  ========================================================= */
 
-      loadMembers(
-        searchValue
-      ),
+  const filteredMembers = useMemo(() => {
 
-      loadFoodMatches(),
+  // ---------------------------------------------------------
+  // NORMALIZE TEXT
+  // ---------------------------------------------------------
+  const normalizeText = (value = "") => {
+    return String(value)
+      .trim()
+      .toLowerCase()
+      .replaceAll("_", " ")
+      .replace(/\s+/g, " ");
+  };
 
-      loadConnections(),
 
+  // ---------------------------------------------------------
+  // NORMALIZE LOCATION
+  // Bangalore and Bengaluru should be treated as same city
+  // ---------------------------------------------------------
+  const normalizeLocation = (value = "") => {
+    let text = normalizeText(value);
+
+    const replacements = {
+      bangalore: "bengaluru",
+      bengaluru: "bengaluru",
+
+      bombay: "mumbai",
+      mumbai: "mumbai",
+
+      madras: "chennai",
+      chennai: "chennai",
+
+      cochin: "kochi",
+      kochi: "kochi",
+
+      calcutta: "kolkata",
+      kolkata: "kolkata",
+    };
+
+    Object.entries(replacements).forEach(
+      ([oldName, newName]) => {
+        text = text.replace(
+          new RegExp(`\\b${oldName}\\b`, "gi"),
+          newName
+        );
+      }
+    );
+
+    return text;
+  };
+
+
+  return members.filter(member => {
+
+    const profile =
+      member?.profile || {};
+
+
+    // -------------------------------------------------------
+    // FOOD
+    // -------------------------------------------------------
+
+    const food = normalizeText(
+      profile.dietary_preference || ""
+    );
+
+
+    // -------------------------------------------------------
+    // LOCATION
+    // -------------------------------------------------------
+
+    const rawLocation = [
+      profile.locality,
+      profile.city,
+      profile.state,
+      profile.postcode,
+    ]
+      .filter(Boolean)
+      .join(" ");
+
+    const location =
+      normalizeLocation(rawLocation);
+
+
+    // -------------------------------------------------------
+    // ROLE / LIFESTYLE
+    // -------------------------------------------------------
+
+    const role =
+      normalizeText(
+        profile.role || ""
+      );
+
+
+    // -------------------------------------------------------
+    // WORKPLACE
+    // -------------------------------------------------------
+
+    const workplace =
+      normalizeText(
+        profile.college_workplace || ""
+      );
+
+
+    // -------------------------------------------------------
+    // FOOD FILTER
+    // -------------------------------------------------------
+
+    const foodPass =
+      selectedFood === "All" ||
+      food.includes(
+        normalizeText(selectedFood)
+      );
+
+
+    // -------------------------------------------------------
+    // LOCATION FILTER
+    // -------------------------------------------------------
+
+    const locationPass =
+      selectedLocation === "All" ||
+      location.includes(
+        normalizeLocation(
+          selectedLocation
+        )
+      );
+
+
+    // -------------------------------------------------------
+    // ROLE FILTER
+    // -------------------------------------------------------
+
+    const rolePass =
+      selectedRole === "All" ||
+      role.includes(
+        normalizeText(selectedRole)
+      );
+
+
+    // -------------------------------------------------------
+    // WORKPLACE FILTER
+    // -------------------------------------------------------
+
+    const workplacePass =
+      selectedWorkplace === "All" ||
+      workplace.includes(
+        normalizeText(
+          selectedWorkplace
+        )
+      );
+
+
+    return (
+      foodPass &&
+      locationPass &&
+      rolePass &&
+      workplacePass
+    );
+
+  });
+
+}, [
+  members,
+  selectedFood,
+  selectedLocation,
+  selectedRole,
+  selectedWorkplace,
+]);
+
+
+  /* =========================================================
+     BEST MATCHES
+  ========================================================= */
+
+  const bestMatches =
+    useMemo(() => {
+      return [...members]
+        .map(member => ({
+          member,
+          score:
+            getFoodMatchScore(
+              getFoodMatch(
+                member.id
+              )
+            ) || 0,
+        }))
+        .sort(
+          (a, b) =>
+            b.score - a.score
+        )
+        .slice(0, 4);
+      // eslint-disable-next-line
+    }, [
+      members,
+      foodMatches,
     ]);
 
 
-    setLoading(false);
-  }
-
-
-  // =========================================================
-  // SHOW ALL
-  // =========================================================
-
-  async function showAllMembers() {
-
-    setSearchValue("");
-
-
-    setLoading(true);
-
-    setError("");
-
-    setMessage("");
-
-
-    await Promise.all([
-
-      loadMembers(""),
-
-      loadFoodMatches(),
-
-      loadConnections(),
-
-    ]);
-
-
-    setLoading(false);
-  }
-
-
-  // =========================================================
-  // SEND REQUEST
-  // =========================================================
+  /* =========================================================
+     SEND
+  ========================================================= */
 
   async function sendRequest(
     memberId
   ) {
-
     setError("");
-
     setMessage("");
 
-
     try {
-
       await api.post(
         "/connections/",
         {
@@ -977,40 +951,20 @@ setConnections(
         }
       );
 
-
       setMessage(
         "Connection request sent."
       );
 
-
       await Promise.all([
-
-        loadMembers(
-          searchValue
-        ),
-
+        loadMembers(),
         loadFoodMatches(),
-
         loadConnections(),
-
       ]);
-
-
-    } catch (
-      requestError
-    ) {
-
-      console.error(
-        "Unable to send request:",
-        requestError.response?.data ||
-        requestError
-      );
-
-
+    } catch (requestError) {
       setError(
         getErrorMessage(
           requestError
-            .response
+            ?.response
             ?.data
         )
       );
@@ -1018,42 +972,30 @@ setConnections(
   }
 
 
-  // =========================================================
-  // ACCEPT REQUEST
-  // =========================================================
+  /* =========================================================
+     ACCEPT
+  ========================================================= */
 
   async function acceptRequest(
     connectionId
   ) {
-
-    setError("");
-
-    setMessage("");
-
-
     try {
+      setError("");
 
       await api.post(
         `/connections/${connectionId}/accept/`
       );
 
-
       setMessage(
         "Connection request accepted."
       );
 
-
       await loadPage();
-
-
-    } catch (
-      requestError
-    ) {
-
+    } catch (requestError) {
       setError(
         getErrorMessage(
           requestError
-            .response
+            ?.response
             ?.data
         )
       );
@@ -1061,42 +1003,30 @@ setConnections(
   }
 
 
-  // =========================================================
-  // DECLINE REQUEST
-  // =========================================================
+  /* =========================================================
+     DECLINE
+  ========================================================= */
 
   async function declineRequest(
     connectionId
   ) {
-
-    setError("");
-
-    setMessage("");
-
-
     try {
+      setError("");
 
       await api.post(
         `/connections/${connectionId}/decline/`
       );
 
-
       setMessage(
         "Connection request declined."
       );
 
-
       await loadPage();
-
-
-    } catch (
-      requestError
-    ) {
-
+    } catch (requestError) {
       setError(
         getErrorMessage(
           requestError
-            .response
+            ?.response
             ?.data
         )
       );
@@ -1104,54 +1034,34 @@ setConnections(
   }
 
 
-  // =========================================================
-  // CANCEL REQUEST
-  // =========================================================
+  /* =========================================================
+     CANCEL
+  ========================================================= */
 
   async function cancelRequest(
     connectionId
   ) {
-
-    setError("");
-
-    setMessage("");
-
-
-    if (
-      !connectionId
-    ) {
-
-      setError(
-        "Connection request ID is missing."
-      );
-
+    if (!connectionId) {
       return;
     }
 
-
     try {
+      setError("");
 
       await api.post(
         `/connections/${connectionId}/cancel/`
       );
 
-
       setMessage(
         "Connection request cancelled."
       );
 
-
       await loadPage();
-
-
-    } catch (
-      requestError
-    ) {
-
+    } catch (requestError) {
       setError(
         getErrorMessage(
           requestError
-            .response
+            ?.response
             ?.data
         )
       );
@@ -1159,53 +1069,38 @@ setConnections(
   }
 
 
-  // =========================================================
-  // REMOVE CONNECTION
-  // =========================================================
+  /* =========================================================
+     REMOVE
+  ========================================================= */
 
   async function removeConnection(
     connectionId
   ) {
-
-    const confirmed =
-      window.confirm(
-        "Remove this member from your connections?"
-      );
-
-
-    if (!confirmed) {
+    if (
+      !window.confirm(
+        "Remove this member from your circle?"
+      )
+    ) {
       return;
     }
 
-
-    setError("");
-
-    setMessage("");
-
-
     try {
+      setError("");
 
       await api.post(
         `/connections/${connectionId}/remove/`
       );
 
-
       setMessage(
         "Connection removed."
       );
 
-
       await loadPage();
-
-
-    } catch (
-      requestError
-    ) {
-
+    } catch (requestError) {
       setError(
         getErrorMessage(
           requestError
-            .response
+            ?.response
             ?.data
         )
       );
@@ -1213,530 +1108,746 @@ setConnections(
   }
 
 
-  // =========================================================
-  // AVATAR
-  // =========================================================
+  /* =========================================================
+     AVATAR
+  ========================================================= */
 
-  function renderMemberAvatar(
-    member
-  ) {
-
+  function MemberAvatar({
+    member,
+    large = false,
+  }) {
     const photo =
-      getMemberPhoto(
-        member
-      );
-
+      getMemberPhoto(member);
 
     if (photo) {
-
       return (
-
         <img
           src={photo}
-          alt={
-            getMemberName(
-              member
-            )
+          alt={getMemberName(
+            member
+          )}
+          className={
+            large
+              ? "fk-avatar fk-avatar-large"
+              : "fk-avatar"
           }
-          className="connect-member-photo"
         />
-
       );
     }
 
-
     return (
-
-      <div className="connect-member-placeholder">
-
-        {
-          getMemberInitial(
-            member
-          )
+      <div
+        className={
+          large
+            ? "fk-avatar-placeholder fk-avatar-large"
+            : "fk-avatar-placeholder"
         }
-
+      >
+        {getMemberInitial(
+          member
+        )}
       </div>
-
     );
   }
 
 
-  // =========================================================
-  // MEMBER DETAILS
-  // =========================================================
-
-  function renderMemberDetails(
-    member
-  ) {
-
-    const profile =
-      member?.profile ||
-      {};
-
-
-    const foodMatch =
-      getFoodMatch(
-        member.id
-      );
-
-
-    const matchScore =
-      getFoodMatchScore(
-        foodMatch
-      );
-
-
-    const matchLevel =
-      getMatchLevel(
-        matchScore || 0
-      );
-
-
-    const dietaryLabel =
-      profile.dietary_preference
-        ? profile
-            .dietary_preference
-            .replaceAll(
-              "_",
-              " "
-            )
-        : "";
-
-
-    console.log(
-      "MEMBER MATCH:",
-      {
-        memberId:
-          member.id,
-
-        memberName:
-          getMemberName(
-            member
-          ),
-
-        foodMatch,
-
-        matchScore,
-      }
-    );
-
-
-    return (
-
-      <>
-
-        <h3>
-          {
-            getMemberName(
-              member
-            )
-          }
-        </h3>
-
-
-        {
-          profile.role &&
-          (
-
-            <p className="connect-member-role">
-              {
-                profile.role
-              }
-            </p>
-
-          )
-        }
-
-
-        {
-          (
-            profile.city ||
-            profile.locality
-          ) &&
-          (
-
-            <p className="connect-member-location">
-
-              <MapPin
-                size={15}
-              />
-
-
-              {
-                [
-                  profile.locality,
-                  profile.city,
-                ]
-                  .filter(Boolean)
-                  .join(", ")
-              }
-
-            </p>
-
-          )
-        }
-
-
-        {
-          profile.college_workplace &&
-          (
-
-            <p>
-              {
-                profile
-                  .college_workplace
-              }
-            </p>
-
-          )
-        }
-
-
-        {
-          dietaryLabel &&
-          (
-
-            <span className="connect-preference">
-              {
-                dietaryLabel
-              }
-            </span>
-
-          )
-        }
-
-
-        {/* =================================================
-            FOOD MATCH
-        ================================================= */}
-
-        <div className="connect-food-match">
-
-          {
-            matchScore !== null
-              ? (
-
-                <>
-
-                  <div className="connect-food-match-top">
-
-                    <div
-                      className={
-                        `connect-food-match-score ${matchLevel.className}`
-                      }
-                    >
-
-                      <Utensils
-                        size={16}
-                      />
-
-
-                      <strong>
-                        {matchScore}%
-                      </strong>
-
-
-                      <span>
-                        Food Match
-                      </span>
-
-                    </div>
-
-
-                    <div
-                      className={
-                        `connect-food-match-level ${matchLevel.className}`
-                      }
-                    >
-
-                      <Sparkles
-                        size={13}
-                      />
-
-
-                      {
-                        matchLevel.label
-                      }
-
-                    </div>
-
-                  </div>
-
-
-                  <div className="connect-food-match-bar">
-
-                    <span
-                      style={{
-                        width:
-                          `${matchScore}%`,
-                      }}
-                    />
-
-                  </div>
-
-
-                  {
-                    Array.isArray(
-                      foodMatch?.match_reasons
-                    ) &&
-                    foodMatch.match_reasons.length >
-                      0 &&
-                    (
-
-                      <p className="connect-food-match-reason">
-                        {
-                          foodMatch.match_reasons[0]
-                        }
-                      </p>
-
-                    )
-                  }
-
-                </>
-
-              )
-              : (
-
-                <div className="connect-food-match-unavailable">
-
-                  <Utensils
-                    size={15}
-                  />
-
-                  <span>
-                    Food Match not calculated yet
-                  </span>
-
-                </div>
-
-              )
-          }
-
-        </div>
-
-      </>
-
-    );
-  }
-
-
-  // =========================================================
-  // ACTIONS
-  // =========================================================
-
-  function renderMemberActions(
-    member
-  ) {
-
+  /* =========================================================
+     ACTION BUTTONS
+  ========================================================= */
+
+  function MemberActions({
+    member,
+  }) {
     const {
-      status:
-        connectionStatus,
-
+      status,
       connectionId,
-
     } =
       getMemberConnectionState(
         member
       );
 
 
+    if (
+      status === "connected"
+    ) {
+      return (
+        <div className="fk-member-actions">
+          <Link
+            to={`/connect/member/${member.id}`}
+            className="fk-btn fk-btn-secondary"
+          >
+            View profile
+          </Link>
+
+          <span className="fk-connected">
+            <UserCheck size={17} />
+            Connected
+          </span>
+        </div>
+      );
+    }
+
+
+    if (
+      status ===
+      "request_sent"
+    ) {
+      return (
+        <div className="fk-member-actions">
+          <Link
+            to={`/connect/member/${member.id}`}
+            className="fk-btn fk-btn-secondary"
+          >
+            View profile
+          </Link>
+
+          <button
+            type="button"
+            className="fk-btn fk-btn-pending"
+            onClick={() =>
+              cancelRequest(
+                connectionId
+              )
+            }
+          >
+            <Clock3 size={16} />
+            Requested
+          </button>
+        </div>
+      );
+    }
+
+
+    if (
+      status ===
+      "request_received"
+    ) {
+      return (
+        <div className="fk-member-actions">
+          <Link
+            to={`/connect/member/${member.id}`}
+            className="fk-btn fk-btn-secondary"
+          >
+            View profile
+          </Link>
+
+          <button
+                  type="button"
+                  className="fk-btn fk-btn-primary"
+                  onClick={() => {
+                    setActiveTab("discover");
+
+                    setTimeout(() => {
+                      const discoverSection =
+                        document.getElementById(
+                          "discover-people-section"
+                        );
+
+                      if (discoverSection) {
+                        discoverSection.scrollIntoView({
+                          behavior: "smooth",
+                          block: "start",
+                        });
+                      } else {
+                        window.scrollTo({
+                          top: 0,
+                          behavior: "smooth",
+                        });
+                      }
+                    }, 100);
+                  }}
+                >
+  <Sparkles size={17} />
+  Discover people
+</button>
+        </div>
+      );
+    }
+
+
     return (
-
-      <div className="connect-card-actions">
-
-
+      <div className="fk-member-actions">
         <Link
-          to={
-            `/connect/member/${member.id}`
-          }
-          className="secondary-button"
+          to={`/connect/member/${member.id}`}
+          className="fk-btn fk-btn-secondary"
         >
-
-          View Profile
-
+          View profile
         </Link>
 
-
-        {
-          connectionStatus ===
-          "none" &&
-          (
-
-            <button
-              type="button"
-              className="primary-button"
-              onClick={() =>
-                sendRequest(
-                  member.id
-                )
-              }
-            >
-
-              <UserPlus
-                size={17}
-              />
-
-              Connect
-
-            </button>
-
-          )
-        }
-
-
-        {
-          connectionStatus ===
-          "request_sent" &&
-          (
-
-            <button
-              type="button"
-              className="secondary-button"
-              onClick={() =>
-                cancelRequest(
-                  connectionId
-                )
-              }
-            >
-
-              <Clock3
-                size={17}
-              />
-
-              Request Sent
-
-            </button>
-
-          )
-        }
-
-
-        {
-          connectionStatus ===
-          "request_received" &&
-          (
-
-            <button
-              type="button"
-              className="primary-button"
-              onClick={() =>
-                setActiveTab(
-                  "requests"
-                )
-              }
-            >
-
-              <UserPlus
-                size={17}
-              />
-
-              Review Request
-
-            </button>
-
-          )
-        }
-
-
-        {
-          connectionStatus ===
-          "connected" &&
-          (
-
-            <span className="connected-badge">
-
-              <UserCheck
-                size={17}
-              />
-
-              Connected
-
-            </span>
-
-          )
-        }
-
+        <button
+          type="button"
+          className="fk-btn fk-btn-primary"
+          onClick={() =>
+            sendRequest(
+              member.id
+            )
+          }
+        >
+          <UserPlus size={17} />
+          Connect
+        </button>
       </div>
-
     );
   }
 
 
-  // =========================================================
-  // LOADING
-  // =========================================================
+  /* =========================================================
+     MEMBER CARD
+  ========================================================= */
 
-  if (
-    loading
-  ) {
+  function MemberCard({
+    member,
+    featured = false,
+  }) {
+    const profile =
+      member?.profile || {};
+
+    const match =
+      getFoodMatch(
+        member.id
+      );
+
+    const score =
+      getFoodMatchScore(
+        match
+      );
+
+    const matchLevel =
+      getMatchLevel(
+        score || 0
+      );
+
+    const location =
+      getLocation(member);
+
+    const diet =
+      getDiet(member);
+
 
     return (
+      <article
+        className={
+          featured
+            ? "fk-person-card featured"
+            : "fk-person-card"
+        }
+      >
+        <div className="fk-person-visual">
 
-      <main className="app-page">
+          <div className="fk-person-glow" />
 
-        <div className="app-panel">
-          Loading FoodKindl members...
+          <MemberAvatar
+            member={member}
+            large
+          />
+
+          {score !== null && (
+            <div className="fk-score-bubble">
+              <strong>
+                {score}%
+              </strong>
+
+              <span>
+                match
+              </span>
+            </div>
+          )}
+
+          <div className="fk-online-dot" />
+
         </div>
 
-      </main>
 
-    );
-  }
+        <div className="fk-person-content">
 
+          <div className="fk-person-name-row">
 
-  // =========================================================
-  // PAGE
-  // =========================================================
+            <div>
+              <h3>
+                {getMemberName(
+                  member
+                )}
+              </h3>
 
-  return (
+              {profile.role && (
+                <p className="fk-person-role">
+                  {profile.role}
+                </p>
+              )}
+            </div>
 
-    <main className="app-page">
+            {score !== null && (
+              <span
+                className={`fk-match-label ${matchLevel.className}`}
+              >
+                <Sparkles
+                  size={13}
+                />
 
+                {
+                  matchLevel.label
+                }
+              </span>
+            )}
 
-      {/* =====================================================
-          HEADING
-      ===================================================== */}
-
-      <div className="app-heading">
-
-        <div>
-
-          <div className="eyebrow left">
-            FoodKindl Connect
           </div>
 
 
-          <h1>
-            Discover and connect
-          </h1>
+          <div className="fk-person-meta">
 
+            {location && (
+              <span>
+                <MapPin
+                  size={15}
+                />
+
+                {location}
+              </span>
+            )}
+
+            {profile
+              .college_workplace && (
+              <span>
+                <BriefcaseBusiness
+                  size={15}
+                />
+
+                {
+                  profile
+                    .college_workplace
+                }
+              </span>
+            )}
+
+          </div>
+
+
+          <div className="fk-person-tags">
+
+            {diet && (
+              <span>
+                <Utensils
+                  size={14}
+                />
+
+                {diet}
+              </span>
+            )}
+
+            {profile
+              .favorite_cuisines && (
+              <span>
+                {
+                  profile
+                    .favorite_cuisines
+                    .split(",")[0]
+                }
+              </span>
+            )}
+
+            {profile.interests && (
+              <span>
+                {
+                  profile
+                    .interests
+                    .split(",")[0]
+                }
+              </span>
+            )}
+
+          </div>
+
+
+          {score !== null && (
+            <div className="fk-match-progress">
+
+              <div className="fk-match-progress-top">
+                <span>
+                  Food compatibility
+                </span>
+
+                <strong>
+                  {score}%
+                </strong>
+              </div>
+
+              <div className="fk-match-track">
+                <span
+                  style={{
+                    width:
+                      `${score}%`,
+                  }}
+                />
+              </div>
+
+            </div>
+          )}
+
+
+          {Array.isArray(
+            match?.match_reasons
+          ) &&
+            match
+              .match_reasons
+              .length > 0 && (
+              <p className="fk-match-reason">
+                {
+                  match
+                    .match_reasons[0]
+                }
+              </p>
+            )}
+
+
+          <MemberActions
+            member={member}
+          />
+
+        </div>
+
+      </article>
+    );
+  }
+
+
+  /* =========================================================
+     FILTER
+  ========================================================= */
+
+  function FilterSelect({
+    icon,
+    label,
+    value,
+    options,
+    onChange,
+  }) {
+    return (
+      <label className="fk-filter-control">
+
+        <span className="fk-filter-icon">
+          {icon}
+        </span>
+
+        <span className="fk-filter-copy">
+          <small>
+            {label}
+          </small>
+
+          <strong>
+            {
+              value === "All"
+                ? `Any ${label.toLowerCase()}`
+                : value
+            }
+          </strong>
+        </span>
+
+        <select
+          value={value}
+          onChange={event =>
+            onChange(
+              event.target.value
+            )
+          }
+        >
+          {options.map(option => (
+            <option
+              key={option}
+              value={option}
+            >
+              {option}
+            </option>
+          ))}
+        </select>
+
+        <ChevronDown
+          className="fk-filter-chevron"
+          size={17}
+        />
+
+      </label>
+    );
+  }
+
+
+  /* =========================================================
+     REQUEST CARD
+  ========================================================= */
+
+  function RequestCard({
+    connection,
+    type,
+  }) {
+    const member =
+      type === "incoming"
+        ? connection?.sender
+        : connection?.receiver;
+
+    if (!member) {
+      return null;
+    }
+
+    return (
+      <article className="fk-request-card">
+
+        <div className="fk-request-person">
+
+          <MemberAvatar
+            member={member}
+          />
+
+          <div>
+            <h3>
+              {getMemberName(
+                member
+              )}
+            </h3>
+
+            <p>
+              {getLocation(
+                member
+              ) ||
+                "FoodKindl member"}
+            </p>
+          </div>
+
+        </div>
+
+
+        <div className="fk-request-actions">
+
+          <Link
+            to={`/connect/member/${member.id}`}
+            className="fk-btn fk-btn-secondary"
+          >
+            Profile
+          </Link>
+
+
+          {type ===
+          "incoming" ? (
+            <>
+              <button
+                type="button"
+                className="fk-btn fk-btn-primary"
+                onClick={() =>
+                  acceptRequest(
+                    connection.id
+                  )
+                }
+              >
+                <Check
+                  size={17}
+                />
+                Accept
+              </button>
+
+              <button
+                type="button"
+                className="fk-icon-button"
+                onClick={() =>
+                  declineRequest(
+                    connection.id
+                  )
+                }
+                title="Decline"
+              >
+                <X
+                  size={18}
+                />
+              </button>
+            </>
+          ) : (
+            <button
+              type="button"
+              className="fk-btn fk-btn-pending"
+              onClick={() =>
+                cancelRequest(
+                  connection.id
+                )
+              }
+            >
+              Cancel request
+            </button>
+          )}
+
+        </div>
+
+      </article>
+    );
+  }
+
+
+  /* =========================================================
+     LOADING
+  ========================================================= */
+
+  if (loading) {
+    return (
+      <main className="connect-page">
+
+        <div className="fk-loading">
+
+          <div className="fk-loader">
+            🍜
+          </div>
+
+          <h2>
+            Finding your food people
+          </h2>
 
           <p>
-            Discover people who share your
-            food tastes and interests,
-            connect with members and build
-            meaningful food connections.
+            Building your FoodKindl
+            matches...
           </p>
 
         </div>
 
-      </div>
+      </main>
+    );
+  }
+
+
+  /* =========================================================
+     PAGE
+  ========================================================= */
+
+  return (
+    <main
+      className={
+        embedded
+          ? "connect-page connect-page-embedded"
+          : "connect-page"
+      }
+    >
+
+      {/* =====================================================
+          HERO
+      ===================================================== */}
+
+      <section className="fk-connect-hero">
+
+        <div className="fk-hero-content">
+
+          <span className="fk-eyebrow">
+            CONNECT
+          </span>
+
+          <h1>
+            Find your
+            <span>
+              {" "}food people.
+            </span>
+          </h1>
+
+          <p>
+            Meet people who share your
+            taste, discover great food
+            matches and turn a meal into
+            a real connection.
+          </p>
+
+
+          <div className="fk-hero-stats">
+
+            <div>
+              <strong>
+                {members.length}
+              </strong>
+
+              <span>
+                People nearby
+              </span>
+            </div>
+
+            <div>
+              <strong>
+                {
+                  connections.length
+                }
+              </strong>
+
+              <span>
+                In your circle
+              </span>
+            </div>
+
+            <div>
+              <strong>
+                {
+                  incomingRequests
+                    .length
+                }
+              </strong>
+
+              <span>
+                New requests
+              </span>
+            </div>
+
+          </div>
+
+        </div>
+
+
+        <div className="fk-hero-art">
+
+          <div className="fk-hero-orbit orbit-1" />
+          <div className="fk-hero-orbit orbit-2" />
+          <div className="fk-hero-orbit orbit-3" />
+
+          <div className="fk-hero-bowl">
+            🍜
+          </div>
+
+          <div className="fk-floating-pill fk-pill-one">
+            <MapPin size={16} />
+
+            <div>
+              <small>
+                NEARBY
+              </small>
+
+              <strong>
+                Discover locally
+              </strong>
+            </div>
+          </div>
+
+          <div className="fk-floating-pill fk-pill-two">
+            <Utensils
+              size={16}
+            />
+
+            <div>
+              <small>
+                FOOD MATCH
+              </small>
+
+              <strong>
+                Find your people
+              </strong>
+            </div>
+          </div>
+
+        </div>
+
+      </section>
 
 
       {/* =====================================================
-          TABS
+          NAVIGATION
       ===================================================== */}
 
-      <div className="connect-tabs">
-
+      <nav className="fk-connect-tabs">
 
         <button
           type="button"
           className={
             activeTab ===
             "discover"
-              ? "connect-tab active"
-              : "connect-tab"
+              ? "active"
+              : ""
           }
           onClick={() =>
             setActiveTab(
@@ -1744,13 +1855,11 @@ setConnections(
             )
           }
         >
-
-          <Search
+          <Sparkles
             size={18}
           />
 
-          Discover Members
-
+          Discover
         </button>
 
 
@@ -1759,8 +1868,8 @@ setConnections(
           className={
             activeTab ===
             "requests"
-              ? "connect-tab active"
-              : "connect-tab"
+              ? "active"
+              : ""
           }
           onClick={() =>
             setActiveTab(
@@ -1768,28 +1877,21 @@ setConnections(
             )
           }
         >
-
           <UserPlus
             size={18}
           />
 
           Requests
 
-
-          {
-            incomingRequests.length >
-            0 &&
-            (
-
-              <span className="connect-count">
-                {
-                  incomingRequests.length
-                }
-              </span>
-
-            )
-          }
-
+          {incomingRequests
+            .length > 0 && (
+            <span className="fk-tab-count">
+              {
+                incomingRequests
+                  .length
+              }
+            </span>
+          )}
         </button>
 
 
@@ -1798,8 +1900,8 @@ setConnections(
           className={
             activeTab ===
             "connections"
-              ? "connect-tab active"
-              : "connect-tab"
+              ? "active"
+              : ""
           }
           onClick={() =>
             setActiveTab(
@@ -1807,595 +1909,590 @@ setConnections(
             )
           }
         >
-
           <UsersRound
             size={18}
           />
 
-          My Connections
-
+          My Circle
         </button>
 
-      </div>
+      </nav>
 
 
       {/* =====================================================
-          STATUS
+          ALERTS
       ===================================================== */}
 
-      {
-        error &&
-        (
+      {message && (
+        <div className="fk-alert success">
+          <Check size={18} />
+          {message}
+        </div>
+      )}
 
-          <p className="error-message">
-            {error}
-          </p>
-
-        )
-      }
-
-
-      {
-        message &&
-        (
-
-          <p className="form-message">
-            {message}
-          </p>
-
-        )
-      }
+      {error && (
+        <div className="fk-alert error">
+          <X size={18} />
+          {error}
+        </div>
+      )}
 
 
       {/* =====================================================
           DISCOVER
       ===================================================== */}
 
-      {
-        activeTab ===
-        "discover" &&
-        (
+      {activeTab ===
+        "discover" && (
+        <>
 
-          <section>
+          {/* BEST MATCHES */}
 
+          {bestMatches.length >
+            0 && (
+            <section className="fk-section">
 
-            <form
-              className="app-panel connect-search-form"
-              onSubmit={
-                searchMembers
-              }
-            >
+              <div className="fk-section-heading">
 
-              <div className="connect-global-search">
+                <div>
+                  <span className="fk-section-kicker">
+                    ✨ MADE FOR YOU
+                  </span>
 
-                <Search
-                  size={21}
-                  className="connect-global-search-icon"
-                />
+                  <h2>
+                    Your best food matches
+                  </h2>
 
-
-                <input
-                  type="search"
-                  value={
-                    searchValue
-                  }
-                  onChange={
-                    event =>
-                      setSearchValue(
-                        event
-                          .target
-                          .value
-                      )
-                  }
-                  placeholder="Search by name, postcode, city, locality, workplace, role or food preference..."
-                  autoComplete="off"
-                />
-
-
-                <button
-                  type="submit"
-                  className="primary-button connect-search-button"
-                >
-
-                  <Search
-                    size={18}
-                  />
-
-                  Search
-
-                </button>
+                  <p>
+                    People you may click
+                    with based on your
+                    FoodKindl preferences.
+                  </p>
+                </div>
 
               </div>
 
 
-              <div className="connect-search-help">
+              <div className="fk-best-match-grid">
 
-                Try:{" "}
+                {bestMatches.map(
+                  item => (
+                    <MemberCard
+                      key={
+                        item
+                          .member
+                          .id
+                      }
+                      member={
+                        item.member
+                      }
+                      featured
+                    />
+                  )
+                )}
 
-                <span>
-                  Bengaluru
+              </div>
+
+            </section>
+          )}
+
+
+          {/* DISCOVER */}
+
+                        <section
+                id="discover-people-section"
+                className="fk-section fk-discover-section"
+              >
+
+            <div className="fk-section-heading fk-discover-heading">
+
+              <div>
+                <span className="fk-section-kicker">
+                  DISCOVER PEOPLE
                 </span>
 
-                {" · "}
+                <h2>
+                  Meet people through food
+                </h2>
 
-                <span>
-                  Vegetarian
-                </span>
-
-                {" · "}
-
-                <span>
-                  Kerala
-                </span>
-
+                <p>
+                  Filter your FoodKindl
+                  community by what
+                  matters to you.
+                </p>
               </div>
 
 
               <button
                 type="button"
-                className="connect-show-all"
-                onClick={
-                  showAllMembers
+                className={
+                  filtersOpen
+                    ? "fk-filter-toggle active"
+                    : "fk-filter-toggle"
+                }
+                onClick={() =>
+                  setFiltersOpen(
+                    value =>
+                      !value
+                  )
                 }
               >
+                <SlidersHorizontal
+                  size={17}
+                />
 
-                Show All Members
-
+                Filters
               </button>
-
-            </form>
-
-
-            <div className="connect-member-grid">
-
-              {
-                members.length ===
-                0
-                  ? (
-
-                    <div className="app-panel">
-                      No members matched your search.
-                    </div>
-
-                  )
-                  : (
-
-                    members.map(
-                      member => (
-
-                        <article
-                          className="connect-member-card"
-                          key={
-                            member.id
-                          }
-                        >
-
-                          {
-                            renderMemberAvatar(
-                              member
-                            )
-                          }
-
-
-                          <div className="connect-member-info">
-
-                            {
-                              renderMemberDetails(
-                                member
-                              )
-                            }
-
-
-                            {
-                              renderMemberActions(
-                                member
-                              )
-                            }
-
-                          </div>
-
-                        </article>
-
-                      )
-                    )
-
-                  )
-              }
 
             </div>
 
+
+            {/* FILTERS */}
+
+            {filtersOpen && (
+              <div className="fk-filter-panel">
+
+                <div className="fk-filter-grid">
+
+                  <FilterSelect
+                    icon={
+                      <Utensils
+                        size={19}
+                      />
+                    }
+                    label="Food preference"
+                    value={
+                      selectedFood
+                    }
+                    options={
+                      FOOD_OPTIONS
+                    }
+                    onChange={
+                      setSelectedFood
+                    }
+                  />
+
+
+                  <FilterSelect
+                    icon={
+                      <MapPin
+                        size={19}
+                      />
+                    }
+                    label="Location"
+                    value={
+                      selectedLocation
+                    }
+                    options={
+                      LOCATION_OPTIONS
+                    }
+                    onChange={
+                      setSelectedLocation
+                    }
+                  />
+
+
+                  <FilterSelect
+                    icon={
+                      <UsersRound
+                        size={19}
+                      />
+                    }
+                    label="Lifestyle"
+                    value={
+                      selectedRole
+                    }
+                    options={
+                      ROLE_OPTIONS
+                    }
+                    onChange={
+                      setSelectedRole
+                    }
+                  />
+
+
+                  <FilterSelect
+                    icon={
+                      <BriefcaseBusiness
+                        size={19}
+                      />
+                    }
+                    label="Workplace"
+                    value={
+                      selectedWorkplace
+                    }
+                    options={
+                      WORKPLACE_OPTIONS
+                    }
+                    onChange={
+                      setSelectedWorkplace
+                    }
+                  />
+
+                </div>
+
+
+                <div className="fk-filter-footer">
+
+                  <span>
+                    <Sparkles
+                      size={16}
+                    />
+
+                    Showing{" "}
+                    <strong>
+                      {
+                        filteredMembers
+                          .length
+                      }
+                    </strong>{" "}
+                    people
+                  </span>
+
+
+                  <button
+                    type="button"
+                    onClick={
+                      resetFilters
+                    }
+                  >
+                    <RefreshCw
+                      size={15}
+                    />
+
+                    Reset filters
+                  </button>
+
+                </div>
+
+              </div>
+            )}
+
+
+            {/* MEMBER GRID */}
+
+            {filteredMembers
+              .length > 0 ? (
+              <div className="fk-people-grid">
+
+                {filteredMembers.map(
+                  member => (
+                    <MemberCard
+                      key={
+                        member.id
+                      }
+                      member={
+                        member
+                      }
+                    />
+                  )
+                )}
+
+              </div>
+            ) : (
+              <div className="fk-empty-state">
+
+                <div>
+                  🔎
+                </div>
+
+                <h3>
+                  No matching people yet
+                </h3>
+
+                <p>
+                  Try a different food
+                  preference, location,
+                  lifestyle or workplace.
+                </p>
+
+                <button
+                  type="button"
+                  className="fk-btn fk-btn-primary"
+                  onClick={
+                    resetFilters
+                  }
+                >
+                  Reset filters
+                </button>
+
+              </div>
+            )}
+
           </section>
 
-        )
-      }
+        </>
+      )}
 
 
       {/* =====================================================
           REQUESTS
       ===================================================== */}
 
-      {
-        activeTab ===
-        "requests" &&
-        (
+      {activeTab ===
+        "requests" && (
+        <section className="fk-section">
 
-          <section className="connect-request-layout">
-
+          <div className="fk-section-heading">
 
             <div>
+              <span className="fk-section-kicker">
+                CONNECTION REQUESTS
+              </span>
 
-              <div className="connect-section-heading">
+              <h2>
+                People who want to connect
+              </h2>
 
-                <h2>
-                  Incoming Requests
-                </h2>
+              <p>
+                Review your incoming
+                requests and invitations
+                you've already sent.
+              </p>
+            </div>
+
+          </div>
+
+
+          <div className="fk-request-columns">
+
+            <div className="fk-request-column">
+
+              <div className="fk-column-title">
+
+                <h3>
+                  Incoming
+                </h3>
 
                 <span>
                   {
-                    incomingRequests.length
+                    incomingRequests
+                      .length
                   }
                 </span>
 
               </div>
 
 
-              <div className="connect-list">
-
-                {
-                  incomingRequests.length ===
-                  0
-                    ? (
-
-                      <div className="app-panel">
-                        No incoming requests.
-                      </div>
-
-                    )
-                    : (
-
-                      incomingRequests.map(
-                        connection => {
-
-                          const member =
-                            connection.sender;
-
-
-                          return (
-
-                            <article
-                              className="connect-request-card"
-                              key={
-                                connection.id
-                              }
-                            >
-
-                              {
-                                renderMemberAvatar(
-                                  member
-                                )
-                              }
-
-
-                              <div className="connect-request-info">
-
-                                {
-                                  renderMemberDetails(
-                                    member
-                                  )
-                                }
-
-
-                                <div className="connect-card-actions">
-
-                                  <Link
-                                    to={
-                                      `/connect/member/${member.id}`
-                                    }
-                                    className="secondary-button"
-                                  >
-                                    View Profile
-                                  </Link>
-
-
-                                  <button
-                                    type="button"
-                                    className="primary-button"
-                                    onClick={() =>
-                                      acceptRequest(
-                                        connection.id
-                                      )
-                                    }
-                                  >
-
-                                    <Check
-                                      size={17}
-                                    />
-
-                                    Accept
-
-                                  </button>
-
-
-                                  <button
-                                    type="button"
-                                    className="secondary-button"
-                                    onClick={() =>
-                                      declineRequest(
-                                        connection.id
-                                      )
-                                    }
-                                  >
-
-                                    <X
-                                      size={17}
-                                    />
-
-                                    Decline
-
-                                  </button>
-
-                                </div>
-
-                              </div>
-
-                            </article>
-
-                          );
-                        }
-                      )
-
-                    )
-                }
-
-              </div>
+              {incomingRequests
+                .length ? (
+                incomingRequests.map(
+                  connection => (
+                    <RequestCard
+                      key={
+                        connection.id
+                      }
+                      connection={
+                        connection
+                      }
+                      type="incoming"
+                    />
+                  )
+                )
+              ) : (
+                <div className="fk-mini-empty">
+                  No new requests.
+                </div>
+              )}
 
             </div>
 
 
-            <div>
+            <div className="fk-request-column">
 
-              <div className="connect-section-heading">
+              <div className="fk-column-title">
 
-                <h2>
-                  Sent Requests
-                </h2>
+                <h3>
+                  Sent by you
+                </h3>
 
                 <span>
                   {
-                    sentRequests.length
+                    sentRequests
+                      .length
                   }
                 </span>
 
               </div>
 
 
-              <div className="connect-list">
-
-                {
-                  sentRequests.length ===
-                  0
-                    ? (
-
-                      <div className="app-panel">
-                        No pending sent requests.
-                      </div>
-
-                    )
-                    : (
-
-                      sentRequests.map(
-                        connection => {
-
-                          const member =
-                            connection.receiver;
-
-
-                          return (
-
-                            <article
-                              className="connect-request-card"
-                              key={
-                                connection.id
-                              }
-                            >
-
-                              {
-                                renderMemberAvatar(
-                                  member
-                                )
-                              }
-
-
-                              <div className="connect-request-info">
-
-                                {
-                                  renderMemberDetails(
-                                    member
-                                  )
-                                }
-
-
-                                <div className="connect-card-actions">
-
-                                  <Link
-                                    to={
-                                      `/connect/member/${member.id}`
-                                    }
-                                    className="secondary-button"
-                                  >
-                                    View Profile
-                                  </Link>
-
-
-                                  <button
-                                    type="button"
-                                    className="secondary-button"
-                                    onClick={() =>
-                                      cancelRequest(
-                                        connection.id
-                                      )
-                                    }
-                                  >
-
-                                    <X
-                                      size={17}
-                                    />
-
-                                    Cancel Request
-
-                                  </button>
-
-                                </div>
-
-                              </div>
-
-                            </article>
-
-                          );
-                        }
-                      )
-
-                    )
-                }
-
-              </div>
+              {sentRequests.length ? (
+                sentRequests.map(
+                  connection => (
+                    <RequestCard
+                      key={
+                        connection.id
+                      }
+                      connection={
+                        connection
+                      }
+                      type="sent"
+                    />
+                  )
+                )
+              ) : (
+                <div className="fk-mini-empty">
+                  You have no pending
+                  sent requests.
+                </div>
+              )}
 
             </div>
 
-          </section>
+          </div>
 
-        )
-      }
+        </section>
+      )}
 
 
       {/* =====================================================
           CONNECTIONS
       ===================================================== */}
 
-      {
-        activeTab ===
-        "connections" &&
-        (
+      {activeTab ===
+        "connections" && (
+        <section className="fk-section">
 
-          <section>
+          <div className="fk-section-heading">
 
-            <div className="connect-section-heading">
-
-              <h2>
-                My Connections
-              </h2>
-
-              <span>
-                {
-                  connections.length
-                }
+            <div>
+              <span className="fk-section-kicker">
+                YOUR FOOD CIRCLE
               </span>
 
+              <h2>
+                People you've connected with
+              </h2>
+
+              <p>
+                Your growing FoodKindl
+                circle.
+              </p>
             </div>
 
-
-            <div className="connect-member-grid">
-
-              {
-                connections.length ===
-                0
-                  ? (
-
-                    <div className="app-panel">
-                      You do not have any connections yet.
-                    </div>
-
-                  )
-                  : (
-
-                    connections.map(
-                      connection => {
-
-                        const member =
-                          getOtherMember(
-                            connection
-                          );
+          </div>
 
 
-                        if (!member) {
-                          return null;
-                        }
+          {connections.length >
+          0 ? (
+            <div className="fk-circle-grid">
 
+              {connections.map(
+                connection => {
+                  const member =
+                    getOtherMember(
+                      connection
+                    );
 
-                        return (
+                  if (!member) {
+                    return null;
+                  }
 
-                          <article
-                            className="connect-member-card"
-                            key={
-                              connection.id
-                            }
-                          >
-
-                            {
-                              renderMemberAvatar(
-                                member
-                              )
-                            }
-
-
-                            <div className="connect-member-info">
-
-                              {
-                                renderMemberDetails(
-                                  member
-                                )
-                              }
-
-
-                              <div className="connect-card-actions">
-
-                                <Link
-                                  to={
-                                    `/connect/member/${member.id}`
-                                  }
-                                  className="primary-button"
-                                >
-                                  View Profile
-                                </Link>
-
-
-                                <button
-                                  type="button"
-                                  className="secondary-button"
-                                  onClick={() =>
-                                    removeConnection(
-                                      connection.id
-                                    )
-                                  }
-                                >
-
-                                  <UserMinus
-                                    size={17}
-                                  />
-
-                                  Remove
-
-                                </button>
-
-                              </div>
-
-                            </div>
-
-                          </article>
-
-                        );
+                  return (
+                    <article
+                      className="fk-circle-card"
+                      key={
+                        connection.id
                       }
-                    )
+                    >
 
-                  )
-              }
+                      <MemberAvatar
+                        member={
+                          member
+                        }
+                      />
+
+                      <div className="fk-circle-info">
+
+                        <h3>
+                          {
+                            getMemberName(
+                              member
+                            )
+                          }
+                        </h3>
+
+                        <p>
+                          {
+                            getLocation(
+                              member
+                            ) ||
+                            getDiet(
+                              member
+                            ) ||
+                            "FoodKindl member"
+                          }
+                        </p>
+
+                      </div>
+
+
+                      <div className="fk-circle-actions">
+
+                        <Link
+                          to={`/connect/member/${member.id}`}
+                          className="fk-btn fk-btn-secondary"
+                        >
+                          Profile
+                        </Link>
+
+                        <button
+                          type="button"
+                          className="fk-icon-button danger"
+                          title="Remove connection"
+                          onClick={() =>
+                            removeConnection(
+                              connection.id
+                            )
+                          }
+                        >
+                          <UserMinus
+                            size={18}
+                          />
+                        </button>
+
+                      </div>
+
+                    </article>
+                  );
+                }
+              )}
 
             </div>
+          ) : (
+            <div className="fk-empty-state">
 
-          </section>
+              <div>
+                👋
+              </div>
 
-        )
-      }
+              <h3>
+                Your circle is just getting started
+              </h3>
+
+              <p>
+                Discover people who share
+                your food interests and
+                start connecting.
+              </p>
+
+              <button
+                type="button"
+                className="fk-btn fk-btn-primary"
+                onClick={() =>
+                  setActiveTab(
+                    "discover"
+                  )
+                }
+              >
+                Discover people
+              </button>
+
+            </div>
+          )}
+
+        </section>
+      )}
 
     </main>
   );

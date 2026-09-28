@@ -1,0 +1,12 @@
+.dineout-page.dineout-plan-page {
+  display: block;
+  min-height: calc(100vh - 64px);
+  padding: 32px clamp(16px, 4vw, 56px) 80px;
+}
+.dineout-plan-page .plan-meetup {
+  width: min(100%, 900px);
+  margin: 0 auto;
+}
+.dineout-plan-page .dineout-plan-back {
+  margin: 0 0 24px;
+}

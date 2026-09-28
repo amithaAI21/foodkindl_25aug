@@ -1,0 +1,260 @@
+/* Load after ai_kitchen.css. The two recipe flows share this quieter layout. */
+.ai-kitchen-page.ai-kitchen-simple,
+main.ai-kitchen-page.ai-kitchen-simple {
+  min-height: 100vh;
+  padding: clamp(18px, 3vw, 40px) 18px 72px;
+  width: 100%;
+  position: relative;
+  isolation: isolate;
+  overflow: visible;
+  background: #21110b !important;
+  color: #fff5ed !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+html:has(.ai-kitchen-simple),
+body:has(.ai-kitchen-simple) { background: #21110b; }
+.ai-kitchen-simple { display: block !important; min-width: 0; }
+.ai-kitchen-simple .ai-kitchen-glow,
+.ai-kitchen-simple .ai-kitchen-glow-one,
+.ai-kitchen-simple .ai-kitchen-glow-two { display: none !important; }
+.ai-kitchen-simple .ai-simple-wrap,
+.ai-kitchen-simple .ai-simple-flow,
+.ai-kitchen-simple .ai-simple-home { opacity: 1 !important; visibility: visible !important; }
+.ai-kitchen-simple * { box-sizing: border-box; }
+.ai-kitchen-simple .ai-simple-wrap { max-width: 960px; margin: 0 auto; position: relative; z-index: 1; }
+.ai-kitchen-simple .ai-simple-topbar { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: clamp(34px, 6vw, 76px); }
+.ai-kitchen-simple .ai-simple-back { display: inline-flex; align-items: center; gap: 8px; border: 0; background: transparent; color: #f0c8ae; padding: 8px 0; font: inherit; font-weight: 650; cursor: pointer; }
+.ai-kitchen-simple .ai-simple-brand { display: inline-flex; align-items: center; gap: 8px; color: #ffd5ba; font-weight: 800; white-space: nowrap; }
+.ai-kitchen-simple .ai-simple-home { text-align: center; }
+.ai-kitchen-simple .ai-simple-eyebrow { display: block; color: #ef9a72; font-size: 11px; font-weight: 800; letter-spacing: .15em; }
+.ai-kitchen-simple .ai-simple-home h1,
+.ai-kitchen-simple .ai-simple-heading h1 { margin: 9px 0 11px; color: #fff5ed; font: 500 clamp(34px, 5vw, 55px)/1.12 Georgia, serif; letter-spacing: -.035em; }
+.ai-kitchen-simple .ai-simple-home > p,
+.ai-kitchen-simple .ai-simple-heading > p { margin: 0; color: #d9b9a6; font-size: 15px; line-height: 1.55; }
+.ai-kitchen-simple .ai-simple-choices { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; max-width: 790px; margin: 42px auto 0; text-align: left; }
+.ai-kitchen-simple .ai-simple-choice { display: flex; flex-direction: column; align-items: flex-start; min-height: 265px; padding: 29px; border: 1px solid #5a382c; border-radius: 22px; background: #2d1911; color: #fff5ed; box-shadow: 0 9px 30px #12070455; text-align: left; font: inherit; cursor: pointer; transition: transform .18s, border-color .18s, box-shadow .18s; }
+.ai-kitchen-simple .ai-simple-choice:hover { transform: translateY(-3px); border-color: #c17c62; box-shadow: 0 14px 28px #4b261019; }
+.ai-kitchen-simple .ai-simple-choice:focus-visible,
+.ai-kitchen-simple button:focus-visible,
+.ai-kitchen-simple input:focus-visible { outline: 3px solid #e99b7d; outline-offset: 3px; }
+.ai-kitchen-simple .ai-simple-choice-icon { display: grid; width: 54px; height: 54px; place-items: center; margin-bottom: 23px; border-radius: 15px; background: #4a291e; color: #ffab83; }
+.ai-kitchen-simple .ai-simple-choice strong { font: 500 25px/1.2 Georgia, serif; }
+.ai-kitchen-simple .ai-simple-choice > span:not(.ai-simple-choice-icon) { margin-top: 9px; color: #786559; font-size: 14px; line-height: 1.5; }
+.ai-kitchen-simple .ai-simple-choice b { margin-top: auto; padding-top: 24px; color: #a34830; font-size: 13px; }
+.ai-kitchen-simple .ai-simple-flow { max-width: 790px; margin: 0 auto; }
+.ai-kitchen-simple .ai-simple-heading { margin-bottom: 25px; }
+.ai-kitchen-simple .ai-ingredients-workspace,
+.ai-kitchen-simple .foodkindl-ai { width: 100%; max-width: none; margin: 0; padding: clamp(18px, 3vw, 34px); border: 1px solid #5a382c; border-radius: 22px; background: #2d1911; box-shadow: 0 9px 30px #12070455; }
+.ai-kitchen-simple .ai-ingredients-heading { display: none; }
+.ai-kitchen-simple .foodkindl-ai-header { display: none; }
+.ai-kitchen-simple .ai-ingredient-input-shell { display: flex; gap: 10px; }
+.ai-kitchen-simple .ai-ingredient-input-shell input { flex: 1; min-width: 0; }
+.ai-kitchen-simple .ai-quick-ingredients { margin-top: 22px; }
+.ai-kitchen-simple .ai-generated-recipe-area,
+.ai-kitchen-simple .foodkindl-recipe { margin-top: 26px; }
+.ai-kitchen-simple .ai-simple-flow { max-width: 1200px; }
+.ai-kitchen-simple .ai-editorial-stage { display: grid; grid-template-columns: 1fr; align-items: stretch; overflow: hidden; border: 1px solid #5a382c; border-radius: 20px; background: #2b1710; box-shadow: 0 14px 42px #4b261014; }
+.ai-kitchen-simple .ai-editorial-form { min-width: 0; padding: clamp(22px, 3vw, 46px); }
+.ai-kitchen-simple .ai-editorial-form .ai-simple-heading { margin-bottom: 24px; }
+.ai-kitchen-simple .ai-editorial-form .ai-simple-heading h1 { font-size: clamp(35px, 3.8vw, 55px); }
+.ai-kitchen-simple .ai-editorial-form .ai-ingredients-workspace,
+.ai-kitchen-simple .ai-editorial-form .foodkindl-ai { border: 1px solid #5a382c; border-radius: 14px; padding: clamp(15px, 2vw, 24px); background: #321c13; box-shadow: none; }
+.ai-kitchen-simple .ai-editorial-form .foodkindl-ai-header { display: none; }
+.ai-kitchen-simple .ai-editorial-form .foodkindl-ai-search { display: flex; flex-wrap: wrap; gap: 10px; }
+.ai-kitchen-simple .ai-editorial-form .foodkindl-ai-search-input { min-width: 200px; flex: 1; }
+.ai-kitchen-simple .ai-editorial-form .ai-create-recipe-book { width: 100%; }
+.ai-kitchen-simple .ai-editorial-form .foodkindl-ai-suggestions { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.ai-kitchen-simple .ai-editorial-photo { display: none !important; }
+
+@media (max-width: 850px) {
+  .ai-kitchen-simple .ai-editorial-stage { grid-template-columns: 1fr; }
+  .ai-kitchen-simple .ai-editorial-photo { min-height: 300px; }
+  .ai-kitchen-simple .ai-editorial-photo-caption strong { max-width: 22ch; }
+}
+@media (max-width: 650px) {
+  .ai-kitchen-page.ai-kitchen-simple { padding: 18px 14px 60px; }
+  .ai-kitchen-simple .ai-simple-choices { grid-template-columns: 1fr; gap: 12px; margin-top: 27px; }
+  .ai-kitchen-simple .ai-simple-choice { min-height: 185px; padding: 21px; }
+  .ai-kitchen-simple .ai-simple-choice-icon { width: 44px; height: 44px; margin-bottom: 14px; }
+  .ai-kitchen-simple .ai-simple-choice b { padding-top: 14px; }
+  .ai-kitchen-simple .ai-simple-topbar { margin-bottom: 42px; }
+  .ai-kitchen-simple .ai-editorial-photo { min-height: 230px; }
+  .ai-kitchen-simple .ai-editorial-form { padding: 20px 16px; }
+  .ai-kitchen-simple .ai-editorial-photo-caption strong { font-size: 31px; }
+}
+
+/* Dark brown AI Kitchen surface */
+.ai-kitchen-page.ai-kitchen-simple .ai-simple-home,
+.ai-kitchen-page.ai-kitchen-simple .ai-simple-flow,
+.ai-kitchen-page.ai-kitchen-simple .ai-editorial-form {
+  color: #fff5ed;
+}
+.ai-kitchen-simple .ai-simple-home h1,
+.ai-kitchen-simple .ai-simple-heading h1,
+.ai-kitchen-simple .ai-editorial-form h1 { color: #fff8f2; }
+.ai-kitchen-simple .ai-simple-choice strong { color: #fff8f2; }
+.ai-kitchen-simple .ai-simple-choice > span:not(.ai-simple-choice-icon),
+.ai-kitchen-simple .ai-simple-home > p,
+.ai-kitchen-simple .ai-simple-heading > p { color: #d9b9a6; }
+.ai-kitchen-simple .ai-editorial-stage { background: #2b1710; }
+
+/* Full-width generated recipe layout */
+.ai-kitchen-simple .ai-simple-wrap,
+.ai-kitchen-simple .ai-simple-flow,
+.ai-kitchen-simple .ai-editorial-stage,
+.ai-kitchen-simple .ai-editorial-form,
+.ai-kitchen-simple .ai-editorial-results,
+.ai-kitchen-simple .ai-generated-recipe-area,
+.ai-kitchen-simple .foodkindl-recipe {
+  width: 100% !important;
+  max-width: none !important;
+}
+
+.ai-kitchen-simple .ai-simple-wrap {
+  margin: 0 auto;
+}
+
+.ai-kitchen-simple .ai-editorial-stage {
+  display: block !important;
+}
+
+.ai-kitchen-simple .ai-editorial-form {
+  padding: clamp(22px, 4vw, 52px) !important;
+}
+
+.ai-kitchen-simple .ai-editorial-results {
+  margin-top: 28px;
+}
+
+.ai-kitchen-simple .ai-generated-recipe-area,
+.ai-kitchen-simple .foodkindl-recipe {
+  min-width: 0 !important;
+  overflow: visible !important;
+}
+
+.ai-kitchen-simple .ai-recipe-meta-grid,
+.ai-kitchen-simple .ai-recipe-book-list,
+.ai-kitchen-simple .ai-recipe-step-list,
+.ai-kitchen-simple .ai-recipe-tip-list {
+  width: 100% !important;
+  max-width: none !important;
+}
+
+.ai-kitchen-simple .ai-recipe-book-list {
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.ai-kitchen-simple .ai-recipe-step-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 14px;
+}
+
+@media (max-width: 650px) {
+  .ai-kitchen-simple .ai-editorial-form {
+    padding: 18px 14px !important;
+  }
+
+  .ai-kitchen-simple .ai-recipe-book-list,
+  .ai-kitchen-simple .ai-recipe-step-list {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Dark recipe theme */
+.ai-kitchen-page.ai-kitchen-simple,
+.ai-kitchen-simple .ai-editorial-stage,
+.ai-kitchen-simple .ai-editorial-results,
+.ai-kitchen-simple .foodkindl-ai,
+.ai-kitchen-simple .foodkindl-recipe,
+.ai-kitchen-simple .ai-generated-recipe-area {
+  background: #21110b !important;
+  color: #fff3ea !important;
+  border-color: #5b382b !important;
+}
+
+.ai-kitchen-simple .foodkindl-recipe,
+.ai-kitchen-simple .ai-generated-recipe-area {
+  box-shadow: 0 18px 50px #10070466 !important;
+}
+
+.ai-kitchen-simple .foodkindl-recipe h1,
+.ai-kitchen-simple .foodkindl-recipe h2,
+.ai-kitchen-simple .foodkindl-recipe h3,
+.ai-kitchen-simple .foodkindl-recipe strong,
+.ai-kitchen-simple .foodkindl-recipe p,
+.ai-kitchen-simple .foodkindl-recipe li,
+.ai-kitchen-simple .foodkindl-recipe span {
+  color: #fff3ea;
+}
+
+.ai-kitchen-simple .foodkindl-recipe-header,
+.ai-kitchen-simple .foodkindl-recipe-section,
+.ai-kitchen-simple .foodkindl-recipe-meta,
+.ai-kitchen-simple .foodkindl-recipe-notes {
+  background: #2d1911 !important;
+  border-color: #624033 !important;
+}
+
+.ai-kitchen-simple .foodkindl-recipe-label,
+.ai-kitchen-simple .foodkindl-recipe-section-heading,
+.ai-kitchen-simple .foodkindl-recipe-meta-item {
+  color: #f28a61 !important;
+}
+
+.ai-kitchen-simple .foodkindl-ingredient,
+.ai-kitchen-simple .foodkindl-step,
+.ai-kitchen-simple .foodkindl-recipe-note {
+  background: #321c13 !important;
+  border: 1px solid #5b382b !important;
+  color: #f8ddd0 !important;
+}
+
+.ai-kitchen-simple .foodkindl-recipe input,
+.ai-kitchen-simple .foodkindl-recipe textarea {
+  background: #321c13 !important;
+  color: #fff3ea !important;
+  border-color: #6a4435 !important;
+}
+
+.ai-kitchen-simple .foodkindl-recipe hr,
+.ai-kitchen-simple .foodkindl-recipe-section {
+  border-color: #5b382b !important;
+}
+
+/* JSX-specific controls and recipe sections */
+.ai-kitchen-simple .ai-ingredients-workspace,
+.ai-kitchen-simple .ai-generated-recipe-area {
+  width: 100% !important;
+  max-width: none !important;
+}
+.ai-kitchen-simple .ai-ingredient-input-shell { display:flex; gap:10px; align-items:center; }
+.ai-kitchen-simple .ai-ingredient-input-shell input { flex:1; min-width:0; }
+.ai-kitchen-simple .ai-ingredient-chip-list,
+.ai-kitchen-simple .ai-selected-ingredients,
+.ai-kitchen-simple .ai-quick-ingredients { display:flex; flex-wrap:wrap; gap:8px; }
+.ai-kitchen-simple .ai-ingredient-chip,
+.ai-kitchen-simple .ai-quick-ingredients button {
+  border:1px solid #6a4435; border-radius:999px; background:#3a2117; color:#ffe5d6; padding:8px 12px;
+}
+.ai-kitchen-simple .ai-ingredient-chip button { margin-left:6px; border:0; background:transparent; color:#ffab83; }
+.ai-kitchen-simple .ai-ingredient-input-help,
+.ai-kitchen-simple .ai-ingredient-error,
+.ai-kitchen-simple .ai-generated-recipe-title,
+.ai-kitchen-simple .ai-recipe-description,
+.ai-kitchen-simple .ai-recipe-reason,
+.ai-kitchen-simple .ai-recipe-prompt-preview { color:#d9b9a6 !important; }
+.ai-kitchen-simple .ai-recipe-book-section { width:100%; margin-top:28px; padding-top:22px; border-top:1px solid #5b382b; }
+.ai-kitchen-simple .ai-recipe-book-list,
+.ai-kitchen-simple .ai-recipe-step-list,
+.ai-kitchen-simple .ai-recipe-tip-list,
+.ai-kitchen-simple .ai-recipe-meta-grid { width:100%; max-width:none; }
+.ai-kitchen-simple .ai-recipe-book-list { display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:14px; }
+.ai-kitchen-simple .ai-recipe-step-list { display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); gap:16px; }
+.ai-kitchen-simple .ai-recipe-tip-list { display:grid; gap:12px; }
+.ai-kitchen-simple .ai-recipe-match { border:1px solid #5b382b; border-radius:12px; background:#392116; color:#ffb28d; padding:12px 14px; }
+@media(max-width:650px){
+ .ai-kitchen-simple .ai-ingredient-input-shell{align-items:stretch; flex-direction:column;}
+ .ai-kitchen-simple .ai-recipe-book-list,.ai-kitchen-simple .ai-recipe-step-list{grid-template-columns:1fr;}
+}

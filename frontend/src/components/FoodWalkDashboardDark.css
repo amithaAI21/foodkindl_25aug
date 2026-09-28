@@ -1,0 +1,121 @@
+.foodwalk {
+  --fw-brown: #2d1b15;
+  --fw-brown-soft: #3c261d;
+  --fw-brown-line: #67483a;
+  --fw-cream: #fffaf5;
+  --fw-coral: #ef6245;
+  display: grid;
+  grid-template-columns: minmax(340px, 420px) minmax(0, 1fr);
+  align-items: start;
+  min-height: 100vh;
+  background: var(--fw-cream);
+  color: var(--fw-brown);
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, sans-serif;
+}
+.foodwalk *, .foodwalk *::before, .foodwalk *::after { box-sizing: border-box; }
+.foodwalk button, .foodwalk input { font: inherit; }
+.foodwalk button { cursor: pointer; }
+.foodwalk button:focus-visible, .foodwalk input:focus-visible { outline: 3px solid #f3ad91; outline-offset: 2px; }
+
+.foodwalk .fw-panel {
+  position: relative;
+  z-index: 3;
+  width: 100%;
+  max-width: none;
+  min-height: 100vh;
+  height: auto;
+  padding: 38px clamp(22px, 2.6vw, 38px) 42px;
+  overflow: visible;
+  background: radial-gradient(circle at 100% 12%, #483023 0%, transparent 33%), var(--fw-brown);
+  color: #fffaf6;
+  border: 0;
+}
+.foodwalk .fw-eyebrow { margin: 0 0 18px; color: #f3a58a; font-size: 10px; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; }
+.foodwalk .fw-eyebrow span { color: #ff7452; }
+.foodwalk .fw-panel h1 { margin: 0; color: white; font-size: clamp(34px, 3vw, 43px); line-height: 1.07; letter-spacing: -.04em; }
+.foodwalk .fw-subtitle { max-width: 35ch; margin: 10px 0 29px; color: #e4cec2; font-size: 14px; line-height: 1.55; }
+.foodwalk .fw-panel form { display: grid; gap: 0; }
+.foodwalk .fw-location, .foodwalk .fw-budget { position: relative; display: grid; width: 100%; margin: 0 0 16px; color: #fffaf6; }
+.foodwalk .fw-location > span, .foodwalk .fw-budget > span, .foodwalk .fw-food-wish > label, .foodwalk .fw-filter-label { color: #f2e5dc; font-size: 12px; font-weight: 700; }
+.foodwalk .fw-location > span, .foodwalk .fw-budget > span { margin-bottom: 8px; }
+.foodwalk .fw-location input, .foodwalk .fw-budget input, .foodwalk .fw-food-wish input {
+  display: block;
+  width: 100%;
+  min-height: 46px;
+  padding: 10px 14px;
+  border: 1px solid #e9d8cc;
+  border-radius: 10px;
+  background: #fffcf9;
+  color: #2f201b;
+  font-size: 14px;
+  outline: 0;
+}
+.foodwalk .fw-location input::placeholder, .foodwalk .fw-food-wish input::placeholder { color: #98857a; }
+.foodwalk .fw-location > small { margin-top: 5px; color: #f3ad91; }
+.foodwalk .fw-filter-label { margin: 14px 0 10px; }
+.foodwalk .fw-food-types { display: flex; flex-wrap: wrap; gap: 7px; margin: 0 0 9px; }
+.foodwalk .fw-food-types button, .foodwalk .fw-food-wish-chips button {
+  min-height: 40px;
+  padding: 9px 12px;
+  border: 1px solid var(--fw-brown-line);
+  border-radius: 11px;
+  background: #422d24;
+  color: #f8ece5;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.25;
+  transition: background-color .15s, border-color .15s, transform .15s;
+}
+.foodwalk .fw-food-types button:hover, .foodwalk .fw-food-wish-chips button:hover { border-color: #e79a7f; transform: translateY(-1px); }
+.foodwalk .fw-food-types button.active, .foodwalk .fw-food-wish-chips button.active { border-color: #ff8b68; background: var(--fw-coral); color: white; box-shadow: 0 5px 14px #160b0633; }
+.foodwalk .fw-budget { margin: 9px 0 18px; }
+.foodwalk .fw-food-wish { width: 100%; margin: 0 0 20px; padding: 18px; border: 1px solid #6a4a3c; border-radius: 16px; background: #3a261e; color: #fffaf6; }
+.foodwalk .fw-food-wish h3 { margin: 0 0 5px; color: white; font-size: 15px; font-weight: 750; }
+.foodwalk .fw-food-wish p { margin: 0 0 15px; color: #d9c1b3; font-size: 12px; line-height: 1.4; }
+.foodwalk .fw-food-wish-chips { display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 16px; }
+.foodwalk .fw-food-wish-chips button { min-height: 33px; padding: 7px 11px; border-radius: 100px; font-size: 11px; background: #4b3329; }
+.foodwalk .fw-food-wish > label { display: block; margin-bottom: 8px; }
+.foodwalk .fw-submit { display: block; width: 100%; min-height: 52px; padding: 13px 18px; border: 0; border-radius: 11px; background: var(--fw-coral); color: white; font-size: 14px; font-weight: 800; box-shadow: 0 10px 25px #12090648; }
+.foodwalk .fw-submit:hover { background: #d95336; }
+.foodwalk .fw-submit:disabled { opacity: .6; cursor: wait; }
+.foodwalk .fw-error, .foodwalk .fw-warning { margin-top: 15px; color: #ffd0bf; line-height: 1.45; }
+.foodwalk .fw-suggestions { position: absolute; top: calc(100% - 13px); right: 0; left: 0; z-index: 1100; max-height: 260px; overflow: auto; border: 1px solid #e8d7c9; border-radius: 11px; background: white; box-shadow: 0 18px 35px #130a0750; }
+.foodwalk .fw-suggestions button { display: grid; width: 100%; padding: 10px 13px; border: 0; background: #fff; color: var(--fw-brown); text-align: left; }
+.foodwalk .fw-suggestions button:hover { background: #fff1e8; }
+.foodwalk .fw-suggestions button span { color: #7d6b61; font-size: 11px; }
+
+.foodwalk .fw-content { width: 100%; min-width: 0; padding: clamp(22px, 3vw, 42px); background: #fffbf7; }
+.foodwalk .fw-stage-heading { margin: 0 0 23px; }
+.foodwalk .fw-stage-kicker { margin: 0 0 9px; color: #a56e37; font-size: 11px; font-weight: 800; letter-spacing: .22em; }
+.foodwalk .fw-stage-heading h2 { margin: 0 0 6px; color: var(--fw-brown); font-family: Georgia, Cambria, serif; font-size: clamp(36px, 3.8vw, 57px); font-weight: 700; line-height: 1.1; letter-spacing: -.035em; }
+.foodwalk .fw-stage-heading > p:last-child { margin: 0; color: #725e52; font-size: clamp(13px, 1.2vw, 16px); line-height: 1.45; }
+.foodwalk .fw-map { height: clamp(360px, 54vh, 600px) !important; width: 100%; min-width: 0; overflow: hidden; border: 1px solid #eaddd4; border-radius: 17px; background: #e6ece7; box-shadow: 0 13px 30px #42281812; }
+.foodwalk .fw-map .leaflet-container { width: 100%; height: 100%; }
+.foodwalk .fw-map-route-pill { position: absolute; bottom: 19px; left: 19px; z-index: 1000; display: grid; gap: 3px; max-width: calc(100% - 38px); padding: 12px 16px; border-radius: 11px; background: #2d1b15ed; color: white; box-shadow: 0 8px 22px #15090552; pointer-events: none; }
+.foodwalk .fw-map-route-pill strong { font-size: 14px; }
+.foodwalk .fw-map-route-pill span { color: #e8cec0; font-size: 11px; }
+.foodwalk .fw-intro-strip { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin-top: 15px; }
+.foodwalk .fw-intro-strip article { min-width: 0; padding: 18px; border: 1px solid #f0e7dd; border-radius: 15px; background: #fff; box-shadow: 0 5px 17px #3e251008; }
+.foodwalk .fw-step-icon { display: grid; width: 36px; height: 36px; margin-bottom: 11px; place-items: center; border-radius: 10px; background: #fff0e8; color: #bd4a2d; font-size: 23px; }
+.foodwalk .fw-intro-strip h3 { margin: 0 0 5px; color: var(--fw-brown); font-size: 14px; }
+.foodwalk .fw-intro-strip p { margin: 0; color: #76665e; font-size: 12px; line-height: 1.5; }
+.foodwalk .fw-results { margin-top: 18px; padding: clamp(18px, 2vw, 28px); border: 1px solid #ebddd2; border-radius: 16px; background: white; color: var(--fw-brown); }
+.foodwalk .fw-results .fw-eyebrow { color: #b45539; }
+.foodwalk .fw-places { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 12px; }
+
+@media (max-width: 900px) {
+  .foodwalk { grid-template-columns: 1fr; }
+  .foodwalk .fw-panel { min-height: 0; padding: 27px 22px; }
+  .foodwalk .fw-content { padding: 24px 22px; }
+  .foodwalk .fw-map { height: 47vh !important; min-height: 340px; }
+}
+@media (max-width: 600px) {
+  .foodwalk .fw-panel, .foodwalk .fw-content { padding: 20px 15px; }
+  .foodwalk .fw-panel h1 { font-size: 34px; }
+  .foodwalk .fw-stage-heading h2 { font-size: 36px; }
+  .foodwalk .fw-map { height: 340px !important; min-height: 0; border-radius: 13px; }
+  .foodwalk .fw-intro-strip { grid-template-columns: 1fr; }
+  .foodwalk .fw-intro-strip article { display: grid; grid-template-columns: 36px 1fr; align-items: center; column-gap: 12px; padding: 11px 13px; }
+  .foodwalk .fw-step-icon { grid-row: span 2; margin: 0; }
+  .foodwalk .fw-intro-strip p { grid-column: 2; }
+}

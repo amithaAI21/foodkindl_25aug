@@ -1,0 +1,90 @@
+/* Import after FoodWalkDashboard.css in the Food Walk page. */
+/* This sheet targets the results as rendered BELOW the Leaflet map. */
+.foodwalk .fw-content .fw-results {
+  margin-top: 20px; padding: clamp(22px, 2.8vw, 36px);
+  border: 1px solid #614133; border-radius: 20px;
+  background: linear-gradient(145deg, #2d1d17, #1d120f); color: var(--fw-ink);
+  box-shadow: 0 12px 34px #09050438;
+}
+.foodwalk .fw-content .fw-results h2, .foodwalk .fw-content .fw-results h3 {
+  color: #fff0e2; font-family: Georgia, serif; font-weight: 500;
+}
+.foodwalk .fw-content .fw-results p { color: #d5bba9; line-height: 1.55; }
+.foodwalk .fw-content .fw-places { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 12px; }
+.foodwalk .fw-content .fw-places > *, .foodwalk .fw-content .fw-recommended > *, .foodwalk .fw-content .fw-summary {
+  border-color: #654536; background: #2b1b15; color: #f5e5d7;
+}
+.foodwalk .fw-content .fw-results button:not(.fw-submit) { border-color: #875743; color: #fff0e3; background-color: #4a2a1f; }
+.foodwalk .fw-content .fw-results button:not(.fw-submit):hover { background-color: #6a3a28; }
+/* Result markup uses direct children. Give each row its own layout and space. */
+.foodwalk .fw-content .fw-results .fw-result-head {
+  display: flex; align-items: flex-start; justify-content: space-between;
+  flex-wrap: wrap; gap: 14px 24px; margin-bottom: 18px;
+}
+.foodwalk .fw-content .fw-results .fw-result-head > div:last-child {
+  display: flex; align-items: center; flex-wrap: wrap; gap: 10px;
+}
+.foodwalk .fw-content .fw-results .fw-result-head h2 {
+  margin: 4px 0 7px; font: 500 clamp(25px, 2.4vw, 34px)/1.15 Georgia, serif;
+}
+.foodwalk .fw-content .fw-results .fw-travel-mode { margin: 0; color: #d9b7a2; }
+.foodwalk .fw-content .fw-results .fw-result-head button,
+.foodwalk .fw-content .fw-results .fw-stop-actions button,
+.foodwalk .fw-content .fw-results .fw-places article button {
+  min-height: 40px; padding: 9px 13px; border: 1px solid #9a634b;
+  border-radius: 9px; background: #583020; color: #fff1e7;
+  font: inherit; font-size: 13px; font-weight: 700; cursor: pointer;
+}
+.foodwalk .fw-content .fw-results .fw-result-head button:hover,
+.foodwalk .fw-content .fw-results .fw-stop-actions button:hover { background: #79432d; }
+.foodwalk .fw-content .fw-results .fw-summary {
+  display: flex; align-items: center; flex-wrap: wrap; gap: 9px 20px;
+  margin: 0 0 25px; padding: 13px 16px;
+  border: 1px solid #79513f; border-radius: 12px;
+  background: #3c261d; color: #f4ddce; font-size: 13px;
+}
+.foodwalk .fw-content .fw-results .fw-summary strong { color: #fff4e8; font-size: 17px; }
+.foodwalk .fw-content .fw-results > h3 { margin: 24px 0 14px; font: 500 23px/1.2 Georgia, serif; }
+.foodwalk .fw-content .fw-results .fw-recommended {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 12px;
+}
+.foodwalk .fw-content .fw-results .fw-recommended > article,
+.foodwalk .fw-content .fw-results .fw-places > article {
+  min-width: 0; margin: 0; padding: 18px;
+  border: 1px solid #664636; border-radius: 14px;
+  background: #291a14; color: #f6e5d8;
+}
+.foodwalk .fw-content .fw-results .fw-recommended > article {
+  display: grid; grid-template-columns: 34px minmax(0, 1fr);
+  align-content: start; gap: 6px 12px;
+}
+.foodwalk .fw-content .fw-results .fw-recommended > article > b {
+  display: grid; width: 32px; height: 32px; place-items: center;
+  border-radius: 50%; background: #673522; color: #ffe4d0;
+}
+.foodwalk .fw-content .fw-results .fw-recommended > article > div:not(.fw-stop-actions) { min-width: 0; }
+.foodwalk .fw-content .fw-results .fw-recommended > article > strong {
+  grid-column: 2; color: #ffbc89; font-size: 16px;
+}
+.foodwalk .fw-content .fw-results .fw-recommended h4,
+.foodwalk .fw-content .fw-results .fw-places h4 {
+  margin: 8px 0; color: #fff1e5; font-size: 16px; line-height: 1.3;
+}
+.foodwalk .fw-content .fw-results .fw-recommended small,
+.foodwalk .fw-content .fw-results .fw-places small { color: #d6af99; }
+.foodwalk .fw-content .fw-results .fw-recommended p,
+.foodwalk .fw-content .fw-results .fw-places p { margin: 8px 0; color: #d8bba9; }
+.foodwalk .fw-content .fw-results .fw-stop-actions {
+  grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px;
+}
+.foodwalk .fw-content .fw-results .fw-places { align-items: stretch; }
+.foodwalk .fw-content .fw-results .fw-places > article { display: flex; flex-direction: column; gap: 4px; }
+.foodwalk .fw-content .fw-results .fw-places > article button { margin-top: 8px; }
+
+.foodwalk .fw-content .fw-results { display: block; padding: 28px; margin: 20px 0 0; border-radius: 18px; }
+.foodwalk .fw-content .fw-results button { appearance: none; font: inherit; cursor: pointer; }
+@media (max-width: 600px) {
+  .foodwalk .fw-content .fw-results { padding: 18px; margin-top: 14px; }
+  .foodwalk .fw-content .fw-results .fw-recommended { grid-template-columns: 1fr; }
+  .foodwalk .fw-content .fw-results .fw-result-head { display: grid; }
+}

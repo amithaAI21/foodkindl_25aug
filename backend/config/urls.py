@@ -63,16 +63,6 @@ urlpatterns = [
         ),
     ),
 
-    # ========================================================
-    # RESTAURANT DISCOVERY
-    # ========================================================
-
-    path(
-        "api/",
-        include(
-            "restaurant_discovery.urls"
-        ),
-    ),
 
     path(
         "api/partner/",

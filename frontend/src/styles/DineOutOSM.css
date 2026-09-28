@@ -1,0 +1,63 @@
+/* Load after DineOutReference.css. Applies only to discovery and result cards. */
+.dineout-page{background:#21110b;color:#f8eee4;padding:28px clamp(16px,3vw,48px) 80px}
+.dineout-page .dineout-hero{margin:0 0 22px;min-height:0;padding:0;background:none;border:0;box-shadow:none}
+.dineout-page .dineout-hero h1{font:400 clamp(40px,4vw,62px)/1.06 Georgia,serif;letter-spacing:-.02em;margin:0;color:#fff7ed}
+.dineout-page .location-input-wrap,.dineout-page .filters input,.dineout-page .filters select{background:#f6efe9;color:#28160e;border:1px solid #d9c6b9;border-radius:10px;min-height:60px}
+.dineout-page .location-input-wrap input,.dineout-page .filters input{color:#28160e}
+.dineout-page .location-input-wrap input::placeholder,.dineout-page .filters input::placeholder{color:#806f64}
+.dineout-page .location-input-wrap>svg{color:#4d2718}
+.dineout-page .filters .primary-button{background:#c9512d;border-radius:10px;min-height:60px}
+.dineout-page .location-search>.secondary-button{color:#e5bd9e}
+.dineout-page .results-layout{grid-template-columns:minmax(0,1.45fr) minmax(0,1fr);gap:16px;align-items:start;margin-top:15px}
+.dineout-page .results-heading h2{font:400 clamp(28px,2.9vw,42px)/1.12 Georgia,serif}
+.dineout-page .restaurant-list{min-width:0}
+.dineout-page .restaurant-card{display:grid;grid-template-columns:clamp(115px,18vw,220px) minmax(0,1fr);gap:20px;align-items:stretch;background:#29170f;border:1px solid #573627;border-radius:12px;padding:14px;margin-bottom:14px;min-height:185px}
+.dineout-page .osm-restaurant-art{width:100%;height:100%;min-height:165px;border-radius:9px;background:radial-gradient(circle,#59301a,#32190e 75%);color:#d98b4a;display:grid;place-items:center}
+.dineout-page .osm-restaurant-art span{display:none}
+.dineout-page .restaurant-content{min-width:0;display:flex;flex-direction:column;align-items:flex-start}
+.dineout-page .restaurant-content h3{font:400 clamp(23px,2.2vw,32px)/1.1 Georgia,serif;color:#fff4eb;margin:4px 0 8px}
+.dineout-page .restaurant-content p,.dineout-page .restaurant-content small{color:#d4b8a7;margin:0 0 7px}
+.dineout-page .osm-facts{width:100%;margin:9px 0 16px;padding-top:11px;border-top:1px solid #644234;display:grid;gap:7px}
+.dineout-page .osm-facts:empty{display:none}
+.dineout-page .osm-facts>div{display:grid;grid-template-columns:minmax(105px,.75fr) minmax(0,1.25fr);gap:10px;font-size:13px;line-height:1.35}
+.dineout-page .osm-facts dt{color:#b99582}.dineout-page .osm-facts dd{margin:0;color:#f0dfd0;overflow-wrap:anywhere}
+.dineout-page .osm-facts a{color:#ffad80}
+.dineout-page .restaurant-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:auto}
+.dineout-page .restaurant-actions .primary-button{background:#cc5431;color:#fff}
+.dineout-page .restaurant-actions .secondary-button{background:transparent;border:1px solid #c6a38b;color:#f9e7da}
+.dineout-page .map-panel{border-radius:12px;overflow:hidden;border:1px solid #755b4c;position:sticky;top:16px;min-height:540px}
+.dineout-page .restaurant-map{height:540px}
+@media(max-width:950px){.dineout-page .results-layout{grid-template-columns:1fr}.dineout-page .map-panel{position:relative;top:auto;min-height:360px}.dineout-page .restaurant-map{height:360px}}
+@media(max-width:620px){.dineout-page .restaurant-card{grid-template-columns:95px minmax(0,1fr);gap:12px;padding:10px}.dineout-page .osm-restaurant-art{min-height:95px}.dineout-page .osm-facts,.dineout-page .restaurant-actions{grid-column:1/-1}.dineout-page .restaurant-content h3{font-size:22px}}
+/* Reference design: location + name/cuisine search + action, then filters. */
+.dineout-page .filters input{grid-column:2 / 4}
+.dineout-page .filters .primary-button{grid-column:4}
+.dineout-page .osm-discovery-filters{grid-column:1/-1;display:flex;align-items:center;justify-content:space-between;gap:18px;flex-wrap:wrap;margin:10px 0 0;padding:0;background:none;border:0}
+.dineout-page .osm-filter-group{display:flex;align-items:center;gap:10px;min-width:0}
+.dineout-page .osm-filter-group>span,.dineout-page .osm-radius{font-size:13px;color:#f0dfd2;white-space:nowrap}
+.dineout-page .osm-segments{display:flex;align-items:center;flex-wrap:wrap;border:1px solid #5d453a;border-radius:11px;overflow:hidden}
+.dineout-page .osm-segments button{padding:9px 11px;background:#281911;border:0;border-right:1px solid #5d453a;color:#e5d4c8;cursor:pointer;font-size:12px;min-height:35px}
+.dineout-page .osm-segments button:last-child{border-right:0}
+.dineout-page .osm-segments button.active{background:#c84d2c;color:#fff}
+.dineout-page .osm-segments button:focus-visible{outline:2px solid #ffb888;outline-offset:-2px}
+.dineout-page .osm-radius{display:flex;align-items:center;gap:8px}
+.dineout-page .osm-radius strong{font-weight:600;color:#fff}
+.dineout-page .osm-radius input{width:112px;accent-color:#e1643e;cursor:pointer}
+.dineout-page .osm-badges{display:flex;flex-wrap:wrap;gap:7px;margin:6px 0 10px}
+.dineout-page .osm-badges span{border:1px solid #715343;border-radius:7px;padding:5px 8px;color:#e7d5c6;background:#34251b;font-size:12px;text-transform:capitalize}
+.dineout-page .results-layout{margin-top:10px!important}
+@media(max-width:950px){.dineout-page .osm-discovery-filters{justify-content:flex-start}.dineout-page .filters input{grid-column:2}.dineout-page .filters .primary-button{grid-column:auto}}
+@media(max-width:650px){.dineout-page .osm-filter-group{width:100%;align-items:flex-start;flex-direction:column;gap:6px}.dineout-page .osm-radius{width:100%}.dineout-page .filters input{grid-column:1}.dineout-page .osm-segments button{font-size:11px}}
+/* Existing Dine Out styles put a dark background on the nested location input. */
+.dineout-page .location-search .location-input-wrap{background:#fff;color:#29180f;border-color:#e2d5ca}
+.dineout-page .location-search .location-input-wrap input,
+.dineout-page .location-search .location-input-wrap input:focus{background:transparent!important;color:#29180f!important;-webkit-text-fill-color:#29180f;border:0!important;box-shadow:none!important;outline:0!important}
+.dineout-page .location-search .location-input-wrap input::placeholder{color:#796b62!important;opacity:1}
+.dineout-page .location-search .location-input-wrap>svg{color:#4e2c1f}
+/* Search area, restaurant name, place type, cuisine, Search. */
+.dineout-page{grid-template-columns:minmax(210px,1.2fr) minmax(220px,1.4fr) minmax(145px,.8fr) minmax(145px,.8fr) minmax(125px,.65fr)}
+.dineout-page .filters select:nth-of-type(1){grid-column:3}
+.dineout-page .filters select:nth-of-type(2){grid-column:4}
+.dineout-page .filters .primary-button{grid-column:5}
+@media(max-width:1050px){.dineout-page{grid-template-columns:repeat(2,minmax(0,1fr))}.dineout-page .location-search{grid-column:1/-1}.dineout-page .filters input{grid-column:1/-1}.dineout-page .filters select:nth-of-type(1){grid-column:1}.dineout-page .filters select:nth-of-type(2){grid-column:2}.dineout-page .filters .primary-button{grid-column:1/-1}}
+@media(max-width:560px){.dineout-page{grid-template-columns:1fr}.dineout-page .filters select:nth-of-type(1),.dineout-page .filters select:nth-of-type(2){grid-column:1}}

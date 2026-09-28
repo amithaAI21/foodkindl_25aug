@@ -1,44 +1,189 @@
 import { useEffect, useRef, useState } from "react";
+
 import {
-  ArrowLeft,
+  ArrowRight,
   Bookmark,
+  ChefHat,
   FileText,
+  Flame,
+  Heart,
   Image as ImageIcon,
   MapPin,
   MessageCircle,
   MessageSquare,
   RefreshCw,
   Repeat2,
+  Search,
+  Send,
   Share2,
+  Sparkles,
+  Users,
   Video,
 } from "lucide-react";
+
 import { useNavigate } from "react-router-dom";
 
 import api from "../api";
 import { useAuth } from "../context/AuthContext";
-// import AIRecipeSearch from "../components/AIRecipeSearch";
+
+import "../styles/Community.css";
+
+
+/* ============================================================
+   REACTIONS
+============================================================ */
 
 const REACTIONS = [
-  { value: "like", label: "Like", emoji: "👍" },
-  { value: "love", label: "Love", emoji: "❤️" },
-  { value: "haha", label: "Haha", emoji: "😂" },
-  { value: "wow", label: "Wow", emoji: "😮" },
-  { value: "sad", label: "Sad", emoji: "😢" },
-  { value: "angry", label: "Angry", emoji: "😡" },
+  {
+    value: "like",
+    label: "Like",
+    emoji: "👍",
+  },
+  {
+    value: "love",
+    label: "Love",
+    emoji: "❤️",
+  },
+  {
+    value: "haha",
+    label: "Haha",
+    emoji: "😂",
+  },
+  {
+    value: "wow",
+    label: "Wow",
+    emoji: "😮",
+  },
+  {
+    value: "sad",
+    label: "Sad",
+    emoji: "😢",
+  },
+  {
+    value: "angry",
+    label: "Angry",
+    emoji: "😡",
+  },
 ];
 
 
+const TRENDING_TOPICS = [
+  {
+    id: "biryani",
+    label: "#Biryani",
+    keywords: [
+      "biryani",
+      "biriyani",
+      "hyderabadi biryani",
+      "chicken biryani",
+      "mutton biryani",
+    ],
+  },
+  {
+    id: "home-cooking",
+    label: "#HomeCooking",
+    keywords: [
+      "home cooking",
+      "homecooking",
+      "home cooked",
+      "home-cooked",
+      "homemade",
+      "home made",
+      "recipe",
+      "cooked at home",
+    ],
+  },
+  {
+    id: "food-walk",
+    label: "#FoodWalk",
+    keywords: [
+      "food walk",
+      "foodwalk",
+      "food trail",
+      "foodtrail",
+      "food walking",
+    ],
+  },
+  {
+    id: "cafe-hopping",
+    label: "#CafeHopping",
+    keywords: [
+      "cafe",
+      "café",
+      "coffee",
+      "cafe hopping",
+      "café hopping",
+      "cafehopping",
+    ],
+  },
+  {
+    id: "healthy-eats",
+    label: "#HealthyEats",
+    keywords: [
+      "healthy",
+      "healthy eats",
+      "healthyeats",
+      "salad",
+      "protein",
+      "low calorie",
+      "nutrition",
+    ],
+  },
+  {
+    id: "desserts",
+    label: "#Desserts",
+    keywords: [
+      "dessert",
+      "desserts",
+      "cake",
+      "ice cream",
+      "icecream",
+      "sweet",
+      "chocolate",
+      "pastry",
+      "brownie",
+    ],
+  },
+  {
+    id: "south-indian",
+    label: "#SouthIndian",
+    keywords: [
+      "south indian",
+      "southindian",
+      "dosa",
+      "idli",
+      "vada",
+      "sambar",
+      "appam",
+      "puttu",
+      "pongal",
+    ],
+  },
+  {
+    id: "street-food",
+    label: "#StreetFood",
+    keywords: [
+      "street food",
+      "streetfood",
+      "chaat",
+      "pani puri",
+      "panipuri",
+      "vada pav",
+      "momos",
+      "roll",
+      "street eats",
+    ],
+  },
+];
+
+/* ============================================================
+   NETLIFY MEDIA UPLOAD
+============================================================ */
 
 async function uploadMediaToNetlify(file) {
-
   if (!file) {
     throw new Error("Please select a file.");
   }
-
-
-  /* ============================================================
-     FILE TYPE VALIDATION
-  ============================================================ */
 
   const allowedImageTypes = [
     "image/jpeg",
@@ -46,87 +191,60 @@ async function uploadMediaToNetlify(file) {
     "image/webp",
   ];
 
-
   const allowedVideoTypes = [
     "video/mp4",
     "video/webm",
     "video/quicktime",
   ];
 
-
   const isImage =
-    allowedImageTypes.includes(
-      file.type
-    );
-
+    allowedImageTypes.includes(file.type);
 
   const isVideo =
-    allowedVideoTypes.includes(
-      file.type
-    );
-
+    allowedVideoTypes.includes(file.type);
 
   if (!isImage && !isVideo) {
-
     throw new Error(
       "Unsupported file type. Use JPG, PNG, WebP, MP4, WebM or MOV."
     );
   }
 
-
-  /* ============================================================
-     FILE SIZE VALIDATION
-  ============================================================ */
-
   const maxImageSize =
     10 * 1024 * 1024;
 
-
   const maxVideoSize =
     50 * 1024 * 1024;
-
 
   if (
     isImage &&
     file.size > maxImageSize
   ) {
-
     throw new Error(
       "Image must be smaller than 10 MB."
     );
   }
 
-
   if (
     isVideo &&
     file.size > maxVideoSize
   ) {
-
     throw new Error(
       "Video must be smaller than 50 MB."
     );
   }
 
-
-  /* ============================================================
-     CREATE FORM DATA
-  ============================================================ */
-
   const formData =
     new FormData();
-
 
   formData.append(
     "file",
     file
   );
 
-
   formData.append(
     "upload_type",
     "public"
   );
-
 
   formData.append(
     "media_type",
@@ -135,26 +253,18 @@ async function uploadMediaToNetlify(file) {
       : "image"
   );
 
-
   console.log(
     "MEDIA UPLOAD START:",
     {
-      name:
-        file.name,
-
-      type:
-        file.type,
-
-      size:
-        file.size,
-
+      name: file.name,
+      type: file.type,
+      size: file.size,
       sizeMB:
         (
           file.size /
           1024 /
           1024
         ).toFixed(2),
-
       mediaType:
         isVideo
           ? "video"
@@ -162,81 +272,54 @@ async function uploadMediaToNetlify(file) {
     }
   );
 
-
-  /* ============================================================
-     NETLIFY FUNCTION
-  ============================================================ */
-
   let response;
 
-
   try {
-
     response =
       await fetch(
         "/.netlify/functions/media-upload",
         {
-          method:
-            "POST",
-
-          body:
-            formData,
+          method: "POST",
+          body: formData,
         }
       );
-
   } catch (networkError) {
-
     console.error(
       "NETLIFY MEDIA UPLOAD NETWORK ERROR:",
       networkError
     );
-
 
     throw new Error(
       "Unable to connect to the FoodKindl media upload service."
     );
   }
 
-
-  /* ============================================================
-     READ RESPONSE
-  ============================================================ */
-
   const responseText =
     await response.text();
-
 
   console.log(
     "MEDIA UPLOAD HTTP STATUS:",
     response.status
   );
 
-
   console.log(
     "MEDIA UPLOAD RAW RESPONSE:",
     responseText
   );
 
-
   let data = null;
 
-
   if (responseText) {
-
     try {
-
       data =
         JSON.parse(
           responseText
         );
-
     } catch (parseError) {
-
       console.error(
         "MEDIA UPLOAD RESPONSE IS NOT JSON:",
         responseText
       );
-
 
       throw new Error(
         `Media upload returned an invalid response (${response.status}).`
@@ -244,25 +327,16 @@ async function uploadMediaToNetlify(file) {
     }
   }
 
-
-  /* ============================================================
-     HANDLE FUNCTION ERROR
-  ============================================================ */
-
   if (!response.ok) {
-
     console.error(
       "MEDIA UPLOAD FAILED:",
       {
         status:
           response.status,
-
         data,
-
         responseText,
       }
     );
-
 
     const errorMessage =
       data?.error ||
@@ -270,16 +344,10 @@ async function uploadMediaToNetlify(file) {
       data?.message ||
       `Media upload failed with status ${response.status}.`;
 
-
     throw new Error(
       errorMessage
     );
   }
-
-
-  /* ============================================================
-     NORMALISE NETLIFY RESPONSE
-  ============================================================ */
 
   const uploadedUrl =
     data?.url ||
@@ -289,44 +357,35 @@ async function uploadMediaToNetlify(file) {
     data?.downloadUrl ||
     "";
 
-
   const uploadedKey =
     data?.key ||
     data?.blob_key ||
     data?.blobKey ||
     "";
 
-
   if (!uploadedKey) {
-
     console.error(
       "MEDIA UPLOAD MISSING BLOB KEY:",
       data
     );
-
 
     throw new Error(
       "The file uploaded, but Netlify did not return a Blob key."
     );
   }
 
-
   if (!uploadedUrl) {
-
     console.error(
       "MEDIA UPLOAD MISSING PUBLIC URL:",
       data
     );
-
 
     throw new Error(
       "The file uploaded, but Netlify did not return a public media URL."
     );
   }
 
-
   const result = {
-
     ...data,
 
     key:
@@ -343,18 +402,20 @@ async function uploadMediaToNetlify(file) {
       data?.contentType ||
       data?.content_type ||
       file.type,
-
   };
-
 
   console.log(
     "MEDIA UPLOAD SUCCESS:",
     result
   );
 
-
   return result;
 }
+
+
+/* ============================================================
+   EMPTY FORM
+============================================================ */
 
 const emptyForm = {
   post_type: "post",
@@ -365,41 +426,99 @@ const emptyForm = {
   longitude: "",
 };
 
-export default function Community() {
-  const { user } = useAuth();
-  const navigate = useNavigate();
 
-  const [posts, setPosts] = useState([]);
-  const [myPosts, setMyPosts] = useState([]);
-  const [reposts, setReposts] = useState([]);
+/* ============================================================
+   COMMUNITY
+============================================================ */
 
-  const [form, setForm] = useState(emptyForm);
-  const [image, setImage] = useState(null);
-  const [video, setVideo] = useState(null);
+export default function Community({
+  embedded = false,
+}) {
+  const PageTag =
+    embedded
+      ? "div"
+      : "main";
 
-  const [loading, setLoading] = useState(true);
-  const [publishing, setPublishing] = useState(false);
-  const [locating, setLocating] = useState(false);
+  const { user } =
+    useAuth();
 
-  const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
+  const navigate =
+    useNavigate();
 
-  const [openReactionPostId, setOpenReactionPostId] =
+
+  /* ==========================================================
+     STATE
+  ========================================================== */
+
+  const [posts, setPosts] =
+    useState([]);
+
+  const [myPosts, setMyPosts] =
+    useState([]);
+
+  const [reposts, setReposts] =
+    useState([]);
+
+  const [form, setForm] =
+    useState(emptyForm);
+
+  const [image, setImage] =
     useState(null);
 
-  const [composerOpen, setComposerOpen] =
+  const [video, setVideo] =
+    useState(null);
+
+  const [loading, setLoading] =
+    useState(true);
+
+  const [publishing, setPublishing] =
     useState(false);
 
-  const [activeTab, setActiveTab] =
-    useState("feed");
+  const [locating, setLocating] =
+    useState(false);
 
-  const imageInputRef = useRef(null);
-  const videoInputRef = useRef(null);
+  const [error, setError] =
+    useState("");
+
+  const [success, setSuccess] =
+    useState("");
+
+  const [
+    openReactionPostId,
+    setOpenReactionPostId,
+  ] = useState(null);
+
+  const [
+    composerOpen,
+    setComposerOpen,
+  ] = useState(false);
+
+  const [
+    activeTab,
+    setActiveTab,
+  ] = useState("feed");
+
+  const [
+    selectedTrendingTopic,
+    setSelectedTrendingTopic,
+  ] = useState(null);
+
+  const imageInputRef =
+    useRef(null);
+
+  const videoInputRef =
+    useRef(null);
+
+
+  /* ==========================================================
+     MEDIA HELPERS
+  ========================================================== */
 
   const API_BASE = (
-  import.meta.env.VITE_BACKEND_URL ||
-  "https://foodkindl-25aug.onrender.com"
-).replace(/\/+$/, "");
+    import.meta.env.VITE_BACKEND_URL ||
+    "https://foodkindl-25aug.onrender.com"
+  ).replace(/\/+$/, "");
+
 
   function getMediaUrl(path) {
     if (!path) {
@@ -414,23 +533,33 @@ export default function Community() {
       return path;
     }
 
-    if (path.startsWith("/.netlify/")) {
+    if (
+      path.startsWith("/.netlify/")
+    ) {
       return `${window.location.origin}${path}`;
     }
 
     return `${API_BASE}${path}`;
   }
 
+
   function getAuthorName(author) {
     return (
       author?.full_name ||
-      [author?.first_name, author?.last_name]
+
+      [
+        author?.first_name,
+        author?.last_name,
+      ]
         .filter(Boolean)
         .join(" ") ||
+
       author?.email ||
+
       "FoodKindl Member"
     );
   }
+
 
   function getAuthorInitial(author) {
     return getAuthorName(author)
@@ -438,74 +567,99 @@ export default function Community() {
       .toUpperCase();
   }
 
-  function getAuthorImage(
-  author
-) {
-  return getMediaUrl(
-    author
-      ?.profile
-      ?.profile_image_1_url
-    ||
-    author
-      ?.profile
-      ?.profile_image_1
-  );
-}
 
-  function updatePost(postId, updates) {
-    setPosts((currentPosts) =>
-      currentPosts.map((post) =>
-        post.id === postId
-          ? {
-              ...post,
-              ...updates,
-            }
-          : post
-      )
-    );
+  function getAuthorImage(author) {
+    return getMediaUrl(
+      author
+        ?.profile
+        ?.profile_image_1_url ||
 
-    setMyPosts((currentPosts) =>
-      currentPosts.map((post) =>
-        post.id === postId
-          ? {
-              ...post,
-              ...updates,
-            }
-          : post
-      )
-    );
-
-    setReposts((currentReposts) =>
-      currentReposts.map((repost) => {
-        if (
-          repost.original_post?.id !== postId
-        ) {
-          return repost;
-        }
-
-        return {
-          ...repost,
-          original_post: {
-            ...repost.original_post,
-            ...updates,
-          },
-        };
-      })
+      author
+        ?.profile
+        ?.profile_image_1
     );
   }
+
+
+  /* ==========================================================
+     UPDATE POST EVERYWHERE
+  ========================================================== */
+
+  function updatePost(
+    postId,
+    updates
+  ) {
+    setPosts(
+      (currentPosts) =>
+        currentPosts.map(
+          (post) =>
+            post.id === postId
+              ? {
+                  ...post,
+                  ...updates,
+                }
+              : post
+        )
+    );
+
+    setMyPosts(
+      (currentPosts) =>
+        currentPosts.map(
+          (post) =>
+            post.id === postId
+              ? {
+                  ...post,
+                  ...updates,
+                }
+              : post
+        )
+    );
+
+    setReposts(
+      (currentReposts) =>
+        currentReposts.map(
+          (repost) => {
+            if (
+              repost
+                .original_post
+                ?.id !== postId
+            ) {
+              return repost;
+            }
+
+            return {
+              ...repost,
+
+              original_post: {
+                ...repost.original_post,
+                ...updates,
+              },
+            };
+          }
+        )
+    );
+  }
+
+
+  /* ==========================================================
+     ERROR PARSER
+  ========================================================== */
 
   function getErrorMessage(data) {
     if (!data) {
       return "The request could not be completed.";
     }
 
-    if (typeof data === "string") {
+    if (
+      typeof data === "string"
+    ) {
       return data;
     }
 
-    const firstValue = Object.values(data)
-      .flat()
-      .find(Boolean);
+    const firstValue =
+      Object.values(data)
+        .flat()
+        .find(Boolean);
 
     return (
       data?.post_type?.[0] ||
@@ -525,12 +679,21 @@ export default function Community() {
     );
   }
 
+
+  /* ==========================================================
+     LOAD POSTS
+  ========================================================== */
+
   async function loadPosts() {
     try {
-      const response = await api.get("/posts/");
+      const response =
+        await api.get(
+          "/posts/"
+        );
 
       const postList =
-        response.data?.results || response.data;
+        response.data?.results ||
+        response.data;
 
       setPosts(
         Array.isArray(postList)
@@ -540,25 +703,33 @@ export default function Community() {
     } catch (requestError) {
       console.error(
         "Unable to load posts:",
-        requestError.response?.data ||
+        requestError
+          .response
+          ?.data ||
           requestError
       );
 
       setError(
-        requestError.response?.data?.detail ||
+        requestError
+          .response
+          ?.data
+          ?.detail ||
           "Community posts could not be loaded."
       );
     }
   }
 
+
   async function loadMyPosts() {
     try {
-      const response = await api.get(
-        "/posts/my-posts/"
-      );
+      const response =
+        await api.get(
+          "/posts/my-posts/"
+        );
 
       const postList =
-        response.data?.results || response.data;
+        response.data?.results ||
+        response.data;
 
       setMyPosts(
         Array.isArray(postList)
@@ -568,34 +739,44 @@ export default function Community() {
     } catch (requestError) {
       console.error(
         "Unable to load my posts:",
-        requestError.response?.data ||
+        requestError
+          .response
+          ?.data ||
           requestError
       );
     }
   }
 
+
   async function loadReposts() {
     try {
-      const response = await api.get(
-        "/posts/reposts/"
-      );
+      const response =
+        await api.get(
+          "/posts/reposts/"
+        );
 
       const repostList =
-        response.data?.results || response.data;
+        response.data?.results ||
+        response.data;
 
       setReposts(
-        Array.isArray(repostList)
+        Array.isArray(
+          repostList
+        )
           ? repostList
           : []
       );
     } catch (requestError) {
       console.error(
         "Unable to load reposts:",
-        requestError.response?.data ||
+        requestError
+          .response
+          ?.data ||
           requestError
       );
     }
   }
+
 
   async function loadCommunity() {
     setLoading(true);
@@ -610,58 +791,98 @@ export default function Community() {
     setLoading(false);
   }
 
+
   useEffect(() => {
     loadCommunity();
   }, []);
 
+
+  /* ==========================================================
+     PUBLISHER HELPERS
+  ========================================================== */
+
   function clearFileInputs() {
-    if (imageInputRef.current) {
-      imageInputRef.current.value = "";
+    if (
+      imageInputRef.current
+    ) {
+      imageInputRef.current.value =
+        "";
     }
 
-    if (videoInputRef.current) {
-      videoInputRef.current.value = "";
+    if (
+      videoInputRef.current
+    ) {
+      videoInputRef.current.value =
+        "";
     }
   }
+
 
   function resetPublisher() {
     setForm(emptyForm);
+
     setImage(null);
     setVideo(null);
+
     setComposerOpen(false);
+
     clearFileInputs();
   }
 
-  function selectPostType(postType) {
-    setForm((previous) => ({
-      ...emptyForm,
-      location_name: previous.location_name,
-      latitude: previous.latitude,
-      longitude: previous.longitude,
-      post_type: postType,
-    }));
+
+  function selectPostType(
+    postType
+  ) {
+    setForm(
+      (previous) => ({
+        ...emptyForm,
+
+        location_name:
+          previous.location_name,
+
+        latitude:
+          previous.latitude,
+
+        longitude:
+          previous.longitude,
+
+        post_type:
+          postType,
+      })
+    );
 
     setComposerOpen(true);
+
     setImage(null);
     setVideo(null);
+
     setError("");
     setSuccess("");
+
     clearFileInputs();
   }
 
+
   function validateBeforeSubmit() {
-    const title = form.title.trim();
-    const text = form.text.trim();
+    const title =
+      form.title.trim();
+
+    const text =
+      form.text.trim();
 
     if (
-      form.post_type === "article" &&
+      form.post_type ===
+        "article" &&
       !title
     ) {
       return "Please enter an article title.";
     }
 
     if (
-      ["post", "article"].includes(
+      [
+        "post",
+        "article",
+      ].includes(
         form.post_type
       ) &&
       !text
@@ -670,14 +891,16 @@ export default function Community() {
     }
 
     if (
-      form.post_type === "image" &&
+      form.post_type ===
+        "image" &&
       !image
     ) {
       return "Please select an image.";
     }
 
     if (
-      form.post_type === "video" &&
+      form.post_type ===
+        "video" &&
       !video
     ) {
       return "Please select a video.";
@@ -686,348 +909,294 @@ export default function Community() {
     return "";
   }
 
-  
+
+  /* ==========================================================
+     CREATE POST
+  ========================================================== */
+
   async function createPost(
-  event
-) {
-  event.preventDefault();
-
-  setError("");
-  setSuccess("");
-
-
-  const validationError =
-    validateBeforeSubmit();
-
-
-  if (validationError) {
-    setError(
-      validationError
-    );
-
-    return;
-  }
-
-
-  setPublishing(
-    true
-  );
-
-
-  try {
-    let uploadedImage =
-      null;
-
-    let uploadedVideo =
-      null;
-
-
-    // ========================================================
-    // IMAGE -> NETLIFY BLOB
-    // ========================================================
-
-    if (image) {
-      console.log(
-        "Uploading image to Netlify Blob..."
-      );
-
-
-      uploadedImage =
-        await uploadMediaToNetlify(
-          image
-        );
-
-
-      console.log(
-        "IMAGE BLOB UPLOAD SUCCESS:",
-        uploadedImage
-      );
-    }
-
-
-    // ========================================================
-    // VIDEO -> NETLIFY BLOB
-    // ========================================================
-
-    if (video) {
-      console.log(
-        "Uploading video to Netlify Blob..."
-      );
-
-
-      uploadedVideo =
-        await uploadMediaToNetlify(
-          video
-        );
-
-
-      console.log(
-        "VIDEO BLOB UPLOAD SUCCESS:",
-        uploadedVideo
-      );
-    }
-
-
-    // ========================================================
-    // DATA FOR DJANGO
-    // ========================================================
-
-    const formData =
-      new FormData();
-
-
-    formData.append(
-      "post_type",
-      form.post_type
-    );
-
-
-    formData.append(
-      "title",
-      form.title.trim()
-    );
-
-
-    formData.append(
-      "text",
-      form.text.trim()
-    );
-
-
-    formData.append(
-      "location_name",
-      form.location_name.trim()
-    );
-
-
-    if (
-      form.latitude
-    ) {
-      formData.append(
-        "latitude",
-        form.latitude
-      );
-    }
-
-
-    if (
-      form.longitude
-    ) {
-      formData.append(
-        "longitude",
-        form.longitude
-      );
-    }
-
-
-    // ========================================================
-    // IMAGE BLOB METADATA
-    // ========================================================
-
-    if (uploadedImage) {
-      formData.append(
-        "image_blob_key",
-        uploadedImage.key
-      );
-
-
-      formData.append(
-        "image_url",
-        uploadedImage.url
-      );
-
-
-      formData.append(
-        "image_original_name",
-        uploadedImage.filename ||
-        image.name
-      );
-
-
-      formData.append(
-        "image_content_type",
-        uploadedImage.contentType ||
-        image.type
-      );
-    }
-
-
-    // ========================================================
-    // VIDEO BLOB METADATA
-    // ========================================================
-
-    if (uploadedVideo) {
-      formData.append(
-        "video_blob_key",
-        uploadedVideo.key
-      );
-
-
-      formData.append(
-        "video_url",
-        uploadedVideo.url
-      );
-
-
-      formData.append(
-        "video_original_name",
-        uploadedVideo.filename ||
-        video.name
-      );
-
-
-      formData.append(
-        "video_content_type",
-        uploadedVideo.contentType ||
-        video.type
-      );
-    }
-
-
-    // ========================================================
-    // DEBUG
-    // ========================================================
-
-    console.log(
-      "SENDING POST TO DJANGO:"
-    );
-
-
-    for (
-      const pair of
-      formData.entries()
-    ) {
-      console.log(
-        pair[0],
-        pair[1]
-      );
-    }
-
-
-    // ========================================================
-    // SAVE POST METADATA IN DJANGO
-    // ========================================================
-
-    const response =
-      await api.post(
-        "/posts/",
-        formData
-      );
-
-
-    console.log(
-      "POST SAVE SUCCESS:",
-      response.status,
-      response.data
-    );
-
-
-    // ========================================================
-    // SUCCESS MESSAGE
-    // ========================================================
-
-    const publishedType =
-      form.post_type ===
-      "article"
-        ? "Article"
-
-        : form.post_type ===
-            "image"
-          ? "Image"
-
-          : form.post_type ===
-              "video"
-            ? "Video"
-
-            : "Post";
-
-
-    resetPublisher();
-
-
-    setSuccess(
-      `${publishedType} published successfully.`
-    );
-
-
-    await loadCommunity();
-
-
-  } catch (
-    requestError
+    event
   ) {
-    console.error(
-      "Unable to publish content:",
-      requestError.response?.data ||
-      requestError
-    );
+    event.preventDefault();
 
+    setError("");
+    setSuccess("");
 
-    if (
-      requestError instanceof Error &&
-      !requestError.response
-    ) {
+    const validationError =
+      validateBeforeSubmit();
+
+    if (validationError) {
       setError(
-        requestError.message
+        validationError
       );
-    } else {
-      setError(
-        getErrorMessage(
-          requestError.response?.data
-        )
-      );
+
+      return;
     }
 
+    setPublishing(true);
 
-  } finally {
-    setPublishing(
-      false
-    );
+    try {
+      let uploadedImage =
+        null;
+
+      let uploadedVideo =
+        null;
+
+      if (image) {
+        console.log(
+          "Uploading image to Netlify Blob..."
+        );
+
+        uploadedImage =
+          await uploadMediaToNetlify(
+            image
+          );
+      }
+
+      if (video) {
+        console.log(
+          "Uploading video to Netlify Blob..."
+        );
+
+        uploadedVideo =
+          await uploadMediaToNetlify(
+            video
+          );
+      }
+
+      const formData =
+        new FormData();
+
+      formData.append(
+        "post_type",
+        form.post_type
+      );
+
+      formData.append(
+        "title",
+        form.title.trim()
+      );
+
+      formData.append(
+        "text",
+        form.text.trim()
+      );
+
+      formData.append(
+        "location_name",
+        form.location_name.trim()
+      );
+
+      if (form.latitude) {
+        formData.append(
+          "latitude",
+          form.latitude
+        );
+      }
+
+      if (form.longitude) {
+        formData.append(
+          "longitude",
+          form.longitude
+        );
+      }
+
+      if (uploadedImage) {
+        formData.append(
+          "image_blob_key",
+          uploadedImage.key
+        );
+
+        formData.append(
+          "image_url",
+          uploadedImage.url
+        );
+
+        formData.append(
+          "image_original_name",
+          uploadedImage.filename ||
+            image.name
+        );
+
+        formData.append(
+          "image_content_type",
+          uploadedImage.contentType ||
+            image.type
+        );
+      }
+
+      if (uploadedVideo) {
+        formData.append(
+          "video_blob_key",
+          uploadedVideo.key
+        );
+
+        formData.append(
+          "video_url",
+          uploadedVideo.url
+        );
+
+        formData.append(
+          "video_original_name",
+          uploadedVideo.filename ||
+            video.name
+        );
+
+        formData.append(
+          "video_content_type",
+          uploadedVideo.contentType ||
+            video.type
+        );
+      }
+
+      console.log(
+        "SENDING POST TO DJANGO:"
+      );
+
+      for (
+        const pair of
+        formData.entries()
+      ) {
+        console.log(
+          pair[0],
+          pair[1]
+        );
+      }
+
+      const response =
+        await api.post(
+          "/posts/",
+          formData
+        );
+
+      console.log(
+        "POST SAVE SUCCESS:",
+        response.status,
+        response.data
+      );
+
+      const publishedType =
+        form.post_type ===
+        "article"
+          ? "Article"
+          : form.post_type ===
+              "image"
+            ? "Image"
+            : form.post_type ===
+                "video"
+              ? "Video"
+              : "Post";
+
+      resetPublisher();
+
+      setSuccess(
+        `${publishedType} published successfully.`
+      );
+
+      await loadCommunity();
+    } catch (requestError) {
+      console.error(
+        "Unable to publish content:",
+        requestError
+          .response
+          ?.data ||
+          requestError
+      );
+
+      if (
+        requestError instanceof
+          Error &&
+        !requestError.response
+      ) {
+        setError(
+          requestError.message
+        );
+      } else {
+        setError(
+          getErrorMessage(
+            requestError
+              .response
+              ?.data
+          )
+        );
+      }
+    } finally {
+      setPublishing(false);
+    }
   }
-}
+
+
+  /* ==========================================================
+     LOCATION
+  ========================================================== */
 
   function addCurrentLocation() {
     setError("");
     setSuccess("");
 
-    if (!navigator.geolocation) {
+    if (
+      !navigator.geolocation
+    ) {
       setError(
         "Location services are not supported by this browser."
       );
+
       return;
     }
 
     setLocating(true);
 
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        setForm((previous) => ({
-          ...previous,
-          latitude: Number(
-            position.coords.latitude
-          ).toFixed(6),
-          longitude: Number(
-            position.coords.longitude
-          ).toFixed(6),
-        }));
+    navigator.geolocation
+      .getCurrentPosition(
+        (position) => {
+          setForm(
+            (previous) => ({
+              ...previous,
 
-        setSuccess(
-          "Current location coordinates added."
-        );
-        setLocating(false);
-      },
-      () => {
-        setError(
-          "FoodKindl could not access your location."
-        );
-        setLocating(false);
-      },
-      {
-        enableHighAccuracy: true,
-        timeout: 10000,
-      }
-    );
+              latitude:
+                Number(
+                  position
+                    .coords
+                    .latitude
+                ).toFixed(6),
+
+              longitude:
+                Number(
+                  position
+                    .coords
+                    .longitude
+                ).toFixed(6),
+            })
+          );
+
+          setSuccess(
+            "Current location coordinates added."
+          );
+
+          setLocating(false);
+        },
+
+        () => {
+          setError(
+            "FoodKindl could not access your location."
+          );
+
+          setLocating(false);
+        },
+
+        {
+          enableHighAccuracy:
+            true,
+
+          timeout: 10000,
+        }
+      );
   }
+
+
+  /* ==========================================================
+     REACTIONS
+  ========================================================== */
 
   async function reactToPost(
     event,
@@ -1037,65 +1206,101 @@ export default function Community() {
     event.preventDefault();
     event.stopPropagation();
 
-    setOpenReactionPostId(null);
+    setOpenReactionPostId(
+      null
+    );
 
     try {
       if (
-        post.my_reaction === reactionType
+        post.my_reaction ===
+        reactionType
       ) {
-        const response = await api.delete(
-          `/posts/${post.id}/remove_reaction/`
-        );
+        const response =
+          await api.delete(
+            `/posts/${post.id}/remove_reaction/`
+          );
 
-        updatePost(post.id, {
-          my_reaction:
-            response.data.my_reaction,
-          reaction_count:
-            response.data.reaction_count,
-          reaction_summary:
-            response.data.reaction_summary,
-        });
+        updatePost(
+          post.id,
+          {
+            my_reaction:
+              response.data
+                .my_reaction,
+
+            reaction_count:
+              response.data
+                .reaction_count,
+
+            reaction_summary:
+              response.data
+                .reaction_summary,
+          }
+        );
 
         return;
       }
 
-      const response = await api.post(
-        `/posts/${post.id}/react/`,
+      const response =
+        await api.post(
+          `/posts/${post.id}/react/`,
+          {
+            reaction_type:
+              reactionType,
+          }
+        );
+
+      updatePost(
+        post.id,
         {
-          reaction_type: reactionType,
+          my_reaction:
+            response.data
+              .my_reaction,
+
+          reaction_count:
+            response.data
+              .reaction_count,
+
+          reaction_summary:
+            response.data
+              .reaction_summary,
         }
       );
-
-      updatePost(post.id, {
-        my_reaction:
-          response.data.my_reaction,
-        reaction_count:
-          response.data.reaction_count,
-        reaction_summary:
-          response.data.reaction_summary,
-      });
     } catch (requestError) {
       setError(
         getErrorMessage(
-          requestError.response?.data
+          requestError
+            .response
+            ?.data
         )
       );
     }
   }
 
-  async function toggleSave(event, post) {
+
+  /* ==========================================================
+     SAVE
+  ========================================================== */
+
+  async function toggleSave(
+    event,
+    post
+  ) {
     event.preventDefault();
     event.stopPropagation();
 
     try {
-      const response = await api.post(
-        `/posts/${post.id}/toggle_save/`
-      );
+      const response =
+        await api.post(
+          `/posts/${post.id}/toggle_save/`
+        );
 
-      updatePost(post.id, {
-        saved_by_me:
-          response.data.saved,
-      });
+      updatePost(
+        post.id,
+        {
+          saved_by_me:
+            response.data.saved,
+        }
+      );
 
       setSuccess(
         response.data.saved
@@ -1105,11 +1310,18 @@ export default function Community() {
     } catch (requestError) {
       setError(
         getErrorMessage(
-          requestError.response?.data
+          requestError
+            .response
+            ?.data
         )
       );
     }
   }
+
+
+  /* ==========================================================
+     REPOST
+  ========================================================== */
 
   async function shareToCommunity(
     event,
@@ -1118,30 +1330,42 @@ export default function Community() {
     event.preventDefault();
     event.stopPropagation();
 
-    const message = window.prompt(
-      "Add your thoughts to this repost (optional):",
-      ""
-    );
+    const message =
+      window.prompt(
+        "Add your thoughts to this repost (optional):",
+        ""
+      );
 
     if (message === null) {
       return;
     }
 
     try {
-      const response = await api.post(
-        `/posts/${post.id}/share_to_community/`,
+      const response =
+        await api.post(
+          `/posts/${post.id}/share_to_community/`,
+          {
+            message:
+              message.trim(),
+          }
+        );
+
+      updatePost(
+        post.id,
         {
-          message: message.trim(),
+          community_share_count:
+            (
+              post.community_share_count ||
+              0
+            ) + 1,
+
+          share_count:
+            (
+              post.share_count ||
+              0
+            ) + 1,
         }
       );
-
-      updatePost(post.id, {
-        community_share_count:
-          (post.community_share_count || 0) +
-          1,
-        share_count:
-          (post.share_count || 0) + 1,
-      });
 
       setSuccess(
         "Post reposted successfully."
@@ -1150,19 +1374,27 @@ export default function Community() {
       await loadReposts();
 
       if (
-        response.data?.shared_by?.id ===
-        user?.id
+        response.data
+          ?.shared_by
+          ?.id === user?.id
       ) {
         await loadMyPosts();
       }
     } catch (requestError) {
       setError(
         getErrorMessage(
-          requestError.response?.data
+          requestError
+            .response
+            ?.data
         )
       );
     }
   }
+
+
+  /* ==========================================================
+     EXTERNAL SHARE
+  ========================================================== */
 
   async function shareExternally(
     event,
@@ -1180,15 +1412,20 @@ export default function Community() {
           title:
             post.title ||
             "FoodKindl community post",
+
           text:
             post.text ||
             "View this FoodKindl post.",
-          url: shareUrl,
+
+          url:
+            shareUrl,
         });
       } else {
-        await navigator.clipboard.writeText(
-          shareUrl
-        );
+        await navigator
+          .clipboard
+          .writeText(
+            shareUrl
+          );
 
         setSuccess(
           "Post link copied successfully."
@@ -1207,14 +1444,22 @@ export default function Community() {
     }
   }
 
-  async function recordUniqueView(post) {
+
+  /* ==========================================================
+     UNIQUE VIEW
+  ========================================================== */
+
+  async function recordUniqueView(
+    post
+  ) {
     const storageKey =
       `foodkindl-view-${post.id}`;
 
     if (
-      sessionStorage.getItem(
-        storageKey
-      )
+      sessionStorage
+        .getItem(
+          storageKey
+        )
     ) {
       return;
     }
@@ -1225,27 +1470,48 @@ export default function Community() {
     );
 
     try {
-      const response = await api.post(
-        `/posts/${post.id}/record_view/`
-      );
+      const response =
+        await api.post(
+          `/posts/${post.id}/record_view/`
+        );
 
-      updatePost(post.id, {
-        unique_view_count:
-          response.data.unique_view_count,
-      });
-    } catch (requestError) {
-      sessionStorage.removeItem(
-        storageKey
+      updatePost(
+        post.id,
+        {
+          unique_view_count:
+            response.data
+              .unique_view_count,
+        }
       );
+    } catch (requestError) {
+      sessionStorage
+        .removeItem(
+          storageKey
+        );
     }
   }
 
-  function isGovernmentIdVerified(member) {
+
+  /* ==========================================================
+     MESSAGE
+  ========================================================== */
+
+  function isGovernmentIdVerified(
+    member
+  ) {
     return Boolean(
-      member?.profile?.is_verified === true &&
-      member?.profile?.verification_status === "approved"
+      member
+        ?.profile
+        ?.is_verified ===
+        true &&
+
+      member
+        ?.profile
+        ?.verification_status ===
+        "approved"
     );
   }
+
 
   function openDirectMessage(
     event,
@@ -1261,31 +1527,42 @@ export default function Community() {
       setError(
         "This member is unavailable for messaging."
       );
+
       return;
     }
 
-    if (member.id === user?.id) {
+    if (
+      member.id ===
+      user?.id
+    ) {
       setError(
         "You cannot message yourself."
       );
+
       return;
     }
 
-    /*
-     * Community itself has NO ID-verification restriction.
-     * Verification is required only when private messaging.
-     */
-    if (!isGovernmentIdVerified(user)) {
+    if (
+      !isGovernmentIdVerified(
+        user
+      )
+    ) {
       setError(
         "Please complete Government ID verification before messaging members."
       );
+
       return;
     }
 
-    if (!isGovernmentIdVerified(member)) {
+    if (
+      !isGovernmentIdVerified(
+        member
+      )
+    ) {
       setError(
         "You can message only Government ID verified members."
       );
+
       return;
     }
 
@@ -1301,6 +1578,11 @@ export default function Community() {
     );
   }
 
+
+  /* ==========================================================
+     OPEN POST
+  ========================================================== */
+
   function openPost(post) {
     recordUniqueView(post);
 
@@ -1308,6 +1590,11 @@ export default function Community() {
       `/community/post/${post.id}`
     );
   }
+
+
+  /* ==========================================================
+     DISPLAY HELPERS
+  ========================================================== */
 
   function getReactionEmoji(
     reactionType
@@ -1317,46 +1604,82 @@ export default function Community() {
         (reaction) =>
           reaction.value ===
           reactionType
-      )?.emoji || "👍"
+      )?.emoji ||
+      "♡"
     );
   }
 
-  function formatRelativeTime(dateValue) {
+
+  function getReactionLabel(
+    reactionType
+  ) {
+    if (!reactionType) {
+      return "Love";
+    }
+
+    return (
+      REACTIONS.find(
+        (reaction) =>
+          reaction.value ===
+          reactionType
+      )?.label ||
+      "React"
+    );
+  }
+
+
+  function formatRelativeTime(
+    dateValue
+  ) {
     if (!dateValue) {
       return "";
     }
 
-    const date = new Date(dateValue);
-    const diffInSeconds = Math.max(
-      0,
-      Math.floor(
-        (Date.now() - date.getTime()) / 1000
-      )
-    );
+    const date =
+      new Date(
+        dateValue
+      );
 
-    if (diffInSeconds < 60) {
+    const diffInSeconds =
+      Math.max(
+        0,
+        Math.floor(
+          (
+            Date.now() -
+            date.getTime()
+          ) /
+            1000
+        )
+      );
+
+    if (
+      diffInSeconds < 60
+    ) {
       return "Just now";
     }
 
-    const minutes = Math.floor(
-      diffInSeconds / 60
-    );
+    const minutes =
+      Math.floor(
+        diffInSeconds / 60
+      );
 
     if (minutes < 60) {
       return `${minutes}m`;
     }
 
-    const hours = Math.floor(
-      minutes / 60
-    );
+    const hours =
+      Math.floor(
+        minutes / 60
+      );
 
     if (hours < 24) {
       return `${hours}h`;
     }
 
-    const days = Math.floor(
-      hours / 24
-    );
+    const days =
+      Math.floor(
+        hours / 24
+      );
 
     if (days < 7) {
       return `${days}d`;
@@ -1366,7 +1689,9 @@ export default function Community() {
       undefined,
       {
         day: "numeric",
+
         month: "short",
+
         year:
           date.getFullYear() !==
           new Date().getFullYear()
@@ -1376,32 +1701,58 @@ export default function Community() {
     );
   }
 
-  function getPostTypeLabel(postType) {
-    if (postType === "article") {
+
+  function getPostTypeLabel(
+    postType
+  ) {
+    if (
+      postType ===
+      "article"
+    ) {
       return "Article";
     }
 
-    if (postType === "video") {
+    if (
+      postType ===
+      "video"
+    ) {
       return "Video";
     }
 
-    if (postType === "image") {
+    if (
+      postType ===
+      "image"
+    ) {
       return "Photo";
     }
 
     return "Post";
   }
 
-  const savedPosts = posts.filter(
-    (post) => post.saved_by_me
-  );
+
+  /* ==========================================================
+     FEED DATA
+  ========================================================== */
+
+  const savedPosts =
+    posts.filter(
+      (post) =>
+        post.saved_by_me
+    );
+
 
   const normalFeedItems =
-    posts.map((post) => ({
-      itemType: "post",
-      createdAt: post.created_at,
-      post,
-    }));
+    posts.map(
+      (post) => ({
+        itemType: "post",
+
+        createdAt:
+          post.created_at,
+
+        post,
+      })
+    );
+
 
   const repostFeedItems =
     reposts
@@ -1409,68 +1760,116 @@ export default function Community() {
         (repost) =>
           repost.original_post
       )
-      .map((repost) => ({
-        itemType: "repost",
-        createdAt: repost.created_at,
-        repost,
-        post:
-          repost.original_post,
-      }));
+      .map(
+        (repost) => ({
+          itemType:
+            "repost",
+
+          createdAt:
+            repost.created_at,
+
+          repost,
+
+          post:
+            repost.original_post,
+        })
+      );
+
 
   const combinedFeed = [
     ...normalFeedItems,
     ...repostFeedItems,
   ].sort(
     (first, second) =>
-      new Date(second.createdAt) -
-      new Date(first.createdAt)
+      new Date(
+        second.createdAt
+      ) -
+      new Date(
+        first.createdAt
+      )
   );
 
-  const visibleFeed =
+
+  const baseVisibleFeed =
     activeTab === "feed"
       ? combinedFeed
       : activeTab === "saved"
-        ? savedPosts.map(
-            (post) => ({
-              itemType: "post",
-              createdAt:
-                post.created_at,
-              post,
-            })
-          )
-        : myPosts.map(
-            (post) => ({
-              itemType: "post",
-              createdAt:
-                post.created_at,
-              post,
-            })
-          );
+        ? savedPosts.map((post) => ({
+            itemType: "post",
+            createdAt: post.created_at,
+            post,
+          }))
+        : myPosts.map((post) => ({
+            itemType: "post",
+            createdAt: post.created_at,
+            post,
+          }));
 
-  function renderFeedCard(item) {
+  const visibleFeed = selectedTrendingTopic
+    ? baseVisibleFeed.filter((item) => {
+        const post = item?.post;
+
+        if (!post) {
+          return false;
+        }
+
+        const searchableText = [
+          post.title,
+          post.text,
+          post.location_name,
+          post.post_type,
+          getAuthorName(post.author),
+          Array.isArray(post.tags)
+            ? post.tags.join(" ")
+            : post.tags || "",
+        ]
+          .filter(Boolean)
+          .join(" ")
+          .toLowerCase();
+
+        return selectedTrendingTopic.keywords.some((keyword) =>
+          searchableText.includes(keyword.toLowerCase())
+        );
+      })
+    : baseVisibleFeed;
+
+
+  /* ==========================================================
+     POST CARD
+  ========================================================== */
+
+  function renderFeedCard(
+    item
+  ) {
     const isRepost =
-      item.itemType === "repost";
+      item.itemType ===
+      "repost";
 
     const repost =
       isRepost
         ? item.repost
         : null;
 
-    const post = item.post;
+    const post =
+      item.post;
 
     if (!post) {
       return null;
     }
 
     const authorName =
-      getAuthorName(post.author);
+      getAuthorName(
+        post.author
+      );
 
     const authorImage =
-      getAuthorImage(post.author);
+      getAuthorImage(
+        post.author
+      );
 
     return (
       <article
-        className="feed-card community-card-link"
+        className="fk-feed-card"
         key={
           isRepost
             ? `repost-${repost.id}`
@@ -1482,9 +1881,12 @@ export default function Community() {
           openPost(post)
         }
       >
+
         {isRepost && (
-          <div className="repost-header">
-            <Repeat2 size={15} />
+          <div className="fk-repost-header">
+            <Repeat2
+              size={15}
+            />
 
             <strong>
               {getAuthorName(
@@ -1492,200 +1894,312 @@ export default function Community() {
               )}
             </strong>
 
-            <span>   reposted this</span>
+            <span>
+              reposted this
+            </span>
           </div>
         )}
 
+
         {isRepost &&
           repost.message && (
-            <div className="repost-message">
+            <div className="fk-repost-message">
               {repost.message}
             </div>
           )}
 
-        <div className="feed-author-row">
-          <div className="feed-author">
-            {authorImage ? (
-              <img
-                src={authorImage}
-                alt={authorName}
-                className="community-avatar"
-              />
-            ) : (
-              <div className="avatar-mini">
-                {getAuthorInitial(
-                  post.author
-                )}
-              </div>
-            )}
 
-            <div className="feed-author-copy">
-              <strong>{authorName}</strong>
+        <header className="fk-post-author-row">
 
-              <div className="feed-post-meta">
-                <small>
+          <div className="fk-post-author">
+
+            <div className="fk-avatar-shell">
+
+              {authorImage ? (
+                <img
+                  src={
+                    authorImage
+                  }
+                  alt={
+                    authorName
+                  }
+                  className="fk-avatar"
+                />
+              ) : (
+                <div className="fk-avatar fk-avatar-fallback">
+                  {getAuthorInitial(
+                    post.author
+                  )}
+                </div>
+              )}
+
+              {isGovernmentIdVerified(
+                post.author
+              ) && (
+                <span
+                  className="fk-verified-dot"
+                  title="Verified member"
+                >
+                  ✓
+                </span>
+              )}
+
+            </div>
+
+
+            <div className="fk-author-copy">
+
+              <strong>
+                {authorName}
+              </strong>
+
+              <div className="fk-post-meta">
+
+                <span>
                   {formatRelativeTime(
                     post.created_at
                   )}
-                </small>
+                </span>
 
-                <span aria-hidden="true">·</span>
+                <i>•</i>
 
-                <span className="post-type-label">
+                <span>
                   {getPostTypeLabel(
                     post.post_type
                   )}
                 </span>
+
               </div>
+
             </div>
+
           </div>
+
 
           {post.author?.id !==
             user?.id && (
+
             <button
               type="button"
-              className="feed-author-message"
-              onClick={(event) =>
-                openDirectMessage(
-                  event,
-                  post.author
-                )
+              className="fk-message-button"
+              onClick={
+                (event) =>
+                  openDirectMessage(
+                    event,
+                    post.author
+                  )
               }
             >
-              <MessageCircle size={17} />
-              Message
+              <MessageCircle
+                size={17}
+              />
+
+              <span>
+                Message
+              </span>
             </button>
+
           )}
-        </div>
+
+        </header>
+
 
         {post.location_name && (
-          <div className="post-location">
-            <MapPin size={15} />
-            {post.location_name}
+          <div className="fk-post-location">
+            <MapPin
+              size={14}
+            />
+
+            <span>
+              {
+                post.location_name
+              }
+            </span>
           </div>
         )}
 
+
         {post.title && (
-          <h2 className="community-card-title">
+          <h2 className="fk-post-title">
             {post.title}
           </h2>
         )}
 
+
         {post.text && (
-          <p className="community-card-text">
-            {post.text.length > 500
+          <p className="fk-post-text">
+
+            {post.text.length >
+            500
               ? `${post.text.slice(
                   0,
                   500
                 )}...`
               : post.text}
+
           </p>
         )}
 
-        {(post.image_url || post.image) && (
-          <div className="post-media">
+
+        {(post.image_url ||
+          post.image) && (
+
+          <div className="fk-post-media">
+
             <img
               src={getMediaUrl(
-                post.image_url || post.image
+                post.image_url ||
+                  post.image
               )}
               alt={
                 post.title ||
                 "FoodKindl community post"
               }
-              className="post-image"
+              className="fk-post-image"
               loading="lazy"
             />
+
+            <div className="fk-media-overlay" />
+
           </div>
         )}
 
-        {(post.video_url || post.video) && (
-          <div className="post-media">
+
+        {(post.video_url ||
+          post.video) && (
+
+          <div className="fk-post-media">
+
             <video
               src={getMediaUrl(
-                post.video_url || post.video
+                post.video_url ||
+                  post.video
               )}
-              className="post-video"
+              className="fk-post-video"
               controls
               playsInline
               preload="metadata"
               onPlay={() =>
-                recordUniqueView(post)
+                recordUniqueView(
+                  post
+                )
               }
-              onClick={(event) =>
-                event.stopPropagation()
+              onClick={
+                (event) =>
+                  event.stopPropagation()
               }
             >
-              Your browser does not
-              support video playback.
+              Your browser does
+              not support video
+              playback.
             </video>
+
           </div>
         )}
 
-        <div className="community-metrics">
+
+        <div className="fk-post-stats">
+
           <span>
-            {post.reaction_count || 0}
-            {" "}reactions
+            <Heart
+              size={16}
+            />
+            {
+              post.reaction_count ||
+              0
+            }
           </span>
 
           <span>
-            {post.comment_count || 0}
-            {" "}comments
+            <MessageCircle
+              size={16}
+            />
+            {
+              post.comment_count ||
+              0
+            }
           </span>
 
           <span>
-            {post.unique_view_count || 0}
-            {" "}views
+            <span className="fk-eye-symbol">
+              ◉
+            </span>
+
+            {
+              post.unique_view_count ||
+              0
+            }
           </span>
 
           <span>
-            {post.community_share_count ||
-              0}
-            {" "}reposts
+            <Repeat2
+              size={16}
+            />
+
+            {
+              post.community_share_count ||
+              0
+            }
           </span>
+
         </div>
 
-        <div className="community-interaction-bar">
-          <div className="reaction-control">
+
+        <div className="fk-interaction-bar">
+
+          <div className="fk-reaction-control">
+
             <button
               type="button"
               className={
                 post.my_reaction
-                  ? "interaction-button reacted"
-                  : "interaction-button"
+                  ? "fk-action-button fk-action-love active"
+                  : "fk-action-button fk-action-love"
               }
-              onClick={(event) => {
-                event.preventDefault();
-                event.stopPropagation();
+              onClick={
+                (event) => {
+                  event.preventDefault();
+                  event.stopPropagation();
 
-                setOpenReactionPostId(
-                  openReactionPostId ===
-                    post.id
-                    ? null
-                    : post.id
-                );
-              }}
+                  setOpenReactionPostId(
+                    openReactionPostId ===
+                      post.id
+                      ? null
+                      : post.id
+                  );
+                }
+              }
             >
-              <span>
+
+              <span className="fk-action-emoji">
                 {getReactionEmoji(
                   post.my_reaction
                 )}
               </span>
 
-              {post.my_reaction
-                ? post.my_reaction
-                : "React"}
+              <span>
+                {getReactionLabel(
+                  post.my_reaction
+                )}
+              </span>
+
             </button>
+
 
             {openReactionPostId ===
               post.id && (
+
               <div
-                className="reaction-picker"
-                onClick={(event) =>
-                  event.stopPropagation()
+                className="fk-reaction-picker"
+                onClick={
+                  (event) =>
+                    event.stopPropagation()
                 }
               >
+
                 {REACTIONS.map(
                   (reaction) => (
+
                     <button
                       type="button"
                       key={
@@ -1697,17 +2211,19 @@ export default function Community() {
                       className={
                         post.my_reaction ===
                         reaction.value
-                          ? "reaction-option selected"
-                          : "reaction-option"
+                          ? "fk-reaction-option selected"
+                          : "fk-reaction-option"
                       }
-                      onClick={(event) =>
-                        reactToPost(
-                          event,
-                          post,
-                          reaction.value
-                        )
+                      onClick={
+                        (event) =>
+                          reactToPost(
+                            event,
+                            post,
+                            reaction.value
+                          )
                       }
                     >
+
                       <span>
                         {
                           reaction.emoji
@@ -1719,70 +2235,92 @@ export default function Community() {
                           reaction.label
                         }
                       </small>
+
                     </button>
+
                   )
                 )}
+
               </div>
+
             )}
+
           </div>
+
 
           <button
             type="button"
-            className="interaction-button"
-            onClick={(event) => {
-              event.preventDefault();
-              event.stopPropagation();
-              openPost(post);
-            }}
+            className="fk-action-button"
+            onClick={
+              (event) => {
+                event.preventDefault();
+                event.stopPropagation();
+
+                openPost(post);
+              }
+            }
           >
-            <MessageCircle size={19} />
+            <MessageCircle
+              size={20}
+            />
             Comment
           </button>
 
-          <button
-            type="button"
-            className="interaction-button"
-            onClick={(event) =>
-              shareToCommunity(
-                event,
-                post
-              )
-            }
-          >
-            <Repeat2 size={19} />
-            Repost
-          </button>
 
           <button
             type="button"
-            className="interaction-button"
-            onClick={(event) =>
-              shareExternally(
-                event,
-                post
-              )
+            className="fk-action-button"
+            onClick={
+              (event) =>
+                shareToCommunity(
+                  event,
+                  post
+                )
             }
           >
-            <Share2 size={19} />
+            <Repeat2
+              size={20}
+            />
+            Repost
+          </button>
+
+
+          <button
+            type="button"
+            className="fk-action-button"
+            onClick={
+              (event) =>
+                shareExternally(
+                  event,
+                  post
+                )
+            }
+          >
+            <Share2
+              size={20}
+            />
             Share
           </button>
+
 
           <button
             type="button"
             className={
               post.saved_by_me
-                ? "interaction-button saved"
-                : "interaction-button"
+                ? "fk-action-button fk-save-action active"
+                : "fk-action-button fk-save-action"
             }
-            onClick={(event) =>
-              toggleSave(
-                event,
-                post
-              )
+            onClick={
+              (event) =>
+                toggleSave(
+                  event,
+                  post
+                )
             }
           >
+
             <Bookmark
-              size={19}
+              size={20}
               fill={
                 post.saved_by_me
                   ? "currentColor"
@@ -1793,579 +2331,516 @@ export default function Community() {
             {post.saved_by_me
               ? "Saved"
               : "Save"}
+
           </button>
+
         </div>
+
       </article>
     );
   }
 
+
+  /* ==========================================================
+     JSX
+  ========================================================== */
+
   return (
-    <>
-      <style>{`
-        .community-page {
-          width: min(1240px, calc(100% - 56px));
-          max-width: 1240px;
-          margin: 0 auto;
-          padding: 30px 0 72px;
-        }
 
-        .community-desktop-intro {
-          margin: 6px 0 22px;
-        }
+    <PageTag
+      className={
+        embedded
+          ? "community-page community-page-embedded"
+          : "app-page community-page"
+      }
+    >
 
-        .community-desktop-intro h1 {
-          margin: 6px 0 0;
-          font-size: clamp(30px, 2.6vw, 42px);
-          line-height: 1.08;
-          letter-spacing: -0.035em;
-        }
+      {/* ======================================================
+          HERO
+      ====================================================== */}
 
-        .community-tabs {
-          width: 100%;
-          display: flex;
-          align-items: center;
-          gap: 8px;
-          margin: 0 0 28px;
-          padding: 7px;
-          border: 1px solid rgba(255, 255, 255, 0.08);
-          border-radius: 16px;
-          background: rgba(255, 255, 255, 0.018);
-        }
+      <section className="fk-community-hero">
 
-        .community-tab {
-          min-width: 126px;
-          min-height: 44px;
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
-          gap: 8px;
-          padding: 10px 18px;
-          border: 0;
-          border-radius: 11px;
-          background: transparent;
-          color: rgba(255, 255, 255, 0.62);
-          font: inherit;
-          font-weight: 600;
-          cursor: pointer;
-        }
+        <div className="fk-hero-glow fk-hero-glow-one" />
+        <div className="fk-hero-glow fk-hero-glow-two" />
 
-        .community-tab.active {
-          background: linear-gradient(
-            135deg,
-            rgba(154, 20, 15, 0.96),
-            rgba(112, 10, 8, 0.96)
-          );
-          color: #fff;
-        }
 
-        .community-layout {
-          display: grid;
-          grid-template-columns:
-            minmax(0, 68fr)
-            minmax(320px, 32fr);
-          gap: 28px;
-          align-items: start;
-          width: 100%;
-          max-width: 1240px;
-          margin-left: auto;
-          margin-right: auto;
-        }
+        <div className="fk-hero-copy">
 
-        .community-feed-heading {
-          margin-bottom: 18px;
-        }
+          <div className="fk-hero-label">
+            <span>
+              <Sparkles
+                size={14}
+              />
+            </span>
 
-        .community-feed-heading h2 {
-          max-width: 720px;
-          margin: 8px 0 0;
-          font-size: 28px;
-          line-height: 1.2;
-          letter-spacing: -0.025em;
-        }
-
-        .feed-list {
-          display: grid;
-          gap: 18px;
-        }
-
-        .feed-card {
-          overflow: visible;
-          border: 1px solid rgba(255, 126, 72, 0.14);
-          border-radius: 20px;
-          background:
-            linear-gradient(
-              180deg,
-              rgba(28, 10, 8, 0.96),
-              rgba(22, 8, 7, 0.96)
-            );
-          box-shadow: 0 14px 44px rgba(0, 0, 0, 0.16);
-        }
-
-        .feed-card > :not(.post-media):not(.community-interaction-bar) {
-          margin-left: 22px;
-          margin-right: 22px;
-        }
-
-        .feed-author-row {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          gap: 18px;
-          padding-top: 20px;
-        }
-
-        .feed-author {
-          display: flex;
-          align-items: center;
-          gap: 12px;
-          min-width: 0;
-        }
-
-        .feed-author-copy {
-          display: grid;
-          gap: 3px;
-          min-width: 0;
-        }
-
-        .community-avatar,
-        .avatar-mini {
-          width: 46px;
-          height: 46px;
-          flex: 0 0 46px;
-          border-radius: 50%;
-        }
-
-        .community-avatar {
-          object-fit: cover;
-        }
-
-        .avatar-mini {
-          display: grid;
-          place-items: center;
-          border: 1px solid rgba(255, 126, 72, 0.24);
-          background: rgba(255, 126, 72, 0.12);
-          font-weight: 700;
-        }
-
-        .feed-post-meta {
-          display: flex;
-          align-items: center;
-          gap: 6px;
-          color: rgba(255, 255, 255, 0.48);
-          font-size: 12px;
-        }
-
-        .post-type-label {
-          color: rgba(255, 255, 255, 0.6);
-          font-size: inherit;
-          text-transform: none;
-        }
-
-        .feed-author-message {
-          display: inline-flex;
-          align-items: center;
-          gap: 7px;
-          min-height: 36px;
-          padding: 8px 12px;
-          border: 1px solid rgba(255, 255, 255, 0.08);
-          border-radius: 10px;
-          background: rgba(255, 255, 255, 0.025);
-          color: rgba(255, 255, 255, 0.66);
-          font: inherit;
-          font-size: 13px;
-          cursor: pointer;
-        }
-
-        .feed-author-message:hover {
-          background: rgba(255, 255, 255, 0.06);
-          color: #fff;
-        }
-
-        .community-card-title {
-          margin-top: 18px;
-          margin-bottom: 8px;
-          font-size: 25px;
-          line-height: 1.22;
-          color: #fff;
-        }
-
-        .community-card-text {
-          margin-top: 8px;
-          margin-bottom: 18px;
-          color: rgba(255, 255, 255, 0.76);
-          font-size: 15px;
-          line-height: 1.68;
-          white-space: pre-wrap;
-        }
-
-        .post-media {
-          width: 100%;
-          margin-top: 18px;
-          overflow: hidden;
-          background: #090909;
-        }
-
-        .post-image,
-        .post-video {
-          width: 100%;
-          max-height: 560px;
-          display: block;
-          object-fit: cover;
-          background: #090909;
-        }
-
-        .community-metrics {
-          display: flex;
-          flex-wrap: wrap;
-          gap: 17px;
-          padding-top: 14px;
-          padding-bottom: 14px;
-          color: rgba(255, 255, 255, 0.46);
-          font-size: 12px;
-        }
-
-        .community-interaction-bar {
-          position: relative;
-          display: grid;
-          grid-template-columns: repeat(5, minmax(0, 1fr));
-          gap: 4px;
-          padding: 9px 12px 11px;
-          border-top: 1px solid rgba(255, 255, 255, 0.07);
-        }
-
-        .interaction-button {
-          min-height: 42px;
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
-          gap: 7px;
-          padding: 9px 8px;
-          border: 0;
-          border-radius: 9px;
-          background: transparent;
-          color: rgba(255, 255, 255, 0.61);
-          font: inherit;
-          font-size: 13px;
-          cursor: pointer;
-        }
-
-        .interaction-button:hover {
-          background: rgba(255, 255, 255, 0.05);
-          color: #fff;
-        }
-
-        .interaction-button.reacted,
-        .interaction-button.saved {
-          color: #ff8b55;
-          background: rgba(255, 126, 72, 0.07);
-        }
-
-        .reaction-control {
-          position: relative;
-          min-width: 0;
-        }
-
-        .reaction-control > .interaction-button {
-          width: 100%;
-        }
-
-        .reaction-picker {
-          position: absolute;
-          left: 0;
-          bottom: calc(100% + 10px);
-          z-index: 30;
-          display: flex;
-          gap: 4px;
-          padding: 8px;
-          border: 1px solid rgba(255, 255, 255, 0.1);
-          border-radius: 14px;
-          background: #160a08;
-          box-shadow: 0 18px 44px rgba(0, 0, 0, 0.36);
-        }
-
-        .community-publish-sidebar {
-          position: sticky;
-          top: 90px;
-          display: grid;
-          gap: 16px;
-        }
-
-        .quick-publisher-card {
-          padding: 17px;
-          border: 1px solid rgba(255, 126, 72, 0.14);
-          border-radius: 18px;
-          background:
-            linear-gradient(
-              180deg,
-              rgba(28, 10, 8, 0.93),
-              rgba(22, 8, 7, 0.93)
-            );
-        }
-
-        .quick-publisher-top {
-          display: grid;
-          grid-template-columns: 46px 1fr;
-          align-items: center;
-          gap: 10px;
-        }
-
-        .start-post-button {
-          min-height: 44px;
-          padding: 10px 15px;
-          text-align: left;
-          border: 1px solid rgba(255, 255, 255, 0.1);
-          border-radius: 999px;
-          background: rgba(255, 255, 255, 0.02);
-          color: rgba(255, 255, 255, 0.78);
-          font: inherit;
-          font-weight: 600;
-          cursor: pointer;
-        }
-
-        .quick-publisher-actions {
-          display: grid;
-          grid-template-columns: repeat(3, minmax(0, 1fr));
-          gap: 4px;
-          margin-top: 13px;
-        }
-
-        .quick-publisher-actions button {
-          min-height: 56px;
-          display: grid;
-          place-items: center;
-          gap: 4px;
-          padding: 7px 5px;
-          border: 0;
-          border-radius: 10px;
-          background: transparent;
-          color: rgba(255, 255, 255, 0.6);
-          font: inherit;
-          font-size: 12px;
-          cursor: pointer;
-        }
-
-        .quick-publisher-actions button:hover {
-          background: rgba(255, 255, 255, 0.05);
-          color: #fff;
-        }
-
-        .community-publisher-sidebar {
-          max-height: calc(100vh - 120px);
-          overflow-y: auto;
-        }
-
-        @media (max-width: 1050px) {
-          .community-page {
-            width: min(100% - 36px, 820px);
-          }
-
-          .community-layout {
-            grid-template-columns: 1fr;
-          }
-
-          .community-publish-sidebar {
-            position: static;
-            grid-row: 1;
-          }
-        }
-      `}</style>
-
-      <main className="app-page community-page">
-      <div
-        className="community-top-actions"
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          gap: "12px",
-          flexWrap: "wrap",
-          marginBottom: "22px",
-        }}
-      >
-        <button
-          type="button"
-          className="secondary-button"
-          onClick={() => navigate("/dashboard")}
-        >
-          <ArrowLeft size={18} />
-          Back to Dashboard
-        </button>
-
-        <button
-          type="button"
-          className="secondary-button"
-          onClick={loadCommunity}
-          disabled={loading}
-        >
-          <RefreshCw size={18} />
-          {loading ? "Refreshing..." : "Refresh"}
-        </button>
-      </div>
-
-      <div className="community-desktop-intro">
-        <div>
-          <div className="eyebrow left">
-            FoodKindl Community
+            FOODKINDL COMMUNITY
           </div>
+
 
           <h1>
-            See what people are sharing
+            Food tastes better
+            <br />
+
+            when stories are{" "}
+
+            <em>
+              shared.
+            </em>
           </h1>
+
+
+          <p>
+            Discover real food stories,
+            hidden gems, home-cooked
+            moments and the people behind
+            them.
+          </p>
+
+
+          {/* <div className="fk-hero-actions"> */}
+
+            {/* <button
+              type="button"
+              className="fk-hero-primary"
+              onClick={() =>
+                selectPostType(
+                  "post"
+                )
+              }
+            >
+              Share your story
+
+              <ArrowRight
+                size={18}
+              />
+            </button>
+
+
+            <button
+              type="button"
+              className="fk-hero-secondary"
+              onClick={() =>
+                navigate(
+                  "/discover"
+                )
+              }
+            >
+              <Users
+                size={18}
+              />
+
+              Discover people
+            </button> */}
+{/*  */}
+          {/* </div> */}
+
+
+        
         </div>
-      </div>
 
 
-{/* <AIRecipeSearch /> */}
-
-
-<div
-  className="community-tabs"
-  role="tablist"
->
-        <button
-          type="button"
-          role="tab"
-          aria-selected={
-            activeTab === "feed"
-          }
-          className={
-            activeTab === "feed"
-              ? "community-tab active"
-              : "community-tab"
-          }
-          onClick={() =>
-            setActiveTab("feed")
-          }
+        <div
+          className="fk-hero-visual"
+          aria-hidden="true"
         >
-          <MessageSquare size={18} />
-          Feed
-        </button>
 
-        <button
-          type="button"
-          role="tab"
-          aria-selected={
-            activeTab === "saved"
-          }
-          className={
-            activeTab === "saved"
-              ? "community-tab active"
-              : "community-tab"
-          }
-          onClick={() =>
-            setActiveTab("saved")
-          }
-        >
-          <Bookmark size={18} />
-          Saved
-        </button>
+          <div className="fk-hero-orbit fk-orbit-one" />
+          <div className="fk-hero-orbit fk-orbit-two" />
 
-        <button
-          type="button"
-          role="tab"
-          aria-selected={
-            activeTab === "my-posts"
-          }
-          className={
-            activeTab === "my-posts"
-              ? "community-tab active"
-              : "community-tab"
-          }
-          onClick={() =>
-            setActiveTab("my-posts")
-          }
-        >
-          <MessageSquare size={18} />
-          My Posts
-        </button>
-      </div>
+          <div className="fk-food-visual-card">
 
-      <div className="community-layout">
-        <section className="community-main">
-          <div className="community-feed-section">
-            <div className="community-feed-heading">
-              <div>
-                <div className="eyebrow left">
-                  {activeTab === "saved"
-                    ? "Saved"
-                    : activeTab ===
-                        "my-posts"
-                      ? "My Posts"
-                      : "Community"}
-                </div>
+            <div className="fk-food-bowl">
+              🍲
+            </div>
 
-                <h2>
-                  {activeTab === "saved"
-                    ? "Posts you saved"
-                    : activeTab ===
-                        "my-posts"
-                      ? "Things you shared"
-                      : "What's happening in your community"}
-                </h2>
-              </div>
+            <div className="fk-food-card-copy">
 
+              <span>
+                TODAY'S MOOD
+              </span>
+
+              <strong>
+                Good food.
+                <br />
+                Better company.
+              </strong>
 
             </div>
 
-            {loading ? (
-              <div className="app-panel">
-                Loading posts...
-              </div>
-            ) : visibleFeed.length ===
-              0 ? (
-              <div className="app-panel community-empty-state">
-                {activeTab === "saved"
-                  ? "No saved posts yet."
-                  : activeTab ===
-                      "my-posts"
-                    ? "You haven't shared anything yet."
-                    : "Nothing has been shared yet."}
-              </div>
-            ) : (
-              <div className="feed-list">
-                {visibleFeed.map(
-                  renderFeedCard
-                )}
-              </div>
-            )}
           </div>
-        </section>
 
-        <aside className="community-publish-sidebar">
-          <div className="quick-publisher-card">
-            <div className="quick-publisher-top">
-              {getAuthorImage(user) ? (
-                <img
-                  src={getAuthorImage(
-                    user
-                  )}
-                  alt={getAuthorName(
-                    user
-                  )}
-                  className="community-avatar"
-                />
-              ) : (
-                <div className="avatar-mini">
-                  {getAuthorInitial(
-                    user
-                  )}
-                </div>
+
+          <div className="fk-floating-card fk-floating-card-top">
+
+            <span className="fk-floating-icon">
+              🔥
+            </span>
+
+            <div>
+              <small>
+                TRENDING
+              </small>
+
+              <strong>
+                #Biryani
+              </strong>
+            </div>
+
+          </div>
+
+
+          <div className="fk-floating-card fk-floating-card-bottom">
+
+            <span className="fk-floating-icon">
+              🍜
+            </span>
+
+            <div>
+              <small>
+                DISCOVER
+              </small>
+
+              <strong>
+                Food stories nearby
+              </strong>
+            </div>
+
+          </div>
+
+        </div>
+
+      </section>
+
+
+      {/* ======================================================
+          COMMUNITY TOOLBAR
+      ====================================================== */}
+
+      <section className="fk-community-toolbar">
+
+        <nav
+          className="fk-community-tabs"
+          role="tablist"
+          aria-label="Community posts"
+        >
+
+          <button
+            type="button"
+            role="tab"
+            aria-selected={
+              activeTab ===
+              "feed"
+            }
+            className={
+              activeTab ===
+              "feed"
+                ? "fk-community-tab active"
+                : "fk-community-tab"
+            }
+            onClick={() =>
+              setActiveTab(
+                "feed"
+              )
+            }
+          >
+            <MessageSquare
+              size={18}
+            />
+            Feed
+          </button>
+
+
+          <button
+            type="button"
+            role="tab"
+            aria-selected={
+              activeTab ===
+              "saved"
+            }
+            className={
+              activeTab ===
+              "saved"
+                ? "fk-community-tab active"
+                : "fk-community-tab"
+            }
+            onClick={() =>
+              setActiveTab(
+                "saved"
+              )
+            }
+          >
+            <Bookmark
+              size={18}
+            />
+            Saved
+          </button>
+
+
+          <button
+            type="button"
+            role="tab"
+            aria-selected={
+              activeTab ===
+              "my-posts"
+            }
+            className={
+              activeTab ===
+              "my-posts"
+                ? "fk-community-tab active"
+                : "fk-community-tab"
+            }
+            onClick={() =>
+              setActiveTab(
+                "my-posts"
+              )
+            }
+          >
+            <Users
+              size={18}
+            />
+            My Posts
+          </button>
+
+        </nav>
+
+
+        <div className="fk-toolbar-search">
+
+          <Search
+            size={17}
+          />
+
+          <span>
+            Discover food stories
+          </span>
+
+        </div>
+
+      </section>
+
+
+      {/* ======================================================
+          STATUS
+      ====================================================== */}
+
+      {(error ||
+        success) && (
+
+        <div className="fk-status-area">
+
+          {error && (
+            <div className="fk-alert fk-alert-error">
+              {error}
+            </div>
+          )}
+
+          {success && (
+            <div className="fk-alert fk-alert-success">
+              {success}
+            </div>
+          )}
+
+        </div>
+
+      )}
+
+
+      {/* ======================================================
+          CONTENT
+      ====================================================== */}
+
+      <section className="fk-community-content">
+
+        {/* ====================================================
+            LEFT
+        ==================================================== */}
+
+        <div className="fk-feed-column">
+
+          <div className="fk-feed-heading">
+
+            <div>
+
+              <span>
+                COMMUNITY FEED
+              </span>
+
+              <h2>
+                What's cooking?
+              </h2>
+
+            </div>
+
+
+            <div className="fk-feed-heading-badge">
+
+              <Flame
+                size={16}
+              />
+
+              Fresh stories
+
+            </div>
+
+          </div>
+
+
+          {loading ? (
+
+            <div className="fk-empty-state">
+
+              <RefreshCw
+                size={23}
+                className="fk-loading-icon"
+              />
+
+              <strong>
+                Loading your food community...
+              </strong>
+
+            </div>
+
+          ) : visibleFeed.length ===
+            0 ? (
+
+            <div className="fk-empty-state">
+
+              <ChefHat
+                size={35}
+              />
+
+              <strong>
+                {selectedTrendingTopic
+                  ? `No ${selectedTrendingTopic.label} stories yet.`
+                  : activeTab === "saved"
+                    ? "No saved stories yet."
+                    : activeTab === "my-posts"
+                      ? "You haven't shared anything yet."
+                      : "Nothing has been shared yet."}
+              </strong>
+
+              <span>
+                FoodKindl gets better when
+                someone shares the first
+                story.
+              </span>
+
+              {activeTab !==
+                "saved" && (
+
+                <button
+                  type="button"
+                  onClick={() =>
+                    selectPostType(
+                      "post"
+                    )
+                  }
+                >
+                  Create a post
+                </button>
+
               )}
 
-              <button
-                type="button"
-                className="start-post-button"
-                onClick={() =>
-                  selectPostType(
-                    "post"
-                  )
-                }
-              >
-                Share something...
-              </button>
             </div>
 
-            <div className="quick-publisher-actions">
+          ) : (
+
+            <div className="fk-feed-list">
+              {visibleFeed.map(
+                renderFeedCard
+              )}
+            </div>
+
+          )}
+
+        </div>
+
+
+        {/* ====================================================
+            RIGHT
+        ==================================================== */}
+
+        <aside className="fk-community-sidebar">
+
+          {/* ==================================================
+              CREATE POST
+          ================================================== */}
+
+          <section className="fk-create-card">
+
+            <div className="fk-create-user-row">
+
+              <div className="fk-avatar-shell">
+
+                {getAuthorImage(
+                  user
+                ) ? (
+
+                  <img
+                    src={getAuthorImage(
+                      user
+                    )}
+                    alt={getAuthorName(
+                      user
+                    )}
+                    className="fk-avatar"
+                  />
+
+                ) : (
+
+                  <div className="fk-avatar fk-avatar-fallback">
+                    {getAuthorInitial(
+                      user
+                    )}
+                  </div>
+
+                )}
+
+                {isGovernmentIdVerified(
+                  user
+                ) && (
+                  <span className="fk-verified-dot">
+                    ✓
+                  </span>
+                )}
+
+              </div>
+
+
+              <div>
+
+                <small>
+                  SHARE WITH THE COMMUNITY
+                </small>
+
+                <strong>
+                  Create a post
+                </strong>
+
+              </div>
+
+            </div>
+
+
+            <button
+              type="button"
+              className="fk-start-post"
+              onClick={() =>
+                selectPostType(
+                  "post"
+                )
+              }
+            >
+
+              Share your food story,
+              experience or recipe...
+
+            </button>
+
+
+            <div className="fk-quick-actions">
+
               <button
                 type="button"
                 onClick={() =>
@@ -2374,9 +2849,14 @@ export default function Community() {
                   )
                 }
               >
-                <ImageIcon size={20} />
-                Photo
+                <ImageIcon
+                  size={20}
+                />
+                <span>
+                  Photo
+                </span>
               </button>
+
 
               <button
                 type="button"
@@ -2386,9 +2866,14 @@ export default function Community() {
                   )
                 }
               >
-                <Video size={20} />
-                Video
+                <Video
+                  size={20}
+                />
+                <span>
+                  Video
+                </span>
               </button>
+
 
               <button
                 type="button"
@@ -2398,101 +2883,171 @@ export default function Community() {
                   )
                 }
               >
-                <FileText size={20} />
-                Article
+                <FileText
+                  size={20}
+                />
+                <span>
+                  Article
+                </span>
               </button>
+
+
+              <button
+                type="button"
+                className="fk-quick-post"
+                onClick={() =>
+                  selectPostType(
+                    "post"
+                  )
+                }
+              >
+                <Send
+                  size={19}
+                />
+
+                <span>
+                  Post
+                </span>
+              </button>
+
             </div>
-          </div>
+
+          </section>
+
+
+          {/* ==================================================
+              COMPOSER
+          ================================================== */}
 
           {composerOpen && (
+
             <form
-              className="app-panel community-publisher community-publisher-sidebar"
-              onSubmit={createPost}
+              className="fk-composer"
+              onSubmit={
+                createPost
+              }
               encType="multipart/form-data"
             >
-              <div className="publisher-modal-heading">
+
+              <div className="fk-composer-heading">
+
                 <div>
+
+                  <small>
+                    FOODKINDL
+                  </small>
+
                   <strong>
+
                     {form.post_type ===
                     "article"
                       ? "Write an article"
+
                       : form.post_type ===
                           "image"
                         ? "Share a photo"
+
                         : form.post_type ===
                             "video"
-                          ? "Share video"
-                          : "Share with the community"}
+                          ? "Share a video"
+
+                          : "Create a post"}
+
                   </strong>
 
-                  <small>
-                    {getAuthorName(
-                      user
-                    )}
-                  </small>
                 </div>
+
 
                 <button
                   type="button"
-                  className="publisher-close-button"
+                  className="fk-composer-close"
                   onClick={() => {
                     setComposerOpen(
                       false
                     );
+
                     setError("");
                     setSuccess("");
                   }}
+                  aria-label="Close composer"
                 >
                   ×
                 </button>
+
               </div>
+
 
               {form.post_type ===
                 "article" && (
+
                 <input
                   type="text"
-                  placeholder="Article title"
-                  value={form.title}
-                  maxLength={200}
-                  onChange={(event) =>
-                    setForm(
-                      (previous) => ({
-                        ...previous,
-                        title:
-                          event.target
-                            .value,
-                      })
-                    )
+                  className="fk-composer-input"
+                  placeholder="Give your story a title..."
+                  value={
+                    form.title
+                  }
+                  maxLength={
+                    200
+                  }
+                  onChange={
+                    (event) =>
+                      setForm(
+                        (
+                          previous
+                        ) => ({
+                          ...previous,
+
+                          title:
+                            event
+                              .target
+                              .value,
+                        })
+                      )
                   }
                   required
                 />
+
               )}
 
+
               <textarea
-                className="community-sidebar-textarea"
+                className="fk-composer-textarea"
                 placeholder={
                   form.post_type ===
                   "article"
-                    ? "Write your article..."
+                    ? "Write your food story..."
+
                     : form.post_type ===
                         "image"
-                      ? "Say something about this photo..."
+                      ? "Tell us about this photo..."
+
                       : form.post_type ===
                           "video"
-                        ? "Say something about this video..."
-                        : "What would you like to share?"
+                        ? "Tell us about this video..."
+
+                        : "What's your food story today?"
                 }
-                value={form.text}
-                maxLength={5000}
-                onChange={(event) =>
-                  setForm(
-                    (previous) => ({
-                      ...previous,
-                      text:
-                        event.target
-                          .value,
-                    })
-                  )
+                value={
+                  form.text
+                }
+                maxLength={
+                  5000
+                }
+                onChange={
+                  (event) =>
+                    setForm(
+                      (
+                        previous
+                      ) => ({
+                        ...previous,
+
+                        text:
+                          event
+                            .target
+                            .value,
+                      })
+                    )
                 }
                 required={
                   form.post_type ===
@@ -2502,8 +3057,15 @@ export default function Community() {
                 }
               />
 
-              <label className="publisher-location-field">
-                Location
+
+              <label className="fk-field">
+
+                <span>
+                  <MapPin
+                    size={15}
+                  />
+                  Location
+                </span>
 
                 <input
                   type="text"
@@ -2511,47 +3073,66 @@ export default function Community() {
                   value={
                     form.location_name
                   }
-                  onChange={(event) =>
-                    setForm(
-                      (previous) => ({
-                        ...previous,
-                        location_name:
-                          event.target
-                            .value,
-                      })
-                    )
+                  onChange={
+                    (event) =>
+                      setForm(
+                        (
+                          previous
+                        ) => ({
+                          ...previous,
+
+                          location_name:
+                            event
+                              .target
+                              .value,
+                        })
+                      )
                   }
                 />
+
               </label>
+
 
               <button
                 type="button"
-                className="secondary-button publisher-location-button"
+                className="fk-location-button"
                 onClick={
                   addCurrentLocation
                 }
-                disabled={locating}
+                disabled={
+                  locating
+                }
               >
-                <MapPin size={17} />
+                <MapPin
+                  size={16}
+                />
 
                 {locating
-                  ? "Finding Location..."
-                  : "Use Current Location"}
+                  ? "Finding location..."
+                  : "Use current location"}
               </button>
+
 
               {form.latitude &&
                 form.longitude && (
-                  <p className="location-coordinate-text">
-                    Coordinates:{" "}
-                    {form.latitude},{" "}
-                    {form.longitude}
-                  </p>
-                )}
+
+                <p className="fk-coordinate-text">
+                  Coordinates:{" "}
+                  {form.latitude},{" "}
+                  {form.longitude}
+                </p>
+
+              )}
+
 
               {form.post_type ===
                 "image" && (
-                <label className="publisher-upload-field">
-                  Upload Photo
+
+                <label className="fk-upload-field">
+
+                  <span>
+                    Upload Photo
+                  </span>
 
                   <input
                     ref={
@@ -2559,24 +3140,31 @@ export default function Community() {
                     }
                     type="file"
                     accept="image/jpeg,image/png,image/webp"
-                    onChange={(
-                      event
-                    ) =>
-                      setImage(
-                        event.target
-                          .files?.[0] ||
-                          null
-                      )
+                    onChange={
+                      (event) =>
+                        setImage(
+                          event
+                            .target
+                            .files?.[0] ||
+                            null
+                        )
                     }
                     required
                   />
+
                 </label>
+
               )}
+
 
               {form.post_type ===
                 "video" && (
-                <label className="publisher-upload-field">
-                  Upload Video
+
+                <label className="fk-upload-field">
+
+                  <span>
+                    Upload Video
+                  </span>
 
                   <input
                     ref={
@@ -2584,62 +3172,158 @@ export default function Community() {
                     }
                     type="file"
                     accept="video/mp4,video/webm,video/quicktime"
-                    onChange={(
-                      event
-                    ) =>
-                      setVideo(
-                        event.target
-                          .files?.[0] ||
-                          null
-                      )
+                    onChange={
+                      (event) =>
+                        setVideo(
+                          event
+                            .target
+                            .files?.[0] ||
+                            null
+                        )
                     }
                     required
                   />
+
                 </label>
+
               )}
 
+
               {image && (
-                <p className="form-message">
+
+                <p className="fk-selected-file">
                   Selected image:{" "}
                   {image.name}
                 </p>
+
               )}
 
+
               {video && (
-                <p className="form-message">
+
+                <p className="fk-selected-file">
                   Selected video:{" "}
                   {video.name}
                 </p>
+
               )}
 
-              {error && (
-                <p className="error-message">
-                  {error}
-                </p>
-              )}
-
-              {success && (
-                <p className="form-message">
-                  {success}
-                </p>
-              )}
 
               <button
                 type="submit"
-                className="primary-button publisher-submit-button"
+                className="fk-publish-button"
                 disabled={
                   publishing
                 }
               >
+
                 {publishing
                   ? "Publishing..."
-                  : "Publish"}
+                  : "Share with FoodKindl"}
+
+                {!publishing && (
+                  <ArrowRight
+                    size={18}
+                  />
+                )}
+
               </button>
+
             </form>
+
           )}
+
+
+          {/* ==================================================
+              TRENDING
+          ================================================== */}
+
+          <section className="fk-side-card fk-trending-card">
+
+            <div className="fk-side-heading">
+
+              <div>
+
+                <span className="fk-side-heading-icon">
+                  <Flame
+                    size={17}
+                  />
+                </span>
+
+                <strong>
+                  Trending bites
+                </strong>
+
+              </div>
+
+              <span className="fk-see-all">
+                Explore
+              </span>
+
+            </div>
+
+
+            <p className="fk-side-description">
+              See what the FoodKindl
+              community is talking about
+              today.
+            </p>
+
+
+            <div className="fk-topic-chips">
+              {TRENDING_TOPICS.map((topic) => {
+                const isActive =
+                  selectedTrendingTopic?.id === topic.id;
+
+                return (
+                  <button
+                    type="button"
+                    key={topic.id}
+                    className={
+                      isActive
+                        ? "fk-topic-chip active"
+                        : "fk-topic-chip"
+                    }
+                    aria-pressed={isActive}
+                    onClick={() => {
+                      setActiveTab("feed");
+                      setError("");
+                      setSuccess("");
+                      setSelectedTrendingTopic(
+                        isActive ? null : topic
+                      );
+                    }}
+                  >
+                    {topic.label}
+                  </button>
+                );
+              })}
+            </div>
+
+            {selectedTrendingTopic && (
+              <div className="fk-trending-selected">
+                <span>
+                  Showing {selectedTrendingTopic.label}
+                </span>
+
+                <button
+                  type="button"
+                  onClick={() =>
+                    setSelectedTrendingTopic(null)
+                  }
+                >
+                  Clear
+                </button>
+              </div>
+            )}
+
+          </section>
+
+
         </aside>
-      </div>
-      </main>
-    </>
+
+      </section>
+
+    </PageTag>
   );
 }
