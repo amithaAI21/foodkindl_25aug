@@ -3,9 +3,17 @@
   publish = "dist"
   functions = "netlify/functions"
 
+[build.environment]
+  SECRETS_SCAN_OMIT_KEYS = "VITE_BACKEND_URL,VITE_VALHALLA_URL,VITE_DISCOVER_USERS_URL,VITE_CONNECTION_REQUEST_URL"
+
 [dev]
   command = "npm run dev"
   targetPort = 5173
   port = 8888
   publish = "dist"
   functions = "netlify/functions"
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
