@@ -75,20 +75,18 @@ const TermsOfUse = lazy(() =>
 // LOGGED-IN APP PAGES
 // ============================================================
 
-const Dashboard = lazy(() =>
+const ConnectDashboard = lazy(() =>
   import("./pages/ConnectDashboard")
 );
 
 
 // ============================================================
-// DISCOVER
-// Community + Connect combined page
+// DISCOVER / COMMUNITY / CONNECT
 // ============================================================
 
 const Discover = lazy(() =>
   import("./pages/Discover")
 );
-
 
 const Community = lazy(() =>
   import("./pages/Community")
@@ -167,7 +165,6 @@ const PartnerDashboard = lazy(() =>
 const Notifications = lazy(() =>
   import("./pages/Notifications")
 );
-
 
 
 // ============================================================
@@ -567,7 +564,7 @@ function PartnerOnly({
   ) {
     return (
       <Navigate
-        to="/dashboard"
+        to="/connect-dashboard"
         replace
       />
     );
@@ -782,41 +779,39 @@ export default function App() {
 
 
           {/* ===============================================
-              PARTNER DASHBOARD
+              CONNECT DASHBOARD
           =============================================== */}
 
           <Route
-            path="/partner/dashboard"
-            element={
-              <PartnerOnly>
-                <PartnerDashboard />
-              </PartnerOnly>
-            }
-          />
-
-
-          {/* ===============================================
-              USER DASHBOARD
-          =============================================== */}
-
-          <Route
-            path="/dashboard"
+            path="/connect-dashboard"
             element={
               <Protected>
-                <Dashboard />
+                <ConnectDashboard />
               </Protected>
             }
           />
 
 
           {/* ===============================================
+              LEGACY DASHBOARD URL
+
+              Any old /dashboard link will automatically
+              open ConnectDashboard.
+          =============================================== */}
+
+          <Route
+            path="/dashboard"
+            element={
+              <Navigate
+                to="/connect-dashboard"
+                replace
+              />
+            }
+          />
+
+
+          {/* ===============================================
               DISCOVER
-              
-              Main navigation:
-              
-              Discover
-                 ↓
-              Community | Connect
           =============================================== */}
 
           <Route
@@ -831,9 +826,6 @@ export default function App() {
 
           {/* ===============================================
               COMMUNITY POST DETAIL
-
-              Keep this because Community cards may
-              still navigate to individual posts.
           =============================================== */}
 
           <Route
@@ -848,8 +840,6 @@ export default function App() {
 
           {/* ===============================================
               LEGACY COMMUNITY ROUTE
-
-              Redirect old links to Discover.
           =============================================== */}
 
           <Route
@@ -865,9 +855,6 @@ export default function App() {
 
           {/* ===============================================
               CONNECT
-
-              Keep direct Connect route because profile
-              and other existing flows may use it.
           =============================================== */}
 
           <Route
@@ -888,10 +875,20 @@ export default function App() {
             }
           />
 
+
+          {/* ===============================================
+              NOTIFICATIONS
+          =============================================== */}
+
           <Route
-              path="/notifications"
-              element={<Notifications />}
-            />
+            path="/notifications"
+            element={
+              <Protected>
+                <Notifications />
+              </Protected>
+            }
+          />
+
 
           {/* ===============================================
               FOOD INVITES
@@ -974,9 +971,6 @@ export default function App() {
               </VerifiedOnly>
             }
           />
-
-
-          {/* Food Journey Results */}
 
           <Route
             path="/food-walk/journey"
@@ -1101,9 +1095,22 @@ export default function App() {
 
 
           {/* ===============================================
-              FALLBACK
+              RESTAURANT PARTNER DASHBOARD
+          =============================================== */}
 
-              KEEP THIS LAST.
+          <Route
+            path="/partner/dashboard"
+            element={
+              <PartnerOnly>
+                <PartnerDashboard />
+              </PartnerOnly>
+            }
+          />
+
+
+          {/* ===============================================
+              FALLBACK
+              KEEP THIS LAST
           =============================================== */}
 
           <Route

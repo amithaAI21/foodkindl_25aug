@@ -276,49 +276,24 @@ export default function Navbar() {
       >
 
         {user ? (
-          <>
-
-            {/* ===============================================
-                DASHBOARD
-            =============================================== */}
-
-            <Link
-              to="/"
-              onClick={close}
-              className={
-                isActive("/")
-                  ? "navbar-main-link active"
-                  : "navbar-main-link"
-              }
-            >
-              <Home size={18} />
-
-              <span>
-                Dashboard
-              </span>
-            </Link>
+          <>  
 
 
             {/* ===============================================
                 CONNECT
             =============================================== */}
 
-            <Link
+         <Link
               to="/connect-dashboard"
               onClick={close}
               className={
-                isActive(
-                  "/connect-dashboard"
-                )
+                isActive("/connect-dashboard")
                   ? "navbar-main-link active"
                   : "navbar-main-link"
               }
             >
               <UsersRound size={18} />
-
-              <span>
-                Connect
-              </span>
+              <span>Connect</span>
             </Link>
 
 
