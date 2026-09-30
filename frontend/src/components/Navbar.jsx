@@ -1,13 +1,12 @@
 import {
   ChevronDown,
-  ConciergeBell,
-  Heart,
+  Home,
   LogOut,
   Menu,
   Settings,
   ShieldCheck,
-  Sparkles,
   UserRound,
+  UsersRound,
   X,
 } from "lucide-react";
 
@@ -19,11 +18,14 @@ import {
 
 import {
   Link,
+  useLocation,
 } from "react-router-dom";
 
 import {
   useAuth,
 } from "../context/AuthContext";
+
+import "../styles/navbar.css";
 
 
 export default function Navbar() {
@@ -31,6 +33,8 @@ export default function Navbar() {
     user,
     logout,
   } = useAuth();
+
+  const location = useLocation();
 
   const [
     open,
@@ -94,8 +98,13 @@ export default function Navbar() {
       );
     }
 
+    const normalizedPath =
+      imagePath.startsWith("/")
+        ? imagePath
+        : `/${imagePath}`;
+
     return (
-      `${API_BASE}${imagePath}`
+      `${API_BASE}${normalizedPath}`
     );
   }
 
@@ -121,12 +130,26 @@ export default function Navbar() {
 
 
   // =========================================================
+  // ACTIVE NAVIGATION
+  // =========================================================
+
+  function isActive(path) {
+    if (path === "/") {
+      return location.pathname === "/";
+    }
+
+    return location.pathname.startsWith(
+      path
+    );
+  }
+
+
+  // =========================================================
   // CLOSE MENUS
   // =========================================================
 
   function close() {
     setOpen(false);
-
     setProfileMenuOpen(false);
   }
 
@@ -137,7 +160,6 @@ export default function Navbar() {
 
   function handleLogout() {
     logout();
-
     close();
   }
 
@@ -179,6 +201,23 @@ export default function Navbar() {
   );
 
 
+  // =========================================================
+  // CLOSE MOBILE MENU WHEN ROUTE CHANGES
+  // =========================================================
+
+  useEffect(
+    () => {
+      setOpen(false);
+      setProfileMenuOpen(false);
+    },
+    [location.pathname]
+  );
+
+
+  // =========================================================
+  // PAGE
+  // =========================================================
+
   return (
     <header className="navbar">
 
@@ -201,7 +240,7 @@ export default function Navbar() {
 
 
       {/* =====================================================
-          MOBILE MENU
+          MOBILE MENU BUTTON
       ===================================================== */}
 
       <button
@@ -235,20 +274,63 @@ export default function Navbar() {
             : "nav"
         }
       >
+
         {user ? (
           <>
 
+            {/* ===============================================
+                DASHBOARD
+            =============================================== */}
+
+            <Link
+              to="/"
+              onClick={close}
+              className={
+                isActive("/")
+                  ? "navbar-main-link active"
+                  : "navbar-main-link"
+              }
+            >
+              <Home size={18} />
+
+              <span>
+                Dashboard
+              </span>
+            </Link>
 
 
-        
-            {/* =========================================
+            {/* ===============================================
+                CONNECT
+            =============================================== */}
+
+            <Link
+              to="/connect-dashboard"
+              onClick={close}
+              className={
+                isActive(
+                  "/connect-dashboard"
+                )
+                  ? "navbar-main-link active"
+                  : "navbar-main-link"
+              }
+            >
+              <UsersRound size={18} />
+
+              <span>
+                Connect
+              </span>
+            </Link>
+
+
+            {/* ===============================================
                 PROFILE AVATAR DROPDOWN
-            ========================================= */}
+            =============================================== */}
 
             <div
               className="navbar-profile-menu"
               ref={profileMenuRef}
             >
+
               <button
                 type="button"
                 className="navbar-avatar-button"
@@ -305,9 +387,9 @@ export default function Navbar() {
               </button>
 
 
-              {/* =========================================
+              {/* =============================================
                   PROFILE DROPDOWN
-              ========================================= */}
+              ============================================= */}
 
               {profileMenuOpen && (
                 <div
@@ -425,7 +507,6 @@ export default function Navbar() {
                     />
 
                     <div>
-
                       <span>
                         Safety &amp;
                         Verification
@@ -438,7 +519,6 @@ export default function Navbar() {
                             : "Complete verification"
                         }
                       </small>
-
                     </div>
                   </Link>
 
@@ -477,9 +557,9 @@ export default function Navbar() {
         ) : (
           <>
 
-            {/* =========================================
+            {/* ===============================================
                 PUBLIC NAVIGATION
-            ========================================= */}
+            =============================================== */}
 
             <Link
               to="/login"
@@ -491,6 +571,7 @@ export default function Navbar() {
 
           </>
         )}
+
       </nav>
 
     </header>
