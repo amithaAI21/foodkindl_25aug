@@ -733,12 +733,12 @@ export default function LandingPage() {
         aria-label="Social Dining, Simplified"
       >
         <div className="fk-social-image-inner">
-          <img
+          {/* <img
             className="fk-social-image"
             src="public/images/social-dining-simplified.png"
             loading="lazy"
             decoding="async"
-          />
+          /> */}
 
           {/* <Link className="fk-social-image-cta" to={joinUrl}>
             {user ? "Explore FoodKindl" : "Join FoodKindl"}
