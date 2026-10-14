@@ -17,6 +17,18 @@ from .views import (
 )
 
 from .views import FoodKindlPeopleView
+from .otp_views import (
+    RequestOTPView,
+    VerifyOTPView,
+    LinkMobileRequestView,
+    LinkMobileVerifyView,
+)
+
+from .views import (
+    VerifyEmailView,
+    ResendVerificationEmailView,
+)
+
 
 urlpatterns = [
 
@@ -138,5 +150,16 @@ urlpatterns = [
     "session-context/",
     SessionContextView.as_view(),
     name="session-context",
+),
+    
+        path(
+        "verify-email/<str:token>/",
+        VerifyEmailView.as_view(),
+        name="verify-email",
+    ),
+    path(
+        "email/verification/resend/",
+        ResendVerificationEmailView.as_view(),
+        name="resend-verification-email",
 ),
 ]

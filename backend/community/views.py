@@ -132,7 +132,6 @@ class PostViewSet(viewsets.ModelViewSet):
         url_path="my-posts",
         permission_classes=[
             permissions.IsAuthenticated,
-            IsVerifiedMember,
         ],
     )
     def my_posts(self, request):

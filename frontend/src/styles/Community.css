@@ -3164,3 +3164,36 @@
   }
 
 }
+
+
+/* FOODKINDL POSTING REMINDER */
+
+.fk-post-guideline {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px 14px;
+  margin: 14px 0;
+
+  background: rgba(255, 120, 65, 0.07);
+  border: 1px solid rgba(255, 120, 65, 0.18);
+  border-radius: 10px;
+}
+
+.fk-post-guideline svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+  color: #ff8756;
+}
+
+.fk-post-guideline p {
+  margin: 0;
+  color: #bfb1a9;
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.fk-post-guideline strong {
+  color: #fff;
+  font-weight: 700;
+}

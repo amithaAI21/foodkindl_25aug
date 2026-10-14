@@ -1,3 +1,4 @@
+
 from rest_framework.permissions import (
     BasePermission,
     SAFE_METHODS,
@@ -6,22 +7,13 @@ from rest_framework.permissions import (
 
 class IsOwnerOrReadOnly(BasePermission):
     """
-    Allow everyone with access to read an object.
-
-    Only the object's owner may update or delete it.
-    Supports objects that use author, owner, or sender.
+    Anyone with access can read an object.
+    Only the owner can update or delete it.
     """
 
-    message = (
-        "You do not have permission to modify this item."
-    )
+    message = "You do not have permission to modify this item."
 
-    def has_object_permission(
-        self,
-        request,
-        view,
-        obj,
-    ):
+    def has_object_permission(self, request, view, obj):
         if request.method in SAFE_METHODS:
             return True
 
@@ -36,32 +28,17 @@ class IsOwnerOrReadOnly(BasePermission):
 
 class IsVerifiedMember(BasePermission):
     """
-    Allow access only when the authenticated user's
-    Government ID has been approved.
+    Allow any authenticated user to access member features.
+    Government ID verification is NOT required.
+
+    The original class name is retained for compatibility
+    with existing views that import IsVerifiedMember.
     """
 
-    message = (
-        "Your Government ID must be approved "
-        "before you can access this feature."
-    )
+    message = "Please log in to access this feature."
 
-    def has_permission(
-        self,
-        request,
-        view,
-    ):
-        if not request.user.is_authenticated:
-            return False
-
-        profile = getattr(
-            request.user,
-            "profile",
-            None,
-        )
-
+    def has_permission(self, request, view):
         return bool(
-            profile
-            and profile.is_verified
-            and profile.verification_status
-            == "approved"
+            request.user
+            and request.user.is_authenticated
         )

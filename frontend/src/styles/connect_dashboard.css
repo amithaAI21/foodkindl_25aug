@@ -2011,3 +2011,78 @@
 .cd-side-nav .cd-sos-nav:hover svg {
   color: #ffffff;
 }
+
+/* FoodKindl Connect Dashboard: stats within the welcome banner.
+   Append to the END of src/styles/connect_dashboard.css */
+
+.cd-hero.cd-hero-with-stats {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-height: 330px;
+  height: auto;
+  padding: 28px 30px;
+  overflow: hidden;
+}
+
+.cd-hero-with-stats .cd-hero-content {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  justify-content: space-between;
+  width: 100%;
+  min-height: 270px;
+}
+
+.cd-hero-welcome { max-width: 720px; }
+
+.cd-hero-stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  width: 100%;
+  margin-top: 28px;
+}
+
+.cd-hero-stat-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  padding: 13px 15px;
+  border: 1px solid rgba(255, 110, 45, 0.28);
+  border-radius: 12px;
+  background: rgba(22, 12, 8, 0.84);
+  color: #fff;
+  font: inherit;
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background .2s ease, border-color .2s ease;
+}
+
+.cd-hero-stat-card:hover,
+.cd-hero-stat-card:focus-visible {
+  background: rgba(61, 29, 16, .9);
+  border-color: #ff6b35;
+}
+
+.cd-hero-stat-card > svg { flex: 0 0 auto; color: #ff6b35; }
+.cd-hero-stat-card > span { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.cd-hero-stat-card strong { font-size: 20px; font-weight: 800; line-height: 1; }
+.cd-hero-stat-card small { color: #c4b5ad; font-size: 11px; }
+
+@media (max-width: 900px) {
+  .cd-hero.cd-hero-with-stats { padding: 24px; }
+  .cd-hero-stats { gap: 8px; }
+  .cd-hero-stat-card { padding: 11px; gap: 8px; }
+}
+
+@media (max-width: 600px) {
+  .cd-hero.cd-hero-with-stats { min-height: 0; padding: 20px; }
+  .cd-hero-with-stats .cd-hero-content { min-height: 0; }
+  .cd-hero-stats { grid-template-columns: 1fr; margin-top: 22px; }
+  .cd-hero-stat-card { padding: 11px 13px; }
+}

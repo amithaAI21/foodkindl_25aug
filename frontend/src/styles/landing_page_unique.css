@@ -4712,3 +4712,396 @@ html[data-page-hidden="true"] *::after {
     display: none;
   }
 }
+
+.fk-landing .fk-food-walk-shell {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+  gap: clamp(20px, 3vw, 40px);
+  align-items: stretch;
+}
+
+.fk-landing .fk-food-walk-route {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.fk-landing .fk-food-walk-video {
+  min-width: 0;
+  padding: clamp(20px, 3vw, 32px);
+  border: 1px solid rgba(255, 112, 35, 0.35);
+  border-radius: 24px;
+  background: linear-gradient(145deg, #211008, #100b08);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  box-sizing: border-box;
+}
+
+.fk-food-walk-video h3 {
+  margin: 12px 0;
+  color: #fff4e8;
+  font-size: clamp(24px, 2.5vw, 34px);
+  line-height: 1.2;
+}
+
+.fk-food-walk-video p {
+  margin: 0 0 24px;
+  color: #d6c3b3;
+  font-size: 16px;
+  line-height: 1.6;
+}
+
+.fk-food-walk-video-player {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  object-fit: contain;
+  background: #000;
+  border: 1px solid rgba(255, 112, 35, 0.25);
+  border-radius: 16px;
+}
+
+@media (max-width: 900px) {
+  .fk-landing .fk-food-walk-shell {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Give the video more space than the route card */
+.fk-landing #food-walk .fk-food-walk-shell {
+  display: grid;
+  grid-template-columns: minmax(0, 0.7fr) minmax(0, 1.3fr);
+  gap: 24px;
+  align-items: stretch;
+}
+
+/* Smaller, quieter route card */
+.fk-landing #food-walk .fk-food-walk-route {
+  width: 100%;
+  min-width: 0;
+  padding: 20px;
+  border-color: rgba(255, 112, 35, 0.22);
+  box-sizing: border-box;
+}
+
+.fk-landing #food-walk .fk-food-walk-route-head {
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.fk-landing #food-walk .fk-route-title {
+  font-size: clamp(20px, 2vw, 28px);
+}
+
+.fk-landing #food-walk .fk-route-content {
+  min-width: 0;
+  width: 100%;
+}
+
+.fk-landing #food-walk .fk-route-stops {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+/* Larger, highlighted video card */
+.fk-landing #food-walk .fk-food-walk-video {
+  min-width: 0;
+  padding: clamp(24px, 3vw, 40px);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  border: 2px solid #ff782d;
+  border-radius: 24px;
+  background: linear-gradient(145deg, #32170c, #160d08);
+  box-shadow:
+    0 0 32px rgba(255, 112, 35, 0.14),
+    0 20px 48px rgba(0, 0, 0, 0.3);
+  box-sizing: border-box;
+}
+
+.fk-landing #food-walk .fk-food-walk-video h3 {
+  margin: 14px 0;
+  color: #fff5e9;
+  font-size: clamp(28px, 3vw, 42px);
+  line-height: 1.15;
+}
+
+.fk-landing #food-walk .fk-food-walk-video p {
+  margin-bottom: 24px;
+  color: #ead5c5;
+  font-size: 17px;
+  line-height: 1.6;
+}
+
+.fk-landing #food-walk .fk-food-walk-video-player {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 16 / 9;
+  object-fit: contain;
+  border: 1px solid rgba(255, 160, 95, 0.5);
+  border-radius: 16px;
+  background: #000;
+}
+
+/* Stack on mobile */
+@media (max-width: 900px) {
+  .fk-landing #food-walk .fk-food-walk-shell {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  /* Show the video first on mobile */
+  .fk-landing #food-walk .fk-food-walk-video {
+    order: -1;
+  }
+}
+
+/* Balanced route and video layout */
+.fk-landing #food-walk .fk-food-walk-shell {
+  display: grid !important;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 3fr) !important;
+  gap: 28px;
+  align-items: start !important;
+}
+
+/* Route card */
+.fk-landing #food-walk .fk-food-walk-route {
+  width: 100% !important;
+  max-width: none !important;
+  min-width: 0;
+  min-height: 0 !important;
+  height: auto !important;
+  padding: 24px !important;
+  border: 1px solid #59321f;
+  border-radius: 20px;
+  background: #130d09;
+  box-sizing: border-box;
+}
+
+.fk-landing #food-walk .fk-food-walk-route-head {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.fk-landing #food-walk .fk-route-title {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  font-size: 24px;
+}
+
+.fk-landing #food-walk .fk-route-content {
+  width: 100%;
+  min-width: 0;
+  margin: 20px 0;
+}
+
+.fk-landing #food-walk .fk-animated-route-map {
+  width: 100%;
+  height: 150px;
+  min-height: 0;
+  margin: 0 0 20px;
+  overflow: hidden;
+}
+
+.fk-landing #food-walk .fk-route-stops {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 18px 12px;
+}
+
+.fk-landing #food-walk .fk-route-stop {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  min-width: 0;
+}
+
+.fk-landing #food-walk .fk-route-stop-marker {
+  flex: 0 0 auto;
+}
+
+.fk-landing #food-walk .fk-route-connector {
+  display: none;
+}
+
+.fk-landing #food-walk .fk-route-stop-copy {
+  min-width: 0;
+  text-align: left;
+}
+
+.fk-landing #food-walk .fk-route-stop-copy strong,
+.fk-landing #food-walk .fk-route-stop-copy small {
+  display: block;
+  white-space: normal !important;
+  overflow: visible !important;
+  text-overflow: clip !important;
+}
+
+.fk-landing #food-walk .fk-route-stop-copy strong {
+  font-size: 15px;
+  line-height: 1.4;
+}
+
+.fk-landing #food-walk .fk-route-stop-copy small {
+  margin-top: 4px;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.fk-landing #food-walk .fk-route-summary {
+  display: flex !important;
+  flex-direction: row !important;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+  gap: 10px;
+}
+
+/* Video remains the main focus */
+.fk-landing #food-walk .fk-food-walk-video {
+  width: 100% !important;
+  max-width: none !important;
+  min-width: 0;
+  padding: 24px !important;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start !important;
+  border: 1px solid #8b4c29;
+  border-radius: 20px;
+  background: linear-gradient(145deg, #24150e, #140e0a);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.25);
+  box-sizing: border-box;
+}
+
+.fk-landing #food-walk .fk-food-walk-video h3 {
+  margin: 12px 0;
+  font-size: clamp(25px, 2.5vw, 36px);
+  line-height: 1.2;
+  color: #fff4e8;
+}
+
+.fk-landing #food-walk .fk-food-walk-video p {
+  margin: 0 0 20px;
+  font-size: 15px;
+  line-height: 1.6;
+  color: #d9c5b6;
+}
+
+.fk-landing #food-walk .fk-food-walk-video-player {
+  display: block;
+  width: 100% !important;
+  max-width: none !important;
+  height: auto !important;
+  aspect-ratio: 16 / 9;
+  object-fit: contain;
+  border: 1px solid #54321f;
+  border-radius: 12px;
+  background: #000;
+}
+
+/* Show video first when stacked */
+@media (max-width: 1000px) {
+  .fk-landing #food-walk .fk-food-walk-shell {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+
+  .fk-landing #food-walk .fk-food-walk-video {
+    order: -1;
+  }
+}
+
+@media (max-width: 480px) {
+  .fk-landing #food-walk .fk-food-walk-route,
+  .fk-landing #food-walk .fk-food-walk-video {
+    padding: 18px !important;
+  }
+}
+
+/* Limit and centre the Food Walk section */
+.fk-landing #food-walk {
+  width: 100% !important;
+  max-width: 1440px !important;
+  margin: 0 auto !important;
+  padding: 48px clamp(16px, 3vw, 40px) !important;
+  box-sizing: border-box;
+}
+
+.fk-landing #food-walk .fk-section-heading {
+  width: 100%;
+  max-width: none;
+}
+
+/* Route 40%, video 60% */
+.fk-landing #food-walk .fk-food-walk-shell {
+  display: grid !important;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 3fr) !important;
+  width: 100% !important;
+  max-width: none !important;
+  margin: 24px 0 0 !important;
+  gap: 28px;
+  align-items: start !important;
+}
+
+.fk-landing #food-walk .fk-food-walk-route,
+.fk-landing #food-walk .fk-food-walk-video {
+  width: 100% !important;
+  max-width: none !important;
+  min-width: 0 !important;
+  height: auto !important;
+  min-height: 0 !important;
+  box-sizing: border-box;
+}
+
+.fk-landing #food-walk .fk-food-walk-video-player {
+  display: block;
+  width: 100% !important;
+  max-width: none !important;
+  height: auto !important;
+  aspect-ratio: 16 / 9;
+  object-fit: contain;
+}
+
+.fk-landing #food-walk .fk-route-summary {
+  display: flex !important;
+  flex-direction: row !important;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+  gap: 10px;
+}
+
+@media (max-width: 900px) {
+  .fk-landing #food-walk .fk-food-walk-shell {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+
+  .fk-landing #food-walk .fk-food-walk-video {
+    order: -1;
+  }
+}
+
+
+/* Image */
+#learn-create-share .fk-ecosystem-image img {
+  display: block;
+  width: 100% !important;
+  max-width: none !important;
+  height: auto !important;
+  object-fit: contain;
+}
+
+/* Mobile responsive */
+@media (max-width: 768px) {
+  .fk-landing section#learn-create-share {
+    width: calc(100% - 20px) !important;
+    margin: 25px auto !important;
+  }
+
+  #learn-create-share .fk-ecosystem-image {
+    border-radius: 12px;
+  }
+}

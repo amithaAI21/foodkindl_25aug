@@ -2275,3 +2275,116 @@
     font-size: 1rem;
   }
 }
+
+/* Add at the end of src/styles/profile.css */
+.fk-profile-layout { display:grid; grid-template-columns:240px minmax(0,1fr); gap:28px; align-items:start; max-width:1440px; margin:0 auto; }
+.fk-profile-sidebar { position:sticky; top:24px; background:#fff; border:1px solid #e7ebe7; border-radius:20px; padding:25px 15px; display:flex; flex-direction:column; gap:8px; box-shadow:0 10px 30px rgba(24,52,32,.04); }
+.fk-profile-sidebar-brand { display:flex; align-items:center; gap:10px; font-weight:800; color:#226a43; font-size:21px; padding:6px 13px 22px; }
+.fk-profile-sidebar-caption { font-size:11px; letter-spacing:.12em; font-weight:800; color:#85948b; margin:5px 13px 7px; }
+.fk-profile-sidebar a { display:flex; align-items:center; gap:12px; padding:13px; color:#44564b; text-decoration:none; border-radius:12px; font-weight:600; }
+.fk-profile-sidebar a:hover,.fk-profile-sidebar a:focus-visible { background:#eaf5ec; color:#226a43; }
+.fk-profile-sidebar-bottom { margin-top:35px; border-top:1px solid #edf0ec; padding:19px 13px 4px; font-size:12px; color:#8a9a8f; }
+.fk-profile-main { min-width:0; }
+.fk-profile-main .profile-identity-hero { border-radius:20px; }
+.fk-profile-main .profile-settings-card,.fk-profile-main .profile-wide-card { border-radius:18px; }
+#profile-about,#profile-food,#profile-privacy,#profile-gallery { scroll-margin-top:28px; }
+@media(max-width:900px){ .fk-profile-layout { grid-template-columns:1fr; gap:16px; } .fk-profile-sidebar { position:static; flex-direction:row; flex-wrap:wrap; padding:12px; } .fk-profile-sidebar-brand { width:100%; padding:8px; } .fk-profile-sidebar-caption,.fk-profile-sidebar-bottom { display:none; } .fk-profile-sidebar a { font-size:13px; padding:10px; } }
+
+
+/* FoodKindl profile layout fixes */
+
+.foodkindl-profile-page {
+  width: 100%;
+  max-width: 100%;
+  min-height: 100vh;
+  height: auto !important;
+  overflow: visible !important;
+  box-sizing: border-box;
+  padding-bottom: 150px !important;
+}
+
+.foodkindl-profile-page .professional-profile-form {
+  min-width: 0;
+  width: 100%;
+  max-width: 100%;
+  height: auto !important;
+  overflow: visible !important;
+}
+
+.foodkindl-profile-page .profile-settings-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 24px;
+  align-items: start;
+  height: auto !important;
+  overflow: visible !important;
+}
+
+.foodkindl-profile-page .profile-settings-card,
+.foodkindl-profile-page .profile-wide-card {
+  min-width: 0;
+  width: 100%;
+  height: auto !important;
+  min-height: 0;
+  max-height: none !important;
+  overflow: visible !important;
+  box-sizing: border-box;
+}
+
+.foodkindl-profile-page .profile-save-area {
+  position: relative !important;
+  bottom: auto !important;
+  left: auto !important;
+  right: auto !important;
+  width: 100%;
+  margin-top: 24px;
+  z-index: 1;
+}
+
+.foodkindl-profile-page .professional-photo-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 20px;
+}
+
+.foodkindl-profile-page .profile-privacy-options {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.foodkindl-profile-page .profile-privacy-option {
+  min-width: 0;
+  height: auto;
+}
+
+.foodkindl-profile-page input,
+.foodkindl-profile-page select,
+.foodkindl-profile-page textarea {
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+@media (max-width: 1100px) {
+  .foodkindl-profile-page .profile-settings-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .foodkindl-profile-page {
+    padding: 16px 16px 150px !important;
+  }
+
+  .foodkindl-profile-page .professional-photo-grid,
+  .foodkindl-profile-page .profile-privacy-options {
+    grid-template-columns: 1fr;
+  }
+
+  .foodkindl-profile-page .profile-save-area {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 16px;
+  }
+}

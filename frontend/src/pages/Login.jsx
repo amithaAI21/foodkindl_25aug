@@ -1,791 +1,172 @@
-import {
-  ArrowRight,
-  Check,
-  ChefHat,
-  Eye,
-  EyeOff,
-  Footprints,
-  Heart,
-  MapPin,
-  Send,
-  ShieldCheck,
-  Sparkles,
-  Utensils,
-  Users,
-} from "lucide-react";
-
+import { ArrowRight, ChefHat, Eye, EyeOff, ShieldCheck, Sparkles } from "lucide-react";
 import { useEffect, useState } from "react";
-
-import {
-  Link,
-  useNavigate,
-} from "react-router-dom";
-
-import {
-  useAuth,
-} from "../context/AuthContext";
-
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 import api from "../api";
-
 import "../styles/login.css";
 
+function errorMessage(err, fallback) {
+  const data = err?.response?.data;
+  for (const key of ["detail", "error", "message", "non_field_errors", "email", "password"]) {
+    if (typeof data?.[key] === "string") return data[key];
+    if (Array.isArray(data?.[key]) && data[key].length) return String(data[key][0]);
+  }
+  return err?.message === "Network Error"
+    ? "Unable to connect to the FoodKindl server."
+    : err?.message && !err?.response ? err.message : fallback;
+}
 
 export default function Login() {
+  const { login } = useAuth();
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const [form, setForm] = useState({ email: "", password: "" });
+  const [error, setError] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
+  const [authenticated, setAuthenticated] = useState(false);
 
-  const {
-    login,
-  } = useAuth();
-
-  const navigate =
-    useNavigate();
-
-
-  const [
-    form,
-    setForm,
-  ] = useState({
-    email: "",
-    password: "",
-  });
-
-
-  const [
-    error,
-    setError,
-  ] = useState("");
-
-
-  const [
-    submitting,
-    setSubmitting,
-  ] = useState(false);
-
-
-  const [
-    showPassword,
-    setShowPassword,
-  ] = useState(false);
-
-
-  const [
-    rememberMe,
-    setRememberMe,
-  ] = useState(false);
-
-
-  // =========================================================
-  // REMEMBER USER
-  // =========================================================
+  const email = form.email.trim().toLowerCase();
+  const verification = searchParams.get("verified");
 
   useEffect(() => {
-
-    const rememberedEmail =
-      localStorage.getItem(
-        "foodkindl_remembered_email"
-      );
-
-    if (rememberedEmail) {
-
-      setForm(
-        previous => ({
-          ...previous,
-          email: rememberedEmail,
-        })
-      );
-
+    const saved = localStorage.getItem("foodkindl_remembered_email");
+    if (saved) {
+      setForm(previous => ({ ...previous, email: saved }));
       setRememberMe(true);
     }
-
   }, []);
 
-
-  // =========================================================
-  // UPDATE FIELD
-  // =========================================================
-
-  function updateField(
-    field,
-    value
-  ) {
-
-    setForm(
-      previous => ({
-        ...previous,
-        [field]: value,
-      })
-    );
-
-    if (error) {
-      setError("");
-    }
+  function updateField(field, value) {
+    setForm(previous => ({ ...previous, [field]: value }));
+    setError("");
   }
 
+  async function finishLogin() {
+    const response = await api.get("/auth/session-context/");
+    if (!response.data) throw new Error("Account information unavailable.");
 
-  // =========================================================
-  // LOGIN
-  // =========================================================
+    if (rememberMe) localStorage.setItem("foodkindl_remembered_email", email);
+    else localStorage.removeItem("foodkindl_remembered_email");
 
-  async function submit(
-    event
-  ) {
+    navigate(response.data.account_type === "partner" ? "/partner/dashboard" : "/dashboard", { replace: true });
+  }
 
+  async function submit(event) {
     event.preventDefault();
-
-    if (submitting) {
-      return;
-    }
-
-    setError("");
+    if (submitting) return;
     setSubmitting(true);
+    setError("");
+    let loggedIn = authenticated;
 
     try {
-
-      // =====================================================
-      // 1. LOGIN
-      // =====================================================
-
-      console.log(
-        "1. Attempting login..."
-      );
-
-      await login(
-        form.email
-          .trim()
-          .toLowerCase(),
-
-        form.password
-      );
-
-      console.log(
-        "2. Login successful."
-      );
-
-
-      if (rememberMe) {
-
-        localStorage.setItem(
-          "foodkindl_remembered_email",
-          form.email
-            .trim()
-            .toLowerCase()
-        );
-
-      } else {
-
-        localStorage.removeItem(
-          "foodkindl_remembered_email"
-        );
-      }
-
-
-      // =====================================================
-      // 2. LOAD SESSION CONTEXT
-      // =====================================================
-
-      let session;
-
-      try {
-
-        const contextResponse =
-          await api.get(
-            "/auth/session-context/"
-          );
-
-        session =
-          contextResponse?.data;
-
-        console.log(
-          "3. Session context:",
-          session
-        );
-
-      } catch (sessionError) {
-
-        console.error(
-          "SESSION CONTEXT ERROR:",
-          sessionError?.response?.status,
-          sessionError?.response?.data,
-          sessionError
-        );
-
-        const backendMessage =
-          sessionError?.response?.data?.detail ||
-          sessionError?.response?.data?.error ||
-          sessionError?.response?.data?.message;
-
-        setError(
-          backendMessage ||
-          (
-            sessionError?.response?.status
-              ? `Unable to load account information. Error ${sessionError.response.status}.`
-              : "Unable to load account information."
-          )
-        );
-
-        return;
-      }
-
-
-      // =====================================================
-      // 3. SESSION CHECK
-      // =====================================================
-
-      if (!session) {
-
-        setError(
-          "FoodKindl could not load your account information."
-        );
-
-        return;
-      }
-
-
-      // =====================================================
-      // 4. RESTAURANT PARTNER
-      // =====================================================
-
-      if (
-        session?.account_type ===
-        "partner"
-      ) {
-
-        console.log(
-          "Restaurant Partner detected."
-        );
-
-        navigate(
-          "/partner/dashboard",
-          {
-            replace: true,
-          }
-        );
-
-        return;
-      }
-
-
-      // =====================================================
-      // 5. NORMAL MEMBER
-      // =====================================================
-
-      console.log(
-        "FoodKindl Member detected."
-      );
-
-      navigate(
-        "/dashboard",
-        {
-          replace: true,
+      if (!loggedIn) {
+        if (!email || !form.password) throw new Error("Enter your email and password.");
+        await login(email, form.password);
+        if (!localStorage.getItem("foodkindl_access")) {
+          throw new Error("Login could not establish an authenticated session.");
         }
-      );
-
-
-    } catch (loginError) {
-
-      console.error(
-        "LOGIN ERROR:",
-        loginError?.response?.status,
-        loginError?.response?.data,
-        loginError
-      );
-
-
-      const data =
-        loginError?.response?.data;
-
-
-      let message =
-        "Unable to log in to FoodKindl.";
-
-
-      if (
-        typeof data?.detail ===
-        "string"
-      ) {
-
-        message =
-          data.detail;
-
-      } else if (
-        typeof data?.error ===
-        "string"
-      ) {
-
-        message =
-          data.error;
-
-      } else if (
-        typeof data?.message ===
-        "string"
-      ) {
-
-        message =
-          data.message;
-
-      } else if (
-        Array.isArray(
-          data?.non_field_errors
-        ) &&
-        data.non_field_errors.length > 0
-      ) {
-
-        message =
-          data.non_field_errors[0];
-
-      } else if (
-        Array.isArray(
-          data?.email
-        ) &&
-        data.email.length > 0
-      ) {
-
-        message =
-          data.email[0];
-
-      } else if (
-        Array.isArray(
-          data?.password
-        ) &&
-        data.password.length > 0
-      ) {
-
-        message =
-          data.password[0];
-
-      } else if (
-        typeof data?.email ===
-        "string"
-      ) {
-
-        message =
-          data.email;
-
-      } else if (
-        typeof data?.password ===
-        "string"
-      ) {
-
-        message =
-          data.password;
-
-      } else if (
-        typeof data ===
-        "string"
-      ) {
-
-        message =
-          data;
-
-      } else if (
-        loginError?.message ===
-        "Network Error"
-      ) {
-
-        message =
-          "Unable to connect to the FoodKindl server.";
-
-      } else if (
-        typeof loginError?.message ===
-        "string" &&
-        loginError.message
-      ) {
-
-        message =
-          loginError.message;
+        loggedIn = true;
+        setAuthenticated(true);
       }
-
-
-      setError(
-        message
-      );
-
-
+      await finishLogin();
+    } catch (err) {
+      if (loggedIn && (err?.response?.status === 401 || err?.response?.status === 403)) {
+        setAuthenticated(false);
+        setError("Your session was rejected. Please log in again.");
+      } else {
+        setError(errorMessage(err, loggedIn
+          ? "You are logged in, but account information could not be loaded. Click Continue to retry."
+          : "Unable to log in. Check your details and try again."));
+      }
     } finally {
-
-      setSubmitting(
-        false
-      );
+      setSubmitting(false);
     }
   }
 
-
-  // =========================================================
-  // UI
-  // =========================================================
-
   return (
-
     <main className="foodkindl-login-page">
-
-
-      {/* =====================================================
-          BACKGROUND
-      ====================================================== */}
-
-      <div
-        className="
-          login-background-glow
-          login-background-glow-one
-        "
-      />
-
-      <div
-        className="
-          login-background-glow
-          login-background-glow-two
-        "
-      />
-
-
-      {/* =====================================================
-          MAIN LOGIN AREA
-      ====================================================== */}
-
+      <div className="login-background-glow login-background-glow-one" />
+      <div className="login-background-glow login-background-glow-two" />
       <section className="login-shell">
-
-
-        {/* ===================================================
-            LEFT SIDE
-        ==================================================== */}
-
         <aside className="login-community-panel">
-
-
           <div className="login-community-content">
-
-
-            <div className="login-story-pill">
-
-              <Sparkles
-                size={14}
-              />
-
-              YOUR FOOD COMMUNITY IS WAITING
-
-            </div>
-
-
-            <h1>
-
-              Welcome back to
-              your{" "}
-
-              <span>
-                food community.
-              </span>
-
-            </h1>
-
-
+            <div className="login-story-pill"><Sparkles size={14} /> YOUR FOOD COMMUNITY IS WAITING</div>
+            <h1>Welcome back to your <span>food community.</span></h1>
             <p className="login-community-description">
-
-              Continue conversations,
-              discover nearby members,
-              respond to Food Invites
-              and create your next shared
-              food experience.
-
+              Continue conversations, discover nearby members, respond to Food Invites
+              and create your next shared food experience.
             </p>
-
-
-            {/* ===============================================
-                LIVE COMMUNITY PREVIEW
-            ================================================ */}
-
-            {/* ===============================================
-    FOODKINDL EXPERIENCE IMAGE
-================================================ */}
-
-<div className="login-community-image-card">
-
-  <img
-    src="/images/dynamic.webp"
-    alt="People connecting over food with FoodKindl"
-    loading="eager"
-    decoding="async"
-  />
-
-
-</div>
+            <div className="login-community-image-card">
+              <img src="/images/dynamic.webp" alt="People connecting over food with FoodKindl" loading="eager" decoding="async" />
+            </div>
           </div>
-
         </aside>
 
-
-        {/* ===================================================
-            RIGHT SIDE
-        ==================================================== */}
-
         <section className="login-form-panel">
-
-
           <div className="login-form-card">
-
-
-            {/* ===============================================
-                HEADER
-            ================================================ */}
-
             <div className="login-form-header">
-
-
-              <div className="login-form-icon">
-
-                <ChefHat
-                  size={24}
-                />
-
-              </div>
-
-
-              <div className="login-eyebrow">
-                FOODKINDL CONNECT
-              </div>
-
-
-              <h2>
-                Welcome back
-              </h2>
-
-
-              <p>
-                Log in to continue discovering
-                people, Food Invites and shared
-                food experiences.
-              </p>
-
+              <div className="login-form-icon"><ChefHat size={24} /></div>
+              <div className="login-eyebrow">FOODKINDL CONNECT</div>
+              <h2>Welcome back</h2>
+              <p>Log in to continue discovering people, Food Invites and shared food experiences.</p>
             </div>
 
+            {verification === "1" && (
+              <p role="status" style={{ marginBottom: 16 }}>
+                Email verified successfully! Please log in to continue.
+              </p>
+            )}
+            {verification === "0" && (
+              <div className="login-error" role="alert" style={{ marginBottom: 16 }}>
+                The verification link is invalid or expired. Please request a new link.
+              </div>
+            )}
 
-            {/* ===============================================
-                FORM
-            ================================================ */}
-
-            <form
-              onSubmit={
-                submit
-              }
-            >
-
-
-              {/* EMAIL */}
-
-              <label>
-
-                Email address
-
-                <input
-                  type="email"
-                  required
-                  autoComplete="email"
-                  value={
-                    form.email
-                  }
-                  onChange={
-                    event =>
-                      updateField(
-                        "email",
-                        event.target.value
-                      )
-                  }
-                  placeholder="you@example.com"
-                />
-
+            <form onSubmit={submit}>
+              <label>Email address
+                <input type="email" required autoComplete="email" value={form.email}
+                  disabled={submitting || authenticated}
+                  onChange={event => updateField("email", event.target.value)} placeholder="you@example.com" />
               </label>
 
-
-              {/* PASSWORD */}
-
-              <label>
-
-                Password
-
+              <label>Password
                 <div className="login-password-field">
-
-                  <input
-                    type={
-                      showPassword
-                        ? "text"
-                        : "password"
-                    }
-                    required
-                    autoComplete="current-password"
-                    value={
-                      form.password
-                    }
-                    onChange={
-                      event =>
-                        updateField(
-                          "password",
-                          event.target.value
-                        )
-                    }
-                    placeholder="Enter your password"
-                  />
-
-
-                  <button
-                    type="button"
-                    className="login-password-toggle"
-                    onClick={() =>
-                      setShowPassword(
-                        current =>
-                          !current
-                      )
-                    }
-                    aria-label={
-                      showPassword
-                        ? "Hide password"
-                        : "Show password"
-                    }
-                  >
-
-                    {
-                      showPassword
-                        ? (
-                            <EyeOff
-                              size={17}
-                            />
-                          )
-                        : (
-                            <Eye
-                              size={17}
-                            />
-                          )
-                    }
-
+                  <input type={showPassword ? "text" : "password"} required={!authenticated}
+                    disabled={submitting || authenticated} autoComplete="current-password" value={form.password}
+                    onChange={event => updateField("password", event.target.value)} placeholder="Enter your password" />
+                  <button type="button" className="login-password-toggle"
+                    onClick={() => setShowPassword(current => !current)}
+                    aria-label={showPassword ? "Hide password" : "Show password"}>
+                    {showPassword ? <EyeOff size={17} /> : <Eye size={17} />}
                   </button>
-
                 </div>
-
               </label>
-
-
-              {/* FORGOT PASSWORD */}
 
               <div className="login-form-options">
-
                 <label className="login-remember-option">
-  <input
-    type="checkbox"
-    className="login-remember-checkbox"
-    checked={rememberMe}
-    onChange={(event) =>
-      setRememberMe(event.target.checked)
-    }
-  />
-
-  <span className="login-remember-text">
-    Remember me
-  </span>
-</label>
-
-                <Link
-                  to="/forgot-password"
-                >
-                  Forgot password?
-                </Link>
-
+                  <input type="checkbox" className="login-remember-checkbox" checked={rememberMe}
+                    disabled={submitting} onChange={event => setRememberMe(event.target.checked)} />
+                  <span className="login-remember-text">Remember my email</span>
+                </label>
+                <Link to="/forgot-password">Forgot password?</Link>
               </div>
 
+              {error && <div className="login-error" role="alert">{error}</div>}
 
-              {/* ERROR */}
-
-              {
-                error &&
-                (
-
-                  <div
-                    className="login-error"
-                    role="alert"
-                  >
-
-                    {error}
-
-                  </div>
-
-                )
-              }
-
-
-              {/* SUBMIT */}
-
-              <button
-                type="submit"
-                className="login-submit-button"
-                disabled={
-                  submitting
-                }
-              >
-
-                {
-                  submitting
-                    ? (
-                        "Logging in..."
-                      )
-                    : (
-                        <>
-
-                          Login to FoodKindl
-
-                          <ArrowRight
-                            size={17}
-                          />
-
-                        </>
-                      )
-                }
-
+              <button type="submit" className="login-submit-button" disabled={submitting}>
+                {submitting ? "Please wait..." : authenticated ? "Continue" : <>
+                  Login to FoodKindl <ArrowRight size={17} />
+                </>}
               </button>
-
             </form>
 
-
-            {/* ===============================================
-                REGISTER
-            ================================================ */}
-
-            <div className="login-register">
-
-
-              <span>
-                New to FoodKindl?
-              </span>
-
-
-              <Link
-                to="/register"
-              >
-                Create an account
-              </Link>
-
-            </div>
-
-
-            {/* ===============================================
-                SECURITY FOOTER
-            ================================================ */}
-
-            <div className="login-security-note">
-
-              <ShieldCheck
-                size={13}
-              />
-
-              <span>
-                Your account and personal information
-                are protected using FoodKindl&apos;s
-                security controls.
-              </span>
-
-            </div>
-
+            <div className="login-register"><span>New to FoodKindl?</span><Link to="/register">Create an account</Link></div>
+            <div className="login-security-note"><ShieldCheck size={13} /><span>Keep your password private.</span></div>
           </div>
-
         </section>
-
       </section>
-
     </main>
   );
 }

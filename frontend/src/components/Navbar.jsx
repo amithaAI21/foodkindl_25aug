@@ -122,13 +122,6 @@ export default function Navbar() {
     user?.email ||
     "FoodKindl Member";
 
-
-  const isVerified =
-    profile.is_verified === true &&
-    profile.verification_status ===
-      "approved";
-
-
   // =========================================================
   // ACTIVE NAVIGATION
   // =========================================================
@@ -338,15 +331,6 @@ export default function Navbar() {
                       size={20}
                     />
                   )}
-
-                  {isVerified && (
-                    <span
-                      className="navbar-avatar-verified"
-                      title="Verified"
-                    >
-                      ✓
-                    </span>
-                  )}
                 </div>
 
 
@@ -405,21 +389,6 @@ export default function Navbar() {
                         }
                       </strong>
 
-
-                      <span
-                        className={
-                          isVerified
-                            ? "navbar-profile-status verified"
-                            : "navbar-profile-status"
-                        }
-                      >
-                        {
-                          isVerified
-                            ? "✓ Verified member"
-                            : "Verification incomplete"
-                        }
-                      </span>
-
                     </div>
 
                   </div>
@@ -466,38 +435,6 @@ export default function Navbar() {
                       Settings
                     </span>
                   </Link>
-
-
-                  {/* =========================================
-                      SAFETY & VERIFICATION
-                  ========================================= */}
-
-                  <Link
-                    to="/safety-verification"
-                    className="navbar-dropdown-item"
-                    onClick={close}
-                  >
-                    <ShieldCheck
-                      size={18}
-                    />
-
-                    <div>
-                      <span>
-                        Safety &amp;
-                        Verification
-                      </span>
-
-                      <small>
-                        {
-                          isVerified
-                            ? "Identity verified"
-                            : "Complete verification"
-                        }
-                      </small>
-                    </div>
-                  </Link>
-
-
                   <div
                     className="navbar-dropdown-divider"
                   />

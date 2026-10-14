@@ -14,6 +14,7 @@ import {
   RefreshCw,
   Repeat2,
   Search,
+  ShieldCheck,
   Send,
   Share2,
   Sparkles,
@@ -210,17 +211,16 @@ async function uploadMediaToNetlify(file) {
   }
 
   const maxImageSize =
-    10 * 1024 * 1024;
+    4 * 1024 * 1024;
 
-  const maxVideoSize =
-    50 * 1024 * 1024;
+    const maxVideoSize = 4 * 1024 * 1024;
 
   if (
     isImage &&
     file.size > maxImageSize
   ) {
     throw new Error(
-      "Image must be smaller than 10 MB."
+      "Image must be smaller than 4 MB."
     );
   }
 
@@ -229,7 +229,7 @@ async function uploadMediaToNetlify(file) {
     file.size > maxVideoSize
   ) {
     throw new Error(
-      "Video must be smaller than 50 MB."
+      "Video must be smaller than 4 MB."
     );
   }
 
@@ -1496,23 +1496,6 @@ export default function Community({
      MESSAGE
   ========================================================== */
 
-  function isGovernmentIdVerified(
-    member
-  ) {
-    return Boolean(
-      member
-        ?.profile
-        ?.is_verified ===
-        true &&
-
-      member
-        ?.profile
-        ?.verification_status ===
-        "approved"
-    );
-  }
-
-
   function openDirectMessage(
     event,
     member
@@ -1537,30 +1520,6 @@ export default function Community({
     ) {
       setError(
         "You cannot message yourself."
-      );
-
-      return;
-    }
-
-    if (
-      !isGovernmentIdVerified(
-        user
-      )
-    ) {
-      setError(
-        "Please complete Government ID verification before messaging members."
-      );
-
-      return;
-    }
-
-    if (
-      !isGovernmentIdVerified(
-        member
-      )
-    ) {
-      setError(
-        "You can message only Government ID verified members."
       );
 
       return;
@@ -1931,17 +1890,6 @@ export default function Community({
                     post.author
                   )}
                 </div>
-              )}
-
-              {isGovernmentIdVerified(
-                post.author
-              ) && (
-                <span
-                  className="fk-verified-dot"
-                  title="Verified member"
-                >
-                  ✓
-                </span>
               )}
 
             </div>
@@ -2797,14 +2745,6 @@ export default function Community({
 
                 )}
 
-                {isGovernmentIdVerified(
-                  user
-                ) && (
-                  <span className="fk-verified-dot">
-                    ✓
-                  </span>
-                )}
-
               </div>
 
 
@@ -3207,6 +3147,17 @@ export default function Community({
                 </p>
 
               )}
+              
+              {/* FOODKINDL POSTING GUIDELINE */}
+              <div className="fk-post-guideline" role="note">
+                <ShieldCheck size={18} aria-hidden="true" />
+                <p>
+                  <strong>Keep it food-related.</strong>{" "}
+                  Share cooking moments, recipes, restaurant
+                  discoveries, and experiences that bring
+                  people together through food.
+                </p>
+              </div>
 
 
               <button
