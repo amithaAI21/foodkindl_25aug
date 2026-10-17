@@ -1,6 +1,10 @@
 
 from django.urls import path
 
+# ============================================================
+# EXISTING INVITES VIEWS
+# ============================================================
+
 from .views import (
     FoodInviteCancelView,
     FoodInviteCompleteView,
@@ -27,9 +31,35 @@ from .views import (
     RestaurantSubmissionDetailView,
 )
 
+from .booking_api import (
+    MemberCheckInView,
+    PartnerVisitVerificationView,
+    BookingVisitStatusView,
+    DailyReferralSummaryView,
+    PartnerBillPaidView,
+)
+
+
+# ============================================================
+# FOODKINDL RESTAURANT PARTNER VIEWS
+# ============================================================
+
 from .restaurant_views import (
     PartnerRestaurantListCreateView,
     PartnerRestaurantDetailView,
+)
+
+
+# ============================================================
+# FOODKINDL SOCIAL TABLE BOOKING VIEWS
+# ============================================================
+
+from .booking_api import (
+    MemberTableBookingsView,
+    MemberCancelTableBookingView,
+    PartnerTableBookingsView,
+    PartnerBookingDecisionView,
+    DineOutBookingEligibilityView,
 )
 
 
@@ -146,7 +176,7 @@ urlpatterns = [
     ),
 
     # ========================================================
-    # RESTAURANT BOOKINGS
+    # EXISTING RESTAURANT BOOKINGS
     # ========================================================
 
     path(
@@ -174,6 +204,53 @@ urlpatterns = [
     ),
 
     # ========================================================
+    # FOODKINDL SOCIAL DINE OUT — TABLE BOOKINGS
+    # ========================================================
+
+    # Member can view their table booking or request a new one.
+    path(
+        "table-bookings/",
+        MemberTableBookingsView.as_view(),
+        name="table-bookings",
+    ),
+
+    # Check whether a Dine Out invitation is eligible
+    # for table booking.
+    #
+    # Conditions enforced by the booking API:
+    # 1. Logged-in user is the invitation host.
+    # 2. At least one guest has accepted.
+    # 3. Restaurant is a registered FoodKindl Partner.
+    # 4. Restaurant accepts FoodKindl bookings.
+    # 5. An active booking does not already exist.
+    path(
+        "table-bookings/eligibility/<int:dine_out_id>/",
+        DineOutBookingEligibilityView.as_view(),
+        name="dineout-booking-eligibility",
+    ),
+
+    # Member cancels an existing booking.
+    path(
+        "table-bookings/<int:booking_id>/cancel/",
+        MemberCancelTableBookingView.as_view(),
+        name="table-booking-cancel",
+    ),
+
+    # Restaurant partner views incoming booking requests.
+    path(
+        "partner/table-bookings/",
+        PartnerTableBookingsView.as_view(),
+        name="partner-table-bookings",
+    ),
+
+    # Restaurant partner confirms or rejects a booking.
+    path(
+        "partner/table-bookings/<int:booking_id>/decision/",
+        PartnerBookingDecisionView.as_view(),
+        name="partner-table-booking-decision",
+    ),
+
+    # ========================================================
     # LOCATION AUTOCOMPLETE
     # ========================================================
 
@@ -188,4 +265,33 @@ urlpatterns = [
         LocationAutocompleteView.as_view(),
         name="location-autocomplete-legacy",
     ),
+
+    path(
+    "table-bookings/<int:booking_id>/check-in/",
+    MemberCheckInView.as_view(),
+    name="member-check-in",
+),
+
+    path(
+        "table-bookings/<int:booking_id>/visit-status/",
+        BookingVisitStatusView.as_view(),
+        name="booking-visit-status",
+    ),
+
+    path(
+        "partner/table-bookings/<int:booking_id>/verify-visit/",
+        PartnerVisitVerificationView.as_view(),
+        name="partner-verify-visit",
+    ),
+    
+    path(
+    "partner/referrals/daily/",
+    DailyReferralSummaryView.as_view(),
+    name="daily-referral-summary",
+),
+    path(
+    "partner/table-bookings/<int:booking_id>/bill-paid/",
+    PartnerBillPaidView.as_view(),
+    name="partner-bill-paid",
+),
 ]

@@ -29,6 +29,8 @@ class DineOutSerializer(serializers.ModelSerializer):
     host = DineOutMemberSerializer(
         read_only=True,
     )
+    
+    is_host = serializers.SerializerMethodField()
 
     # Returned by the API for displaying selected guests
     invited_members = DineOutMemberSerializer(
@@ -86,6 +88,7 @@ class DineOutSerializer(serializers.ModelSerializer):
             "my_response_status",
             "created_at",
             "updated_at",
+            "is_host",
         )
 
         read_only_fields = (
@@ -93,6 +96,14 @@ class DineOutSerializer(serializers.ModelSerializer):
             "created_at",
             "updated_at",
         )
+    
+    def get_is_host(self, obj):
+        request = self.context.get("request")
+
+        if not request or not request.user.is_authenticated:
+            return False
+
+        return obj.host_id == request.user.id 
 
     def validate(self, attrs):
         latitude = attrs.get(

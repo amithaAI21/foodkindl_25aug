@@ -544,6 +544,9 @@ class RestaurantRecommendationView(APIView):
 
         radius = max(500, min(radius, 5000))
         limit = max(1, min(limit, 50))
+        source = request.query_params.get("source", "all").strip().lower()
+        if source not in {"all", "partner", "other"}:
+            return Response({"detail": "Invalid restaurant source."}, status=status.HTTP_400_BAD_REQUEST)
         place_type = request.query_params.get("place_type", "all").strip().lower()
         if place_type not in {"all", "restaurant", "cafe"}:
             return Response({"detail": "Invalid place_type."}, status=status.HTTP_400_BAD_REQUEST)
@@ -607,31 +610,50 @@ class RestaurantRecommendationView(APIView):
             })
         partner_results.sort(key=lambda place: place["distance_km"])
 
+        # Partner-only queries must not depend on Overpass availability or latency.
+        if source == "partner":
+            results = partner_results[:limit]
+            return Response({
+                "count": len(results), "results": results,
+                "requested_radius_metres": radius,
+                "searched_radius_metres": radius,
+                "mapped_places_in_area": 0,
+                "partner_restaurants_found": len(partner_results),
+                "external_search_unavailable": False,
+            })
+
         # Reuse cached OSM results, but never let an external provider failure
         # suppress valid FoodKindl Partner restaurants.
         cache_key = f"dineout:places:v8:{latitude:.4f}:{longitude:.4f}:{radius}"
         cached = cache.get(cache_key)
         effective_radius = radius
+        overpass_unavailable = False
         if cached is None:
             places = None
             for attempt_radius in [radius] + [r for r in (3000, 1500) if r < radius]:
                 try:
-                    places = search_places(latitude, longitude, radius_metres=attempt_radius,
-                                           fetch_elements=fetch_overpass_results)
+                    places = search_places(
+                        latitude, longitude,
+                        radius_metres=attempt_radius,
+                        fetch_elements=fetch_overpass_results,
+                    )
                     effective_radius = attempt_radius
                     break
-                except requests.RequestException:
-                    logger.warning("Overpass search failed for radius=%s", attempt_radius,
-                                   exc_info=True)
+                except requests.RequestException as error:
+                    # Upstream failure: keep the API usable for FoodKindl partners.
+                    logger.warning("Overpass failed at %sm: %s", attempt_radius, error)
+
             if places is None:
-                if not partner_results:
-                    return Response({"detail": "Restaurant search is temporarily unavailable.",
-                                     "results": []}, status=status.HTTP_503_SERVICE_UNAVAILABLE)
+                overpass_unavailable = True
                 places = []
-            if effective_radius == radius and places:
-                cache.set(cache_key, (effective_radius, places), timeout=600)
+                # Cache the provider outage briefly to avoid repeated slow calls.
+                cache.set(cache_key, (radius, places, True), timeout=60)
+            elif effective_radius == radius and places:
+                cache.set(cache_key, (effective_radius, places, False), timeout=600)
         else:
-            effective_radius, places = cached
+            # Support both existing two-item cache entries and the new format.
+            effective_radius, places = cached[:2]
+            overpass_unavailable = bool(cached[2]) if len(cached) > 2 else False
 
         external_results = []
         for place in places:
@@ -676,7 +698,7 @@ class RestaurantRecommendationView(APIView):
         external_results.sort(key=lambda place: place["distance_km"])
 
         # Prefer the partner record when OSM contains the same physical venue.
-        results = list(partner_results)
+        results = list(partner_results) if source == "all" else []
         for place in external_results:
             duplicate = any(
                 place["name"].strip().casefold() == partner["name"].strip().casefold()
@@ -693,6 +715,11 @@ class RestaurantRecommendationView(APIView):
             "mapped_places_in_area": len(places),
             "searched_radius_metres": effective_radius,
             "partner_restaurants_found": len(partner_results),
+            "external_search_unavailable": overpass_unavailable,
+            "warning": (
+                "OpenStreetMap is temporarily unavailable. Showing FoodKindl Partner restaurants only."
+                if overpass_unavailable else ""
+            ),
         })
 
 

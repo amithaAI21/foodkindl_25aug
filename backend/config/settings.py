@@ -8,7 +8,7 @@ import dj_database_url
 
 from dotenv import load_dotenv
 
-
+FOODKINDL_REFERRAL_FEE = "25.00"
 
 from decouple import config
 

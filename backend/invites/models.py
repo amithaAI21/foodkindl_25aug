@@ -3,6 +3,7 @@ import uuid
 from django.conf import settings
 from django.db import models
 from .geocoding import geocode_restaurant_location
+from decimal import Decimal
 
 CUISINE_CHOICES = [
 
@@ -741,6 +742,11 @@ class Restaurant(models.Model):
     updated_at = models.DateTimeField(
         auto_now=True,
     )
+    
+    allows_walk_ins = models.BooleanField(
+    default=False,
+    help_text="Restaurant welcomes guests without advance reservations.",
+)
 
     class Meta:
         ordering = [
@@ -1281,6 +1287,46 @@ class RestaurantBooking(
         ),
 
     ]
+    
+    VISIT_STATUS_CHOICES = [
+    ("not_started", "Not Started"),
+    ("checked_in", "Member Checked In"),
+    ("verified", "Verified"),
+    ("no_show", "No Show"),
+    ("disputed", "Disputed"),
+]
+
+    visit_status = models.CharField(
+        max_length=20,
+        choices=VISIT_STATUS_CHOICES,
+        default="not_started",
+    )
+
+    member_checked_in_at = models.DateTimeField(
+        null=True,
+        blank=True,
+    )
+
+    partner_verified_at = models.DateTimeField(
+        null=True,
+        blank=True,
+    )
+
+    actual_guest_count = models.PositiveIntegerField(
+        null=True,
+        blank=True,
+    )
+
+    commission_amount = models.DecimalField(
+        max_digits=8,
+        decimal_places=2,
+        default=0,
+    )
+
+    commission_status = models.CharField(
+        max_length=20,
+        default="not_due",
+    )
 
 
     # ========================================================
@@ -1293,6 +1339,13 @@ class RestaurantBooking(
         related_name="bookings",
     )
 
+    dine_out = models.OneToOneField(
+        "dineout.DineOut",
+        on_delete=models.PROTECT,
+        related_name="table_booking",
+        null=True,
+        blank=True,
+    )
 
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
@@ -1804,3 +1857,89 @@ class RestaurantSubmission(
             f"({self.get_status_display()})"
         )
         
+class RestaurantVisit(models.Model):
+
+    STATUS_CHOICES = [
+        ("checked_in", "Checked In"),
+        ("verified", "Verified"),
+        ("no_show", "No Show"),
+        ("disputed", "Disputed"),
+    ]
+
+    booking = models.OneToOneField(
+        "invites.RestaurantBooking",
+        on_delete=models.PROTECT,
+        related_name="visit_record",
+    )
+
+    status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default="checked_in",
+    )
+
+    member_checked_in_at = models.DateTimeField(
+        null=True,
+        blank=True,
+    )
+
+    restaurant_confirmed_at = models.DateTimeField(
+        null=True,
+        blank=True,
+    )
+
+    verified_at = models.DateTimeField(
+        null=True,
+        blank=True,
+    )
+
+    actual_guest_count = models.PositiveIntegerField(
+        null=True,
+        blank=True,
+    )
+
+    referral_amount = models.DecimalField(
+        max_digits=8,
+        decimal_places=2,
+        default=Decimal("0.00"),
+    )
+
+    referral_status = models.CharField(
+        max_length=20,
+        default="not_due",
+    )
+
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+    )
+
+    updated_at = models.DateTimeField(
+        auto_now=True,
+    )
+    
+    
+    bill_paid = models.BooleanField(default=False)
+
+    bill_paid_at = models.DateTimeField(
+        null=True,
+        blank=True,
+    )
+
+    bill_amount = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        null=True,
+        blank=True,
+    )
+
+    bill_payment_reference = models.CharField(
+        max_length=100,
+        blank=True,
+        default="",
+    )
+
+    def __str__(self):
+        return (
+            f"{self.booking.booking_reference} - "
+            f"{self.status} - ₹{self.referral_amount}"
+        )

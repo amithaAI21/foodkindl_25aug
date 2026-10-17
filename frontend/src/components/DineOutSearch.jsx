@@ -1948,32 +1948,6 @@ export default function DineOutSearch() {
         </div>
 
         <label>
-          Booking status
-
-          <select
-            value={bookingStatus}
-            onChange={
-              event =>
-                setBookingStatus(
-                  event.target.value
-                )
-            }
-          >
-            <option value="not_booked">
-              Not booked yet
-            </option>
-
-            <option value="booked">
-              Table booked
-            </option>
-
-            <option value="walk_in">
-              Walk in
-            </option>
-          </select>
-        </label>
-
-        <label>
           Dietary preferences or allergies
 
           <textarea

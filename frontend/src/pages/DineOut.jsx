@@ -914,6 +914,9 @@ export default function DineOut() {
 
   const [placeType, setPlaceType] = useState("all");
 
+  // Restaurant discovery mode: show registered FoodKindl partners or external OSM places.
+  const [restaurantSource, setRestaurantSource] = useState("partner");
+
   const [foodFilter, setFoodFilter] = useState("all");
 
   const [radiusKm, setRadiusKm] = useState(5);
@@ -975,6 +978,15 @@ export default function DineOut() {
   const [restaurantLoading, setRestaurantLoading] = useState(false);
 
   const [creating, setCreating] = useState(false);
+  const [bookingRestaurant, setBookingRestaurant] = useState(null);
+  const [bookingDate, setBookingDate] = useState("");
+  const [bookingTime, setBookingTime] = useState("");
+  const [bookingGuests, setBookingGuests] = useState(2);
+  const [bookingNotes, setBookingNotes] = useState("");
+  const [bookingSubmitting, setBookingSubmitting] = useState(false);
+  const [bookingError, setBookingError] = useState("");
+  const [bookingSuccess, setBookingSuccess] = useState("");
+
 
   const [pageError, setPageError] = useState("");
 
@@ -1124,6 +1136,10 @@ export default function DineOut() {
 
       if (!name || !hasValidCoordinates(restaurant)) return false;
 
+      const isPartner = restaurant.is_foodkindl_partner === true;
+      if (restaurantSource === "partner" && !isPartner) return false;
+      if (restaurantSource === "other" && isPartner) return false;
+
       const key = `${name.toLowerCase()}:${getLatitude(restaurant).toFixed(5)}:${getLongitude(restaurant).toFixed(5)}`;
 
       if (seen.has(key)) return false;
@@ -1153,7 +1169,7 @@ export default function DineOut() {
 
     });
 
-  }, [restaurants, searchedRestaurantQuery, placeType, foodFilter, cuisine]);
+  }, [restaurants, searchedRestaurantQuery, placeType, foodFilter, cuisine, restaurantSource]);
 
 
 
@@ -1266,6 +1282,7 @@ export default function DineOut() {
     longitude = coordinates.longitude,
 
     selectedCuisine = cuisine,
+    sourceOverride = restaurantSource,
 
   ) {
 
@@ -1286,6 +1303,7 @@ export default function DineOut() {
           radius: Math.min(radiusKm, 5) * 1000,
 
           limit: 50,
+          source: sourceOverride,
 
         },
 
@@ -1310,7 +1328,7 @@ export default function DineOut() {
         ? `Overpass timed out at ${radiusKm} km; these results cover ${searchedMetres / 1000} km. Search again to retry the full area.`
         : `Search covered ${radiusKm} km.`;
       const partnerCount = results.filter((r) => r.is_foodkindl_partner).length;
-      setSearchCoverage(`${areaMessage} ${results.length} restaurants found, including ${partnerCount} FoodKindl Partner${partnerCount === 1 ? "" : "s"}.`);
+      setSearchCoverage(`${areaMessage} ${partnerCount} FoodKindl Partner${partnerCount === 1 ? "" : "s"} and ${results.length - partnerCount} other restaurants returned.`);
 
       setSelectedRestaurant(null);
 
@@ -1588,6 +1606,35 @@ export default function DineOut() {
      CHOOSE RESTAURANT
 
   ---------------------------------------------------------- */
+
+  async function submitTableBooking(event) {
+    event.preventDefault();
+    setBookingError("");
+    const idMatch = String(bookingRestaurant?.id || "").match(/^foodkindl-(\d+)$/);
+    if (!idMatch) {
+      setBookingError("Only registered FoodKindl restaurants can accept bookings.");
+      return;
+    }
+    try {
+      setBookingSubmitting(true);
+      const response = await api.post("/table-bookings/", {
+        restaurant: Number(idMatch[1]),
+        booking_date: bookingDate,
+        booking_time: bookingTime,
+        guest_count: Number(bookingGuests),
+        special_request: bookingNotes,
+      });
+      setBookingRestaurant(null);
+      setBookingSuccess(`Booking request sent. Reference: ${response.data.booking_reference}. Await partner confirmation.`);
+    } catch (error) {
+      const data = error.response?.data;
+      setBookingError(typeof data?.detail === "string" ? data.detail :
+        data ? Object.entries(data).map(([k,v]) => `${k}: ${Array.isArray(v) ? v.join(" ") : v}`).join(" | ") :
+        "Could not send booking request.");
+    } finally {
+      setBookingSubmitting(false);
+    }
+  }
 
   function chooseRestaurant(restaurant) {
     setSelectedRestaurant(restaurant);
@@ -2178,6 +2225,25 @@ export default function DineOut() {
 
       </section>
 
+      <section className="fk-source-picker" aria-label="Choose restaurant source"
+        style={{ margin: "18px 0", padding: 16, borderRadius: 14, border: "1px solid rgba(212,125,82,.35)" }}>
+        <h2 style={{ fontSize: "1.1rem", marginBottom: 12 }}>Choose restaurants</h2>
+        <div role="group" aria-label="Restaurant listing type"
+          style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: 10 }}>
+          <button type="button" aria-pressed={restaurantSource === "partner"}
+            className={restaurantSource === "partner" ? "primary-button" : "secondary-button"}
+            onClick={() => { setRestaurantSource("partner"); if (locationSelected) void fetchRestaurants(coordinates.latitude, coordinates.longitude, cuisine, "partner"); }}>FoodKindl Partners</button>
+          <button type="button" aria-pressed={restaurantSource === "other"}
+            className={restaurantSource === "other" ? "primary-button" : "secondary-button"}
+            onClick={() => { setRestaurantSource("other"); if (locationSelected) void fetchRestaurants(coordinates.latitude, coordinates.longitude, cuisine, "other"); }}>Other Restaurants</button>
+        </div>
+        <p style={{ marginTop: 10, fontSize: 13, opacity: 0.8 }}>
+          {restaurantSource === "partner"
+            ? "Restaurants registered with FoodKindl. Book a table when bookings are enabled."
+            : "Other mapped restaurants. You can plan a Dine Out, but not reserve a table through FoodKindl."}
+        </p>
+      </section>
+
       <section className="osm-discovery-filters" aria-label="Restaurant filters">
 
         <div className="osm-filter-group"><span>Places</span><div className="osm-segments">
@@ -2260,7 +2326,11 @@ export default function DineOut() {
 
             <div className="empty-state">
 
-              {restaurants.length > 0 && foodFilter === "veg"
+              {restaurantSource === "partner" && restaurants.length === 0
+                ? "No FoodKindl Partner restaurants found in this area. Try a different location or radius."
+                : restaurantSource === "partner" && !restaurants.some((r) => r.is_foodkindl_partner)
+                  ? "No registered FoodKindl Partner restaurants found within the searched radius."
+                : restaurants.length > 0 && foodFilter === "veg"
                   ? "No restaurants here have confirmed vegetarian options in OpenStreetMap. Try All to see places with unknown dietary details."
                   : restaurants.length > 0
                     ? "No restaurants match these filters. Try another cuisine or place type."
@@ -2320,6 +2390,11 @@ export default function DineOut() {
                 <RestaurantOSMFacts restaurant={restaurant} />
 
                 <div className="restaurant-actions">
+                  {restaurantSource === "partner" && restaurant.is_foodkindl_partner && !restaurant.accepts_foodkindl_booking && (
+                    <span style={{ fontSize: 12, opacity: .8, alignSelf: "center" }}>Table bookings not enabled</span>
+                  )}
+                  
+
 
                   <button
 
@@ -2786,28 +2861,6 @@ export default function DineOut() {
 
         <label>
 
-          Booking status
-
-          <select
-
-            value={bookingStatus}
-
-            onChange={(event) => setBookingStatus(event.target.value)}
-
-          >
-
-            <option value="not_booked">Not booked yet</option>
-
-            <option value="booked">Table booked</option>
-
-            <option value="walk_in">Walk in</option>
-
-          </select>
-
-        </label>
-
-        <label>
-
           Dietary preferences
 
           <textarea
@@ -2990,6 +3043,23 @@ export default function DineOut() {
 
       </section>}
 
+      {bookingSuccess && <p role="status" className="search-status" style={{padding:16}}>{bookingSuccess}</p>}
+      {bookingRestaurant && (
+        <div className="restaurant-modal-backdrop" onMouseDown={() => !bookingSubmitting && setBookingRestaurant(null)}>
+          <form className="restaurant-modal" onMouseDown={(event) => event.stopPropagation()} onSubmit={submitTableBooking}
+            style={{display:"grid",gap:12,padding:24,maxWidth:480,margin:"auto"}}>
+            <h2>Request a table · {bookingRestaurant.name}</h2>
+            <label>Date<input type="date" required min={localDateKey(new Date())} value={bookingDate} onChange={(e)=>setBookingDate(e.target.value)} /></label>
+            <label>Time<input type="time" required value={bookingTime} onChange={(e)=>setBookingTime(e.target.value)} /></label>
+            <label>Guests<input type="number" required min="1" max="20" value={bookingGuests} onChange={(e)=>setBookingGuests(e.target.value)} /></label>
+            <label>Special requests<textarea value={bookingNotes} onChange={(e)=>setBookingNotes(e.target.value)} /></label>
+            <p>A request is not confirmed until the restaurant accepts it.</p>
+            {bookingError && <p role="alert" className="error-message">{bookingError}</p>}
+            <button type="submit" className="primary-button" disabled={bookingSubmitting}>{bookingSubmitting ? "Sending..." : "Request Booking"}</button>
+            <button type="button" className="secondary-button" disabled={bookingSubmitting} onClick={()=>setBookingRestaurant(null)}>Cancel</button>
+          </form>
+        </div>
+      )}
       <RestaurantDetailsModal
 
         restaurant={detailsRestaurant}

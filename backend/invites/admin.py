@@ -64,6 +64,26 @@ from .models import (
 )
 
 
+from datetime import date, timedelta
+from django.db.models import Count, Sum, Q
+from django.utils import timezone
+from django.core.exceptions import PermissionDenied
+
+from .models import RestaurantVisit
+
+from datetime import date, datetime, timedelta
+
+from decimal import Decimal
+
+from django.contrib import admin
+from django.core.exceptions import PermissionDenied
+from django.db.models import Count, Sum, Q
+from django.shortcuts import render
+from django.urls import path, reverse
+from django.utils import timezone
+
+from .models import RestaurantVisit
+
 # ============================================================
 # CSV IMPORT FORM
 # ============================================================
@@ -2355,3 +2375,232 @@ class FoodInviteParticipantAdmin(
         "status",
 
     )
+    
+# ============================================================
+# FOODKINDL RESTAURANT VISITS / REFERRAL ADMIN
+# ============================================================
+
+@admin.register(RestaurantVisit)
+class RestaurantVisitAdmin(admin.ModelAdmin):
+
+    list_display = (
+        "booking_reference",
+        "restaurant_name",
+        "member_name",
+        "status",
+        "member_checked_in_at",
+        "restaurant_confirmed_at",
+        "verified_at",
+        "actual_guest_count",
+        "referral_amount",
+        "referral_status",
+        "bill_paid",
+        "bill_paid_at",
+        "bill_amount",
+        "referral_amount",
+        "referral_status",
+    )
+
+    list_filter = (
+        "status",
+        "referral_status",
+        "verified_at",
+        "booking__restaurant",
+    )
+
+    search_fields = (
+        "booking__booking_reference",
+        "booking__restaurant__name",
+        "booking__user__username",
+        "booking__user__email",
+    )
+
+    ordering = ("-created_at",)
+
+    list_per_page = 50
+
+    list_select_related = (
+        "booking__restaurant",
+        "booking__user",
+    )
+
+    readonly_fields = (
+        "booking",
+        "status",
+        "member_checked_in_at",
+        "restaurant_confirmed_at",
+        "verified_at",
+        "actual_guest_count",
+        "referral_amount",
+        "referral_status",
+        "created_at",
+        "updated_at",
+    )
+
+    change_list_template = (
+        "admin/invites/restaurantvisit/change_list.html"
+    )
+
+    # =====================================================
+    # BOOKING REFERENCE
+    # =====================================================
+
+    @admin.display(description="Booking Reference")
+    def booking_reference(self, obj):
+        return obj.booking.booking_reference
+
+    # =====================================================
+    # RESTAURANT NAME
+    # =====================================================
+
+    @admin.display(description="Restaurant")
+    def restaurant_name(self, obj):
+        return obj.booking.restaurant.name
+
+    # =====================================================
+    # MEMBER NAME
+    # =====================================================
+
+    @admin.display(description="Member")
+    def member_name(self, obj):
+        user = obj.booking.user
+        return user.get_full_name() or user.username
+
+    # =====================================================
+    # PERMISSIONS
+    # =====================================================
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+    # =====================================================
+    # DAILY REFERRAL SUMMARY URL
+    # =====================================================
+
+    def get_urls(self):
+        custom_urls = [
+            path(
+                "daily-referrals/",
+                self.admin_site.admin_view(
+                    self.daily_referrals_view
+                ),
+                name="invites_restaurantvisit_daily_referrals",
+            ),
+        ]
+
+        return custom_urls + super().get_urls()
+
+    # =====================================================
+    # DAILY REFERRAL SUMMARY
+    # =====================================================
+
+    def daily_referrals_view(self, request):
+
+        if not self.has_view_permission(request):
+            raise PermissionDenied
+
+        selected_date_text = request.GET.get("date", "")
+
+        date_error = ""
+
+        if selected_date_text:
+            try:
+                selected_date = date.fromisoformat(
+                    selected_date_text
+                )
+            except ValueError:
+                selected_date = timezone.localdate()
+                date_error = "Invalid date. Use YYYY-MM-DD."
+        else:
+            selected_date = timezone.localdate()
+
+        start_datetime = timezone.make_aware(
+            datetime.combine(
+                selected_date,
+                datetime.min.time(),
+            ),
+            timezone.get_current_timezone(),
+        )
+
+        end_datetime = timezone.make_aware(
+            datetime.combine(
+                selected_date + timedelta(days=1),
+                datetime.min.time(),
+            ),
+            timezone.get_current_timezone(),
+        )
+
+        visits = RestaurantVisit.objects.filter(
+            status="verified",
+            verified_at__gte=start_datetime,
+            verified_at__lt=end_datetime,
+        )
+
+        totals = visits.aggregate(
+            verified_visits=Count("id"),
+            total_referral=Sum("referral_amount"),
+            total_due=Sum(
+                "referral_amount",
+                filter=Q(referral_status="due"),
+            ),
+            total_paid=Sum(
+                "referral_amount",
+                filter=Q(referral_status="paid"),
+            ),
+        )
+
+        zero = Decimal("0.00")
+
+        restaurant_summary = (
+            visits.values(
+                "booking__restaurant__id",
+                "booking__restaurant__name",
+            )
+            .annotate(
+                visit_count=Count("id"),
+                total_referral=Sum("referral_amount"),
+                total_due=Sum(
+                    "referral_amount",
+                    filter=Q(referral_status="due"),
+                ),
+                total_paid=Sum(
+                    "referral_amount",
+                    filter=Q(referral_status="paid"),
+                ),
+            )
+            .order_by("-total_referral")
+        )
+
+        context = {
+            **self.admin_site.each_context(request),
+            "title": "FoodKindl Daily Referral Summary",
+            "opts": self.model._meta,
+            "selected_date": selected_date.isoformat(),
+            "date_error": date_error,
+            "verified_visits": totals["verified_visits"] or 0,
+            "total_referral": totals["total_referral"] or zero,
+            "total_due": totals["total_due"] or zero,
+            "total_paid": totals["total_paid"] or zero,
+            "restaurant_summary": restaurant_summary,
+            "visit_entries": visits.select_related(
+                "booking__restaurant",
+                "booking__user",
+            ).order_by("-verified_at"),
+            "referral_changelist_url": reverse(
+                "admin:invites_restaurantvisit_changelist"
+            ),
+        }
+
+        request.current_app = self.admin_site.name
+
+        return render(
+            request,
+            "admin/invites/restaurantvisit/daily_referrals.html",
+            context,
+        )

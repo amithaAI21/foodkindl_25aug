@@ -202,6 +202,95 @@ export default function PartnerDashboard() {
   const { user, logout } = useAuth();
 
   const [activeTab, setActiveTab] = useState("restaurant");
+  const [restaurantLookupFailed, setRestaurantLookupFailed] = useState(false);
+  const [tableBookings, setTableBookings] = useState([]);
+  const [bookingsLoading, setBookingsLoading] = useState(false);
+  const [bookingActionId, setBookingActionId] = useState(null);
+  const [visitActionId, setVisitActionId] = useState(null);
+  const [visitGuestCounts, setVisitGuestCounts] = useState({});
+
+  async function verifyVisit(booking, action) {
+    const labels = { arrived: "Confirm guests arrived", no_show: "Report no-show", disputed: "Open a visit dispute" };
+    if (!window.confirm(`${labels[action]} for ${booking.booking_reference}?`)) return;
+
+    const payload = { action };
+    if (action === "arrived") {
+      const count = Number(visitGuestCounts[booking.id] ?? booking.guest_count);
+      if (!Number.isInteger(count) || count < 1 || count > 20) {
+        setError("Actual number of guests must be between 1 and 20.");
+        return;
+      }
+      payload.actual_guest_count = count;
+    }
+    try {
+      setVisitActionId(booking.id);
+      setError("");
+      await api.post(`/partner/table-bookings/${booking.id}/verify-visit/`, payload);
+      await loadTableBookings();
+      setMessage(action === "arrived" ? "Restaurant arrival saved. Verification requires member check-in too." : action === "no_show" ? "No-show report saved." : "Visit flagged for review.");
+    } catch (err) {
+      setError(getErrorMessage(err, "Unable to update visit status."));
+    } finally {
+      setVisitActionId(null);
+    }
+  }
+
+
+  async function loadTableBookings() {
+    try {
+      setBookingsLoading(true);
+      const response = await api.get("/partner/table-bookings/");
+      setTableBookings(Array.isArray(response.data) ? response.data : response.data?.results || []);
+    } catch (err) {
+      setError(getErrorMessage(err, "Could not load restaurant bookings."));
+    } finally {
+      setBookingsLoading(false);
+    }
+  }
+
+  async function decideBooking(id, nextStatus) {
+    try {
+      setBookingActionId(id);
+      await api.post(`/partner/table-bookings/${id}/decision/`, {status: nextStatus});
+      await loadTableBookings();
+      setMessage(nextStatus === "confirmed" ? "Booking confirmed." : "Booking rejected.");
+    } catch (err) {
+      setError(getErrorMessage(err, "Unable to update booking."));
+    } finally {
+      setBookingActionId(null);
+    }
+  }
+
+
+  async function confirmBillPaid(booking) {
+    if (!booking || booking.status !== "confirmed") return;
+    if (!window.confirm(
+      `Confirm that the diners for ${booking.booking_reference} have paid the restaurant bill?`
+    )) return;
+
+    try {
+      setVisitActionId(booking.id);
+      setError("");
+      setMessage("");
+
+      const response = await api.post(
+        `/partner/table-bookings/${booking.id}/bill-paid/`,
+        { bill_amount: "", payment_reference: "" }
+      );
+
+      setMessage(
+        response.data?.detail ||
+        "Guest bill payment recorded. The ₹10 referral is due only after all verification requirements are satisfied."
+      );
+      await loadTableBookings();
+    } catch (err) {
+      console.error("BILL PAID ERROR:", err.response?.data || err);
+      setError(getErrorMessage(err, "Unable to confirm guest bill payment."));
+    } finally {
+      setVisitActionId(null);
+    }
+  }
+
 
   const [restaurant, setRestaurant] = useState(null);
   const [restaurantForm, setRestaurantForm] = useState(EMPTY_RESTAURANT);
@@ -262,6 +351,7 @@ export default function PartnerDashboard() {
     try {
       setLoading(true);
       setError("");
+      setRestaurantLookupFailed(false);
 
       const response = await api.get("/partner/restaurants/");
       const data = response.data;
@@ -287,6 +377,9 @@ export default function PartnerDashboard() {
         return;
       }
 
+      // Existing partners land on Bookings; Restaurant remains available for edits.
+      setActiveTab("bookings");
+      void loadTableBookings();
       setRestaurant(firstRestaurant);
       setRestaurantForm({
         ...EMPTY_RESTAURANT,
@@ -319,6 +412,7 @@ export default function PartnerDashboard() {
       );
     } catch (err) {
       console.error("LOAD RESTAURANT ERROR:", err);
+      setRestaurantLookupFailed(true);
       setError(getErrorMessage(err, "Unable to load restaurant."));
     } finally {
       setLoading(false);
@@ -465,6 +559,10 @@ export default function PartnerDashboard() {
             : "",
       });
 
+      // After the first save, skip the registration form on future logins.
+      setRestaurantLookupFailed(false);
+      setActiveTab("bookings");
+      void loadTableBookings();
       setMessage(
         restaurantId
           ? "Restaurant details updated."
@@ -884,6 +982,20 @@ export default function PartnerDashboard() {
     );
   }
 
+  // If the lookup fails (network/permission error), never present the
+  // registration form as if the partner has no restaurant.
+  if (restaurantLookupFailed) {
+    return (
+      <main className="fk-loading" role="alert">
+        <h2>Could not load your restaurant</h2>
+        <p>{error || "Please check your connection and try again."}</p>
+        <button type="button" className="primary-button" onClick={loadRestaurant}>
+          Retry loading restaurant
+        </button>
+      </main>
+    );
+  }
+
   return (
     <div className="fk-studio">
       <aside className="fk-sidebar">
@@ -908,6 +1020,11 @@ export default function PartnerDashboard() {
           >
             <Camera size={20} />
             <span>Photos</span>
+          </button>
+
+          <button type="button" className={`fk-nav-item ${activeTab === "bookings" ? "active" : ""} ${!restaurantId ? "disabled" : ""}`}
+            onClick={() => { if (!restaurantId) return; openTab("bookings"); loadTableBookings(); }}>
+            <Check size={20} /><span>Bookings</span>
           </button>
 
           <button
@@ -964,6 +1081,132 @@ export default function PartnerDashboard() {
               <X size={17} />
             </button>
           </div>
+        )}
+
+        {activeTab === "bookings" && (
+          <section className="fk-page-section">
+            <div className="fk-page-heading">
+              <h1>Table booking requests</h1>
+              <p>Confirm bookings, verify guest visits, and track FoodKindl referral fees.</p>
+            </div>
+            <button type="button" className="primary-button" onClick={loadTableBookings} disabled={bookingsLoading}>Refresh bookings</button>
+            {bookingsLoading && <p>Loading bookings...</p>}
+            {!bookingsLoading && tableBookings.length === 0 && <p>No bookings yet.</p>}
+            <div style={{ display: "grid", gap: 16, marginTop: 16 }}>
+              {tableBookings.map((booking) => {
+                const checkedIn = Boolean(booking.member_checked_in_at);
+                const restaurantVerified = Boolean(booking.partner_verified_at);
+                const status = booking.visit_status || "not_started";
+                const canVerify = booking.status === "confirmed" && !["verified", "no_show", "disputed"].includes(status);
+                const count = visitGuestCounts[booking.id] ?? String(booking.guest_count || 2);
+                return (
+                  <article key={booking.id} style={{ border: "1px solid #806050", borderRadius: 12, padding: 18 }}>
+                    <h3>{booking.restaurant_name} · {booking.booking_reference}</h3>
+                    <p>Guest: {booking.member_name}</p>
+                    <p>{booking.booking_date} at {booking.booking_time} · {booking.guest_count} diners</p>
+                    <p>Booking status: <strong>{booking.status}</strong></p>
+                    {booking.special_request && <p>Request: {booking.special_request}</p>}
+                    {booking.status === "pending" && (
+                      <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
+                        <button type="button" className="primary-button" disabled={bookingActionId === booking.id} onClick={() => decideBooking(booking.id, "confirmed")}>Confirm</button>
+                        <button type="button" disabled={bookingActionId === booking.id} onClick={() => decideBooking(booking.id, "rejected")}>Reject</button>
+                      </div>
+                    )}
+                    {booking.status === "rejected" && (
+                      <p style={{ opacity: 0.75 }}>Reservation rejected. No visit verification is available for this booking.</p>
+                    )}
+                    {booking.status === "confirmed" && (
+                      <div style={{ marginTop: 18, border: "1px solid #b9aa9f", padding: 16, borderRadius: 12 }}>
+                        <h3 style={{ marginTop: 0 }}>Visit verification</h3>
+                        <p>Member check-in and restaurant confirmation are both required before a visit can be verified.</p>
+                        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(170px, 1fr))", gap: 10, margin: "14px 0" }}>
+                          <div style={{ padding: 12, background: "#e6f3e9", borderRadius: 8, color: "#17432b" }}>
+                            <small>Host check-in</small><div><strong>{checkedIn ? "Checked in" : "Not checked in"}</strong></div>
+                          </div>
+                          <div style={{ padding: 12, background: "#f0eeeb", borderRadius: 8, color: "#302720" }}>
+                            <small>Restaurant verification</small><div><strong>{restaurantVerified ? "Confirmed" : "Pending"}</strong></div>
+                          </div>
+                          <div style={{ padding: 12, background: "#f0eeeb", borderRadius: 8, color: "#302720" }}>
+                            <small>Visit status</small><div><strong>{status.replaceAll("_", " ")}</strong></div>
+                          </div>
+                        </div>
+                        {checkedIn && <p>Member checked in: {new Date(booking.member_checked_in_at).toLocaleString("en-IN")}</p>}
+                        {/* Bill status comes from TableBookingSerializer, backed by RestaurantVisit. */}
+                        <div style={{ marginTop: 14, padding: 14, border: "1px solid #c9dfcb", borderRadius: 10, background: "#f1f7f1" }}>
+                          <h4 style={{ marginTop: 0 }}>Restaurant bill payment</h4>
+                          <p>
+                            Dining bill: <strong>{booking.bill_paid === true ? "Paid" : "Not recorded as paid"}</strong>
+                          </p>
+                          {booking.bill_paid_at && (
+                            <p style={{ fontSize: 13 }}>
+                              Confirmed at: {new Date(booking.bill_paid_at).toLocaleString("en-IN")}
+                            </p>
+                          )}
+                          {booking.bill_paid === true ? (
+                            <p role="status" style={{ color: "#175b42", fontWeight: 600 }}>
+                              Bill payment recorded. FoodKindl's ₹10 referral is earned only when the backend verifies all required conditions.
+                            </p>
+                          ) : restaurantVerified && !["no_show", "disputed"].includes(status) ? (
+                            <>
+                              <p>Once guests have settled their bill, confirm it here.</p>
+                              <button
+                                type="button"
+                                className="primary-button"
+                                onClick={() => confirmBillPaid(booking)}
+                                disabled={visitActionId === booking.id}
+                                style={{ background: "#17633a", color: "white" }}
+                              >
+                                {visitActionId === booking.id ? "Saving..." : "Confirm Bill Paid"}
+                              </button>
+                              {!checkedIn && (
+                                <p style={{ marginTop: 10, color: "#8f570e", fontSize: 13 }}>
+                                  Host check-in is still pending. Recording a restaurant bill payment does not itself earn the ₹10 referral.
+                                </p>
+                              )}
+                            </>
+                          ) : (
+                            <p style={{ fontSize: 13 }}>
+                              Confirm guest arrival before recording a paid bill.
+                            </p>
+                          )}
+                          <small>"Bill Paid" means guests paid the restaurant; it does not mean the restaurant paid FoodKindl.</small>
+                        </div>
+                        {status === "verified" ? (
+                          <div style={{ padding: 14, background: "#e6f3e9", color: "#17432b", borderRadius: 8 }}>
+                            <strong>Visit verified</strong>
+                            <p>Actual diners: {booking.actual_guest_count ?? booking.guest_count}</p>
+                            <p>FoodKindl referral fee recorded: ₹{Number(booking.commission_amount || 0).toFixed(2)} · {booking.commission_status || "not_due"}</p>
+                            <small>This is a fee record, not proof of payment.</small>
+                          </div>
+                        ) : status === "no_show" || status === "disputed" ? (
+                          <p><strong>{status === "no_show" ? "No-show reported" : "Visit disputed"}.</strong> This visit requires reconciliation and is not automatically billable.</p>
+                        ) : (
+                          <>
+                            {restaurantVerified ? (
+                              <p>Restaurant arrival was recorded. Waiting for the host to check in; do not charge yet.</p>
+                            ) : (
+                              <>
+                                <label style={{ display: "flex", flexDirection: "column", gap: 5, maxWidth: 200, marginBottom: 12 }}>
+                                  Actual diners
+                                  <input type="number" min="1" max="20" step="1" value={count} onChange={(e) => setVisitGuestCounts((current) => ({ ...current, [booking.id]: e.target.value }))} />
+                                </label>
+                                <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+                                  <button type="button" className="primary-button" disabled={!canVerify || visitActionId === booking.id} onClick={() => verifyVisit(booking, "arrived")}>Guests Arrived</button>
+                                  <button type="button" disabled={!canVerify || visitActionId === booking.id} onClick={() => verifyVisit(booking, "no_show")}>No-show</button>
+                                  <button type="button" disabled={!canVerify || visitActionId === booking.id} onClick={() => verifyVisit(booking, "disputed")}>Dispute / Unable to Verify</button>
+                                </div>
+                              </>
+                            )}
+                            <p style={{ fontSize: 13, opacity: 0.8, marginTop: 12 }}>Actions are allowed only near the scheduled visit time, as enforced by Django. A referral fee is not recorded until the visit is verified under the agreed partner terms.</p>
+                          </>
+                        )}
+                      </div>
+                    )}
+                  </article>
+                );
+              })}
+            </div>
+          </section>
         )}
 
         {activeTab === "restaurant" && (

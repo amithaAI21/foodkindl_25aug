@@ -1,0 +1,263 @@
+
+{% extends "admin/base_site.html" %}
+
+{% block content %}
+
+<style>
+  .fk-summary {
+    max-width: 1250px;
+    margin: 20px auto;
+  }
+
+  .fk-cards {
+    display: grid;
+    grid-template-columns: repeat(
+      auto-fit,
+      minmax(180px, 1fr)
+    );
+    gap: 16px;
+    margin: 24px 0;
+  }
+
+  .fk-card {
+    padding: 22px;
+    border: 1px solid #dbe4df;
+    border-radius: 12px;
+    background: #fff;
+  }
+
+  .fk-card h3 {
+    margin: 0 0 12px;
+    color: #5c746b;
+    font-size: 13px;
+  }
+
+  .fk-card strong {
+    font-size: 28px;
+    color: #175b42;
+  }
+
+  .fk-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 20px 0 32px;
+  }
+
+  .fk-table th,
+  .fk-table td {
+    padding: 12px;
+    text-align: left;
+    border-bottom: 1px solid #ddd;
+  }
+
+  .fk-table th {
+    background: #edf4f0;
+    color: #204f3d;
+  }
+
+  .fk-date-form {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-top: 20px;
+  }
+
+  .fk-date-form input {
+    padding: 8px;
+  }
+
+  .fk-date-form button {
+    padding: 9px 18px;
+    background: #175b42;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+  }
+
+  .fk-note {
+    color: #63736e;
+    margin-top: 10px;
+  }
+</style>
+
+<div class="fk-summary">
+
+  <h1>FoodKindl Daily Referral Summary</h1>
+
+  <p>
+    Track verified restaurant visits and
+    referral fees recorded for FoodKindl.
+  </p>
+
+  <form method="get" class="fk-date-form">
+    <label for="referral-date">
+      <strong>Select date:</strong>
+    </label>
+
+    <input
+      type="date"
+      id="referral-date"
+      name="date"
+      value="{{ selected_date }}"
+    />
+
+    <button type="submit">
+      View Report
+    </button>
+  </form>
+
+  {% if date_error %}
+    <p style="color: #b42318;">
+      {{ date_error }}
+    </p>
+  {% endif %}
+
+  <div class="fk-cards">
+
+    <div class="fk-card">
+      <h3>Verified Visits</h3>
+      <strong>{{ verified_visits }}</strong>
+    </div>
+
+    <div class="fk-card">
+      <h3>Total Referral Earned</h3>
+      <strong>
+        ₹{{ total_referral|floatformat:2 }}
+      </strong>
+    </div>
+
+    <div class="fk-card">
+      <h3>Referral Due</h3>
+      <strong>
+        ₹{{ total_due|floatformat:2 }}
+      </strong>
+    </div>
+
+    <div class="fk-card">
+      <h3>Recorded Paid</h3>
+      <strong>
+        ₹{{ total_paid|floatformat:2 }}
+      </strong>
+    </div>
+
+  </div>
+
+  <h2>Restaurant-wise Referral Summary</h2>
+
+  <table class="fk-table">
+    <thead>
+      <tr>
+        <th>Restaurant</th>
+        <th>Verified Visits</th>
+        <th>Total Referral</th>
+        <th>Due</th>
+        <th>Recorded Paid</th>
+      </tr>
+    </thead>
+
+    <tbody>
+      {% for item in restaurant_summary %}
+        <tr>
+          <td>
+            {{ item.booking__restaurant__name }}
+          </td>
+
+          <td>
+            {{ item.visit_count }}
+          </td>
+
+          <td>
+            ₹{{ item.total_referral|floatformat:2 }}
+          </td>
+
+          <td>
+            ₹{{ item.total_due|default_if_none:0|floatformat:2 }}
+          </td>
+
+          <td>
+            ₹{{ item.total_paid|default_if_none:0|floatformat:2 }}
+          </td>
+        </tr>
+      {% empty %}
+        <tr>
+          <td colspan="5">
+            No verified visits found for this date.
+          </td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <h2>Individual Verified Visits</h2>
+
+  <table class="fk-table">
+    <thead>
+      <tr>
+        <th>Booking Reference</th>
+        <th>Restaurant</th>
+        <th>Member</th>
+        <th>Verified At</th>
+        <th>Guests</th>
+        <th>Referral</th>
+        <th>Payment Status</th>
+      </tr>
+    </thead>
+
+    <tbody>
+      {% for visit in visit_entries %}
+        <tr>
+          <td>
+            {{ visit.booking.booking_reference }}
+          </td>
+
+          <td>
+            {{ visit.booking.restaurant.name }}
+          </td>
+
+          <td>
+            {{ visit.booking.user.username }}
+          </td>
+
+          <td>
+            {{ visit.verified_at|date:"d M Y, h:i A" }}
+          </td>
+
+          <td>
+            {{ visit.actual_guest_count }}
+          </td>
+
+          <td>
+            ₹{{ visit.referral_amount|floatformat:2 }}
+          </td>
+
+          <td>
+            {{ visit.referral_status }}
+          </td>
+        </tr>
+      {% empty %}
+        <tr>
+          <td colspan="7">
+            No referral entries for the selected date.
+          </td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <p class="fk-note">
+    Reports are grouped by the day the visit was verified.
+    "Due" means the referral fee has been earned but
+    has not been recorded as paid.
+  </p>
+
+  <p>
+    <a href="{{ referral_changelist_url }}">
+      View all restaurant visit records
+    </a>
+  </p>
+
+</div>
+
+{% endblock %}
