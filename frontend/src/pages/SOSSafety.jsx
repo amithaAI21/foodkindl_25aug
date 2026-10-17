@@ -1119,20 +1119,13 @@ export default function SOSSafety() {
       ===================================================== */}
 
       <div className="sos-topbar">
-
         <Link
-          to="/safety-verification"
+          to="/connect-dashboard"
           className="sos-back-link"
         >
-
-          <ArrowLeft
-            size={18}
-          />
-
-          Back to Safety &amp; Verification
-
+          <ArrowLeft size={18} />
+          <span>Back to Dashboard</span>
         </Link>
-
       </div>
 
 

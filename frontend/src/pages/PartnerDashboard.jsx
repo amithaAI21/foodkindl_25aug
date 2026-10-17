@@ -148,6 +148,40 @@ function getErrorMessage(error, fallback = "Something went wrong.") {
   return parts.length ? parts.join(" | ") : fallback;
 }
 
+// Optional website: accept a full HTTP(S) URL or a bare domain.
+// Do not manufacture a website when the field is blank.
+function normalizeOptionalWebsite(value) {
+  const raw = String(value ?? "").trim();
+  if (!raw) return "";
+
+  const candidate = /^https?:\/\//i.test(raw)
+    ? raw
+    : `https://${raw}`;
+
+  let parsed;
+  try {
+    parsed = new URL(candidate);
+  } catch {
+    throw new Error(
+      "Enter a valid website address (for example, https://example.com)."
+    );
+  }
+
+  if (
+    !["http:", "https:"].includes(parsed.protocol) ||
+    !parsed.hostname.includes(".") ||
+    /\s/.test(raw) ||
+    parsed.username ||
+    parsed.password
+  ) {
+    throw new Error(
+      "Enter a valid website address (for example, https://example.com)."
+    );
+  }
+
+  return parsed.href;
+}
+
 function Switch({ checked, onChange, label }) {
   return (
     <button
@@ -257,6 +291,7 @@ export default function PartnerDashboard() {
       setRestaurantForm({
         ...EMPTY_RESTAURANT,
         ...firstRestaurant,
+        website: firstRestaurant.website ?? "",
         average_cost_for_two:
           firstRestaurant.average_cost_for_two ?? "",
         seating_capacity:
@@ -398,10 +433,11 @@ export default function PartnerDashboard() {
         ),
       };
 
-      // DRF URLField rejects an empty string on some serializers,
-      // so only send website when the partner has entered one.
-      if (restaurantForm.website?.trim()) {
-        payload.website = restaurantForm.website.trim();
+      // Website is optional. Never send null, "null", or whitespace.
+      // When supplied, make sure it is a valid absolute HTTP(S) URL.
+      const website = normalizeOptionalWebsite(restaurantForm.website);
+      if (website) {
+        payload.website = website;
       }
 
       const response = restaurantId
@@ -414,6 +450,7 @@ export default function PartnerDashboard() {
       setRestaurantForm({
         ...EMPTY_RESTAURANT,
         ...saved,
+        website: saved.website ?? "",
         average_cost_for_two:
           saved.average_cost_for_two ?? "",
         seating_capacity:
@@ -1008,9 +1045,13 @@ export default function PartnerDashboard() {
                 </label>
 
                 <label>
-                  Website
+                  Website (optional)
                   <input
-                    value={restaurantForm.website || ""}
+                    type="text"
+                    inputMode="url"
+                    autoComplete="url"
+                    placeholder="https://example.com"
+                    value={restaurantForm.website ?? ""}
                     onChange={(e) =>
                       updateRestaurantField("website", e.target.value)
                     }

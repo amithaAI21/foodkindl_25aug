@@ -38,12 +38,18 @@ class DineOutSerializer(serializers.ModelSerializer):
 
     # Sent by React when creating/updating a Dine Out
     invited_member_ids = serializers.PrimaryKeyRelatedField(
-        source="invited_members",
-        queryset=User.objects.all(),
-        many=True,
-        write_only=True,
-        required=False,
-    )
+            source="invited_members",
+            queryset=User.objects.filter(
+                is_active=True,
+                is_staff=False,
+                is_superuser=False,
+                profile__account_type="member",
+                profile__member_profile_enabled=True,
+            ),
+            many=True,
+            write_only=True,
+            required=False,
+        )
 
     accepted_guests = serializers.SerializerMethodField()
     my_response_status = serializers.SerializerMethodField()

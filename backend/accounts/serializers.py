@@ -349,314 +349,311 @@ class BlockedMemberSerializer(serializers.ModelSerializer):
 
 
 class RegisterSerializer(serializers.ModelSerializer):
-    full_name = serializers.CharField(required=True, max_length=150, trim_whitespace=True)
 
+    # ========================================================
+    # REGISTRATION FIELDS
+    # ========================================================
+
+    full_name = serializers.CharField(
+        required=False,
+        allow_blank=True,
+        max_length=150,
+        trim_whitespace=True,
+    )
 
     email = serializers.EmailField(
-
         required=True,
-
         allow_blank=False,
-
     )
-
-
 
     phone_number = serializers.CharField(
-
-        required=True,
-
+        required=False,
         write_only=True,
-
         max_length=15,
-
-        allow_blank=False,
-
+        allow_blank=True,
+        default="",
     )
-
-
 
     password = serializers.CharField(
-
         write_only=True,
-
         min_length=8,
-
         trim_whitespace=False,
-
     )
-
-
 
     account_type = serializers.ChoiceField(
-
         choices=["member", "partner"],
-
         write_only=True,
-
         default="member",
-
     )
 
-
-
     class Meta:
-
         model = User
 
         fields = (
-
             "id",
             "full_name",
-
             "first_name",
-
             "last_name",
-
             "email",
-
             "phone_number",
-
             "password",
-
             "account_type",
-
         )
-
-
 
         read_only_fields = ("id",)
 
-
-
         extra_kwargs = {
-
             "first_name": {
-
                 "required": False,
-
                 "allow_blank": True,
-
             },
-
             "last_name": {
-
                 "required": False,
-
                 "allow_blank": True,
-
             },
-
         }
 
-
+    # ========================================================
+    # EMAIL VALIDATION
+    # ========================================================
 
     def validate_email(self, value):
-
         email = value.strip().lower()
 
-
-
         if User.objects.filter(
-
             Q(email__iexact=email) |
-
             Q(username__iexact=email)
-
         ).exists():
 
             raise serializers.ValidationError(
-
                 "An account with this email already exists."
-
             )
-
-
 
         return email
 
-
+    # ========================================================
+    # PHONE VALIDATION
+    # ========================================================
 
     def validate_phone_number(self, value):
+        phone = str(value or "").strip()
 
-        phone = str(value).strip()
+        # Partners can register without a phone number.
+        if not phone:
+            return ""
 
-
-
-        # Support +91, 91 and standard 10-digit input.
-
-        phone = phone.replace(" ", "").replace("-", "")
-
-
+        phone = (
+            phone.replace(" ", "")
+            .replace("-", "")
+            .replace("(", "")
+            .replace(")", "")
+        )
 
         if phone.startswith("+91"):
-
             phone = phone[3:]
 
         elif len(phone) == 12 and phone.startswith("91"):
-
             phone = phone[2:]
-
-
 
         import re
 
-
-
         if not re.fullmatch(r"[6-9][0-9]{9}", phone):
-
             raise serializers.ValidationError(
-
                 "Enter a valid Indian 10-digit mobile number."
-
             )
-
-
 
         if Profile.objects.filter(
-
             phone_number=phone
-
         ).exists():
-
             raise serializers.ValidationError(
-
                 "This phone number is already registered."
-
             )
-
-
 
         return phone
 
-
+    # ========================================================
+    # FULL NAME VALIDATION
+    # ========================================================
 
     def validate_full_name(self, value):
-        value = ' '.join(value.split())
-        if not value:
-            raise serializers.ValidationError('Please enter your full name.')
-        parts = value.split(' ', 1)
-        if len(parts[0]) > 150 or (len(parts) > 1 and len(parts[1]) > 150):
-            raise serializers.ValidationError('Name is too long.')
+        value = " ".join(value.split())
+
+        if value and len(value) > 150:
+            raise serializers.ValidationError(
+                "Full name is too long."
+            )
+
         return value
+
+    # ========================================================
+    # ACCOUNT TYPE VALIDATION
+    # ========================================================
 
     def validate(self, attrs):
 
-        candidate = User(
-
-            username=attrs["email"],
-
-            email=attrs["email"],
-
-            first_name=attrs.get("first_name", "").strip(),
-
-            last_name=attrs.get("last_name", "").strip(),
-
+        account_type = attrs.get(
+            "account_type", "member"
         )
 
+        first_name = (
+            attrs.get("first_name") or ""
+        ).strip()
 
+        last_name = (
+            attrs.get("last_name") or ""
+        ).strip()
+
+        full_name = (
+            attrs.get("full_name") or ""
+        ).strip()
+
+        phone_number = (
+            attrs.get("phone_number") or ""
+        ).strip()
+
+        # Construct full name for partner registration.
+        if not full_name:
+            full_name = " ".join(
+                filter(None, [first_name, last_name])
+            )
+
+        full_name = " ".join(full_name.split())
+
+        if len(full_name) < 2:
+            raise serializers.ValidationError({
+                "full_name": "Please enter your full name."
+            })
+
+        if len(full_name) > 150:
+            raise serializers.ValidationError({
+                "full_name": "Full name is too long."
+            })
+
+        # -----------------------------------------------
+        # MEMBER REQUIREMENTS
+        # -----------------------------------------------
+
+        if account_type == "member":
+
+            if not phone_number:
+                raise serializers.ValidationError({
+                    "phone_number":
+                        "Phone number is required for members."
+                })
+
+        # -----------------------------------------------
+        # PARTNER REQUIREMENTS
+        # -----------------------------------------------
+
+        elif account_type == "partner":
+
+            if not first_name:
+                raise serializers.ValidationError({
+                    "first_name": "First name is required."
+                })
+
+            if not last_name:
+                raise serializers.ValidationError({
+                    "last_name": "Last name is required."
+                })
+
+            # Phone number is optional for partners.
+
+        # -----------------------------------------------
+        # PASSWORD VALIDATION
+        # -----------------------------------------------
+
+        name_parts = full_name.split(maxsplit=1)
+
+        candidate = User(
+            username=attrs["email"],
+            email=attrs["email"],
+            first_name=name_parts[0],
+            last_name=(
+                name_parts[1]
+                if len(name_parts) > 1
+                else ""
+            ),
+        )
 
         try:
-
             validate_password(
-
                 attrs["password"],
-
                 user=candidate,
-
             )
 
         except DjangoValidationError as error:
-
             raise serializers.ValidationError({
-
-                "password": list(error.messages),
-
+                "password": list(error.messages)
             })
 
-
+        attrs["full_name"] = full_name
+        attrs["phone_number"] = phone_number
 
         return attrs
 
-
+    # ========================================================
+    # CREATE USER
+    # ========================================================
 
     @transaction.atomic
-
     def create(self, validated_data):
-        full_name = validated_data.pop('full_name').strip()
+
+        full_name = validated_data.pop(
+            "full_name"
+        ).strip()
+
         name_parts = full_name.split(maxsplit=1)
-        validated_data['first_name'] = name_parts[0]
-        validated_data['last_name'] = name_parts[1] if len(name_parts) > 1 else ''
 
-        account_type = validated_data.pop(
+        first_name = name_parts[0]
 
-            "account_type", "member"
-
+        last_name = (
+            name_parts[1]
+            if len(name_parts) > 1
+            else ""
         )
 
-
+        account_type = validated_data.pop(
+            "account_type", "member"
+        )
 
         password = validated_data.pop("password")
 
-        phone_number = validated_data.pop("phone_number")
+        # Optional for Partner accounts.
+        phone_number = validated_data.pop(
+            "phone_number", ""
+        )
 
         email = validated_data["email"]
 
-
+        # -----------------------------------------------
+        # CREATE AUTH USER
+        # -----------------------------------------------
 
         user = User(
-
             username=email,
-
             email=email,
-
-            first_name=validated_data.get(
-
-                "first_name", ""
-
-            ).strip(),
-
-            last_name=validated_data.get(
-
-                "last_name", ""
-
-            ).strip(),
-
+            first_name=first_name,
+            last_name=last_name,
         )
-
-
 
         user.set_password(password)
-
         user.save()
 
-
-
-        # The post_save signal may have already
-
-        # created the profile.
+        # -----------------------------------------------
+        # CREATE OR GET PROFILE
+        # -----------------------------------------------
 
         profile, _ = Profile.objects.get_or_create(
-
             user=user
-
         )
 
-
-
-        # Store the registered mobile number.
-
         profile.phone_number = phone_number
-
-
-
-        # Registration alone does not verify ownership
-
-        # of the mobile number.
-
         profile.phone_verified_at = None
 
-
+        # -----------------------------------------------
+        # RESTAURANT PARTNER ACCOUNT
+        # -----------------------------------------------
 
         if account_type == "partner":
 
@@ -666,6 +663,10 @@ class RegisterSerializer(serializers.ModelSerializer):
 
             profile.preferred_portal = "restaurant"
 
+        # -----------------------------------------------
+        # FOODKINDL MEMBER ACCOUNT
+        # -----------------------------------------------
+
         else:
 
             profile.account_type = "member"
@@ -674,26 +675,18 @@ class RegisterSerializer(serializers.ModelSerializer):
 
             profile.preferred_portal = "member"
 
-
-
-        # Email remains unverified until the user
-
-        # clicks the verification link.
+        # -----------------------------------------------
+        # EMAIL VERIFICATION
+        # -----------------------------------------------
 
         profile.email_verified_at = None
 
-
-
         profile.save()
 
-
-
-        # RegisterView sends the verification email.
-
+        # Verification email is sent by RegisterView.
         # Registration does not issue JWT tokens.
 
         return user
-
 
 
 

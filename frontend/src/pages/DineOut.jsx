@@ -417,73 +417,9 @@ function LiveRestaurantNavigation({ restaurant, onStatus }) {
 
   const lastRoutedPositionRef = useRef(null);
 
-  useEffect(() => {
+  
 
-    if (!navigator.geolocation) {
 
-      onStatus((current) => ({
-
-        ...current,
-
-        loading: false,
-
-        error: "Live location is not supported by this browser.",
-
-      }));
-
-      return undefined;
-
-    }
-
-    const watchId = navigator.geolocation.watchPosition(
-
-      (position) => {
-        setGpsAccuracy(position.coords.accuracy);
-        onStatus((current) => ({
-          ...current,
-          gpsAccuracy: Math.round(position.coords.accuracy),
-          lastGpsUpdate: new Date(position.timestamp).toLocaleTimeString(),
-          error: "",
-        }));
-        setCurrentPosition([
-
-          position.coords.latitude,
-
-          position.coords.longitude,
-
-        ]);
-
-      },
-
-      (error) => {
-
-        const message =
-
-          error.code === error.PERMISSION_DENIED
-
-            ? "Allow location access to start navigation."
-
-            : "Your live location could not be determined.";
-
-        onStatus((current) => ({ ...current, loading: false, error: message }));
-
-      },
-
-      {
-
-        enableHighAccuracy: true,
-
-        maximumAge: 3000,
-
-        timeout: 15000,
-
-      },
-
-    );
-
-    return () => navigator.geolocation.clearWatch(watchId);
-
-  }, [onStatus]);
 
   useEffect(() => {
 
@@ -1079,138 +1015,72 @@ export default function DineOut() {
   const [membersError, setMembersError] = useState("");
 
   /* ----------------------------------------------------------
+     LOAD ELIGIBLE FOODKINDL MEMBERS FOR PRIVATE INVITATIONS
 
-     LOAD MEMBERS FOR PRIVATE INVITATIONS
+     /people/ is handled by FoodKindlPeopleView, which already
+     excludes restaurant partners, inactive accounts, blocked
+     users and the logged-in user at the Django level.
 
-     Change VITE_MEMBER_DIRECTORY_ENDPOINT in .env only if your
-
-     existing member/profile-list endpoint uses a different URL.
-
+     Note: the current People API returns up to 20 members.
+     For a larger directory, add pagination to the backend.
   ---------------------------------------------------------- */
-
   useEffect(() => {
-
-    if (visibility !== "invited_only") {
-
-      return;
-
-    }
-
-    if (availableMembers.length > 0) {
-
-      return;
-
-    }
+    if (visibility !== "invited_only") return undefined;
 
     let cancelled = false;
 
     async function loadMembers() {
-
       setMembersLoading(true);
-
       setMembersError("");
 
       try {
-
-        const endpoint =
-
-          import.meta.env.VITE_MEMBER_DIRECTORY_ENDPOINT || "/dineout/members/";
-
-        const response = await api.get(endpoint);
-
-        const rawMembers = Array.isArray(response.data)
-
-          ? response.data
-
-          : response.data?.results ||
-
-            response.data?.members ||
-
-            response.data?.profiles ||
-
-            [];
+        // Never use the unfiltered /dineout/members/ endpoint here.
+        const response = await api.get("/auth/people/");
+        const data = response.data;
+        const rawMembers = Array.isArray(data)
+          ? data
+          : Array.isArray(data?.results)
+            ? data.results
+            : [];
 
         const normalizedMembers = rawMembers
-
           .map((item) => {
+            const user = item?.user || item;
+            const id = Number(user?.id ?? item?.user_id ?? item?.member_id);
+            const name = String(
+              user?.full_name ||
+              [user?.first_name, user?.last_name].filter(Boolean).join(" ") ||
+              user?.display_name ||
+              user?.username ||
+              "Member"
+            ).trim();
 
-            const user = item.user || item;
-
-            const id = user.id || item.user_id;
-
-            const name =
-
-              user.name ||
-
-              user.full_name ||
-
-              [user.first_name, user.last_name].filter(Boolean).join(" ") ||
-
-              user.username ||
-
-              item.display_name ||
-
-              user.email;
-
-            if (!id || !name) {
-
-              return null;
-
-            }
-
-            return {
-
-              id: Number(id),
-
-              name,
-
-              email: user.email || "",
-
-            };
-
+            if (!Number.isInteger(id) || id <= 0) return null;
+            return { id, name, email: user?.email || "" };
           })
-
           .filter(Boolean);
 
         if (!cancelled) {
-
           setAvailableMembers(normalizedMembers);
-
-        }
-
-      } catch (error) {
-
-        if (!cancelled) {
-
-          setMembersError(
-
-            "Could not load FoodKindl members. Check the member-directory API endpoint.",
-
+          const allowedIds = new Set(normalizedMembers.map((member) => member.id));
+          setSelectedMemberIds((current) =>
+            current.filter((id) => allowedIds.has(id))
           );
-
         }
-
-      } finally {
-
+      } catch (error) {
+        console.error("Dine Out member directory error:", error);
         if (!cancelled) {
-
-          setMembersLoading(false);
-
+          setAvailableMembers([]);
+          setMembersError("Could not load FoodKindl members. Please try again.");
         }
-
+      } finally {
+        if (!cancelled) setMembersLoading(false);
       }
-
     }
 
     loadMembers();
-
-    return () => {
-
-      cancelled = true;
-
-    };
-
-  }, [visibility, availableMembers.length]);
+    return () => { cancelled = true; };
+  }, [visibility]);
 
   function toggleInvitedMember(memberId) {
 
@@ -1427,6 +1297,10 @@ export default function DineOut() {
 
         : response.data?.results || response.data?.restaurants || [];
 
+      // Diagnostic: inspect the actual API URL and partner rows in the browser console.
+      console.info("Dine Out restaurant API:", response.config?.baseURL, response.config?.url);
+      console.info("Dine Out partner restaurants:", results.filter((r) => r.is_foodkindl_partner));
+
       setRestaurants(results);
       setCuisine("All cuisines");
 
@@ -1435,7 +1309,8 @@ export default function DineOut() {
       const areaMessage = searchedMetres > 0 && searchedMetres < Math.min(radiusKm, 5) * 1000
         ? `Overpass timed out at ${radiusKm} km; these results cover ${searchedMetres / 1000} km. Search again to retry the full area.`
         : `Search covered ${radiusKm} km.`;
-      setSearchCoverage(`${areaMessage} ${Number.isFinite(mappedCount) ? mappedCount : results.length} named dining places returned by OpenStreetMap.`);
+      const partnerCount = results.filter((r) => r.is_foodkindl_partner).length;
+      setSearchCoverage(`${areaMessage} ${results.length} restaurants found, including ${partnerCount} FoodKindl Partner${partnerCount === 1 ? "" : "s"}.`);
 
       setSelectedRestaurant(null);
 
@@ -1453,7 +1328,12 @@ export default function DineOut() {
 
         "Restaurant search error:",
 
-        requestError.response?.data || requestError,
+        {
+          url: `${requestError.config?.baseURL || ""}${requestError.config?.url || ""}`,
+          status: requestError.response?.status,
+          response: requestError.response?.data,
+          message: requestError.message,
+        },
 
       );
 
@@ -1883,6 +1763,14 @@ export default function DineOut() {
 
       return;
 
+    }
+
+    if (
+      visibility === "invited_only" &&
+      selectedMemberIds.some((id) => !availableMembers.some((member) => member.id === id))
+    ) {
+      showCreateError("Guest list changed. Please select FoodKindl members again.");
+      return;
     }
 
     if (selectedMemberIds.length > guestCount) {
@@ -2407,6 +2295,12 @@ export default function DineOut() {
 
 
                 <h3>{restaurant.name}</h3>
+
+                {restaurant.is_foodkindl_partner && (
+                  <span className="fk-partner-label" style={{ display: "inline-block", marginBottom: 8, padding: "5px 10px", borderRadius: 12, border: "1px solid #d95d38", color: "#ffb39b", fontWeight: 700, fontSize: 12 }}>
+                    FoodKindl Partner
+                  </span>
+                )}
 
                 {(restaurant.cuisine || restaurant.tags?.cuisine) && <p>{String(restaurant.cuisine || restaurant.tags.cuisine).replaceAll(";", " · ")}</p>}
 

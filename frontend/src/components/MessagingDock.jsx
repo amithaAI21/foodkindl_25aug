@@ -74,18 +74,39 @@ export default function MessagingDock() {
     return `${API_BASE}${path}`;
   }
 
+  // Prefer the real member name supplied by Django. Never present a
+  // generic placeholder as though it were a registered person's name.
   function getUserName(currentUser) {
-    return (
-      currentUser?.full_name ||
-      [
-        currentUser?.first_name,
-        currentUser?.last_name,
-      ]
-        .filter(Boolean)
-        .join(" ") ||
-      currentUser?.email ||
-      "FoodKindl Member"
-    );
+    const person = currentUser?.user || currentUser;
+    const profile = currentUser?.profile || person?.profile || {};
+
+    const fullNameFromParts = [
+      person?.first_name,
+      person?.last_name,
+    ].filter(Boolean).join(" ");
+
+    const candidates = [
+      person?.full_name,
+      fullNameFromParts,
+      person?.display_name,
+      profile?.full_name,
+      profile?.display_name,
+      person?.username,
+      profile?.username,
+      person?.name,
+    ];
+
+    for (const candidate of candidates) {
+      const name = typeof candidate === "string" ? candidate.trim() : "";
+      if (!name) continue;
+      if (["foodkindl member", "foodkindlmember", "member", "user"]
+        .includes(name.toLowerCase())) continue;
+      // An email address is not a public display name.
+      if (name.includes("@")) continue;
+      return name;
+    }
+
+    return "Member";
   }
 
   function getUserInitial(currentUser) {
@@ -233,7 +254,7 @@ export default function MessagingDock() {
     return (
       conversation?.other_user?.profile?.role ||
       conversation?.other_user?.profile?.city ||
-      "FoodKindl member"
+      "Member"
     );
   }
 
@@ -958,7 +979,7 @@ export default function MessagingDock() {
                                 ?.college_workplace ||
                               member.profile
                                 ?.city ||
-                              "FoodKindl member"}
+                              "Member"}
                           </small>
                         </div>
                       </button>

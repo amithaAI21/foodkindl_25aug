@@ -5,7 +5,8 @@ import React, {
   useState,
 } from "react";
 
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { ArrowLeft } from "lucide-react";
 
 import api from "../api";
 import "../styles/FoodInvites.css";
@@ -721,6 +722,11 @@ export default function FoodInvites() {
 
       <section className="fi-hero">
         <div className="fi-hero-copy">
+          <Link to="/connect-dashboard" className="fi-back-dashboard">
+            <ArrowLeft size={18} aria-hidden="true" />
+            <span>Back to Dashboard</span>
+          </Link>
+
           <span className="fi-eyebrow">
             ✦ FOODKINDL INVITES
           </span>

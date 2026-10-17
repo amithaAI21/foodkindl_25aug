@@ -10,12 +10,19 @@ import {
 
 import api from "../api";
 
+/* =========================================================
+   AUTH CONTEXT
+========================================================= */
+
 const AuthContext = createContext(null);
 
 const ACCESS_KEY = "foodkindl_access";
 const REFRESH_KEY = "foodkindl_refresh";
 
-// Normalize email address
+/* =========================================================
+   NORMALIZE EMAIL
+========================================================= */
+
 function normalizeEmail(email) {
   const value = String(email ?? "")
     .trim()
@@ -25,14 +32,19 @@ function normalizeEmail(email) {
     throw new Error("Email address is required.");
   }
 
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+  if (!emailRegex.test(value)) {
     throw new Error("Enter a valid email address.");
   }
 
   return value;
 }
 
-// Normalize Indian mobile number for registration
+/* =========================================================
+   NORMALIZE MOBILE NUMBER
+========================================================= */
+
 function normalizeMobile(value) {
   let mobile = String(value ?? "").replace(
     /[\s()-]/g,
@@ -57,6 +69,50 @@ function normalizeMobile(value) {
   return mobile;
 }
 
+/* =========================================================
+   ACCOUNT TYPE
+========================================================= */
+
+export function getAccountType(user) {
+  const accountType =
+    user?.profile?.account_type ??
+    user?.account_type ??
+    user?.user?.profile?.account_type ??
+    user?.user?.account_type;
+
+  if (accountType === "partner") {
+    return "partner";
+  }
+
+  if (accountType === "member") {
+    return "member";
+  }
+
+  return null;
+}
+
+/* =========================================================
+   DASHBOARD ROUTING
+========================================================= */
+
+export function getDashboardPath(user) {
+  const accountType = getAccountType(user);
+
+  if (accountType === "partner") {
+    return "/partner/dashboard";
+  }
+
+  if (accountType === "member") {
+    return "/discover";
+  }
+
+  return null;
+}
+
+/* =========================================================
+   AUTH PROVIDER
+========================================================= */
+
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -65,10 +121,15 @@ export function AuthProvider({ children }) {
     () => Boolean(localStorage.getItem(ACCESS_KEY))
   );
 
-  // Clear login session
+  /* =======================================================
+     CLEAR AUTH
+  ======================================================= */
+
   const clearAuth = useCallback(() => {
     localStorage.removeItem(ACCESS_KEY);
     localStorage.removeItem(REFRESH_KEY);
+
+    // Remove legacy keys.
     localStorage.removeItem("access");
     localStorage.removeItem("access_token");
 
@@ -76,7 +137,10 @@ export function AuthProvider({ children }) {
     setIsAuthenticated(false);
   }, []);
 
-  // Fetch current authenticated user
+  /* =======================================================
+     FETCH AUTHENTICATED USER
+  ======================================================= */
+
   const loadUser = useCallback(async () => {
     const token = localStorage.getItem(ACCESS_KEY);
 
@@ -90,13 +154,28 @@ export function AuthProvider({ children }) {
     try {
       const response = await api.get("/auth/me/");
 
-      setUser(response.data);
+      const currentUser = response.data;
+
+      if (!currentUser) {
+        throw new Error(
+          "Unable to load user account information."
+        );
+      }
+
+      setUser(currentUser);
       setIsAuthenticated(true);
 
-      return response.data;
+      return currentUser;
     } catch (error) {
-      if (error.response?.status === 401) {
+      console.error(
+        "Unable to load user:",
+        error?.response?.status || error?.message
+      );
+
+      if (error?.response?.status === 401) {
         clearAuth();
+      } else {
+        setUser(null);
       }
 
       return null;
@@ -105,11 +184,18 @@ export function AuthProvider({ children }) {
     }
   }, [clearAuth]);
 
+  /* =======================================================
+     LOAD SESSION WHEN APP OPENS
+  ======================================================= */
+
   useEffect(() => {
     loadUser();
   }, [loadUser]);
 
-  // Store JWT tokens after successful login
+  /* =======================================================
+     COMPLETE LOGIN
+  ======================================================= */
+
   const completeLogin = useCallback(
     async (data) => {
       const access = data?.access;
@@ -130,20 +216,35 @@ export function AuthProvider({ children }) {
       }
 
       setIsAuthenticated(true);
-      setUser(null);
       setLoading(false);
 
-      if (data?.user) {
-        setUser(data.user);
-        return data.user;
+      // Prefer account information returned by Django.
+      let currentUser = data?.user ?? null;
+
+      // Fetch the latest profile, including account_type.
+      const fetchedUser = await loadUser();
+
+      if (fetchedUser) {
+        currentUser = fetchedUser;
       }
 
-      return loadUser();
+      if (!currentUser) {
+        throw new Error(
+          "Login succeeded, but user details were not returned."
+        );
+      }
+
+      setUser(currentUser);
+
+      return currentUser;
     },
     [loadUser]
   );
 
-  // LOGIN: Email and password only
+  /* =======================================================
+     LOGIN USING EMAIL AND PASSWORD
+  ======================================================= */
+
   const login = useCallback(
     async (email, password) => {
       const normalizedEmail = normalizeEmail(email);
@@ -168,10 +269,32 @@ export function AuthProvider({ children }) {
     [completeLogin]
   );
 
-  // REGISTER: New FoodKindl account
+  /* =======================================================
+     REGISTER USER
+     MEMBER / RESTAURANT PARTNER
+  ======================================================= */
+
   const register = useCallback(async (payload) => {
+    const account_type =
+      payload?.account_type === "partner"
+        ? "partner"
+        : "member";
+
+    /* FIRST AND LAST NAME */
+
+    const first_name = String(
+      payload?.first_name ?? ""
+    ).trim();
+
+    const last_name = String(
+      payload?.last_name ?? ""
+    ).trim();
+
+    /* FULL NAME */
+
     const full_name = String(
-      payload?.full_name ?? ""
+      payload?.full_name ||
+      `${first_name} ${last_name}`
     )
       .trim()
       .replace(/\s+/g, " ");
@@ -182,11 +305,26 @@ export function AuthProvider({ children }) {
       );
     }
 
+    if (
+      account_type === "partner" &&
+      (!first_name || !last_name)
+    ) {
+      throw new Error(
+        "Please enter your first and last name."
+      );
+    }
+
+    /* EMAIL */
+
     const email = normalizeEmail(payload?.email);
+
+    /* PHONE NUMBER */
 
     const phone_number = normalizeMobile(
       payload?.phone_number
     );
+
+    /* PASSWORD */
 
     const password = String(
       payload?.password ?? ""
@@ -202,34 +340,51 @@ export function AuthProvider({ children }) {
       payload?.confirm_password !== undefined &&
       password !== payload.confirm_password
     ) {
-      throw new Error(
-        "Passwords do not match."
-      );
+      throw new Error("Passwords do not match.");
     }
 
-    const account_type =
-      payload?.account_type === "partner"
-        ? "partner"
-        : "member";
+    /* REGISTRATION PAYLOAD */
+
+    const registrationData = {
+      full_name,
+      email,
+      phone_number,
+      password,
+      account_type,
+    };
+
+    if (account_type === "partner") {
+      registrationData.first_name = first_name;
+      registrationData.last_name = last_name;
+    }
+
+    /* SEND REGISTRATION TO DJANGO */
 
     const response = await api.post(
       "/auth/register/",
-      {
-        full_name,
-        email,
-        phone_number,
-        password,
-        account_type,
-      }
+      registrationData
     );
+
+    // Email verification is handled by Django.
+    // Registration does not automatically log in.
 
     return response.data;
   }, []);
 
-  // LOGOUT
+  /* =======================================================
+     LOGOUT
+  ======================================================= */
+
   const logout = useCallback(() => {
     clearAuth();
   }, [clearAuth]);
+
+  /* =======================================================
+     CONTEXT VALUES
+  ======================================================= */
+
+  const accountType = getAccountType(user);
+  const dashboardPath = getDashboardPath(user);
 
   const value = useMemo(
     () => ({
@@ -238,9 +393,13 @@ export function AuthProvider({ children }) {
       login,
       register,
       logout,
+
       reloadUser: loadUser,
       refreshUser: loadUser,
+
       isAuthenticated,
+      accountType,
+      dashboardPath,
     }),
     [
       user,
@@ -250,6 +409,8 @@ export function AuthProvider({ children }) {
       logout,
       loadUser,
       isAuthenticated,
+      accountType,
+      dashboardPath,
     ]
   );
 
@@ -259,6 +420,10 @@ export function AuthProvider({ children }) {
     </AuthContext.Provider>
   );
 }
+
+/* =========================================================
+   USE AUTH
+========================================================= */
 
 export function useAuth() {
   const context = useContext(AuthContext);

@@ -1,3 +1,4 @@
+
 from django.urls import path
 
 from .views import (
@@ -26,6 +27,11 @@ from .views import (
     RestaurantSubmissionDetailView,
 )
 
+from .restaurant_views import (
+    PartnerRestaurantListCreateView,
+    PartnerRestaurantDetailView,
+)
+
 
 urlpatterns = [
 
@@ -33,48 +39,38 @@ urlpatterns = [
     # FOOD INVITES
     # ========================================================
 
-    # GET  -> list invites
-    # POST -> create invite
     path(
         "food-invites/",
         FoodInviteListCreateView.as_view(),
         name="food-invite-list-create",
     ),
 
-    # GET    -> view invite
-    # PATCH  -> edit invite
-    # PUT    -> replace invite
-    # DELETE -> delete invite
     path(
         "food-invites/<uuid:id>/",
         FoodInviteDetailView.as_view(),
         name="food-invite-detail",
     ),
 
-    # Accept / decline invitation
     path(
         "food-invites/<uuid:invite_id>/respond/",
         FoodInviteRespondView.as_view(),
         name="food-invite-respond",
     ),
 
-    # Creator cancels invite
     path(
         "food-invites/<uuid:invite_id>/cancel/",
         FoodInviteCancelView.as_view(),
         name="food-invite-cancel",
     ),
 
-    # Creator completes invite
     path(
         "food-invites/<uuid:invite_id>/complete/",
         FoodInviteCompleteView.as_view(),
         name="food-invite-complete",
     ),
 
-
     # ========================================================
-    # CUSTOMER RESTAURANT / CAFE / HOTEL SUBMISSIONS
+    # CUSTOMER RESTAURANT SUBMISSIONS
     # ========================================================
 
     path(
@@ -89,9 +85,8 @@ urlpatterns = [
         name="restaurant-submission-detail",
     ),
 
-
     # ========================================================
-    # FOOD WALK / RESTAURANT RECOMMENDATIONS
+    # RESTAURANT RECOMMENDATIONS
     # ========================================================
 
     path(
@@ -106,9 +101,8 @@ urlpatterns = [
         name="food-walk-restaurants",
     ),
 
-
     # ========================================================
-    # ADMIN RESTAURANT MANAGEMENT
+    # EXISTING RESTAURANT MANAGEMENT
     # ========================================================
 
     path(
@@ -129,17 +123,27 @@ urlpatterns = [
         name="restaurant-geocode",
     ),
 
-
-    # ========================================================
-    # RESTAURANT DETAIL
-    # ========================================================
-
     path(
         "restaurants/<int:id>/",
         RestaurantDetailView.as_view(),
         name="restaurant-detail",
     ),
 
+    # ========================================================
+    # FOODKINDL RESTAURANT PARTNER REGISTRATION
+    # ========================================================
+
+    path(
+        "partner/restaurants/",
+        PartnerRestaurantListCreateView.as_view(),
+        name="partner-restaurants",
+    ),
+
+    path(
+        "partner/restaurants/<int:pk>/",
+        PartnerRestaurantDetailView.as_view(),
+        name="partner-restaurant-detail",
+    ),
 
     # ========================================================
     # RESTAURANT BOOKINGS
@@ -169,22 +173,16 @@ urlpatterns = [
         name="restaurant-booking-status",
     ),
 
-
     # ========================================================
     # LOCATION AUTOCOMPLETE
     # ========================================================
 
-    # NEW frontend endpoint
-    # Frontend calls:
-    # /api/geocode/?q=Indiranagar
     path(
         "geocode/",
         LocationAutocompleteView.as_view(),
         name="location-autocomplete",
     ),
 
-    # Keep old endpoint also, so older FoodKindl code
-    # does not suddenly break.
     path(
         "locations/autocomplete/",
         LocationAutocompleteView.as_view(),

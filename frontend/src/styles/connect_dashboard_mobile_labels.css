@@ -1,0 +1,77 @@
+/* FoodKindl: readable dashboard navigation on phones only.
+   Import AFTER connect_dashboard.css to override icon-only mobile rules. */
+@media (max-width: 768px) {
+  .cd-app .cd-left-sidebar {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    height: auto !important;
+    position: static !important;
+    overflow: visible !important;
+  }
+
+  .cd-app .cd-side-nav {
+    display: grid !important;
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    align-items: stretch !important;
+    gap: 10px !important;
+    padding: 12px !important;
+    width: 100% !important;
+    height: auto !important;
+  }
+
+  .cd-app .cd-side-nav > a {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 7px !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    min-height: 84px !important;
+    padding: 12px 6px !important;
+    text-align: center !important;
+    white-space: normal !important;
+    box-sizing: border-box !important;
+    text-decoration: none !important;
+    position: relative !important;
+  }
+
+  .cd-app .cd-side-nav > a > svg {
+    display: block !important;
+    flex: 0 0 auto !important;
+    width: 24px !important;
+    height: 24px !important;
+  }
+
+  .cd-app .cd-side-nav > a > span:not(.cd-side-count) {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    position: static !important;
+    width: auto !important;
+    height: auto !important;
+    max-width: 100% !important;
+    font-size: 12px !important;
+    font-weight: 600 !important;
+    line-height: 1.25 !important;
+    letter-spacing: normal !important;
+    white-space: normal !important;
+    overflow: visible !important;
+    text-overflow: initial !important;
+    clip: auto !important;
+    transform: none !important;
+  }
+
+  .cd-app .cd-side-nav .cd-side-count {
+    position: absolute !important;
+    top: 5px !important;
+    right: 8px !important;
+  }
+}
+
+@media (max-width: 359px) {
+  .cd-app .cd-side-nav {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+}

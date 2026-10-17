@@ -81,6 +81,7 @@ from rest_framework.response import Response
 
 
 from .helper import search_places
+from invites.models import Restaurant as FoodKindlRestaurant
 
 
 
@@ -540,6 +541,7 @@ class RestaurantRecommendationView(APIView):
         if not (math.isfinite(latitude) and math.isfinite(longitude)
                 and -90 <= latitude <= 90 and -180 <= longitude <= 180):
             return Response({"detail": "Invalid coordinates."}, status=status.HTTP_400_BAD_REQUEST)
+
         radius = max(500, min(radius, 5000))
         limit = max(1, min(limit, 50))
         place_type = request.query_params.get("place_type", "all").strip().lower()
@@ -549,11 +551,69 @@ class RestaurantRecommendationView(APIView):
         diet = request.query_params.get("diet", "all").strip().lower()
         if diet not in {"all", "veg", "vegetarian", "nonveg", "non_veg", "non-veg"}:
             return Response({"detail": "Invalid diet."}, status=status.HTTP_400_BAD_REQUEST)
-        # Cache raw mapped places so all filters reuse the same Overpass response.
+
+        # FoodKindl listings are queried live, not from the external-places cache.
+        partner_results = []
+        partner_rows = FoodKindlRestaurant.objects.filter(
+            is_active=True,
+            is_foodkindl_partner=True,
+            latitude__isnull=False,
+            longitude__isnull=False,
+        )
+        for restaurant in partner_rows:
+            lat, lon = float(restaurant.latitude), float(restaurant.longitude)
+            if not (math.isfinite(lat) and math.isfinite(lon) and -90 <= lat <= 90 and -180 <= lon <= 180):
+                continue
+            km = distance_km(latitude, longitude, lat, lon)
+            if km * 1000 > radius + 10:
+                continue
+            amenity = restaurant.restaurant_type or "restaurant"
+            if amenity == "hotel":
+                amenity = "restaurant"
+            if place_type != "all" and amenity != place_type:
+                continue
+            cuisine_label = restaurant.get_cuisine_display() if restaurant.cuisine else ""
+            if cuisine and cuisine != "all cuisines" and cuisine.replace("_", " ") not in cuisine_label.lower():
+                continue
+            if diet in {"veg", "vegetarian"} and not restaurant.serves_vegetarian:
+                continue
+            if diet in {"nonveg", "non_veg", "non-veg"} and not restaurant.serves_non_vegetarian:
+                continue
+            partner_results.append({
+                "id": f"foodkindl-{restaurant.pk}",
+                "name": restaurant.name,
+                "latitude": lat,
+                "longitude": lon,
+                "distance_km": round(km, 2),
+                "amenity": amenity,
+                "category": amenity,
+                "cuisine": cuisine_label,
+                "address": restaurant.address or ", ".join(filter(None, [restaurant.locality, restaurant.city])),
+                "phone": restaurant.phone_number,
+                "website": restaurant.website,
+                "opening_hours": (
+                    f"{restaurant.opening_time.strftime('%H:%M')}-{restaurant.closing_time.strftime('%H:%M')}"
+                    if restaurant.opening_time and restaurant.closing_time else ""
+                ),
+                "diet_vegetarian": "yes" if restaurant.serves_vegetarian else "no",
+                "diet_non_vegetarian": "yes" if restaurant.serves_non_vegetarian else "no",
+                "wheelchair": "yes" if restaurant.wheelchair_accessible else "no",
+                "internet_access": "yes" if restaurant.has_wifi else "no",
+                "payment_methods": ["cards"] if restaurant.accepts_cards else [],
+                "source": "foodkindl",
+                "is_foodkindl_partner": True,
+                "accepts_foodkindl_booking": restaurant.accepts_foodkindl_booking,
+                "image_url": restaurant.image_url,
+            })
+        partner_results.sort(key=lambda place: place["distance_km"])
+
+        # Reuse cached OSM results, but never let an external provider failure
+        # suppress valid FoodKindl Partner restaurants.
         cache_key = f"dineout:places:v8:{latitude:.4f}:{longitude:.4f}:{radius}"
-        places = cache.get(cache_key)
+        cached = cache.get(cache_key)
         effective_radius = radius
-        if places is None:
+        if cached is None:
+            places = None
             for attempt_radius in [radius] + [r for r in (3000, 1500) if r < radius]:
                 try:
                     places = search_places(latitude, longitude, radius_metres=attempt_radius,
@@ -564,15 +624,16 @@ class RestaurantRecommendationView(APIView):
                     logger.warning("Overpass search failed for radius=%s", attempt_radius,
                                    exc_info=True)
             if places is None:
-                return Response({"detail": "Restaurant search is temporarily unavailable.",
-                                 "results": []}, status=status.HTTP_503_SERVICE_UNAVAILABLE)
-            # Keep effective radius with the data; never imply fallback covered the whole area.
-            if effective_radius == radius:
+                if not partner_results:
+                    return Response({"detail": "Restaurant search is temporarily unavailable.",
+                                     "results": []}, status=status.HTTP_503_SERVICE_UNAVAILABLE)
+                places = []
+            if effective_radius == radius and places:
                 cache.set(cache_key, (effective_radius, places), timeout=600)
         else:
-            effective_radius, places = places
+            effective_radius, places = cached
 
-        results = []
+        external_results = []
         for place in places:
             tags = place["tags"]
             category = place["category"]
@@ -593,7 +654,7 @@ class RestaurantRecommendationView(APIView):
             km = distance_km(latitude, longitude, place["latitude"], place["longitude"])
             if km * 1000 > effective_radius + 10:
                 continue
-            results.append({
+            external_results.append({
                 "id": place["id"], "name": place["name"],
                 "latitude": place["latitude"], "longitude": place["longitude"],
                 "distance_km": round(km, 2), "amenity": tags.get("amenity"),
@@ -610,13 +671,29 @@ class RestaurantRecommendationView(APIView):
                 "payment_methods": [key.removeprefix("payment:").replace("_", " ")
                                     for key, value in tags.items()
                                     if key.startswith("payment:") and str(value).lower() == "yes"],
+                "source": "openstreetmap", "is_foodkindl_partner": False,
             })
-        results.sort(key=lambda place: place["distance_km"])
+        external_results.sort(key=lambda place: place["distance_km"])
+
+        # Prefer the partner record when OSM contains the same physical venue.
+        results = list(partner_results)
+        for place in external_results:
+            duplicate = any(
+                place["name"].strip().casefold() == partner["name"].strip().casefold()
+                and distance_km(place["latitude"], place["longitude"],
+                                partner["latitude"], partner["longitude"]) < 0.12
+                for partner in partner_results
+            )
+            if not duplicate:
+                results.append(place)
         results = results[:limit]
-        return Response({"count": len(results), "results": results,
-                         "requested_radius_metres": radius,
-                         "mapped_places_in_area": len(places),
-                         "searched_radius_metres": effective_radius})
+        return Response({
+            "count": len(results), "results": results,
+            "requested_radius_metres": radius,
+            "mapped_places_in_area": len(places),
+            "searched_radius_metres": effective_radius,
+            "partner_restaurants_found": len(partner_results),
+        })
 
 
 class DineOutViewSet(

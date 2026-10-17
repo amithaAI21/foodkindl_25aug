@@ -28,7 +28,7 @@ import {
 
 import Navbar from "./components/Navbar";
 
-import { useAuth } from "./context/AuthContext";
+import { useAuth, getAccountType } from "./context/AuthContext";
 
 
 
@@ -429,29 +429,15 @@ const PUBLIC_DARK_PAGES = [
 
 
 function isPartnerUser(user) {
+  const accountType = getAccountType(user);
+  if (accountType) return accountType === "partner";
 
-  const profile =
-
-    user?.profile || {};
-
-
-
+  // Backward compatibility for older profile responses.
   return (
-
-    user?.account_type === "partner" ||
-
-    profile?.account_type === "partner" ||
-
-    user?.preferred_portal === "restaurant" ||
-
-    profile?.preferred_portal === "restaurant"
-
+    user?.profile?.preferred_portal === "restaurant" ||
+    user?.preferred_portal === "restaurant"
   );
-
 }
-
-
-
 
 
 // ============================================================
@@ -1125,38 +1111,36 @@ export default function App() {
 
 
   const hideMessaging =
+  isPartnerRoute ||
+  [
+    "/",
+    "/login",
+    "/register",
+    "/register/restaurant",
+    "/forgot-password",
+    "/careers",
+    "/contact",
+    "/community-guidelines",
+    "/safety",
+    "/privacy",
+    "/terms",
+  ].includes(location.pathname) ||
 
-    isPartnerRoute ||
+  // Food Invites, including details and edit pages
+  location.pathname === "/food-invites" ||
+  location.pathname.startsWith("/food-invites/") ||
 
-    [
+  // Cook Together
+  location.pathname === "/cook-together" ||
+  location.pathname.startsWith("/cook-together/") ||
 
-      "/",
+  // Dine Out, including planning and detail pages
+  location.pathname === "/dine-out" ||
+  location.pathname.startsWith("/dine-out/") ||
 
-      "/login",
-
-      "/register",
-
-      "/register/restaurant",
-
-      "/forgot-password",
-
-      "/careers",
-
-      "/contact",
-
-      "/community-guidelines",
-
-      "/safety",
-
-      "/privacy",
-
-      "/terms",
-
-    ].includes(
-
-      location.pathname
-
-    );
+  // Food Walk, including journey pages
+  location.pathname === "/food-walk" ||
+  location.pathname.startsWith("/food-walk/");
 
 
 

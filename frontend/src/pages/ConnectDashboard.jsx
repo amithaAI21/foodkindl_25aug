@@ -1,2065 +1,4130 @@
 import { useEffect, useMemo, useState } from "react";
 
+
+
 import {
 
-  Bell,
 
-  Check,
 
-  ChevronRight,
+  Bell,
 
-  CircleUserRound,
 
-  Clock3,
 
-  Home,
+  Check,
 
-  MapPin,
 
-  Search,
 
-  Sparkles,
+  ChevronRight,
 
-  UserCheck,
 
-  UserPlus,
 
-  UsersRound,
+  CircleUserRound,
 
-  Utensils,
 
-  X,
 
-  ChefHat,
+  Clock3,
 
-  ShieldAlert,
+
+
+  Home,
+
+
+
+  MapPin,
+
+
+
+  Search,
+
+
+
+  Sparkles,
+
+
+
+  UserCheck,
+
+
+
+  UserPlus,
+
+
+
+  UsersRound,
+
+
+
+  Utensils,
+
+
+
+  X,
+
+
+
+  ChefHat,
+
+
+
+  ShieldAlert,
+
+
 
 } from "lucide-react";
 
+
+
 import { Link, useNavigate } from "react-router-dom";
+
+
 
 import api from "../api";
 
+
+
 import { useAuth } from "../context/AuthContext";
 
+
+
 import "../styles/connect_dashboard.css";
+import "../styles/connect_dashboard_mobile_labels.css";
+
+
 
 import PublicPosts from "../components/PublicPosts";
 
+
+
 /* =========================================================
 
-   CONNECT DASHBOARD
+
+
+   CONNECT DASHBOARD
+
+
 
 \\\\========================================================= */
 
+
+
 export default function ConnectDashboard() {
 
-  const { user } = useAuth();
 
-  const navigate = useNavigate();
 
-  /* =======================================================
+  const { user } = useAuth();
 
-     STATE
 
-  ======================================================= */
 
-  const [members, setMembers] = useState([]);
+  const navigate = useNavigate();
 
-  const [foodMatches, setFoodMatches] = useState([]);
 
-  const [incomingRequests, setIncomingRequests] = useState([]);
 
-  const [sentRequests, setSentRequests] = useState([]);
+  /* =======================================================
 
-  const [connections, setConnections] = useState([]);
 
-  const [loading, setLoading] = useState(true);
 
-  const [error, setError] = useState("");
+     STATE
 
-  const [message, setMessage] = useState("");
 
-  const [membersError, setMembersError] = useState("");
 
-  const [connectionsError, setConnectionsError] = useState("");
+  ======================================================= */
 
-  /* =======================================================
 
-     API BASE
 
-  ======================================================= */
+  const [members, setMembers] = useState([]);
 
-  const API_BASE = (
 
-    import.meta.env.VITE_BACKEND_URL ||
 
-    "http://127.0.0.1:8000"
+  const [foodMatches, setFoodMatches] = useState([]);
 
-  ).replace(/\/+$/, "");
 
-  /* =======================================================
 
-     MEDIA
+  const [incomingRequests, setIncomingRequests] = useState([]);
 
-  ======================================================= */
 
-  function getMediaUrl(path) {
 
-    if (!path) return "";
+  const [sentRequests, setSentRequests] = useState([]);
 
-    if (
 
-      path.startsWith("http://") ||
 
-      path.startsWith("https://") ||
+  const [connections, setConnections] = useState([]);
 
-      path.startsWith("blob:")
 
-    ) {
 
-      return path;
+  const [loading, setLoading] = useState(true);
 
-    }
 
-    if (path.startsWith("/.netlify/")) {
 
-      return `${window.location.origin}${path}`;
+  const [error, setError] = useState("");
 
-    }
 
-    const normalizedPath = path.startsWith("/")
 
-      ? path
+  const [message, setMessage] = useState("");
 
-      : `/${path}`;
 
-    return `${API_BASE}${normalizedPath}`;
 
-  }
+  const [membersError, setMembersError] = useState("");
 
-  /* =======================================================
 
-     MEMBER HELPERS
 
-  ======================================================= */
+  const [connectionsError, setConnectionsError] = useState("");
 
-  function getMemberName(member) {
 
-    const fullName = String(member?.full_name || member?.profile?.full_name || "").trim();
 
-    const parts = [member?.first_name, member?.last_name].filter(Boolean).join(" ").trim();
+  /* =======================================================
 
-    const username = String(member?.username || "").trim();
 
-    return fullName || parts || (username && !username.includes("@") ? username : "") || "FoodKindl Member";
 
-  }
+     API BASE
 
-  function getMemberInitial(member) {
 
-    return getMemberName(member)
 
-      .charAt(0)
+  ======================================================= */
 
-      .toUpperCase();
 
-  }
 
-  function getMemberPhoto(member) {
+  const API_BASE = (
 
-    return getMediaUrl(
 
-      member?.profile?.profile_image_1_url ||
 
-        member?.profile?.profile_image_1 ||
+    import.meta.env.VITE_BACKEND_URL ||
 
-        member?.profile_image_1_url ||
 
-        member?.profile_image_1 ||
 
-        ""
+    "http://127.0.0.1:8000"
 
-    );
 
-  }
 
-  function getLocation(member) {
+  ).replace(/\/+$/, "");
 
-    const profile = member?.profile || {};
 
-    return [
 
-      profile.locality,
+  /* =======================================================
 
-      profile.city,
 
-    ]
 
-      .filter(Boolean)
+     MEDIA
 
-      .join(", ");
 
-  }
 
-  function getDiet(member) {
+  ======================================================= */
 
-    const value =
 
-      member?.profile?.dietary_preference || "";
 
-    if (!value) return "";
+  function getMediaUrl(path) {
 
-    return String(value)
 
-      .replaceAll("_", " ")
 
-      .replace(
+    if (!path) return "";
 
-        /\b\w/g,
 
-        (char) => char.toUpperCase()
 
-      );
+    if (
 
-  }
 
-  function getOtherMember(connection) {
 
-    if (
+      path.startsWith("http://") ||
 
-      Number(connection?.sender?.id) ===
 
-      Number(user?.id)
 
-    ) {
+      path.startsWith("https://") ||
 
-      return connection?.receiver;
 
-    }
 
-    return connection?.sender;
+      path.startsWith("blob:")
 
-  }
 
-  /* =======================================================
 
-     CURRENT USER
+    ) {
 
-  ======================================================= */
 
-  const currentUserName = useMemo(() => getMemberName(user), [user]);
 
-  const currentUserPhoto = useMemo(() => {
+      return path;
 
-    return getMediaUrl(
 
-      user?.profile?.profile_image_1_url ||
 
-        user?.profile?.profile_image_1 ||
+    }
 
-        user?.profile_image_1_url ||
 
-        user?.profile_image_1 ||
 
-        ""
+    if (path.startsWith("/.netlify/")) {
 
-    );
 
-    // eslint-disable-next-line react-hooks/exhaustive-deps
 
-  }, [user]);
+      return `${window.location.origin}${path}`;
 
-  const currentUserRole =
 
-    user?.profile?.role ||
 
-    "Food Explorer";
+    }
 
-  const currentUserLocation = [
 
-    user?.profile?.locality,
 
-    user?.profile?.city,
+    const normalizedPath = path.startsWith("/")
 
-  ]
 
-    .filter(Boolean)
 
-    .join(", ");
+      ? path
 
-  /* =======================================================
 
-     FOOD MATCH HELPERS
 
-  ======================================================= */
+      : `/${path}`;
 
-  function getFoodMatchMemberIds(match) {
 
-    return [
 
-      match?.id,
+    return `${API_BASE}${normalizedPath}`;
 
-      match?.user_id,
 
-      match?.member_id,
 
-      match?.user?.id,
+  }
 
-      match?.member?.id,
 
-      match?.profile?.user_id,
 
-      match?.profile?.user?.id,
+  /* =======================================================
 
-    ]
 
-      .filter(
 
-        (value) =>
+     MEMBER HELPERS
 
-          value !== undefined &&
 
-          value !== null &&
 
-          value !== ""
+  ======================================================= */
 
-      )
 
-      .map((value) => Number(value))
 
-      .filter((value) => !Number.isNaN(value));
+  function getMemberName(member) {
 
-  }
 
-  function getFoodMatch(memberId) {
 
-    const id = Number(memberId);
+    const fullName = String(member?.full_name || member?.profile?.full_name || "").trim();
 
-    if (Number.isNaN(id)) {
 
-      return null;
 
-    }
+    const parts = [member?.first_name, member?.last_name].filter(Boolean).join(" ").trim();
 
-    return (
 
-      foodMatches.find((match) =>
 
-        getFoodMatchMemberIds(match).includes(id)
+    const username = String(member?.username || "").trim();
 
-      ) || null
 
-    );
 
-  }
+    return fullName || parts || (username && !username.includes("@") ? username : "") || "FoodKindl Member";
 
-  function getFoodMatchScore(match) {
 
-    if (!match) return null;
 
-    const rawScore =
+  }
 
-      match?.food_match ??
 
-      match?.match_score ??
 
-      match?.score ??
+  function getMemberInitial(member) {
 
-      match?.percentage ??
 
-      match?.match_percentage ??
 
-      null;
+    return getMemberName(member)
 
-    if (
 
-      rawScore === null ||
 
-      rawScore === undefined ||
+      .charAt(0)
 
-      rawScore === ""
 
-    ) {
 
-      return null;
+      .toUpperCase();
 
-    }
 
-    const score = Number(rawScore);
 
-    if (Number.isNaN(score)) {
+  }
 
-      return null;
 
-    }
 
-    return Math.max(
+  function getMemberPhoto(member) {
 
-      0,
 
-      Math.min(Math.round(score), 100)
 
-    );
+    return getMediaUrl(
 
-  }
 
-  /* =======================================================
 
-     CONNECTION STATE
+      member?.profile?.profile_image_1_url ||
 
-  ======================================================= */
 
-  function getMemberConnectionState(member) {
 
-    const memberId = Number(member?.id);
+        member?.profile?.profile_image_1 ||
 
-    const accepted = connections.find(
 
-      (connection) => {
 
-        const senderId =
+        member?.profile_image_1_url ||
 
-          Number(connection?.sender?.id);
 
-        const receiverId =
 
-          Number(connection?.receiver?.id);
+        member?.profile_image_1 ||
 
-        return (
 
-          senderId === memberId ||
 
-          receiverId === memberId
+        ""
 
-        );
 
-      }
 
-    );
+    );
 
-    if (accepted) {
 
-      return {
 
-        status: "connected",
+  }
 
-        connectionId: accepted.id,
 
-      };
 
-    }
+  function getLocation(member) {
 
-    const sent = sentRequests.find(
 
-      (connection) =>
 
-        Number(connection?.receiver?.id) ===
+    const profile = member?.profile || {};
 
-        memberId
 
-    );
 
-    if (sent) {
+    return [
 
-      return {
 
-        status: "request_sent",
 
-        connectionId: sent.id,
+      profile.locality,
 
-      };
 
-    }
 
-    const incoming = incomingRequests.find(
+      profile.city,
 
-      (connection) =>
 
-        Number(connection?.sender?.id) ===
 
-        memberId
+    ]
 
-    );
 
-    if (incoming) {
 
-      return {
+      .filter(Boolean)
 
-        status: "request_received",
 
-        connectionId: incoming.id,
 
-      };
+      .join(", ");
 
-    }
 
-    const apiStatus =
 
-      member?.connection_status;
+  }
 
-    if (
 
-      apiStatus === "connected" ||
 
-      apiStatus === "request_sent" ||
+  function getDiet(member) {
 
-      apiStatus === "request_received"
 
-    ) {
 
-      return {
+    const value =
 
-        status: apiStatus,
 
-        connectionId:
 
-          member?.connection_id || null,
+      member?.profile?.dietary_preference || "";
 
-      };
 
-    }
 
-    return {
+    if (!value) return "";
 
-      status: "none",
 
-      connectionId: null,
 
-    };
+    return String(value)
 
-  }
 
-  /* =======================================================
 
-     LOAD MEMBERS
+      .replaceAll("_", " ")
 
-  ======================================================= */
 
-  async function loadMembers() {
 
-    try {
+      .replace(
 
-      setMembersError("");
 
-      const response = await api.get("/members/");
 
-      const result = response.data?.results ?? response.data ?? [];
+        /\b\w/g,
 
-      const list = Array.isArray(result) ? result : [];
 
-      setMembers(list.filter((member) =>
 
-        (member?.profile?.account_type || member?.account_type) !== "partner"
+        (char) => char.toUpperCase()
 
-      ));
 
-    } catch (requestError) {
 
-      console.error("Unable to load members:", requestError);
+      );
 
-      const status = requestError?.response?.status;
 
-      const detail = requestError?.response?.data?.detail;
 
-      setMembersError(`Members could not be loaded${status ? ` (HTTP ${status})` : ""}: ${typeof detail === "string" ? detail : "Check the /members/ API."}`);
+  }
 
-    }
 
-  }
 
-  /* =======================================================
+  function getOtherMember(connection) {
 
-     LOAD FOOD MATCHES
 
-  ======================================================= */
 
-  async function loadFoodMatches() {
+    if (
 
-    try {
 
-      const response =
 
-        await api.get(
+      Number(connection?.sender?.id) ===
 
-          "/auth/food-matches/"
 
-        );
 
-      const result =
+      Number(user?.id)
 
-        response.data?.results ||
 
-        response.data ||
 
-        [];
+    ) {
 
-      setFoodMatches(
 
-        Array.isArray(result)
 
-          ? result
+      return connection?.receiver;
 
-          : []
 
-      );
 
-    } catch (requestError) {
+    }
 
-      console.error(
 
-        "Food match error:",
 
-        requestError
+    return connection?.sender;
 
-      );
 
-      setFoodMatches([]);
 
-    }
+  }
 
-  }
 
-  /* =======================================================
 
-     LOAD CONNECTIONS
+  /* =======================================================
 
-  ======================================================= */
 
-  async function loadConnections() {
 
-    const endpoints = [
+     CURRENT USER
 
-      ["incoming", "/connections/incoming/"],
 
-      ["sent", "/connections/sent/"],
 
-      ["accepted", "/connections/accepted/"],
+  ======================================================= */
 
-    ];
 
-    const results = await Promise.allSettled(
 
-      endpoints.map(([, url]) => api.get(url))
+  const currentUserName = useMemo(() => getMemberName(user), [user]);
 
-    );
 
-    const failed = [];
 
-    const getList = (index) => {
+  const currentUserPhoto = useMemo(() => {
 
-      const result = results[index];
 
-      if (result.status === "rejected") {
 
-        const status = result.reason?.response?.status;
+    return getMediaUrl(
 
-        const detail = result.reason?.response?.data?.detail;
 
-        failed.push(`${endpoints[index][0]}${status ? ` (HTTP ${status})` : ""}${typeof detail === "string" ? `: ${detail}` : ""}`);
 
-        console.error(`Failed ${endpoints[index][1]}`, result.reason);
+      user?.profile?.profile_image_1_url ||
 
-        return null;
 
-      }
 
-      const data = result.value.data?.results ?? result.value.data ?? [];
+        user?.profile?.profile_image_1 ||
 
-      return Array.isArray(data) ? data : [];
 
-    };
 
-    const incoming = getList(0);
+        user?.profile_image_1_url ||
 
-    const sent = getList(1);
 
-    const accepted = getList(2);
 
-    if (incoming !== null) setIncomingRequests(incoming);
+        user?.profile_image_1 ||
 
-    if (sent !== null) setSentRequests(sent);
 
-    if (accepted !== null) {
 
-      setConnections(accepted.filter((connection) => {
+        ""
 
-        const other = Number(connection?.sender?.id) === Number(user?.id)
 
-          ? connection?.receiver : connection?.sender;
 
-        return (other?.profile?.account_type || other?.account_type) !== "partner";
+    );
 
-      }));
 
-    }
 
-    setConnectionsError(failed.length ? `Connection API failed: ${failed.join("; ")}` : "");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
 
-  }
 
-  /* =======================================================
 
-     LOAD PAGE
+  }, [user]);
 
-  ======================================================= */
 
-  async function loadPage() {
 
-    setLoading(true);
+  const currentUserRole =
 
-    setError("");
 
-    await Promise.all([
 
-      loadMembers(),
+    user?.profile?.role ||
 
-      loadFoodMatches(),
 
-      loadConnections(),
 
-    ]);
+    "Food Explorer";
 
-    setLoading(false);
 
-  }
 
-  useEffect(() => {
+  const currentUserLocation = [
 
-    loadPage();
 
-    // eslint-disable-next-line react-hooks/exhaustive-deps
 
-  }, []);
+    user?.profile?.locality,
 
-  /* =======================================================
 
-     CONNECTION ACTIONS
 
-  ======================================================= */
+    user?.profile?.city,
 
-  function getErrorMessage(data) {
 
-    if (!data) {
 
-      return "The request could not be completed.";
+  ]
 
-    }
 
-    if (typeof data === "string") {
 
-      return data;
+    .filter(Boolean)
 
-    }
 
-    return (
 
-      data?.receiver_id?.[0] ||
+    .join(", ");
 
-      data?.non_field_errors?.[0] ||
 
-      data?.detail ||
 
-      data?.message ||
+  /* =======================================================
 
-      "The request could not be completed."
 
-    );
 
-  }
+     FOOD MATCH HELPERS
 
-  async function sendRequest(memberId) {
 
-    try {
 
-      setError("");
+  ======================================================= */
 
-      setMessage("");
 
-      await api.post(
 
-        "/connections/",
+  function getFoodMatchMemberIds(match) {
 
-        {
 
-          receiver_id: memberId,
 
-        }
+    return [
 
-      );
 
-      setMessage(
 
-        "Connection request sent."
+      match?.id,
 
-      );
 
-      await Promise.all([
 
-        loadMembers(),
+      match?.user_id,
 
-        loadFoodMatches(),
 
-        loadConnections(),
 
-      ]);
+      match?.member_id,
 
-    } catch (requestError) {
 
-      setError(
 
-        getErrorMessage(
+      match?.user?.id,
 
-          requestError
 
-            ?.response
 
-            ?.data
+      match?.member?.id,
 
-        )
 
-      );
 
-    }
+      match?.profile?.user_id,
 
-  }
 
-  async function acceptRequest(
 
-    connectionId
+      match?.profile?.user?.id,
 
-  ) {
 
-    try {
 
-      setError("");
+    ]
 
-      setMessage("");
 
-      await api.post(
 
-        `/connections/${connectionId}/accept/`
+      .filter(
 
-      );
 
-      setMessage(
 
-        "Connection request accepted."
+        (value) =>
 
-      );
 
-      await loadPage();
 
-    } catch (requestError) {
+          value !== undefined &&
 
-      setError(
 
-        getErrorMessage(
 
-          requestError
+          value !== null &&
 
-            ?.response
 
-            ?.data
 
-        )
+          value !== ""
 
-      );
 
-    }
 
-  }
+      )
 
-  async function declineRequest(
 
-    connectionId
 
-  ) {
+      .map((value) => Number(value))
 
-    try {
 
-      setError("");
 
-      setMessage("");
+      .filter((value) => !Number.isNaN(value));
 
-      await api.post(
 
-        `/connections/${connectionId}/decline/`
 
-      );
+  }
 
-      setMessage(
 
-        "Connection request declined."
 
-      );
+  function getFoodMatch(memberId) {
 
-      await loadPage();
 
-    } catch (requestError) {
 
-      setError(
+    const id = Number(memberId);
 
-        getErrorMessage(
 
-          requestError
 
-            ?.response
+    if (Number.isNaN(id)) {
 
-            ?.data
 
-        )
 
-      );
+      return null;
 
-    }
 
-  }
 
-  async function cancelRequest(
+    }
 
-    connectionId
 
-  ) {
 
-    if (!connectionId) return;
+    return (
 
-    try {
 
-      setError("");
 
-      setMessage("");
+      foodMatches.find((match) =>
 
-      await api.post(
 
-        `/connections/${connectionId}/cancel/`
 
-      );
+        getFoodMatchMemberIds(match).includes(id)
 
-      setMessage(
 
-        "Connection request cancelled."
 
-      );
+      ) || null
 
-      await loadPage();
 
-    } catch (requestError) {
 
-      setError(
+    );
 
-        getErrorMessage(
 
-          requestError
 
-            ?.response
+  }
 
-            ?.data
 
-        )
 
-      );
+  function getFoodMatchScore(match) {
 
-    }
 
-  }
 
-  /* =======================================================
+    if (!match) return null;
 
-     BEST MATCHES
 
-  ======================================================= */
 
-  const bestMatches = useMemo(() => {
+    const rawScore =
 
-    return [...members]
 
-      .filter(
 
-        (member) =>
+      match?.food_match ??
 
-          Number(member?.id) !==
 
-          Number(user?.id)
 
-      )
+      match?.match_score ??
 
-      .map((member) => ({
 
-        member,
 
-        score:
+      match?.score ??
 
-          getFoodMatchScore(
 
-            getFoodMatch(member.id)
 
-          ) || 0,
+      match?.percentage ??
 
-      }))
 
-      .sort(
 
-        (a, b) =>
+      match?.match_percentage ??
 
-          b.score - a.score
 
-      )
 
-      .slice(0, 12);
+      null;
 
-    // eslint-disable-next-line react-hooks/exhaustive-deps
 
-  }, [
 
-    members,
+    if (
 
-    foodMatches,
 
-    user,
 
-  ]);
+      rawScore === null ||
 
-  /* =======================================================
 
-     GREETING
 
-  ======================================================= */
+      rawScore === undefined ||
 
-  function getGreeting() {
 
-    const hour =
 
-      new Date().getHours();
+      rawScore === ""
 
-    if (hour < 12) {
 
-      return "Good morning";
 
-    }
+    ) {
 
-    if (hour < 17) {
 
-      return "Good afternoon";
 
-    }
+      return null;
 
-    return "Good evening";
 
-  }
 
-  /* =======================================================
+    }
 
-     AVATAR
 
-  ======================================================= */
 
-  function Avatar({
+    const score = Number(rawScore);
 
-    member,
 
-    className = "",
 
-  }) {
+    if (Number.isNaN(score)) {
 
-    const photo =
 
-      getMemberPhoto(member);
 
-    if (photo) {
+      return null;
 
-      return (
 
-        <img
 
-          src={photo}
+    }
 
-          alt={getMemberName(member)}
 
-          className={`cd-avatar ${className}`}
 
-        />
+    return Math.max(
 
-      );
 
-    }
 
-    return (
+      0,
 
-      <div
 
-        className={`cd-avatar cd-avatar-placeholder ${className}`}
 
-      >
+      Math.min(Math.round(score), 100)
 
-        {getMemberInitial(member)}
 
-      </div>
 
-    );
+    );
 
-  }
 
-  /* =======================================================
 
-     MEMBER ACTION
+  }
 
-  ======================================================= */
 
-  function MemberAction({
 
-    member,
+  /* =======================================================
 
-  }) {
 
-    const {
 
-      status,
+     CONNECTION STATE
 
-      connectionId,
 
-    } =
 
-      getMemberConnectionState(
+  ======================================================= */
 
-        member
 
-      );
 
-    if (status === "connected") {
+  function getMemberConnectionState(member) {
 
-      return (
 
-        <Link
 
-          to={`/connect/member/${member.id}`}
+    const memberId = Number(member?.id);
 
-          className="cd-person-action connected"
 
-        >
 
-          <UserCheck size={15} />
+    const accepted = connections.find(
 
-          Connected
 
-        </Link>
 
-      );
+      (connection) => {
 
-    }
 
-    if (status === "request_sent") {
 
-      return (
+        const senderId =
 
-        <button
 
-          type="button"
 
-          className="cd-person-action pending"
+          Number(connection?.sender?.id);
 
-          onClick={() =>
 
-            cancelRequest(
 
-              connectionId
+        const receiverId =
 
-            )
 
-          }
 
-        >
+          Number(connection?.receiver?.id);
 
-          <Clock3 size={15} />
 
-          Requested
 
-        </button>
+        return (
 
-      );
 
-    }
 
-    if (
+          senderId === memberId ||
 
-      status ===
 
-      "request_received"
 
-    ) {
+          receiverId === memberId
 
-      return (
 
-        <button
 
-          type="button"
+        );
 
-          className="cd-person-action"
 
-          onClick={() =>
 
-            acceptRequest(
+      }
 
-              connectionId
 
-            )
 
-          }
+    );
 
-        >
 
-          <Check size={15} />
 
-          Accept
+    if (accepted) {
 
-        </button>
 
-      );
 
-    }
+      return {
 
-    return (
 
-      <button
 
-        type="button"
+        status: "connected",
 
-        className="cd-person-action"
 
-        onClick={() =>
 
-          sendRequest(member.id)
+        connectionId: accepted.id,
 
-        }
 
-      >
 
-        <UserPlus size={15} />
+      };
 
-        Connect
 
-      </button>
 
-    );
+    }
 
-  }
 
-  /* =======================================================
 
-     MEMBER CARD
+    const sent = sentRequests.find(
 
-  ======================================================= */
 
-  function PersonCard({
 
-    member,
+      (connection) =>
 
-  }) {
 
-    const profile =
 
-      member?.profile || {};
+        Number(connection?.receiver?.id) ===
 
-    const score =
 
-      getFoodMatchScore(
 
-        getFoodMatch(
+        memberId
 
-          member.id
 
-        )
 
-      );
+    );
 
-    return (
 
-      <article className="cd-person-card">
 
-        <Link
+    if (sent) {
 
-          to={`/connect/member/${member.id}`}
 
-          className="cd-person-main"
 
-        >
+      return {
 
-          <div className="cd-person-avatar-wrap">
 
-            <Avatar
 
-              member={member}
+        status: "request_sent",
 
-              className="cd-person-avatar"
 
-            />
 
-            {score !== null && (
+        connectionId: sent.id,
 
-              <span className="cd-match-score">
 
-                {score}%
 
-              </span>
+      };
 
-            )}
 
-          </div>
 
-          <div className="cd-person-copy">
+    }
 
-            <h3>
 
-              {getMemberName(member)}
 
-            </h3>
+    const incoming = incomingRequests.find(
 
-            {profile.role && (
 
-              <p className="cd-person-role">
 
-                {profile.role}
+      (connection) =>
 
-              </p>
 
-            )}
 
-            <div className="cd-person-meta">
+        Number(connection?.sender?.id) ===
 
-              {getLocation(member) && (
 
-                <span>
 
-                  <MapPin size={13} />
+        memberId
 
-                  {getLocation(member)}
 
-                </span>
 
-              )}
+    );
 
-              {getDiet(member) && (
 
-                <span>
 
-                  <Utensils size={13} />
+    if (incoming) {
 
-                  {getDiet(member)}
 
-                </span>
 
-              )}
+      return {
 
-            </div>
 
-          </div>
 
-        </Link>
+        status: "request_received",
 
-        <MemberAction
 
-          member={member}
 
-        />
+        connectionId: incoming.id,
 
-      </article>
 
-    );
 
-  }
+      };
 
-  /* =======================================================
 
-     LOADING
 
-  ======================================================= */
+    }
 
-  if (loading) {
 
-    return (
 
-      <main className="cd-loading-page">
+    const apiStatus =
 
-        <div className="cd-loader">
 
-          🍜
 
-        </div>
+      member?.connection_status;
 
-        <h2>
 
-          Finding your food people
 
-        </h2>
+    if (
 
-        <p>
 
-          Building your FoodKindl dashboard...
 
-        </p>
+      apiStatus === "connected" ||
 
-      </main>
 
-    );
 
-  }
+      apiStatus === "request_sent" ||
 
-  /* =======================================================
 
-     PAGE
 
-  ======================================================= */
+      apiStatus === "request_received"
 
-  return (
 
-    <div className="cd-app">
 
-      <div className="cd-dashboard">
+    ) {
 
-        {/* =================================================
 
-            LEFT SIDEBAR
 
-        ================================================= */}
+      return {
 
-        <aside className="cd-left-sidebar">
 
-          <nav className="cd-side-nav">
 
-            <Link to="/">
+        status: apiStatus,
 
-              <Home size={19} />
 
-              <span>Home</span>
 
-            </Link>
+        connectionId:
 
-            <Link
 
-              to="/discover"
 
-              className="active"
+          member?.connection_id || null,
 
-            >
 
-              <Search size={19} />
 
-              <span>Discover</span>
+      };
 
-            </Link>
 
-            <Link to="/ai-kitchen">
 
-              <Sparkles size={19} />
+    }
 
-              <span>AI Kitchen</span>
 
-            </Link>
 
-            <Link to="/food-invites">
+    return {
 
-              <ChefHat size={19} />
 
-              <span>Food Invites</span>
 
-            </Link>
+      status: "none",
 
-            <Link to="/notifications">
 
-              <Bell size={19} />
 
-              <span>
+      connectionId: null,
 
-                Notifications
 
-              </span>
 
-              {incomingRequests.length > 0 && (
+    };
 
-                <span className="cd-side-count">
 
-                  {incomingRequests.length}
 
-                </span>
+  }
 
-              )}
 
-            </Link>
 
-            {/* <Link to="/food-invites#my-plans">
+  /* =======================================================
 
-              <CalendarDays size={19} />
 
-              <span>My Plans</span>
 
-            </Link> */}
+     LOAD MEMBERS
 
-            <Link
 
-              to="/sos-safety"
 
-              className="cd-sos-nav"
+  ======================================================= */
 
-            >
 
-              <ShieldAlert size={19} />
 
-              <span>SOS Alert</span>
+  async function loadMembers() {
 
-            </Link>
 
-            <Link to="/profile">
 
-              <CircleUserRound size={19} />
+    try {
 
-              <span>Profile</span>
 
-            </Link>
 
-          </nav>
+      setMembersError("");
 
-        </aside>
 
-        {/* =================================================
 
-            CENTER
+      const response = await api.get("/members/");
 
-        ================================================= */}
 
-        <main className="cd-main">
 
-          {message && (
+      const result = response.data?.results ?? response.data ?? [];
 
-            <div className="cd-alert success">
 
-              <Check size={17} />
 
-              {message}
+      const list = Array.isArray(result) ? result : [];
 
-            </div>
 
-          )}
 
-          {(error || membersError || connectionsError) && (
+      setMembers(list.filter((member) =>
 
-            <div className="cd-alert error">
 
-              <X size={17} />
 
-              {[error, membersError, connectionsError].filter(Boolean).join(" | ")}
+        (member?.profile?.account_type || member?.account_type) !== "partner"
 
-            </div>
 
-          )}
 
-          {/* WELCOME BANNER WITH STATS INSIDE */}
+      ));
 
-          <section className="cd-hero cd-hero-with-stats">
 
-            <div className="cd-hero-overlay" />
 
-            <div className="cd-hero-content">
+    } catch (requestError) {
 
-              <div className="cd-hero-welcome">
 
-                <span className="cd-hero-eyebrow">{getGreeting()},</span>
 
-                <h1>{currentUserName} <span>👋</span></h1>
+      console.error("Unable to load members:", requestError);
 
-                <h2>How do you want to experience food today?</h2>
 
-                <p>Cook, share, explore and meet amazing people through food.</p>
 
-              </div>
+      const status = requestError?.response?.status;
 
-              <div className="cd-hero-stats" aria-label="Your FoodKindl activity">
 
-                {/* Connections → My Circle tab */}
 
-                <Link
+      const detail = requestError?.response?.data?.detail;
 
-                  to="/connect?tab=connections"
 
-                  className="cd-hero-stat-card"
 
-                >
+      setMembersError(`Members could not be loaded${status ? ` (HTTP ${status})` : ""}: ${typeof detail === "string" ? detail : "Check the /members/ API."}`);
 
-                  <UsersRound size={21} aria-hidden="true" />
 
-                  <span>
 
-                    <strong>{connections.length}</strong>
+    }
 
-                    <small>Connections</small>
 
-                  </span>
 
-                </Link>
+  }
 
-                {/* New Requests → Requests tab */}
 
-                <Link
 
-                  to="/connect?tab=requests"
+  /* =======================================================
 
-                  className="cd-hero-stat-card"
 
-                >
 
-                  <UserPlus size={21} aria-hidden="true" />
+     LOAD FOOD MATCHES
 
-                  <span>
 
-                    <strong>{incomingRequests.length}</strong>
 
-                    <small>New requests</small>
+  ======================================================= */
 
-                  </span>
 
-                </Link>
 
-                {/* FoodKindl Members → Discover tab */}
+  async function loadFoodMatches() {
 
-                <Link
 
-                  to="/connect?tab=discover"
 
-                  className="cd-hero-stat-card"
+    try {
 
-                >
 
-                  <Sparkles size={21} aria-hidden="true" />
 
-                  <span>
+      const response =
 
-                    <strong>{members.length}</strong>
 
-                    <small>FoodKindl members</small>
 
-                  </span>
+        await api.get(
 
-                </Link>
 
-              </div>
 
-            </div>
+          "/auth/food-matches/"
 
-          </section>
 
-          {/* Existing public posts only; no Discover People / Circle cards */}
 
-          <PublicPosts />
+        );
+
+
+
+      const result =
+
+
+
+        response.data?.results ||
+
+
+
+        response.data ||
+
+
+
+        [];
+
+
+
+      setFoodMatches(
+
+
+
+        Array.isArray(result)
+
+
+
+          ? result
+
+
+
+          : []
+
+
+
+      );
+
+
+
+    } catch (requestError) {
+
+
+
+      console.error(
+
+
+
+        "Food match error:",
+
+
+
+        requestError
+
+
+
+      );
+
+
+
+      setFoodMatches([]);
+
+
+
+    }
+
+
+
+  }
+
+
+
+  /* =======================================================
+
+
+
+     LOAD CONNECTIONS
+
+
+
+  ======================================================= */
+
+
+
+  async function loadConnections() {
+
+
+
+    const endpoints = [
+
+
+
+      ["incoming", "/connections/incoming/"],
+
+
+
+      ["sent", "/connections/sent/"],
+
+
+
+      ["accepted", "/connections/accepted/"],
+
+
+
+    ];
+
+
+
+    const results = await Promise.allSettled(
+
+
+
+      endpoints.map(([, url]) => api.get(url))
+
+
+
+    );
+
+
+
+    const failed = [];
+
+
+
+    const getList = (index) => {
+
+
+
+      const result = results[index];
+
+
+
+      if (result.status === "rejected") {
+
+
+
+        const status = result.reason?.response?.status;
+
+
+
+        const detail = result.reason?.response?.data?.detail;
+
+
+
+        failed.push(`${endpoints[index][0]}${status ? ` (HTTP ${status})` : ""}${typeof detail === "string" ? `: ${detail}` : ""}`);
+
+
+
+        console.error(`Failed ${endpoints[index][1]}`, result.reason);
+
+
+
+        return null;
+
+
+
+      }
+
+
+
+      const data = result.value.data?.results ?? result.value.data ?? [];
+
+
+
+      return Array.isArray(data) ? data : [];
+
+
+
+    };
+
+
+
+    const incoming = getList(0);
+
+
+
+    const sent = getList(1);
+
+
+
+    const accepted = getList(2);
+
+
+
+    if (incoming !== null) setIncomingRequests(incoming);
+
+
+
+    if (sent !== null) setSentRequests(sent);
+
+
+
+    if (accepted !== null) {
+
+
+
+      setConnections(accepted.filter((connection) => {
+
+
+
+        const other = Number(connection?.sender?.id) === Number(user?.id)
+
+
+
+          ? connection?.receiver : connection?.sender;
+
+
+
+        return (other?.profile?.account_type || other?.account_type) !== "partner";
+
+
+
+      }));
+
+
+
+    }
+
+
+
+    setConnectionsError(failed.length ? `Connection API failed: ${failed.join("; ")}` : "");
+
+
+
+  }
+
+
+
+  /* =======================================================
+
+
+
+     LOAD PAGE
+
+
+
+  ======================================================= */
+
+
+
+  async function loadPage() {
+
+
+
+    setLoading(true);
+
+
+
+    setError("");
+
+
+
+    await Promise.all([
+
+
+
+      loadMembers(),
+
+
+
+      loadFoodMatches(),
+
+
+
+      loadConnections(),
+
+
+
+    ]);
+
+
+
+    setLoading(false);
+
+
+
+  }
+
+
+
+  useEffect(() => {
+
+
+
+    loadPage();
+
+
+
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+
+
+
+  }, []);
+
+
+
+  /* =======================================================
+
+
+
+     CONNECTION ACTIONS
+
+
+
+  ======================================================= */
+
+
+
+  function getErrorMessage(data) {
+
+
+
+    if (!data) {
+
+
+
+      return "The request could not be completed.";
+
+
+
+    }
+
+
+
+    if (typeof data === "string") {
+
+
+
+      return data;
+
+
+
+    }
+
+
+
+    return (
+
+
+
+      data?.receiver_id?.[0] ||
+
+
+
+      data?.non_field_errors?.[0] ||
+
+
+
+      data?.detail ||
+
+
+
+      data?.message ||
+
+
+
+      "The request could not be completed."
+
+
+
+    );
+
+
+
+  }
+
+
+
+  async function sendRequest(memberId) {
+
+
+
+    try {
+
+
+
+      setError("");
+
+
+
+      setMessage("");
+
+
+
+      await api.post(
+
+
+
+        "/connections/",
+
+
+
+        {
+
+
+
+          receiver_id: memberId,
+
+
+
+        }
+
+
+
+      );
+
+
+
+      setMessage(
+
+
+
+        "Connection request sent."
+
+
+
+      );
+
+
+
+      await Promise.all([
+
+
+
+        loadMembers(),
+
+
+
+        loadFoodMatches(),
+
+
+
+        loadConnections(),
+
+
+
+      ]);
+
+
+
+    } catch (requestError) {
+
+
+
+      setError(
+
+
+
+        getErrorMessage(
+
+
+
+          requestError
+
+
+
+            ?.response
+
+
+
+            ?.data
+
+
+
+        )
+
+
+
+      );
+
+
+
+    }
+
+
+
+  }
+
+
+
+  async function acceptRequest(
+
+
+
+    connectionId
+
+
+
+  ) {
+
+
+
+    try {
+
+
+
+      setError("");
+
+
+
+      setMessage("");
+
+
+
+      await api.post(
+
+
+
+        `/connections/${connectionId}/accept/`
+
+
+
+      );
+
+
+
+      setMessage(
+
+
+
+        "Connection request accepted."
+
+
+
+      );
+
+
+
+      await loadPage();
+
+
+
+    } catch (requestError) {
+
+
+
+      setError(
+
+
+
+        getErrorMessage(
+
+
+
+          requestError
+
+
+
+            ?.response
+
+
+
+            ?.data
+
+
+
+        )
+
+
+
+      );
+
+
+
+    }
+
+
+
+  }
+
+
+
+  async function declineRequest(
+
+
+
+    connectionId
+
+
+
+  ) {
+
+
+
+    try {
+
+
+
+      setError("");
+
+
+
+      setMessage("");
+
+
+
+      await api.post(
+
+
+
+        `/connections/${connectionId}/decline/`
+
+
+
+      );
+
+
+
+      setMessage(
+
+
+
+        "Connection request declined."
+
+
+
+      );
+
+
+
+      await loadPage();
+
+
+
+    } catch (requestError) {
+
+
+
+      setError(
+
+
+
+        getErrorMessage(
+
+
+
+          requestError
+
+
+
+            ?.response
+
+
+
+            ?.data
+
+
+
+        )
+
+
+
+      );
+
+
+
+    }
+
+
+
+  }
+
+
+
+  async function cancelRequest(
+
+
+
+    connectionId
+
+
+
+  ) {
+
+
+
+    if (!connectionId) return;
+
+
+
+    try {
+
+
+
+      setError("");
+
+
+
+      setMessage("");
+
+
+
+      await api.post(
+
+
+
+        `/connections/${connectionId}/cancel/`
+
+
+
+      );
+
+
+
+      setMessage(
+
+
+
+        "Connection request cancelled."
+
+
+
+      );
+
+
+
+      await loadPage();
+
+
+
+    } catch (requestError) {
+
+
+
+      setError(
+
+
+
+        getErrorMessage(
+
+
+
+          requestError
+
+
+
+            ?.response
+
+
+
+            ?.data
+
+
+
+        )
+
+
+
+      );
+
+
+
+    }
+
+
+
+  }
+
+
+
+  /* =======================================================
+
+
+
+     BEST MATCHES
+
+
+
+  ======================================================= */
+
+
+
+  const bestMatches = useMemo(() => {
+
+
+
+    return [...members]
+
+
+
+      .filter(
+
+
+
+        (member) =>
+
+
+
+          Number(member?.id) !==
+
+
+
+          Number(user?.id)
+
+
+
+      )
+
+
+
+      .map((member) => ({
+
+
+
+        member,
+
+
+
+        score:
+
+
+
+          getFoodMatchScore(
+
+
+
+            getFoodMatch(member.id)
+
+
+
+          ) || 0,
+
+
+
+      }))
+
+
+
+      .sort(
+
+
+
+        (a, b) =>
+
+
+
+          b.score - a.score
+
+
+
+      )
+
+
+
+      .slice(0, 12);
+
+
+
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+
+
+
+  }, [
+
+
+
+    members,
+
+
+
+    foodMatches,
+
+
+
+    user,
+
+
+
+  ]);
+
+
+
+  /* =======================================================
+
+
+
+     GREETING
+
+
+
+  ======================================================= */
+
+
+
+  function getGreeting() {
+
+
+
+    const hour =
+
+
+
+      new Date().getHours();
+
+
+
+    if (hour < 12) {
+
+
+
+      return "Good morning";
+
+
+
+    }
+
+
+
+    if (hour < 17) {
+
+
+
+      return "Good afternoon";
+
+
+
+    }
+
+
+
+    return "Good evening";
+
+
+
+  }
+
+
+
+  /* =======================================================
+
+
+
+     AVATAR
+
+
+
+  ======================================================= */
+
+
+
+  function Avatar({
+
+
+
+    member,
+
+
+
+    className = "",
+
+
+
+  }) {
+
+
+
+    const photo =
+
+
+
+      getMemberPhoto(member);
+
+
+
+    if (photo) {
+
+
+
+      return (
+
+
+
+        <img
+
+
+
+          src={photo}
+
+
+
+          alt={getMemberName(member)}
+
+
+
+          className={`cd-avatar ${className}`}
+
+
+
+        />
+
+
+
+      );
+
+
+
+    }
+
+
+
+    return (
+
+
+
+      <div
+
+
+
+        className={`cd-avatar cd-avatar-placeholder ${className}`}
+
+
+
+      >
+
+
+
+        {getMemberInitial(member)}
+
+
+
+      </div>
+
+
+
+    );
+
+
+
+  }
+
+
+
+  /* =======================================================
+
+
+
+     MEMBER ACTION
+
+
+
+  ======================================================= */
+
+
+
+  function MemberAction({
+
+
+
+    member,
+
+
+
+  }) {
+
+
+
+    const {
+
+
+
+      status,
+
+
+
+      connectionId,
+
+
+
+    } =
+
+
+
+      getMemberConnectionState(
+
+
+
+        member
+
+
+
+      );
+
+
+
+    if (status === "connected") {
+
+
+
+      return (
+
+
+
+        <Link
+
+
+
+          to={`/connect/member/${member.id}`}
+
+
+
+          className="cd-person-action connected"
+
+
+
+        >
+
+
+
+          <UserCheck size={15} />
+
+
+
+          Connected
+
+
+
+        </Link>
+
+
+
+      );
+
+
+
+    }
+
+
+
+    if (status === "request_sent") {
+
+
+
+      return (
+
+
+
+        <button
+
+
+
+          type="button"
+
+
+
+          className="cd-person-action pending"
+
+
+
+          onClick={() =>
+
+
+
+            cancelRequest(
+
+
+
+              connectionId
+
+
+
+            )
+
+
+
+          }
+
+
+
+        >
+
+
+
+          <Clock3 size={15} />
+
+
+
+          Requested
+
+
+
+        </button>
+
+
+
+      );
+
+
+
+    }
+
+
+
+    if (
+
+
+
+      status ===
+
+
+
+      "request_received"
+
+
+
+    ) {
+
+
+
+      return (
+
+
+
+        <button
+
+
+
+          type="button"
+
+
+
+          className="cd-person-action"
+
+
+
+          onClick={() =>
+
+
+
+            acceptRequest(
+
+
+
+              connectionId
+
+
+
+            )
+
+
+
+          }
+
+
+
+        >
+
+
+
+          <Check size={15} />
+
+
+
+          Accept
+
+
+
+        </button>
+
+
+
+      );
+
+
+
+    }
+
+
+
+    return (
+
+
+
+      <button
+
+
+
+        type="button"
+
+
+
+        className="cd-person-action"
+
+
+
+        onClick={() =>
+
+
+
+          sendRequest(member.id)
+
+
+
+        }
+
+
+
+      >
+
+
+
+        <UserPlus size={15} />
+
+
+
+        Connect
+
+
+
+      </button>
+
+
+
+    );
+
+
+
+  }
+
+
+
+  /* =======================================================
+
+
+
+     MEMBER CARD
+
+
+
+  ======================================================= */
+
+
+
+  function PersonCard({
+
+
+
+    member,
+
+
+
+  }) {
+
+
+
+    const profile =
+
+
+
+      member?.profile || {};
+
+
+
+    const score =
+
+
+
+      getFoodMatchScore(
+
+
+
+        getFoodMatch(
+
+
+
+          member.id
+
+
+
+        )
+
+
+
+      );
+
+
+
+    return (
+
+
+
+      <article className="cd-person-card">
+
+
+
+        <Link
+
+
+
+          to={`/connect/member/${member.id}`}
+
+
+
+          className="cd-person-main"
+
+
+
+        >
+
+
+
+          <div className="cd-person-avatar-wrap">
+
+
+
+            <Avatar
+
+
+
+              member={member}
+
+
+
+              className="cd-person-avatar"
+
+
+
+            />
+
+
+
+            {score !== null && (
+
+
+
+              <span className="cd-match-score">
+
+
+
+                {score}%
+
+
+
+              </span>
+
+
+
+            )}
+
+
+
+          </div>
+
+
+
+          <div className="cd-person-copy">
+
+
+
+            <h3>
+
+
+
+              {getMemberName(member)}
+
+
+
+            </h3>
+
+
+
+            {profile.role && (
+
+
+
+              <p className="cd-person-role">
+
+
+
+                {profile.role}
+
+
+
+              </p>
+
+
+
+            )}
+
+
+
+            <div className="cd-person-meta">
+
+
+
+              {getLocation(member) && (
+
+
+
+                <span>
+
+
+
+                  <MapPin size={13} />
+
+
+
+                  {getLocation(member)}
+
+
+
+                </span>
+
+
+
+              )}
+
+
+
+              {getDiet(member) && (
+
+
+
+                <span>
+
+
+
+                  <Utensils size={13} />
+
+
+
+                  {getDiet(member)}
+
+
+
+                </span>
+
+
+
+              )}
+
+
+
+            </div>
+
+
+
+          </div>
+
+
+
+        </Link>
+
+
+
+        <MemberAction
+
+
+
+          member={member}
+
+
+
+        />
+
+
+
+      </article>
+
+
+
+    );
+
+
+
+  }
+
+
+
+  /* =======================================================
+
+
+
+     LOADING
+
+
+
+  ======================================================= */
+
+
+
+  if (loading) {
+
+
+
+    return (
+
+
+
+      <main className="cd-loading-page">
+
+
+
+        <div className="cd-loader">
+
+
+
+          🍜
+
+
+
+        </div>
+
+
+
+        <h2>
+
+
+
+          Finding your food people
+
+
+
+        </h2>
+
+
+
+        <p>
+
+
+
+          Building your FoodKindl dashboard...
+
+
+
+        </p>
+
+
+
+      </main>
+
+
+
+    );
+
+
+
+  }
+
+
+
+  /* =======================================================
+
+
+
+     PAGE
+
+
+
+  ======================================================= */
+
+
+
+  return (
+
+
+
+    <div className="cd-app">
+
+
+
+      <div className="cd-dashboard">
+
+
+
+        {/* =================================================
+
+
+
+            LEFT SIDEBAR
+
+
+
+        ================================================= */}
+
+
+
+        <aside className="cd-left-sidebar">
+
+
+
+          <nav className="cd-side-nav">
+
+
+
+            <Link to="/">
+
+
+
+              <Home size={19} />
+
+
+
+              <span>Home</span>
+
+
+
+            </Link>
+
+
+
+            <Link
+
+
+
+              to="/discover"
+
+
+
+              className="active"
+
+
+
+            >
+
+
+
+              <Search size={19} />
+
+
+
+              <span>Discover</span>
+
+
+
+            </Link>
+
+
+
+            <Link to="/ai-kitchen">
+
+
+
+              <Sparkles size={19} />
+
+
+
+              <span>AI Kitchen</span>
+
+
+
+            </Link>
+
+
+
+            <Link to="/food-invites">
+
+
+
+              <ChefHat size={19} />
+
+
+
+              <span>Food Invites</span>
+
+
+
+            </Link>
+
+
+
+            <Link to="/notifications">
+
+
+
+              <Bell size={19} />
+
+
+
+              <span>
+
+
+
+                Notifications
+
+
+
+              </span>
+
+
+
+              {incomingRequests.length > 0 && (
+
+
+
+                <span className="cd-side-count">
+
+
+
+                  {incomingRequests.length}
+
+
+
+                </span>
+
+
+
+              )}
+
+
+
+            </Link>
+
+
+
+            {/* <Link to="/food-invites#my-plans">
+
+
+
+              <CalendarDays size={19} />
+
+
+
+              <span>My Plans</span>
+
+
+
+            </Link> */}
+
+
+
+            <Link
+
+
+
+              to="/sos-safety"
+
+
+
+              className="cd-sos-nav"
+
+
+
+            >
+
+
+
+              <ShieldAlert size={19} />
+
+
+
+              <span>SOS Alert</span>
+
+
+
+            </Link>
+
+
+
+            <Link to="/profile">
+
+
+
+              <CircleUserRound size={19} />
+
+
+
+              <span>Profile</span>
+
+
+
+            </Link>
+
+
+
+          </nav>
+
+
+
+        </aside>
+
+
+
+        {/* =================================================
+
+
+
+            CENTER
+
+
+
+        ================================================= */}
+
+
+
+        <main className="cd-main">
+
+
+
+          {message && (
+
+
+
+            <div className="cd-alert success">
+
+
+
+              <Check size={17} />
+
+
+
+              {message}
+
+
+
+            </div>
+
+
+
+          )}
+
+
+
+          {(error || membersError || connectionsError) && (
+
+
+
+            <div className="cd-alert error">
+
+
+
+              <X size={17} />
+
+
+
+              {[error, membersError, connectionsError].filter(Boolean).join(" | ")}
+
+
+
+            </div>
+
+
+
+          )}
+
+
+
+          {/* WELCOME BANNER WITH STATS INSIDE */}
+
+
+
+          <section className="cd-hero cd-hero-with-stats">
+
+
+
+            <div className="cd-hero-overlay" />
+
+
+
+            <div className="cd-hero-content">
+
+
+
+              <div className="cd-hero-welcome">
+
+
+
+                <span className="cd-hero-eyebrow">{getGreeting()},</span>
+
+
+
+                <h1>{currentUserName} <span>👋</span></h1>
+
+
+
+                <h2>How do you want to experience food today?</h2>
+
+
+
+                <p>Cook, share, explore and meet amazing people through food.</p>
+
+
+
+              </div>
+
+
+
+              <div className="cd-hero-stats" aria-label="Your FoodKindl activity">
+
+
+
+                {/* Connections → My Circle tab */}
+
+
+
+                <Link
+
+
+
+                  to="/connect?tab=connections"
+
+
+
+                  className="cd-hero-stat-card"
+
+
+
+                >
+
+
+
+                  <UsersRound size={21} aria-hidden="true" />
+
+
+
+                  <span>
+
+
+
+                    <strong>{connections.length}</strong>
+
+
+
+                    <small>Connections</small>
+
+
+
+                  </span>
+
+
+
+                </Link>
+
+
+
+                {/* New Requests → Requests tab */}
+
+
+
+                <Link
+
+
+
+                  to="/connect?tab=requests"
+
+
+
+                  className="cd-hero-stat-card"
+
+
+
+                >
+
+
+
+                  <UserPlus size={21} aria-hidden="true" />
+
+
+
+                  <span>
+
+
+
+                    <strong>{incomingRequests.length}</strong>
+
+
+
+                    <small>New requests</small>
+
+
+
+                  </span>
+
+
+
+                </Link>
+
+
+
+                {/* FoodKindl Members → Discover tab */}
+
+
+
+                <Link
+
+
+
+                  to="/connect?tab=discover"
+
+
+
+                  className="cd-hero-stat-card"
+
+
+
+                >
+
+
+
+                  <Sparkles size={21} aria-hidden="true" />
+
+
+
+                  <span>
+
+
+
+                    <strong>{members.length}</strong>
+
+
+
+                    <small>FoodKindl members</small>
+
+
+
+                  </span>
+
+
+
+                </Link>
+
+
+
+              </div>
+
+
+
+            </div>
+
+
+
+          </section>
+
+
+
+          {/* Existing public posts only; no Discover People / Circle cards */}
+
+
+
+          <PublicPosts />
+
+
 
 </main>
 
-        {/* =================================================
 
-            RIGHT SIDEBAR
 
-        ================================================= */}
+        {/* =================================================
 
-        <aside className="cd-right-sidebar">
 
-          {/* PROFILE */}
 
-          <section className="cd-right-card cd-profile-card">
+            RIGHT SIDEBAR
 
-            <div className="cd-profile-header">
 
-              {currentUserPhoto ? (
 
-                <img
+        ================================================= */}
 
-                  src={currentUserPhoto}
 
-                  alt={currentUserName}
 
-                />
+        <aside className="cd-right-sidebar">
 
-              ) : (
 
-                <div className="cd-profile-placeholder">
 
-                  {currentUserName
+          {/* PROFILE */}
 
-                    .charAt(0)
 
-                    .toUpperCase()}
 
-                </div>
+          <section className="cd-right-card cd-profile-card">
 
-              )}
 
-              <div>
 
-                <h3>
+            <div className="cd-profile-header">
 
-                  {currentUserName}
 
-                </h3>
 
-                <p>
+              {currentUserPhoto ? (
 
-                  {currentUserRole}
 
-                </p>
 
-                {currentUserLocation && (
+                <img
 
-                  <span>
 
-                    <MapPin size={12} />
 
-                    {currentUserLocation}
+                  src={currentUserPhoto}
 
-                  </span>
 
-                )}
 
-              </div>
+                  alt={currentUserName}
 
-            </div>
 
-            <div className="cd-profile-stats">
-        <Link to="/connect?tab=connections" aria-label="View my connections">
-          <UsersRound size={20} />
-          <span>
-            <strong>{connections.length}</strong>
-            Connections
-          </span>
-        </Link>
 
-        <Link to="/connect?tab=requests" aria-label="View connection requests">
-          <UserPlus size={20} />
-          <span>
-            <strong>{incomingRequests.length}</strong>
-            Requests
-          </span>
-        </Link>
-      </div>
+                />
 
-          </section>
 
-          {/* REQUESTS */}
 
-          <section
+              ) : (
 
-            id="cd-requests"
 
-            className="cd-right-card"
 
-          >
+                <div className="cd-profile-placeholder">
 
-            <div className="cd-right-title">
 
-              <div>
 
-                <UserPlus size={18} />
+                  {currentUserName
 
-                <h3>
 
-                  Recent Requests
 
-                </h3>
+                    .charAt(0)
 
-              </div>
 
-              <Link to="/connect?tab=requests">
 
-                View All
+                    .toUpperCase()}
 
-              </Link>
 
-            </div>
 
-            {incomingRequests.length > 0 ? (
+                </div>
 
-              <div className="cd-request-list">
 
-                {incomingRequests
 
-                  .slice(0, 4)
+              )}
 
-                  .map((connection) => {
 
-                    const member =
 
-                      connection?.sender;
+              <div>
 
-                    if (!member) {
 
-                      return null;
 
-                    }
+                <h3>
 
-                    return (
 
-                      <article
 
-                        key={connection.id}
+                  {currentUserName}
 
-                        className="cd-request-item"
 
-                      >
 
-                        <Avatar
+                </h3>
 
-                          member={member}
 
-                        />
 
-                        <div className="cd-request-copy">
+                <p>
 
-                          <Link
 
-                            to={`/connect/member/${member.id}`}
 
-                          >
+                  {currentUserRole}
 
-                            {getMemberName(member)}
 
-                          </Link>
 
-                          <span>
+                </p>
 
-                            {getLocation(member) ||
 
-                              "FoodKindl member"}
 
-                          </span>
+                {currentUserLocation && (
 
-                        </div>
 
-                        <div className="cd-request-buttons">
 
-                          <button
+                  <span>
 
-                            type="button"
 
-                            className="accept"
 
-                            aria-label={`Accept ${getMemberName(member)}`}
+                    <MapPin size={12} />
 
-                            onClick={() =>
 
-                              acceptRequest(
 
-                                connection.id
+                    {currentUserLocation}
 
-                              )
 
-                            }
 
-                          >
+                  </span>
 
-                            <Check size={14} />
 
-                          </button>
 
-                          <button
+                )}
 
-                            type="button"
 
-                            aria-label={`Decline ${getMemberName(member)}`}
 
-                            onClick={() =>
+              </div>
 
-                              declineRequest(
 
-                                connection.id
 
-                              )
+            </div>
 
-                            }
 
-                          >
 
-                            <X size={14} />
+            <div className="cd-profile-stats">
 
-                          </button>
+        <Link to="/connect?tab=connections" aria-label="View my connections">
 
-                        </div>
+          <UsersRound size={20} />
 
-                      </article>
+          <span>
 
-                    );
+            <strong>{connections.length}</strong>
 
-                  })}
+            Connections
 
-              </div>
+          </span>
 
-            ) : (
+        </Link>
 
-              <div className="cd-right-empty">
 
-                <UserPlus size={26} />
 
-                <strong>
+        <Link to="/connect?tab=requests" aria-label="View connection requests">
 
-                  No new requests
+          <UserPlus size={20} />
 
-                </strong>
+          <span>
 
-                <span>
+            <strong>{incomingRequests.length}</strong>
 
-                  New connection requests will appear here.
+            Requests
 
-                </span>
+          </span>
 
-              </div>
+        </Link>
 
-            )}
+      </div>
 
-          </section>
 
-          {/* FOODKINDL AROUND YOU */}
 
-          <section className="cd-right-card">
+          </section>
 
-            <div className="cd-right-title">
 
-              <div>
 
-                <MapPin size={18} />
+          {/* REQUESTS */}
 
-                <h3>
 
-                  FoodKindl around you
 
-                </h3>
+          <section
 
-              </div>
 
-            </div>
 
-            <button
+            id="cd-requests"
 
-              type="button"
 
-              className="cd-around-item"
 
-              onClick={() =>
+            className="cd-right-card"
 
-                navigate("/cook-together")
 
-              }
 
-            >
+          >
 
-              <span className="cd-around-icon">
 
-                🍲
 
-              </span>
+            <div className="cd-right-title">
 
-              <div>
 
-                <strong>
 
-                  Cook Together
+              <div>
 
-                </strong>
 
-                <span>
 
-                  Discover cooking experiences
+                <UserPlus size={18} />
 
-                </span>
 
-              </div>
 
-              <ChevronRight size={17} />
+                <h3>
 
-            </button>
 
-            <button
 
-              type="button"
+                  Recent Requests
 
-              className="cd-around-item"
 
-              onClick={() =>
 
-                navigate("/dine-out")
+                </h3>
 
-              }
 
-            >
 
-              <span className="cd-around-icon">
+              </div>
 
-                🍴
 
-              </span>
 
-              <div>
+              <Link to="/connect?tab=requests">
 
-                <strong>
 
-                  Dine Out
 
-                </strong>
+                View All
 
-                <span>
 
-                  Meet people over a meal
 
-                </span>
+              </Link>
 
-              </div>
 
-              <ChevronRight size={17} />
 
-            </button>
+            </div>
 
-            <button
 
-              type="button"
 
-              className="cd-around-item"
+            {incomingRequests.length > 0 ? (
 
-              onClick={() =>
 
-                navigate("/food-walk")
 
-              }
+              <div className="cd-request-list">
 
-            >
 
-              <span className="cd-around-icon">
 
-                🚶
+                {incomingRequests
 
-              </span>
 
-              <div>
 
-                <strong>
+                  .slice(0, 4)
 
-                  Food Walk
 
-                </strong>
 
-                <span>
+                  .map((connection) => {
 
-                  Explore food along your route
 
-                </span>
 
-              </div>
+                    const member =
 
-              <ChevronRight size={17} />
 
-            </button>
 
-          </section>
+                      connection?.sender;
 
-        </aside>
 
-      </div>
 
-    </div>
+                    if (!member) {
 
-  );
+
+
+                      return null;
+
+
+
+                    }
+
+
+
+                    return (
+
+
+
+                      <article
+
+
+
+                        key={connection.id}
+
+
+
+                        className="cd-request-item"
+
+
+
+                      >
+
+
+
+                        <Avatar
+
+
+
+                          member={member}
+
+
+
+                        />
+
+
+
+                        <div className="cd-request-copy">
+
+
+
+                          <Link
+
+
+
+                            to={`/connect/member/${member.id}`}
+
+
+
+                          >
+
+
+
+                            {getMemberName(member)}
+
+
+
+                          </Link>
+
+
+
+                          <span>
+
+
+
+                            {getLocation(member) ||
+
+
+
+                              "FoodKindl member"}
+
+
+
+                          </span>
+
+
+
+                        </div>
+
+
+
+                        <div className="cd-request-buttons">
+
+
+
+                          <button
+
+
+
+                            type="button"
+
+
+
+                            className="accept"
+
+
+
+                            aria-label={`Accept ${getMemberName(member)}`}
+
+
+
+                            onClick={() =>
+
+
+
+                              acceptRequest(
+
+
+
+                                connection.id
+
+
+
+                              )
+
+
+
+                            }
+
+
+
+                          >
+
+
+
+                            <Check size={14} />
+
+
+
+                          </button>
+
+
+
+                          <button
+
+
+
+                            type="button"
+
+
+
+                            aria-label={`Decline ${getMemberName(member)}`}
+
+
+
+                            onClick={() =>
+
+
+
+                              declineRequest(
+
+
+
+                                connection.id
+
+
+
+                              )
+
+
+
+                            }
+
+
+
+                          >
+
+
+
+                            <X size={14} />
+
+
+
+                          </button>
+
+
+
+                        </div>
+
+
+
+                      </article>
+
+
+
+                    );
+
+
+
+                  })}
+
+
+
+              </div>
+
+
+
+            ) : (
+
+
+
+              <div className="cd-right-empty">
+
+
+
+                <UserPlus size={26} />
+
+
+
+                <strong>
+
+
+
+                  No new requests
+
+
+
+                </strong>
+
+
+
+                <span>
+
+
+
+                  New connection requests will appear here.
+
+
+
+                </span>
+
+
+
+              </div>
+
+
+
+            )}
+
+
+
+          </section>
+
+
+
+          {/* FOODKINDL AROUND YOU */}
+
+
+
+          <section className="cd-right-card">
+
+
+
+            <div className="cd-right-title">
+
+
+
+              <div>
+
+
+
+                <MapPin size={18} />
+
+
+
+                <h3>
+
+
+
+                  FoodKindl around you
+
+
+
+                </h3>
+
+
+
+              </div>
+
+
+
+            </div>
+
+
+
+            <button
+
+
+
+              type="button"
+
+
+
+              className="cd-around-item"
+
+
+
+              onClick={() =>
+
+
+
+                navigate("/cook-together")
+
+
+
+              }
+
+
+
+            >
+
+
+
+              <span className="cd-around-icon">
+
+
+
+                🍲
+
+
+
+              </span>
+
+
+
+              <div>
+
+
+
+                <strong>
+
+
+
+                  Cook Together
+
+
+
+                </strong>
+
+
+
+                <span>
+
+
+
+                  Discover cooking experiences
+
+
+
+                </span>
+
+
+
+              </div>
+
+
+
+              <ChevronRight size={17} />
+
+
+
+            </button>
+
+
+
+            <button
+
+
+
+              type="button"
+
+
+
+              className="cd-around-item"
+
+
+
+              onClick={() =>
+
+
+
+                navigate("/dine-out")
+
+
+
+              }
+
+
+
+            >
+
+
+
+              <span className="cd-around-icon">
+
+
+
+                🍴
+
+
+
+              </span>
+
+
+
+              <div>
+
+
+
+                <strong>
+
+
+
+                  Dine Out
+
+
+
+                </strong>
+
+
+
+                <span>
+
+
+
+                  Meet people over a meal
+
+
+
+                </span>
+
+
+
+              </div>
+
+
+
+              <ChevronRight size={17} />
+
+
+
+            </button>
+
+
+
+            <button
+
+
+
+              type="button"
+
+
+
+              className="cd-around-item"
+
+
+
+              onClick={() =>
+
+
+
+                navigate("/food-walk")
+
+
+
+              }
+
+
+
+            >
+
+
+
+              <span className="cd-around-icon">
+
+
+
+                🚶
+
+
+
+              </span>
+
+
+
+              <div>
+
+
+
+                <strong>
+
+
+
+                  Food Walk
+
+
+
+                </strong>
+
+
+
+                <span>
+
+
+
+                  Explore food along your route
+
+
+
+                </span>
+
+
+
+              </div>
+
+
+
+              <ChevronRight size={17} />
+
+
+
+            </button>
+
+
+
+          </section>
+
+
+
+        </aside>
+
+
+
+      </div>
+
+
+
+    </div>
+
+
+
+  );
+
+
 
 }

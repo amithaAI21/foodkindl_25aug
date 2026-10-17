@@ -3,7 +3,6 @@ import {
   ArrowRight,
   Check,
   ChefHat,
-  Footprints,
   MapPin,
   ShieldCheck,
   Sparkles,
@@ -31,6 +30,7 @@ import "../styles/register.css";
 const initialForm = {
   first_name: "",
   last_name: "",
+  phone_number: "",
   email: "",
   password: "",
 };
@@ -125,200 +125,89 @@ export default function RestaurantRegister() {
      SUBMIT
   ========================================================= */
 
-  async function submit(
-    event
-  ) {
-
+  async function submit(event) {
     event.preventDefault();
-
-
-    if (submitting) {
-      return;
-    }
-
+    if (submitting) return;
 
     setError("");
 
-    setSubmitting(
-      true
-    );
+    const first_name = form.first_name.trim();
+    const last_name = form.last_name.trim();
+    const phone_number = form.phone_number.trim();
+    const email = form.email.trim().toLowerCase();
+    const password = form.password;
 
+    if (!first_name || !last_name) {
+      setError("Enter your first and last name.");
+      return;
+    }
 
-    /* =======================================================
-       IMPORTANT
+    // The backend and AuthContext expect a valid Indian 10-digit mobile.
+    const normalizedPhone = phone_number
+      .replace(/[\s()-]/g, "")
+      .replace(/^\+91/, "")
+      .replace(/^91(?=[6-9][0-9]{9}$)/, "");
 
-       Restaurant registration must ALWAYS send:
-       account_type: "partner"
-    ======================================================== */
+    if (!/^[6-9][0-9]{9}$/.test(normalizedPhone)) {
+      setError("Enter a valid Indian 10-digit mobile number.");
+      return;
+    }
+
+    if (password.length < 8) {
+      setError("Password must contain at least 8 characters.");
+      return;
+    }
 
     const payload = {
-
-      first_name:
-        form.first_name
-          .trim(),
-
-      last_name:
-        form.last_name
-          .trim(),
-
-      email:
-        form.email
-          .trim()
-          .toLowerCase(),
-
-      password:
-        form.password,
-
-      account_type:
-        "partner",
+      first_name,
+      last_name,
+      full_name: `${first_name} ${last_name}`,
+      phone_number: normalizedPhone,
+      email,
+      password,
+      account_type: "partner",
     };
 
-
-    console.log(
-      "Restaurant partner registration payload:",
-      payload
-    );
-
-
+    setSubmitting(true);
     try {
+      await register(payload);
 
-      await register(
-        payload
-      );
-
-
-      /*
-       * Registration completed.
-       *
-       * Partner should NOT go
-       * to normal member dashboard.
-       */
-
-      navigate(
-        "/partner/onboarding",
-        {
-          replace:
-            true,
-        }
-      );
-
-
+      // Signup doesn't issue login tokens; verify email and log in first.
+      // The login page should route authenticated partners to /partner/dashboard.
+      navigate("/login", {
+        replace: true,
+        state: {
+          message: "Partner account created. Verify your email, then log in.",
+        },
+      });
     } catch (err) {
+      const data = err?.response?.data;
+      console.error("Partner registration error:", {
+        status: err?.response?.status,
+        data,
+        message: err?.message,
+      });
 
-      console.error(
-        "Partner registration error:",
-        err.response?.data ||
-        err
-      );
-
-
-      const data =
-        err.response?.data;
-
-
-      let message =
+      let message = err?.message ||
         "Restaurant partner registration could not be completed. Please try again.";
 
-
-      if (
-        Array.isArray(
-          data?.account_type
-        )
-        &&
-        data.account_type.length > 0
-      ) {
-
-        message =
-          data.account_type[0];
-
-      } else if (
-        typeof data?.account_type ===
-        "string"
-      ) {
-
-        message =
-          data.account_type;
-
-      } else if (
-        Array.isArray(
-          data?.email
-        )
-        &&
-        data.email.length > 0
-      ) {
-
-        message =
-          data.email[0];
-
-      } else if (
-        typeof data?.email ===
-        "string"
-      ) {
-
-        message =
-          data.email;
-
-      } else if (
-        Array.isArray(
-          data?.password
-        )
-        &&
-        data.password.length > 0
-      ) {
-
-        message =
-          data.password[0];
-
-      } else if (
-        typeof data?.password ===
-        "string"
-      ) {
-
-        message =
-          data.password;
-
-      } else if (
-        Array.isArray(
-          data?.first_name
-        )
-        &&
-        data.first_name.length > 0
-      ) {
-
-        message =
-          data.first_name[0];
-
-      } else if (
-        Array.isArray(
-          data?.last_name
-        )
-        &&
-        data.last_name.length > 0
-      ) {
-
-        message =
-          data.last_name[0];
-
-      } else if (
-        typeof data?.detail ===
-        "string"
-      ) {
-
-        message =
-          data.detail;
+      if (data && typeof data === "object") {
+        const details = Object.entries(data).flatMap(([field, value]) =>
+          (Array.isArray(value) ? value : [value]).map((item) => {
+            const text = typeof item === "string" ? item : JSON.stringify(item);
+            return field === "detail" || field === "non_field_errors"
+              ? text
+              : `${field}: ${text}`;
+          })
+        );
+        if (details.length) message = details.join(" | ");
+      } else if (typeof data === "string" && data) {
+        message = data;
       }
 
-
-      setError(
-        message
-      );
-
-
+      setError(message);
     } finally {
-
-      setSubmitting(
-        false
-      );
+      setSubmitting(false);
     }
   }
 
@@ -826,6 +715,24 @@ export default function RestaurantRegister() {
               </div>
 
 
+
+              {/* PHONE NUMBER */}
+
+              <label>
+                Phone number
+                <input
+                  name="phone_number"
+                  type="tel"
+                  required
+                  autoComplete="tel"
+                  inputMode="numeric"
+                  maxLength={13}
+                  value={form.phone_number}
+                  onChange={handleChange}
+                  placeholder="10-digit mobile number"
+                />
+              </label>
+
               {/* EMAIL */}
 
               <label>
@@ -858,7 +765,7 @@ export default function RestaurantRegister() {
                 <input
                   name="password"
                   type="password"
-                  minLength={6}
+                  minLength={8}
                   required
                   autoComplete="new-password"
                   value={
@@ -867,7 +774,7 @@ export default function RestaurantRegister() {
                   onChange={
                     handleChange
                   }
-                  placeholder="Minimum 6 characters"
+                  placeholder="Minimum 8 characters"
                 />
 
               </label>
@@ -879,7 +786,7 @@ export default function RestaurantRegister() {
                   size={13}
                 />
 
-                Use at least 6 characters.
+                Use at least 8 characters.
 
               </div>
 
