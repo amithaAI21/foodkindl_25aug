@@ -4,7 +4,6 @@ import {
 
   Bell,
 
-
   Check,
 
   ChevronRight,
@@ -32,7 +31,6 @@ import {
   X,
 
   ChefHat,
-
 
   ShieldAlert,
 
@@ -1555,39 +1553,103 @@ export default function ConnectDashboard() {
           )}
 
           {/* WELCOME BANNER WITH STATS INSIDE */}
+
           <section className="cd-hero cd-hero-with-stats">
+
             <div className="cd-hero-overlay" />
+
             <div className="cd-hero-content">
+
               <div className="cd-hero-welcome">
+
                 <span className="cd-hero-eyebrow">{getGreeting()},</span>
+
                 <h1>{currentUserName} <span>👋</span></h1>
+
                 <h2>How do you want to experience food today?</h2>
+
                 <p>Cook, share, explore and meet amazing people through food.</p>
+
               </div>
 
               <div className="cd-hero-stats" aria-label="Your FoodKindl activity">
-                <Link to="/connections" className="cd-hero-stat-card">
-                  <UsersRound size={21} aria-hidden="true" />
-                  <span><strong>{connections.length}</strong><small>Connections</small></span>
-                </Link>
-                <button
-                  type="button"
+
+                {/* Connections → My Circle tab */}
+
+                <Link
+
+                  to="/connect?tab=connections"
+
                   className="cd-hero-stat-card"
-                  onClick={() => document.getElementById("cd-requests")?.scrollIntoView({ behavior: "smooth" })}
+
                 >
-                  <UserPlus size={21} aria-hidden="true" />
-                  <span><strong>{incomingRequests.length}</strong><small>New requests</small></span>
-                </button>
-                <Link to="/discover" className="cd-hero-stat-card">
-                  <Sparkles size={21} aria-hidden="true" />
-                  <span><strong>{members.length}</strong><small>FoodKindl members</small></span>
+
+                  <UsersRound size={21} aria-hidden="true" />
+
+                  <span>
+
+                    <strong>{connections.length}</strong>
+
+                    <small>Connections</small>
+
+                  </span>
+
                 </Link>
+
+                {/* New Requests → Requests tab */}
+
+                <Link
+
+                  to="/connect?tab=requests"
+
+                  className="cd-hero-stat-card"
+
+                >
+
+                  <UserPlus size={21} aria-hidden="true" />
+
+                  <span>
+
+                    <strong>{incomingRequests.length}</strong>
+
+                    <small>New requests</small>
+
+                  </span>
+
+                </Link>
+
+                {/* FoodKindl Members → Discover tab */}
+
+                <Link
+
+                  to="/connect?tab=discover"
+
+                  className="cd-hero-stat-card"
+
+                >
+
+                  <Sparkles size={21} aria-hidden="true" />
+
+                  <span>
+
+                    <strong>{members.length}</strong>
+
+                    <small>FoodKindl members</small>
+
+                  </span>
+
+                </Link>
+
               </div>
+
             </div>
+
           </section>
 
           {/* Existing public posts only; no Discover People / Circle cards */}
+
           <PublicPosts />
+
 </main>
 
         {/* =================================================
@@ -1659,62 +1721,22 @@ export default function ConnectDashboard() {
             </div>
 
             <div className="cd-profile-stats">
+        <Link to="/connect?tab=connections" aria-label="View my connections">
+          <UsersRound size={20} />
+          <span>
+            <strong>{connections.length}</strong>
+            Connections
+          </span>
+        </Link>
 
-              <Link to="/connections">
-
-                <UsersRound size={20} />
-
-                <span>
-
-                  <strong>
-
-                    {connections.length}
-
-                  </strong>
-
-                  Connections
-
-                </span>
-
-              </Link>
-
-              <button
-
-                type="button"
-
-                onClick={() =>
-
-                  document
-
-                    .getElementById("cd-requests")
-
-                    ?.scrollIntoView({
-
-                      behavior: "smooth",
-
-                    })
-
-                }
-
-              >
-
-                <UserPlus size={20} />
-
-                <span>
-
-                  <strong>
-
-                    {incomingRequests.length}
-
-                  </strong>
-
-                  Requests
-
-                </span>
-
-              </button>
-
-            </div>
+        <Link to="/connect?tab=requests" aria-label="View connection requests">
+          <UserPlus size={20} />
+          <span>
+            <strong>{incomingRequests.length}</strong>
+            Requests
+          </span>
+        </Link>
+      </div>
 
           </section>
 
@@ -1742,7 +1764,7 @@ export default function ConnectDashboard() {
 
               </div>
 
-              <Link to="/connections">
+              <Link to="/connect?tab=requests">
 
                 View All
 

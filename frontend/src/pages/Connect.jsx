@@ -21,7 +21,7 @@ import {
   X,
 } from "lucide-react";
 
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 
 import api from "../api";
 import { useAuth } from "../context/AuthContext";
@@ -116,10 +116,29 @@ function getMatchLevel(score) {
 export default function Connect({
   embedded = false,
 }) {
-  const { user } = useAuth();
+ 
+const { user } = useAuth();
 
-  const [activeTab, setActiveTab] =
-    useState("discover");
+const [searchParams] = useSearchParams();
+
+const requestedTab = searchParams.get("tab");
+
+const validTabs = [
+  "discover",
+  "requests",
+  "connections",
+];
+
+const initialTab = validTabs.includes(requestedTab)
+  ? requestedTab
+  : "discover";
+
+const [activeTab, setActiveTab] = useState(initialTab);
+
+// Update active tab when the URL changes
+useEffect(() => {
+  setActiveTab(initialTab);
+}, [initialTab]);
 
   const [members, setMembers] =
     useState([]);
