@@ -2,26 +2,11 @@
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
 
-import {
+import RestaurantRouteMap from "../components/RestaurantRouteMap";
 
-  Circle,
-  CircleMarker,
+import RestaurantDashboard, { RestaurantSummary } from "../components/RestaurantDashboard";
 
-  MapContainer,
-
-  Marker,
-
-  Polyline,
-
-  Popup,
-
-  TileLayer,
-
-  useMap,
-
-} from "react-leaflet";
-
-import L from "leaflet";
+import GoogleRestaurantMap from "../components/GoogleRestaurantMap";
 
 import {
 
@@ -55,8 +40,6 @@ import {
 
 import { useLocation, useNavigate } from "react-router-dom";
 
-import "leaflet/dist/leaflet.css";
-
 import "../styles/DineOutOriginal.css";
 
 import "../styles/DineOutDetails.css";
@@ -66,39 +49,24 @@ import "../styles/DineOutVisibility.css";
 import "../styles/DineOutReference.css";
 
 import "../styles/DineOutOSM.css";
+
 import "../styles/DineOutPlanPage.css";
 
 import api from "../api";
 
-/* ============================================================
+function backendMediaUrl(url) {
+  if (!url) return null;
+  if (/^https:\/\//i.test(url)) return url;
+  const base = new URL(api.defaults.baseURL || "/api/", window.location.origin);
+  return new URL(url, base.origin).toString();
+}
 
-   LEAFLET MARKER FIX
-
-\\============================================================ */
-
-delete L.Icon.Default.prototype._getIconUrl;
-
-L.Icon.Default.mergeOptions({
-
-  iconRetinaUrl:
-
-    "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png",
-
-  iconUrl:
-
-    "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png",
-
-  shadowUrl:
-
-    "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png",
-
-});
 
 /* ============================================================
 
-   CONSTANTS
+   GOOGLE MAPS DEFAULT CENTER
 
-\\============================================================ */
+\\\\\============================================================ */
 
 const DEFAULT_CENTER = [12.9716, 77.5946];
 
@@ -233,14 +201,21 @@ function InviteDateTimePicker({ date, time, onDateChange, onTimeChange }) {
 }
 
 function cuisineTokens(restaurant) {
+
   return String(restaurant?.tags?.cuisine || restaurant?.cuisine || "")
+
     .split(/[;,]/)
+
     .map((token) => token.trim().replaceAll("_", " ").toLowerCase())
+
     .filter(Boolean);
+
 }
 
 function cuisineLabel(token) {
+
   return token.replace(/\b\w/g, (character) => character.toUpperCase());
+
 }
 
 const PLACE_TYPES = [
@@ -251,14 +226,13 @@ const PLACE_TYPES = [
 
   ["cafe", "Café"],
 
-
 ];
 
 /* ============================================================
 
    HELPERS
 
-\\============================================================ */
+\\\\\============================================================ */
 
 function getLatitude(restaurant) {
 
@@ -406,492 +380,70 @@ function getDrivingInstruction(step) {
 
 }
 
-function LiveRestaurantNavigation({ restaurant, onStatus }) {
-
-  const map = useMap();
-
-  const [currentPosition, setCurrentPosition] = useState(null);
-
-  const [routePoints, setRoutePoints] = useState([]);
-  const [gpsAccuracy, setGpsAccuracy] = useState(null);
-
-  const lastRoutedPositionRef = useRef(null);
-
-  
-
-
-
-  useEffect(() => {
-
-    if (!currentPosition || !hasValidCoordinates(restaurant)) {
-
-      return undefined;
-
-    }
-
-    if (
-
-      lastRoutedPositionRef.current &&
-
-      distanceBetweenCoordinates(
-
-        lastRoutedPositionRef.current,
-
-        currentPosition,
-
-      ) < 40
-
-    ) {
-
-      return undefined;
-
-    }
-
-    lastRoutedPositionRef.current = currentPosition;
-
-    const controller = new AbortController();
-
-    async function loadRoadRoute() {
-
-      const destinationLatitude = getLatitude(restaurant);
-
-      const destinationLongitude = getLongitude(restaurant);
-
-      const [latitude, longitude] = currentPosition;
-
-      try {
-
-        const response = await fetch(
-
-          `https://router.project-osrm.org/route/v1/driving/${longitude},${latitude};${destinationLongitude},${destinationLatitude}?overview=full&geometries=geojson&steps=true`,
-
-          { signal: controller.signal },
-
-        );
-
-        if (!response.ok) {
-
-          throw new Error("Road route request failed");
-
-        }
-
-        const payload = await response.json();
-
-        const route = payload.routes?.[0];
-
-        if (!route?.geometry?.coordinates?.length) {
-
-          throw new Error("No road route was found");
-
-        }
-
-        const points = route.geometry.coordinates.map(([lon, lat]) => [
-
-          lat,
-
-          lon,
-
-        ]);
-
-        const steps = route.legs?.[0]?.steps || [];
-
-        const nextStep =
-
-          steps.find(
-
-            (step) => step.maneuver?.type !== "depart" && step.distance > 8,
-
-          ) ||
-
-          steps[1] ||
-
-          steps[0];
-
-        setRoutePoints(points);
-
-        onStatus({
-
-          loading: false,
-
-          error: "",
-
-          instruction: getDrivingInstruction(nextStep),
-
-          instructionDistance: nextStep?.distance || 0,
-
-          distance: route.distance || 0,
-
-          duration: route.duration || 0,
-          gpsAccuracy: Math.round(gpsAccuracy ?? 0),
-          lastGpsUpdate: new Date().toLocaleTimeString(),
-
-        });
-
-        map.fitBounds(points, { padding: [45, 45], maxZoom: 17 });
-
-      } catch (error) {
-
-        if (error.name !== "AbortError") {
-
-          onStatus((current) => ({
-
-            ...current,
-
-            loading: false,
-
-            error: "Road navigation is temporarily unavailable.",
-
-          }));
-
-        }
-
-      }
-
-    }
-
-    loadRoadRoute();
-
-    return () => controller.abort();
-
-  }, [currentPosition, map, onStatus, restaurant]);
-
+function RestaurantImage({ restaurant, className = "restaurant-image" }) {
+  const photo = backendMediaUrl(restaurant?.photo_url || restaurant?.image_url);
+  const [failed, setFailed] = useState(false);
+  useEffect(() => setFailed(false), [photo]);
   return (
-
-    <>
-
-      {routePoints.length > 0 && (
-
-        <Polyline
-
-          positions={routePoints}
-
-          pathOptions={{ color: "#2878ff", weight: 6 }}
-
-        />
-
-      )}
-
-      {currentPosition && Number.isFinite(gpsAccuracy) && (
-        <Circle center={currentPosition} radius={gpsAccuracy}
-          pathOptions={{ color: "#2878ff", weight: 1, fillColor: "#2878ff", fillOpacity: 0.12 }} />
-      )}
-
-      {currentPosition && (
-
-        <CircleMarker
-
-          center={currentPosition}
-
-          radius={9}
-
-          pathOptions={{
-
-            color: "white",
-
-            weight: 3,
-
-            fillColor: "#2878ff",
-
-            fillOpacity: 1,
-
-          }}
-
-        >
-
-          <Popup>Live GPS location{Number.isFinite(gpsAccuracy) ? ` · ±${Math.round(gpsAccuracy)} m` : ""}</Popup>
-
-        </CircleMarker>
-
-      )}
-
-    </>
-
-  );
-
-}
-
-/* ============================================================
-
-   MAP CONTROLLER
-
-\\============================================================ */
-
-function MapController({ center, restaurants, highlightedRestaurant }) {
-
-  const map = useMap();
-
-  useEffect(() => {
-
-    const locations = restaurants
-
-      .filter(hasValidCoordinates)
-
-      .map((restaurant) => [getLatitude(restaurant), getLongitude(restaurant)]);
-
-    const timer = window.setTimeout(() => {
-
-      map.invalidateSize();
-
-      if (highlightedRestaurant && hasValidCoordinates(highlightedRestaurant)) {
-
-        map.flyTo([getLatitude(highlightedRestaurant), getLongitude(highlightedRestaurant)], 15, {
-
-          duration: 0.5,
-
-        });
-
-      } else if (locations.length > 1) {
-
-        map.fitBounds(locations, {
-
-          padding: [35, 35],
-
-          maxZoom: 15,
-
-        });
-
-      } else if (locations.length === 1) {
-
-        map.setView(locations[0], 15);
-
-      } else {
-
-        map.setView(center, 14);
-
-      }
-
-    }, 150);
-
-    return () => {
-
-      window.clearTimeout(timer);
-
-    };
-
-  }, [map, center, restaurants, highlightedRestaurant]);
-
-  return null;
-
-}
-
-/* ============================================================
-
-   RESTAURANT IMAGE
-
-\\============================================================ */
-
-function RestaurantImage({ className = "restaurant-image" }) {
-
-  // OpenStreetMap does not supply dependable restaurant photos.
-
-  return <div className={`${className} osm-restaurant-art`} aria-hidden="true"><Utensils size={48} strokeWidth={1.15} /></div>;
-
-}
-
-
-
-function osmValue(restaurant, key) {
-
-  return restaurant?.[key] ?? restaurant?.tags?.[key];
-
-}
-
-
-
-function RestaurantOSMFacts({ restaurant }) {
-
-  const hours = osmValue(restaurant, "opening_hours");
-
-  const phone = osmValue(restaurant, "phone") ?? osmValue(restaurant, "contact:phone");
-
-  const website = osmValue(restaurant, "website") ?? osmValue(restaurant, "contact:website");
-
-  const wifi = osmValue(restaurant, "internet_access") ?? osmValue(restaurant, "wifi");
-
-  const wheelchair = osmValue(restaurant, "wheelchair");
-
-  const payments = Array.isArray(restaurant?.payment_methods)
-
-    ? restaurant.payment_methods.filter(Boolean).join(", ")
-
-    : Object.entries(restaurant?.tags || {}).filter(([key, value]) => key.startsWith("payment:") && String(value).toLowerCase() === "yes")
-
-      .map(([key]) => key.slice(8).replaceAll("_", " ")).join(", ");
-
-  const wifiText = wifi === true || ["yes", "wlan"].includes(String(wifi).toLowerCase()) ? "Available"
-
-    : wifi === false || String(wifi).toLowerCase() === "no" ? "No" : null;
-
-  const wheelchairText = ["yes", "limited", "no"].includes(String(wheelchair).toLowerCase())
-
-    ? String(wheelchair).charAt(0).toUpperCase() + String(wheelchair).slice(1) : null;
-
-  const websiteUrl = typeof website === "string" && /^https?:\/\//i.test(website) ? website : null;
-
-  return <dl className="osm-facts">
-
-    {hours && <div><dt>Opening hours</dt><dd>{hours}</dd></div>}
-
-    {phone && <div><dt>Phone</dt><dd><a href={`tel:${phone}`}>{phone}</a></dd></div>}
-
-    {websiteUrl && <div><dt>Website</dt><dd><a href={websiteUrl} target="_blank" rel="noreferrer">Visit website</a></dd></div>}
-
-    {wifiText && <div><dt>Wi-Fi</dt><dd>{wifiText}</dd></div>}
-
-    {wheelchairText && <div><dt>Wheelchair access</dt><dd>{wheelchairText}</dd></div>}
-
-    {payments && <div><dt>Payment methods</dt><dd>{payments}</dd></div>}
-
-  </dl>;
-
-}
-
-
-
-function RestaurantDetailsModal({ restaurant, onClose, onChoose, onNavigate }) {
-
-  if (!restaurant) {
-
-    return null;
-
-  }
-
-  return (
-
-    <div
-
-      className="restaurant-modal-backdrop"
-
-      role="presentation"
-
-      onMouseDown={onClose}
-
-    >
-
-      <article
-
-        className="restaurant-modal"
-
-        role="dialog"
-
-        aria-modal="true"
-
-        aria-label={`${restaurant.name} details`}
-
-        onMouseDown={(event) => event.stopPropagation()}
-
-      >
-
-        <button
-
-          type="button"
-
-          className="restaurant-modal-close"
-
-          onClick={onClose}
-
-          aria-label="Close details"
-
-        >
-
-          <X size={20} />
-
-        </button>
-
-        <RestaurantImage
-
-          restaurant={restaurant}
-
-          className="restaurant-modal-image"
-
-        />
-
-        <div className="restaurant-modal-content">
-
-          <p className="eyebrow">RESTAURANT DETAILS</p>
-
-          <h2>{restaurant.name}</h2>
-
-          {(restaurant.cuisine || restaurant.tags?.cuisine) && <p className="restaurant-modal-cuisine">{restaurant.cuisine || restaurant.tags.cuisine}</p>}
-
-          {(restaurant.address || restaurant.location_label) && <p>{restaurant.address || restaurant.location_label}</p>}
-
-          <RestaurantOSMFacts restaurant={restaurant} />
-
-          <div className="restaurant-contact-actions">
-
-            {restaurant.phone && (
-
-              <a href={`tel:${restaurant.phone}`}>
-
-                <Phone size={16} />
-
-                Call
-
-              </a>
-
-            )}
-
-            {restaurant.website && (
-
-              <a href={restaurant.website} target="_blank" rel="noreferrer">
-
-                <ExternalLink size={16} />
-
-                Website
-
-              </a>
-
-            )}
-
-            {hasValidCoordinates(restaurant) && (
-
-              <button type="button" onClick={() => onNavigate(restaurant)}>
-
-                <Navigation size={16} />
-
-                Navigate here
-
-              </button>
-
-            )}
-
-          </div>
-
-          <button
-
-            type="button"
-
-            className="primary-button restaurant-modal-choose"
-
-            onClick={() => onChoose(restaurant)}
-
-          >
-
-            Plan a Dine Out
-
-          </button>
-
-        </div>
-
-      </article>
-
+    <div className={`${className} osm-restaurant-art`} style={{ position: "relative", overflow: "hidden" }}>
+      {photo && !failed ? (
+        <img src={photo} alt={`${restaurant?.name || "Restaurant"} food or venue`}
+          loading="lazy" onError={() => setFailed(true)}
+          style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+      ) : <Utensils size={48} strokeWidth={1.15} />}
+      {photo && !failed && (restaurant?.photo_attributions || []).map((a, i) => (
+        <small key={i} style={{position:"absolute",bottom:0,left:0,background:"#000b",color:"white",fontSize:10,padding:3}}>
+          {a.uri?.startsWith("https://") ? <a href={a.uri} target="_blank" rel="noreferrer" style={{color:"white"}}>{a.displayName || "Photographer"}</a> : a.displayName}
+        </small>
+      ))}
     </div>
-
   );
-
 }
+
+function googleField(restaurant, ...keys) {
+  return keys.map((key) => restaurant?.[key]).find((value) => value !== undefined && value !== null && value !== "");
+}
+
+function GoogleRestaurantFacts({ restaurant }) {
+  const hours = googleField(restaurant, "currentOpeningHours", "regularOpeningHours", "opening_hours");
+  const hoursText = typeof hours === "string"
+    ? hours
+    : (hours?.weekdayDescriptions || []).join(" · ");
+  const phone = googleField(restaurant, "phone", "nationalPhoneNumber", "internationalPhoneNumber");
+  const website = googleField(restaurant, "website", "websiteUri");
+  const websiteUrl = typeof website === "string" && /^https?:\/\//i.test(website) ? website : null;
+  const mapsUrl = googleField(restaurant, "google_maps_uri", "googleMapsUri");
+  const validMapsUrl = typeof mapsUrl === "string" && /^https?:\/\//i.test(mapsUrl) ? mapsUrl : null;
+  return <>
+    <dl className="osm-facts">
+      {hoursText && <div><dt>Opening hours</dt><dd>{hoursText}</dd></div>}
+      {phone && <div><dt>Phone</dt><dd><a href={`tel:${String(phone).replace(/[^+\d]/g, "")}`}>{phone}</a></dd></div>}
+      {websiteUrl && <div><dt>Website</dt><dd><a href={websiteUrl} target="_blank" rel="noopener noreferrer">Visit website</a></dd></div>}
+      {validMapsUrl && <div><dt>Google Maps</dt><dd><a href={validMapsUrl} target="_blank" rel="noopener noreferrer">View listing</a></dd></div>}
+    </dl>
+    {restaurant.source === "google" && <small>Listing provided by Google Maps</small>}
+    {(restaurant.attributions || []).map((a, i) => <small key={i} style={{ display: "block" }}>
+      {a.providerUri && /^https?:\/\//i.test(a.providerUri)
+        ? <a href={a.providerUri} target="_blank" rel="noopener noreferrer">{a.provider || "Data provider"}</a>
+        : (a.provider || "")}
+    </small>)}
+  </>;
+}
+
+function RestaurantDetailsModal(props) { return <RestaurantDashboard {...props} />; }
 
 /* ============================================================
 
    DINE OUT PAGE
 
-\\============================================================ */
+\\\\\============================================================ */
 
 export default function DineOut() {
 
   const navigate = useNavigate();
+
   const routeLocation = useLocation();
+
   const isPlanPage = new URLSearchParams(routeLocation.search).get("step") === "plan";
 
   const skipAutocompleteRef = useRef(false);
@@ -914,8 +466,9 @@ export default function DineOut() {
 
   const [placeType, setPlaceType] = useState("all");
 
-  // Restaurant discovery mode: show registered FoodKindl partners or external OSM places.
-  const [restaurantSource, setRestaurantSource] = useState("partner");
+  // Restaurant discovery: FoodKindl partners or live Google Places listings.
+
+  const [restaurantSource, setRestaurantSource] = useState("other");
 
   const [foodFilter, setFoodFilter] = useState("all");
 
@@ -926,6 +479,8 @@ export default function DineOut() {
   const [restaurantQuery, setRestaurantQuery] = useState("");
 
   const [searchedRestaurantQuery, setSearchedRestaurantQuery] = useState("");
+  const [minimumRating, setMinimumRating] = useState(0);
+  const [restaurantSort, setRestaurantSort] = useState("distance");
 
   const [locationSuggestions, setLocationSuggestions] = useState([]);
 
@@ -952,7 +507,9 @@ export default function DineOut() {
     distance: 0,
 
     duration: 0,
+
     gpsAccuracy: null,
+
     lastGpsUpdate: "",
 
   });
@@ -977,16 +534,35 @@ export default function DineOut() {
 
   const [restaurantLoading, setRestaurantLoading] = useState(false);
 
-  const [creating, setCreating] = useState(false);
-  const [bookingRestaurant, setBookingRestaurant] = useState(null);
-  const [bookingDate, setBookingDate] = useState("");
-  const [bookingTime, setBookingTime] = useState("");
-  const [bookingGuests, setBookingGuests] = useState(2);
-  const [bookingNotes, setBookingNotes] = useState("");
-  const [bookingSubmitting, setBookingSubmitting] = useState(false);
-  const [bookingError, setBookingError] = useState("");
-  const [bookingSuccess, setBookingSuccess] = useState("");
+  const restaurantRequestRef = useRef(0);
 
+  const restaurantAbortRef = useRef(null);
+
+  useEffect(() => () => {
+
+    restaurantRequestRef.current += 1;
+
+    restaurantAbortRef.current?.abort();
+
+  }, []);
+
+  const [creating, setCreating] = useState(false);
+
+  const [bookingRestaurant, setBookingRestaurant] = useState(null);
+
+  const [bookingDate, setBookingDate] = useState("");
+
+  const [bookingTime, setBookingTime] = useState("");
+
+  const [bookingGuests, setBookingGuests] = useState(3);
+
+  const [bookingNotes, setBookingNotes] = useState("");
+
+  const [bookingSubmitting, setBookingSubmitting] = useState(false);
+
+  const [bookingError, setBookingError] = useState("");
+
+  const [bookingSuccess, setBookingSuccess] = useState("");
 
   const [pageError, setPageError] = useState("");
 
@@ -1010,7 +586,7 @@ export default function DineOut() {
 
   const [eventTime, setEventTime] = useState("");
 
-  const [maximumGuests, setMaximumGuests] = useState(2);
+  const [maximumGuests, setMaximumGuests] = useState(3);
 
   const [bookingStatus, setBookingStatus] = useState("not_booked");
 
@@ -1027,71 +603,119 @@ export default function DineOut() {
   const [membersError, setMembersError] = useState("");
 
   /* ----------------------------------------------------------
+
      LOAD ELIGIBLE FOODKINDL MEMBERS FOR PRIVATE INVITATIONS
 
      /people/ is handled by FoodKindlPeopleView, which already
+
      excludes restaurant partners, inactive accounts, blocked
+
      users and the logged-in user at the Django level.
 
      Note: the current People API returns up to 20 members.
+
      For a larger directory, add pagination to the backend.
+
   ---------------------------------------------------------- */
+
   useEffect(() => {
+
     if (visibility !== "invited_only") return undefined;
 
     let cancelled = false;
 
     async function loadMembers() {
+
       setMembersLoading(true);
+
       setMembersError("");
 
       try {
+
         // Never use the unfiltered /dineout/members/ endpoint here.
+
         const response = await api.get("/auth/people/");
+
         const data = response.data;
+
         const rawMembers = Array.isArray(data)
+
           ? data
+
           : Array.isArray(data?.results)
+
             ? data.results
+
             : [];
 
         const normalizedMembers = rawMembers
+
           .map((item) => {
+
             const user = item?.user || item;
+
             const id = Number(user?.id ?? item?.user_id ?? item?.member_id);
+
             const name = String(
+
               user?.full_name ||
+
               [user?.first_name, user?.last_name].filter(Boolean).join(" ") ||
+
               user?.display_name ||
+
               user?.username ||
+
               "Member"
+
             ).trim();
 
             if (!Number.isInteger(id) || id <= 0) return null;
+
             return { id, name, email: user?.email || "" };
+
           })
+
           .filter(Boolean);
 
         if (!cancelled) {
+
           setAvailableMembers(normalizedMembers);
+
           const allowedIds = new Set(normalizedMembers.map((member) => member.id));
+
           setSelectedMemberIds((current) =>
+
             current.filter((id) => allowedIds.has(id))
+
           );
+
         }
+
       } catch (error) {
+
         console.error("Dine Out member directory error:", error);
+
         if (!cancelled) {
+
           setAvailableMembers([]);
+
           setMembersError("Could not load FoodKindl members. Please try again.");
+
         }
+
       } finally {
+
         if (!cancelled) setMembersLoading(false);
+
       }
+
     }
 
     loadMembers();
+
     return () => { cancelled = true; };
+
   }, [visibility]);
 
   function toggleInvitedMember(memberId) {
@@ -1115,13 +739,21 @@ export default function DineOut() {
   ---------------------------------------------------------- */
 
   const availableCuisines = useMemo(() => {
+
     const values = new Set();
+
     restaurants.forEach((restaurant) => {
+
       if (restaurant?.name && hasValidCoordinates(restaurant)) {
+
         cuisineTokens(restaurant).forEach((token) => values.add(token));
+
       }
+
     });
+
     return [...values].sort((a, b) => a.localeCompare(b));
+
   }, [restaurants]);
 
   const visibleRestaurants = useMemo(() => {
@@ -1137,7 +769,9 @@ export default function DineOut() {
       if (!name || !hasValidCoordinates(restaurant)) return false;
 
       const isPartner = restaurant.is_foodkindl_partner === true;
+
       if (restaurantSource === "partner" && !isPartner) return false;
+
       if (restaurantSource === "other" && isPartner) return false;
 
       const key = `${name.toLowerCase()}:${getLatitude(restaurant).toFixed(5)}:${getLongitude(restaurant).toFixed(5)}`;
@@ -1147,6 +781,7 @@ export default function DineOut() {
       const amenity = String(restaurant?.amenity || restaurant?.tags?.amenity || restaurant?.category || "").toLowerCase();
 
       const cuisineValues = cuisineTokens(restaurant);
+
       const cuisineText = cuisineValues.join(" ");
 
       const vegetarian = String(restaurant?.diet_vegetarian ?? restaurant?.tags?.["diet:vegetarian"] ?? "").toLowerCase();
@@ -1158,20 +793,28 @@ export default function DineOut() {
         (placeType === "cafe" && amenity === "cafe");
 
       const matchesFood = foodFilter === "all" ||
+
         (foodFilter === "veg" && ["yes", "only"].includes(vegetarian));
 
       const matchesCuisine = cuisine === "All cuisines" || cuisineValues.includes(cuisine);
 
       const matchesSearch = !query || `${name} ${cuisineText}`.toLowerCase().includes(query);
-      if (!matchesType || !matchesFood || !matchesCuisine || !matchesSearch) return false;
+      const numericRating = Number(restaurant?.rating);
+      const matchesRating = minimumRating === 0 || (restaurant?.rating != null && Number.isFinite(numericRating) && numericRating >= minimumRating);
+
+      if (!matchesType || !matchesFood || !matchesCuisine || !matchesSearch || !matchesRating) return false;
+
       seen.add(key);
+
       return true;
 
+    }).sort((a, b) => {
+      if (restaurantSort === "rating") return (Number(b.rating) || 0) - (Number(a.rating) || 0) || (Number(b.review_count) || 0) - (Number(a.review_count) || 0);
+      if (restaurantSort === "reviews") return (Number(b.review_count) || 0) - (Number(a.review_count) || 0);
+      return (Number(a.distance_km) || 0) - (Number(b.distance_km) || 0);
     });
 
-  }, [restaurants, searchedRestaurantQuery, placeType, foodFilter, cuisine, restaurantSource]);
-
-
+  }, [restaurants, searchedRestaurantQuery, placeType, foodFilter, cuisine, restaurantSource, minimumRating, restaurantSort]);
 
   useEffect(() => {
 
@@ -1195,7 +838,7 @@ export default function DineOut() {
 
     }
 
-    if (query.length < 2) {
+    if (query.length < 3) {
 
       setLocationSuggestions([]);
 
@@ -1207,6 +850,8 @@ export default function DineOut() {
 
     const requestNumber = ++autocompleteRequestRef.current;
 
+    const controller = new AbortController();
+
     const timer = window.setTimeout(async () => {
 
       try {
@@ -1214,6 +859,8 @@ export default function DineOut() {
         setLocationLoading(true);
 
         const response = await api.get("/dineout/locations/autocomplete/", {
+
+          signal: controller.signal, timeout: 15000,
 
           params: {
 
@@ -1225,7 +872,7 @@ export default function DineOut() {
 
         });
 
-        if (requestNumber !== autocompleteRequestRef.current) {
+        if (controller.signal.aborted || requestNumber !== autocompleteRequestRef.current) {
 
           return;
 
@@ -1241,7 +888,9 @@ export default function DineOut() {
 
       } catch (requestError) {
 
-        console.error("Location autocomplete error:", requestError);
+        if (controller.signal.aborted) return;
+
+        setPageError(requestError.response?.data?.detail || "Location search is unavailable.");
 
         if (requestNumber === autocompleteRequestRef.current) {
 
@@ -1259,11 +908,13 @@ export default function DineOut() {
 
       }
 
-    }, 350);
+    }, 700);
 
     return () => {
 
       window.clearTimeout(timer);
+
+      controller.abort();
 
     };
 
@@ -1282,52 +933,75 @@ export default function DineOut() {
     longitude = coordinates.longitude,
 
     selectedCuisine = cuisine,
+
     sourceOverride = restaurantSource,
+    queryOverride = restaurantQuery,
 
   ) {
+
+    const requestId = ++restaurantRequestRef.current;
+
+    restaurantAbortRef.current?.abort();
+
+    const controller = new AbortController();
+
+    restaurantAbortRef.current = controller;
 
     try {
 
       setRestaurantLoading(true);
 
+      setRestaurants([]);
+
       setPageError("");
 
       const response = await api.get("/dineout/restaurants/recommendations/", {
 
+        signal: controller.signal,
+
+        timeout: 35000,
+
         params: {
-
-          latitude,
-
-          longitude,
-
-          radius: Math.min(radiusKm, 5) * 1000,
-
-          limit: 50,
-          source: sourceOverride,
-
+          // Location is optional when searching for a restaurant by name.
+          ...(locationSelected ? {
+            latitude,
+            longitude,
+            radius: radiusKm * 1000,
+          } : {}),
+          limit: 100,
+          source: !locationSelected ? "other" : sourceOverride,
+          search: queryOverride.trim(),
         },
 
       });
 
+      if (controller.signal.aborted || requestId !== restaurantRequestRef.current) return;
+
       const results = Array.isArray(response.data)
 
-        ? response.data
-
-        : response.data?.results || response.data?.restaurants || [];
+        ? response.data : response.data?.results || response.data?.restaurants || [];
 
       // Diagnostic: inspect the actual API URL and partner rows in the browser console.
-      console.info("Dine Out restaurant API:", response.config?.baseURL, response.config?.url);
-      console.info("Dine Out partner restaurants:", results.filter((r) => r.is_foodkindl_partner));
 
       setRestaurants(results);
+
+      setSearchedRestaurantQuery(queryOverride.trim());
+
       setCuisine("All cuisines");
 
       const searchedMetres = Number(response.data?.searched_radius_metres);
+
       const mappedCount = Number(response.data?.mapped_places_in_area);
-      const areaMessage = searchedMetres > 0 && searchedMetres < Math.min(radiusKm, 5) * 1000
-        ? `Overpass timed out at ${radiusKm} km; these results cover ${searchedMetres / 1000} km. Search again to retry the full area.`
-        : `Search covered ${radiusKm} km.`;
+
+      const areaMessage = locationSelected
+        ? `Search radius: ${radiusKm} km. ${queryOverride.trim() ? `Restaurant search: ${queryOverride.trim()}.` : "Showing nearby restaurants."}`
+        : `Google Places name search: ${queryOverride.trim()}. Results are not restricted to a radius.`;
+      if (!locationSelected && results.length && hasValidCoordinates(results[0])) {
+        setMapCenter([getLatitude(results[0]), getLongitude(results[0])]);
+      }
+
       const partnerCount = results.filter((r) => r.is_foodkindl_partner).length;
+
       setSearchCoverage(`${areaMessage} ${partnerCount} FoodKindl Partner${partnerCount === 1 ? "" : "s"} and ${results.length - partnerCount} other restaurants returned.`);
 
       setSelectedRestaurant(null);
@@ -1336,21 +1010,28 @@ export default function DineOut() {
 
       if (results.length === 0) {
 
-        setPageError("No mapped dining places found in the searched area. Try another location.");
+        setPageError("Google Places returned no restaurants or cafés here. Try another location or radius.");
 
       }
 
     } catch (requestError) {
+
+      if (controller.signal.aborted || requestId !== restaurantRequestRef.current) return;
 
       console.error(
 
         "Restaurant search error:",
 
         {
+
           url: `${requestError.config?.baseURL || ""}${requestError.config?.url || ""}`,
+
           status: requestError.response?.status,
+
           response: requestError.response?.data,
+
           message: requestError.message,
+
         },
 
       );
@@ -1365,13 +1046,13 @@ export default function DineOut() {
 
       setPageError(
 
-        requestError.response?.data?.detail || "Unable to load restaurants.",
+        requestError.response?.data?.detail || "Restaurant search could not finish. Please try again.",
 
       );
 
     } finally {
 
-      setRestaurantLoading(false);
+      if (requestId === restaurantRequestRef.current) setRestaurantLoading(false);
 
     }
 
@@ -1384,6 +1065,12 @@ export default function DineOut() {
   ---------------------------------------------------------- */
 
   async function selectLocation(place) {
+
+    restaurantRequestRef.current += 1;
+
+    restaurantAbortRef.current?.abort();
+
+    setRestaurantLoading(false);
 
     const latitude = Number(place.latitude ?? place.lat);
 
@@ -1447,6 +1134,12 @@ export default function DineOut() {
 
   function handleLocationChange(event) {
 
+    restaurantRequestRef.current += 1;
+
+    restaurantAbortRef.current?.abort();
+
+    setRestaurantLoading(false);
+
     skipAutocompleteRef.current = false;
 
     setLocation(event.target.value);
@@ -1466,6 +1159,12 @@ export default function DineOut() {
   }
 
   function clearLocation() {
+
+    restaurantRequestRef.current += 1;
+
+    restaurantAbortRef.current?.abort();
+
+    setRestaurantLoading(false);
 
     autocompleteRequestRef.current += 1;
 
@@ -1498,6 +1197,12 @@ export default function DineOut() {
   ---------------------------------------------------------- */
 
   function useCurrentLocation() {
+
+    restaurantRequestRef.current += 1;
+
+    restaurantAbortRef.current?.abort();
+
+    setRestaurantLoading(false);
 
     if (!navigator.geolocation) {
 
@@ -1557,22 +1262,29 @@ export default function DineOut() {
 
   async function searchPlaces() {
 
-    if (!locationSelected || !location.trim()) {
-
-      setPageError("Select a location from the suggestions before searching.");
-
+    if (!locationSelected && !restaurantQuery.trim()) {
+      setPageError("Select a location or enter a restaurant name.");
       return;
-
     }
+    if (!locationSelected && restaurantQuery.trim().length < 2) {
+      setPageError("Enter at least two characters in the restaurant name.");
+      return;
+    }
+    // Name-only search should show external Google results, not partner-only data.
+    if (!locationSelected) setRestaurantSource("other");
 
     setLocationSuggestions([]);
 
-    setSearchedLocation(location);
+    setSearchedLocation(locationSelected ? location : "");
 
     setSearchedRestaurantQuery(restaurantQuery);
 
     await fetchRestaurants(coordinates.latitude, coordinates.longitude, "All cuisines");
 
+  }
+
+  function openRestaurantDetails(restaurant) {
+    setDetailsRestaurant(restaurant);
   }
 
   function viewRestaurantOnMap(restaurant) {
@@ -1608,85 +1320,94 @@ export default function DineOut() {
   ---------------------------------------------------------- */
 
   async function submitTableBooking(event) {
+
     event.preventDefault();
+
     setBookingError("");
+
+    if (bookingRestaurant?.is_foodkindl_partner !== true || !bookingRestaurant?.accepts_foodkindl_booking) { setBookingError("Table booking is only available for enabled FoodKindl partners."); return; }
+
     const idMatch = String(bookingRestaurant?.id || "").match(/^foodkindl-(\d+)$/);
+
     if (!idMatch) {
+
       setBookingError("Only registered FoodKindl restaurants can accept bookings.");
+
       return;
+
     }
+
     try {
+
       setBookingSubmitting(true);
+
       const response = await api.post("/table-bookings/", {
+
         restaurant: Number(idMatch[1]),
+
         booking_date: bookingDate,
+
         booking_time: bookingTime,
+
         guest_count: Number(bookingGuests),
+
         special_request: bookingNotes,
+
       });
+
       setBookingRestaurant(null);
+
       setBookingSuccess(`Booking request sent. Reference: ${response.data.booking_reference}. Await partner confirmation.`);
+
     } catch (error) {
+
       const data = error.response?.data;
+
       setBookingError(typeof data?.detail === "string" ? data.detail :
+
         data ? Object.entries(data).map(([k,v]) => `${k}: ${Array.isArray(v) ? v.join(" ") : v}`).join(" | ") :
+
         "Could not send booking request.");
+
     } finally {
+
       setBookingSubmitting(false);
+
     }
+
   }
 
   function chooseRestaurant(restaurant) {
+
     setSelectedRestaurant(restaurant);
+
     setHighlightedRestaurant(restaurant);
+
     setDetailsRestaurant(null);
+
     navigate(`${routeLocation.pathname}?step=plan`, {
+
       state: { selectedRestaurant: restaurant },
+
     });
+
     window.scrollTo({ top: 0, behavior: "smooth" });
+
   }
 
   function startRestaurantNavigation(restaurant) {
 
     if (!hasValidCoordinates(restaurant)) {
 
-      setPageError("This restaurant does not have valid map coordinates.");
+      setPageError("This restaurant has no valid coordinates.");
 
       return;
 
     }
 
-    setPageError("");
-
     setDetailsRestaurant(null);
 
-    setSelectedRestaurant(restaurant);
-
-    setHighlightedRestaurant(restaurant);
-
-    setNavigationRestaurant(restaurant);
-
-    setNavigationStatus({
-
-      loading: true,
-
-      error: "",
-
-      instruction: "Finding your live location…",
-
-      instructionDistance: 0,
-
-      distance: 0,
-
-      duration: 0,
-
-    });
-
-    setMapCenter([getLatitude(restaurant), getLongitude(restaurant)]);
-    // Keep navigation and its road route inside this Dine Out map.
-    window.setTimeout(() => {
-      document.getElementById("dineout-map")?.scrollIntoView({ behavior: "smooth", block: "center" });
-    }, 120);
+    viewRestaurantOnMap(restaurant);
 
   }
 
@@ -1813,11 +1534,17 @@ export default function DineOut() {
     }
 
     if (
+
       visibility === "invited_only" &&
+
       selectedMemberIds.some((id) => !availableMembers.some((member) => member.id === id))
+
     ) {
+
       showCreateError("Guest list changed. Please select FoodKindl members again.");
+
       return;
+
     }
 
     if (selectedMemberIds.length > guestCount) {
@@ -1832,9 +1559,17 @@ export default function DineOut() {
 
     }
 
-    const latitude = getLatitude(selectedRestaurant);
+        const latitude = Number(
 
-    const longitude = getLongitude(selectedRestaurant);
+      getLatitude(selectedRestaurant).toFixed(6)
+
+    );
+
+    const longitude = Number(
+
+      getLongitude(selectedRestaurant).toFixed(6)
+
+    );
 
     if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
 
@@ -1898,11 +1633,7 @@ export default function DineOut() {
 
       setCreating(true);
 
-      console.log("CREATE DINE OUT PAYLOAD:", payload);
-
       const response = await api.post("/dineout/dine-outs/", payload);
-
-      console.log("CREATE DINE OUT SUCCESS:", response.data);
 
       setCreateSuccess("Dine Out invitation created successfully.");
 
@@ -2027,6 +1758,7 @@ export default function DineOut() {
     <main className={`dineout-page${isPlanPage ? " dineout-plan-page" : ""}`}>
 
       {!isPlanPage && <>
+
       <section className="dineout-hero">
 
         <div>
@@ -2185,7 +1917,7 @@ export default function DineOut() {
 
             <p>
 
-              Select a location, then press Search places to see restaurants.
+              Select a location for nearby dining, or search by restaurant name anywhere in India.
 
             </p>
 
@@ -2197,11 +1929,14 @@ export default function DineOut() {
 
         <div className="filters">
 
-          {/* <input type="search" value={restaurantQuery} onChange={(event) => setRestaurantQuery(event.target.value)}
-
-            onKeyDown={(event) => { if (event.key === "Enter") searchPlaces(); }}
-
-            placeholder="Search name or Indian cuisine" aria-label="Search name or Indian cuisine" /> */}
+          <input
+              type="search"
+              value={restaurantQuery}
+              onChange={(event) => setRestaurantQuery(event.target.value)}
+              onKeyDown={(event) => { if (event.key === "Enter") void searchPlaces(); }}
+              placeholder="Search restaurants without choosing a location"
+              aria-label="Search restaurants by name"
+            />
 
           <button
 
@@ -2226,24 +1961,60 @@ export default function DineOut() {
       </section>
 
       <section className="fk-source-picker" aria-label="Choose restaurant source"
+
         style={{ margin: "18px 0", padding: 16, borderRadius: 14, border: "1px solid rgba(212,125,82,.35)" }}>
+
         <h2 style={{ fontSize: "1.1rem", marginBottom: 12 }}>Choose restaurants</h2>
+
         <div role="group" aria-label="Restaurant listing type"
+
           style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: 10 }}>
+
           <button type="button" aria-pressed={restaurantSource === "partner"}
+
             className={restaurantSource === "partner" ? "primary-button" : "secondary-button"}
+
             onClick={() => { setRestaurantSource("partner"); if (locationSelected) void fetchRestaurants(coordinates.latitude, coordinates.longitude, cuisine, "partner"); }}>FoodKindl Partners</button>
+
           <button type="button" aria-pressed={restaurantSource === "other"}
+
             className={restaurantSource === "other" ? "primary-button" : "secondary-button"}
+
             onClick={() => { setRestaurantSource("other"); if (locationSelected) void fetchRestaurants(coordinates.latitude, coordinates.longitude, cuisine, "other"); }}>Other Restaurants</button>
+
         </div>
+
         <p style={{ marginTop: 10, fontSize: 13, opacity: 0.8 }}>
+
           {restaurantSource === "partner"
+
             ? "Restaurants registered with FoodKindl. Book a table when bookings are enabled."
-            : "Other mapped restaurants. You can plan a Dine Out, but not reserve a table through FoodKindl."}
+
+            : "Restaurants discovered through Google Places. Plan a Dine Out; FoodKindl table bookings are partner-only."}
+
         </p>
+
       </section>
 
+      <section aria-label="Ratings and sorting" style={{display:"flex", flexWrap:"wrap", gap:14, alignItems:"center", margin:"16px 0", padding:14, border:"1px solid rgba(212,125,82,.35)", borderRadius:12}}>
+        <label style={{display:"flex", gap:8, alignItems:"center"}}>Minimum rating
+          <select value={minimumRating} onChange={e => setMinimumRating(Number(e.target.value))} aria-label="Minimum Google rating">
+            <option value={0}>Any rating (including unrated)</option>
+            <option value={3}>3.0★ and above</option>
+            <option value={3.5}>3.5★ and above</option>
+            <option value={4}>4.0★ and above</option>
+            <option value={4.5}>4.5★ and above</option>
+          </select>
+        </label>
+        <label style={{display:"flex", gap:8, alignItems:"center"}}>Sort by
+          <select value={restaurantSort} onChange={e => setRestaurantSort(e.target.value)} aria-label="Sort restaurants">
+            <option value="distance">Nearest first</option>
+            <option value="rating">Highest rated</option>
+            <option value="reviews">Most reviewed</option>
+          </select>
+        </label>
+        <button type="button" className="secondary-button" onClick={() => {setMinimumRating(0);setRestaurantSort("distance");setPlaceType("all");setFoodFilter("all");setCuisine("All cuisines");}}>Reset filters</button>
+      </section>
       <section className="osm-discovery-filters" aria-label="Restaurant filters">
 
         <div className="osm-filter-group"><span>Places</span><div className="osm-segments">
@@ -2274,7 +2045,7 @@ export default function DineOut() {
 
         </label>
 
-        <small>Need to search farther than 5 km? Choose location B above and search again.</small>
+        <small>Google Places may return fewer places than the 100-result limit.</small>
 
         <div className="osm-filter-group"><span>Cuisine</span><div className="osm-segments">
 
@@ -2318,7 +2089,7 @@ export default function DineOut() {
 
           {restaurantLoading && (
 
-            <div className="empty-state">Loading restaurants...</div>
+            <div className="empty-state">Finding nearby restaurants…</div>
 
           )}
 
@@ -2327,14 +2098,22 @@ export default function DineOut() {
             <div className="empty-state">
 
               {restaurantSource === "partner" && restaurants.length === 0
+
                 ? "No FoodKindl Partner restaurants found in this area. Try a different location or radius."
+
                 : restaurantSource === "partner" && !restaurants.some((r) => r.is_foodkindl_partner)
+
                   ? "No registered FoodKindl Partner restaurants found within the searched radius."
+
                 : restaurants.length > 0 && foodFilter === "veg"
-                  ? "No restaurants here have confirmed vegetarian options in OpenStreetMap. Try All to see places with unknown dietary details."
+
+                  ? "No restaurants here have confirmed vegetarian options in the listing provider. Try All to see places with unknown dietary details."
+
                   : restaurants.length > 0
+
                     ? "No restaurants match these filters. Try another cuisine or place type."
-                    : "Select a location and press Search. Only restaurants with a name and map location will appear."}
+
+                    : "Select a location and press Search. Only Google Places listings with a name and location will appear."}
 
             </div>
 
@@ -2352,7 +2131,7 @@ export default function DineOut() {
 
               }`}
 
-              onClick={() => viewRestaurantOnMap(restaurant)}
+              onClick={() => openRestaurantDetails(restaurant)}
 
             >
 
@@ -2360,16 +2139,18 @@ export default function DineOut() {
 
               <div className="restaurant-content">
 
-
-
-
-
                 <h3>{restaurant.name}</h3>
 
+                <RestaurantSummary restaurant={restaurant} />
+
                 {restaurant.is_foodkindl_partner && (
+
                   <span className="fk-partner-label" style={{ display: "inline-block", marginBottom: 8, padding: "5px 10px", borderRadius: 12, border: "1px solid #d95d38", color: "#ffb39b", fontWeight: 700, fontSize: 12 }}>
+
                     FoodKindl Partner
+
                   </span>
+
                 )}
 
                 {(restaurant.cuisine || restaurant.tags?.cuisine) && <p>{String(restaurant.cuisine || restaurant.tags.cuisine).replaceAll(";", " · ")}</p>}
@@ -2380,21 +2161,23 @@ export default function DineOut() {
 
                   {["yes", "only"].includes(String(restaurant.diet_vegetarian ?? restaurant.tags?.["diet:vegetarian"]).toLowerCase()) && <span>Vegetarian options</span>}
 
-
                 </div>
 
                 {(restaurant.address || restaurant.location_label) &&
 
                   <small>{restaurant.address || restaurant.location_label}</small>}
 
-                <RestaurantOSMFacts restaurant={restaurant} />
+                <GoogleRestaurantFacts restaurant={restaurant} />
 
                 <div className="restaurant-actions">
-                  {restaurantSource === "partner" && restaurant.is_foodkindl_partner && !restaurant.accepts_foodkindl_booking && (
-                    <span style={{ fontSize: 12, opacity: .8, alignSelf: "center" }}>Table bookings not enabled</span>
-                  )}
-                  
 
+                  {restaurantSource === "partner" && restaurant.is_foodkindl_partner === true && restaurant.accepts_foodkindl_booking && /^foodkindl-\d+$/.test(String(restaurant.id)) && <button type="button" className="primary-button" onClick={event=>{event.stopPropagation();setBookingError("");setBookingRestaurant(restaurant);}}>Request a table</button>}
+
+                  {restaurantSource === "partner" && restaurant.is_foodkindl_partner && !restaurant.accepts_foodkindl_booking && (
+
+                    <span style={{ fontSize: 12, opacity: .8, alignSelf: "center" }}>Table bookings not enabled</span>
+
+                  )}
 
                   <button
 
@@ -2440,14 +2223,6 @@ export default function DineOut() {
 
                   </button>
 
-                  <button type="button" className="secondary-button" onClick={(event) => {
-                    event.stopPropagation();
-                    startRestaurantNavigation(restaurant);
-                  }}>
-                    <Navigation size={16} />
-                    Navigate here
-                  </button>
-
                 </div>
 
               </div>
@@ -2460,277 +2235,46 @@ export default function DineOut() {
 
         <aside id="dineout-map" className="map-panel">
 
-          <MapContainer
+          {highlightedRestaurant ? <>
 
-            center={mapCenter}
+            <div style={{display:'flex',gap:8,flexWrap:'wrap',marginBottom:12}}>
 
-            zoom={14}
+              <button type="button" className="secondary-button" onClick={() => {setHighlightedRestaurant(null);setDetailsRestaurant(null);}}>Show all restaurant pins</button>
 
-            scrollWheelZoom
-
-            className="restaurant-map"
-
-          >
-
-            <MapController
-
-              center={mapCenter}
-
-              restaurants={visibleRestaurants}
-
-              highlightedRestaurant={highlightedRestaurant}
-
-            />
-
-            <TileLayer
-
-              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-
-              attribution="&copy; OpenStreetMap contributors"
-
-            />
-
-            {visibleRestaurants.map((restaurant, index) => {
-
-              if (!hasValidCoordinates(restaurant)) {
-
-                return null;
-
-              }
-
-              return (
-
-                <Marker
-
-                  key={restaurant.id || index}
-
-                  position={[getLatitude(restaurant), getLongitude(restaurant)]}
-
-                  icon={L.divIcon({
-
-                    className: "fk-restaurant-marker",
-
-                    html: `<span class="fk-restaurant-pin${highlightedRestaurant === restaurant ? " is-selected" : ""}" aria-hidden="true"></span>`,
-
-                    iconSize: highlightedRestaurant === restaurant ? [36, 42] : [28, 34],
-
-                    iconAnchor: highlightedRestaurant === restaurant ? [18, 40] : [14, 32],
-
-                    popupAnchor: [0, -34],
-
-                  })}
-
-                  zIndexOffset={highlightedRestaurant === restaurant ? 1000 : 0}
-
-                  eventHandlers={{
-
-                    click: () => {
-                      setHighlightedRestaurant(restaurant);
-                    },
-
-                  }}
-
-                >
-
-                  <Popup>
-
-                    <strong>{restaurant.name}</strong>
-
-                    <br />
-
-                    {restaurant.cuisine || restaurant.tags?.cuisine || ""}
-
-                    <br />
-
-                    {restaurant.address || restaurant.location_label || ""}
-                    <br />
-                    <button type="button" onClick={() => startRestaurantNavigation(restaurant)}>
-                      Navigate here
-                    </button>
-                  </Popup>
-
-                </Marker>
-
-              );
-
-            })}
-
-            {navigationRestaurant && (
-
-              <LiveRestaurantNavigation
-
-                restaurant={navigationRestaurant}
-
-                onStatus={setNavigationStatus}
-
-              />
-
-            )}
-
-          </MapContainer>
-
-          {visibleRestaurants.some(hasValidCoordinates) && (
-
-            <div className="dineout-map-legend" aria-label="Map marker legend">
-
-              <span><i className="legend-pin is-selected" /> Selected restaurant</span>
-
-              <span><i className="legend-pin" /> Other restaurants</span>
+              <button type="button" className="secondary-button" onClick={()=>setDetailsRestaurant(highlightedRestaurant)}>Restaurant details</button>
 
             </div>
 
-          )}
+            <RestaurantRouteMap key={highlightedRestaurant.id} invitation={{
 
-          {navigationRestaurant && (
+              id: highlightedRestaurant.id, latitude: getLatitude(highlightedRestaurant),
 
-            <div
+              longitude: getLongitude(highlightedRestaurant), restaurant_name: highlightedRestaurant.name,
 
-              className="dineout-live-navigation"
+              restaurant_address: highlightedRestaurant.address || highlightedRestaurant.location_label,
 
-              style={{
+              restaurant_external_id: String(highlightedRestaurant.id || '')
 
-                position: "absolute",
+            }} />
 
-                top: 16,
+          </> : <GoogleRestaurantMap center={mapCenter} restaurants={visibleRestaurants}
 
-                left: 16,
-
-                right: 16,
-
-                zIndex: 1000,
-
-                padding: "14px 16px",
-
-                borderRadius: 16,
-
-                background: "rgba(31, 17, 12, 0.94)",
-
-                color: "white",
-
-                boxShadow: "0 10px 30px rgba(0,0,0,.28)",
-
-              }}
-
-            >
-
-              <div
-
-                style={{
-
-                  display: "flex",
-
-                  justifyContent: "space-between",
-
-                  gap: 16,
-
-                }}
-
-              >
-
-                <div>
-
-                  <small style={{ color: "#ff7043", fontWeight: 800 }}>
-
-                    LIVE ROAD NAVIGATION
-
-                  </small>
-
-                  <strong style={{ display: "block", marginTop: 4 }}>
-
-                    {navigationStatus.instruction}
-
-                  </strong>
-
-                  <span
-
-                    style={{ display: "block", marginTop: 4, opacity: 0.8 }}
-
-                  >
-
-                    {navigationStatus.loading
-
-                      ? "Calculating road route…"
-
-                      : `${(navigationStatus.distance / 1000).toFixed(1)} km · ${Math.max(1, Math.round(navigationStatus.duration / 60))} min`}
-
-                  </span>
-
-                  {navigationStatus.lastGpsUpdate && (
-                    <small style={{ display: "block", marginTop: 4, opacity: 0.8 }}>
-                      Live GPS · updated {navigationStatus.lastGpsUpdate}
-                      {Number.isFinite(navigationStatus.gpsAccuracy) && ` · accuracy ±${navigationStatus.gpsAccuracy} m`}
-                    </small>
-                  )}
-
-                  {navigationStatus.instructionDistance > 0 && (
-
-                    <span
-
-                      style={{ display: "block", marginTop: 2, opacity: 0.8 }}
-
-                    >
-
-                      In {Math.round(navigationStatus.instructionDistance)} m
-
-                    </span>
-
-                  )}
-
-                  {navigationStatus.error && (
-
-                    <span
-
-                      style={{
-
-                        display: "block",
-
-                        marginTop: 5,
-
-                        color: "#ffb4a2",
-
-                      }}
-
-                    >
-
-                      {navigationStatus.error}
-
-                    </span>
-
-                  )}
-
-                </div>
-
-                <button
-
-                  type="button"
-
-                  className="secondary-button"
-
-                  onClick={endRestaurantNavigation}
-
-                  style={{ alignSelf: "flex-start" }}
-
-                >
-
-                  End
-
-                </button>
-
-              </div>
-
-            </div>
-
-          )}
+            highlightedRestaurant={null} onSelect={openRestaurantDetails} />}
 
         </aside>
 
       </section>
+
       </>}
 
       {isPlanPage && <section id="plan-meetup" className="plan-meetup">
+
         <button type="button" className="secondary-button dineout-plan-back"
+
           onClick={() => navigate(routeLocation.pathname)}>
+
           ← Back to restaurants
+
         </button>
 
         <p className="eyebrow">NEXT STEP</p>
@@ -3044,22 +2588,39 @@ export default function DineOut() {
       </section>}
 
       {bookingSuccess && <p role="status" className="search-status" style={{padding:16}}>{bookingSuccess}</p>}
-      {bookingRestaurant && (
+
+      {bookingRestaurant?.is_foodkindl_partner === true && /^foodkindl-\d+$/.test(String(bookingRestaurant.id)) && (
+
         <div className="restaurant-modal-backdrop" onMouseDown={() => !bookingSubmitting && setBookingRestaurant(null)}>
+
           <form className="restaurant-modal" onMouseDown={(event) => event.stopPropagation()} onSubmit={submitTableBooking}
+
             style={{display:"grid",gap:12,padding:24,maxWidth:480,margin:"auto"}}>
+
             <h2>Request a table · {bookingRestaurant.name}</h2>
+
             <label>Date<input type="date" required min={localDateKey(new Date())} value={bookingDate} onChange={(e)=>setBookingDate(e.target.value)} /></label>
+
             <label>Time<input type="time" required value={bookingTime} onChange={(e)=>setBookingTime(e.target.value)} /></label>
+
             <label>Guests<input type="number" required min="1" max="20" value={bookingGuests} onChange={(e)=>setBookingGuests(e.target.value)} /></label>
+
             <label>Special requests<textarea value={bookingNotes} onChange={(e)=>setBookingNotes(e.target.value)} /></label>
+
             <p>A request is not confirmed until the restaurant accepts it.</p>
+
             {bookingError && <p role="alert" className="error-message">{bookingError}</p>}
+
             <button type="submit" className="primary-button" disabled={bookingSubmitting}>{bookingSubmitting ? "Sending..." : "Request Booking"}</button>
+
             <button type="button" className="secondary-button" disabled={bookingSubmitting} onClick={()=>setBookingRestaurant(null)}>Cancel</button>
+
           </form>
+
         </div>
+
       )}
+
       <RestaurantDetailsModal
 
         restaurant={detailsRestaurant}

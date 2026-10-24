@@ -1,3 +1,4 @@
+from .google_places import is_food_place
 import math
 import logging
 
@@ -80,7 +81,8 @@ from rest_framework.response import Response
 
 
 
-from .helper import search_places
+from .google_places import search_google_places, search_locations, PlacesUnavailable
+from rest_framework.throttling import UserRateThrottle
 from invites.models import Restaurant as FoodKindlRestaurant
 
 
@@ -101,17 +103,6 @@ NOMINATIM_URL = (
 
 
 
-OVERPASS_URLS = [
-
-    "https://overpass.private.coffee/api/interpreter",
-
-    "https://overpass-api.de/api/interpreter",
-
-
-]
-
-
-
 HTTP_HEADERS = {
 
     "User-Agent": (
@@ -123,82 +114,6 @@ HTTP_HEADERS = {
     ),
 
 }
-
-
-
-def fetch_overpass_results(overpass_query):
-
-    errors = []
-
-
-
-    for overpass_url in OVERPASS_URLS:
-
-        try:
-
-            response = requests.post(
-
-                overpass_url,
-
-                data={
-
-                    "data": overpass_query,
-
-                },
-
-                headers=HTTP_HEADERS,
-
-                timeout=(4, 24),
-
-            )
-
-
-
-            response.raise_for_status()
-
-
-
-            response_data = response.json()
-
-
-
-            return response_data.get(
-
-                "elements",
-
-                [],
-
-            )
-
-
-
-        except (
-
-            requests.RequestException,
-
-            ValueError,
-
-        ) as error:
-
-            errors.append(
-
-                f"{overpass_url}: {error}"
-
-            )
-
-
-
-            continue
-
-
-
-    raise requests.RequestException(
-
-        "All Overpass providers failed. "
-
-        + " | ".join(errors)
-
-    )
 
 
 
@@ -288,246 +203,33 @@ def distance_km(
 
 
 
+class PlacesSearchThrottle(UserRateThrottle):
+    scope = "foodkindl_google_places"
+    rate = "30/min"
+
+
 class LocationAutocompleteView(APIView):
-
-    permission_classes = [
-
-        permissions.AllowAny
-
-    ]
-
-
+    permission_classes = [permissions.IsAuthenticated]
+    throttle_classes = [PlacesSearchThrottle]
 
     def get(self, request):
-
-        query = (
-
-            request.query_params
-
-            .get("q", "")
-
-            .strip()
-
-        )
-
-
-
-        if len(query) < 2:
-
-            return Response({
-
-                "results": [],
-
-            })
-
-
-
+        query = request.query_params.get("q", "").strip()
+        if len(query) < 3:
+            return Response({"results": []})
+        if len(query) > 200:
+            return Response({"detail": "Location query is too long."}, status=400)
         try:
-
-            requested_limit = int(
-
-                request.query_params.get(
-
-                    "limit",
-
-                    8,
-
-                )
-
-            )
-
+            limit = max(1, min(8, int(request.query_params.get("limit", 8))))
+            return Response({"results": search_locations(query, limit)})
         except (TypeError, ValueError):
-
-            requested_limit = 8
-
-
-
-        requested_limit = min(
-
-            max(requested_limit, 1),
-
-            10,
-
-        )
-
-
-
-        try:
-
-            response = requests.get(
-
-                (
-
-                    f"{NOMINATIM_URL}"
-
-                    "/search"
-
-                ),
-
-                params={
-
-                    "q": query,
-
-                    "format": "jsonv2",
-
-                    "addressdetails": 1,
-
-                    "countrycodes": "in",
-
-                    "limit": requested_limit,
-
-                },
-
-                headers=HTTP_HEADERS,
-
-                timeout=12,
-
-            )
-
-
-
-            response.raise_for_status()
-
-
-
-        except requests.RequestException:
-
-            return Response(
-
-                {
-
-                    "results": [],
-
-                    "detail": (
-
-                        "Location search is "
-
-                        "temporarily unavailable."
-
-                    ),
-
-                },
-
-                status=status.HTTP_200_OK,
-
-            )
-
-
-
-        results = []
-
-
-
-        for place in response.json():
-
-            address = (
-
-                place.get("address")
-
-                or {}
-
-            )
-
-
-
-            display_name = place.get(
-
-                "display_name",
-
-                "",
-
-            )
-
-
-
-            place_name = (
-
-                place.get("name")
-
-                or display_name.split(",")[0]
-
-            )
-
-
-
-            try:
-
-                latitude = float(
-
-                    place["lat"]
-
-                )
-
-
-
-                longitude = float(
-
-                    place["lon"]
-
-                )
-
-
-
-            except (
-
-                KeyError,
-
-                TypeError,
-
-                ValueError,
-
-            ):
-
-                continue
-
-
-
-            results.append({
-
-                "id": place.get("place_id"),
-
-                "name": place_name,
-
-                "display_name": display_name,
-
-                "latitude": latitude,
-
-                "longitude": longitude,
-
-                "city": (
-
-                    address.get("city")
-
-                    or address.get("town")
-
-                    or address.get("village")
-
-                ),
-
-                "state": address.get("state"),
-
-                "country": address.get(
-
-                    "country"
-
-                ),
-
-            })
-
-
-
-        return Response({
-
-            "results": results,
-
-        })
-
-
-
+            return Response({"detail": "Invalid search limit."}, status=400)
+        except PlacesUnavailable as error:
+            return Response({"detail": str(error), "results": []}, status=503)
 
 
 class RestaurantRecommendationView(APIView):
-    permission_classes = [permissions.AllowAny]
+    permission_classes = [permissions.IsAuthenticated]
+    throttle_classes = [PlacesSearchThrottle]
 
     def get(self, request):
         try:
@@ -542,7 +244,7 @@ class RestaurantRecommendationView(APIView):
                 and -90 <= latitude <= 90 and -180 <= longitude <= 180):
             return Response({"detail": "Invalid coordinates."}, status=status.HTTP_400_BAD_REQUEST)
 
-        radius = max(500, min(radius, 5000))
+        radius = max(500, min(radius, 10000))
         limit = max(1, min(limit, 50))
         source = request.query_params.get("source", "all").strip().lower()
         if source not in {"all", "partner", "other"}:
@@ -568,9 +270,11 @@ class RestaurantRecommendationView(APIView):
             if not (math.isfinite(lat) and math.isfinite(lon) and -90 <= lat <= 90 and -180 <= lon <= 180):
                 continue
             km = distance_km(latitude, longitude, lat, lon)
-            if km * 1000 > radius + 10:
+            if km * 1000 > radius:
                 continue
             amenity = restaurant.restaurant_type or "restaurant"
+            if not is_food_place(restaurant.name, ["restaurant" if amenity == "hotel" else "fast_food_restaurant" if amenity == "fast_food" else amenity]):
+                continue
             if amenity == "hotel":
                 amenity = "restaurant"
             if place_type != "all" and amenity != place_type:
@@ -622,38 +326,17 @@ class RestaurantRecommendationView(APIView):
                 "external_search_unavailable": False,
             })
 
-        # Reuse cached OSM results, but never let an external provider failure
-        # suppress valid FoodKindl Partner restaurants.
-        cache_key = f"dineout:places:v8:{latitude:.4f}:{longitude:.4f}:{radius}"
-        cached = cache.get(cache_key)
+        # Google listing content is not persisted in the old OSM cache.
         effective_radius = radius
-        overpass_unavailable = False
-        if cached is None:
-            places = None
-            for attempt_radius in [radius] + [r for r in (3000, 1500) if r < radius]:
-                try:
-                    places = search_places(
-                        latitude, longitude,
-                        radius_metres=attempt_radius,
-                        fetch_elements=fetch_overpass_results,
-                    )
-                    effective_radius = attempt_radius
-                    break
-                except requests.RequestException as error:
-                    # Upstream failure: keep the API usable for FoodKindl partners.
-                    logger.warning("Overpass failed at %sm: %s", attempt_radius, error)
-
-            if places is None:
-                overpass_unavailable = True
-                places = []
-                # Cache the provider outage briefly to avoid repeated slow calls.
-                cache.set(cache_key, (radius, places, True), timeout=60)
-            elif effective_radius == radius and places:
-                cache.set(cache_key, (effective_radius, places, False), timeout=600)
-        else:
-            # Support both existing two-item cache entries and the new format.
-            effective_radius, places = cached[:2]
-            overpass_unavailable = bool(cached[2]) if len(cached) > 2 else False
+        overpass_unavailable = False  # Backwards-compatible response field below.
+        try:
+            places = search_google_places(latitude, longitude, radius_metres=radius)
+        except PlacesUnavailable as error:
+            logger.warning("Google Places restaurant search unavailable")
+            if source == "other":
+                return Response({"detail": str(error), "results": []}, status=503)
+            overpass_unavailable = True
+            places = []
 
         external_results = []
         for place in places:
@@ -674,7 +357,7 @@ class RestaurantRecommendationView(APIView):
                     veg == "no" or meat == "yes" or fish == "yes" or nonveg == "yes"):
                 continue
             km = distance_km(latitude, longitude, place["latitude"], place["longitude"])
-            if km * 1000 > effective_radius + 10:
+            if km * 1000 > effective_radius:
                 continue
             external_results.append({
                 "id": place["id"], "name": place["name"],
@@ -693,7 +376,10 @@ class RestaurantRecommendationView(APIView):
                 "payment_methods": [key.removeprefix("payment:").replace("_", " ")
                                     for key, value in tags.items()
                                     if key.startswith("payment:") and str(value).lower() == "yes"],
-                "source": "openstreetmap", "is_foodkindl_partner": False,
+                "source": "google", "is_foodkindl_partner": False,
+                "google_place_id": place.get("google_place_id"),
+                "rating": place.get("rating"), "review_count": place.get("review_count"),
+                "attributions": place.get("attributions", []),
             })
         external_results.sort(key=lambda place: place["distance_km"])
 
@@ -717,7 +403,7 @@ class RestaurantRecommendationView(APIView):
             "partner_restaurants_found": len(partner_results),
             "external_search_unavailable": overpass_unavailable,
             "warning": (
-                "OpenStreetMap is temporarily unavailable. Showing FoodKindl Partner restaurants only."
+                "Google Places is temporarily unavailable. Showing available FoodKindl Partner restaurants only."
                 if overpass_unavailable else ""
             ),
         })
