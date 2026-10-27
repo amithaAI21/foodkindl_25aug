@@ -72,9 +72,9 @@ ALLOWED_HOSTS = get_env_list(
 
         ".onrender.com,"
 
-        "foodkindl.org,"
+        "foodkindl.com,"
 
-        "www.foodkindl.org"
+        "www.foodkindl.com"
 
     ),
 
@@ -510,9 +510,9 @@ CORS_ALLOWED_ORIGINS = get_env_list(
 
         "https://myfoodkindlapps.netlify.app,"
 
-        "https://foodkindl.org,"
+        "https://foodkindl.com,"
 
-        "https://www.foodkindl.org"
+        "https://www.foodkindl.com"
 
     ),
 
@@ -544,9 +544,9 @@ CSRF_TRUSTED_ORIGINS = get_env_list(
 
         "https://foodkindl-25aug.onrender.com,"
 
-        "https://foodkindl.org,"
+        "https://foodkindl.com,"
 
-        "https://www.foodkindl.org"
+        "https://www.foodkindl.com"
 
     ),
 
@@ -709,12 +709,10 @@ LOGGING = {
 # FRONTEND AND PUBLIC BACKEND LINKS
 
 FRONTEND_URL = (
-
     os.environ.get("FRONTEND_URL", "").strip()
-
-    or ("http://localhost:5173" if DEBUG else "https://myfoodkindlapps.netlify.app")
-
+    or ("http://localhost:5173" if DEBUG else "https://foodkindl.com")
 ).rstrip("/")
+
 
 PUBLIC_BACKEND_URL = (
 

@@ -35,17 +35,9 @@ class CookTogetherViewSet(
     ]
 
     def get_permissions(self):
-        if self.action in (
-            "list",
-            "retrieve",
-        ):
-            return [
-                permissions.AllowAny(),
-                IsHostOrPublishedReadOnly(),
-            ]
-
         return super().get_permissions()
 
+    
     def get_queryset(self):
         queryset = (
             CookTogether.objects
@@ -59,36 +51,45 @@ class CookTogetherViewSet(
 
         user = self.request.user
 
-        if user.is_authenticated:
-            return (
-                queryset.filter(
-                    Q(
-                        status=(
-                            CookTogether
-                            .Status
-                            .PUBLISHED
-                        )
-                    )
-                    | Q(host=user)
-                    | Q(
-                        join_requests__guest=user,
-                        join_requests__invitation_type=(
-                            CookTogetherRequest
-                            .InvitationType
-                            .HOST_INVITE
-                        ),
-                    )
-                )
-                .distinct()
-            )
+        if not user.is_authenticated:
+            return queryset.none()
 
-        return queryset.filter(
-            status=(
-                CookTogether
-                .Status
-                .PUBLISHED
+        return (
+            queryset.filter(
+                # Public events visible to logged-in members
+                Q(
+                    status=CookTogether.Status.PUBLISHED,
+                    visibility="public",
+                )
+
+                # Host can view their own events
+                | Q(host=user)
+
+                # Members invited by the host
+                | Q(
+                    join_requests__guest=user,
+                    join_requests__invitation_type=(
+                        CookTogetherRequest
+                        .InvitationType
+                        .HOST_INVITE
+                    ),
+                    join_requests__status__in=[
+                        CookTogetherRequest.Status.PENDING,
+                        CookTogetherRequest.Status.APPROVED,
+                    ],
+                )
+
+                # Approved guests
+                | Q(
+                    join_requests__guest=user,
+                    join_requests__status=(
+                        CookTogetherRequest.Status.APPROVED
+                    ),
+                )
             )
+            .distinct()
         )
+
 
     def perform_create(self, serializer):
         serializer.save(

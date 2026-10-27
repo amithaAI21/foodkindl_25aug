@@ -22,7 +22,6 @@ class UserSummarySerializer(
         fields = (
             "id",
             "name",
-            "email",
         )
 
         read_only_fields = fields
@@ -46,7 +45,6 @@ class InvitedMemberSerializer(
         fields = (
             "id",
             "full_name",
-            "email",
         )
 
         read_only_fields = fields
@@ -319,38 +317,52 @@ class CookTogetherSerializer(
 
         return instance
 
-    # def to_representation(self, instance):
-    #     data = super().to_representation(
-    #         instance
-    #     )
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
 
-    #     request = self.context.get("request")
+        request = self.context.get("request")
+        user = getattr(request, "user", None)
 
-    #     if (
-    #         not request
-    #         or not request.user.is_authenticated
-    #     ):
-    #         data["exact_address"] = ""
-    #         return data
+        is_authenticated = bool(
+            user and user.is_authenticated
+        )
 
-    #     if instance.host_id == request.user.id:
-    #         return data
+        is_host = (
+            is_authenticated
+            and instance.host_id == user.id
+        )
 
-    #     is_approved = (
-    #         instance.join_requests.filter(
-    #             guest=request.user,
-    #             status=(
-    #                 CookTogetherRequest
-    #                 .Status
-    #                 .APPROVED
-    #             ),
-    #         ).exists()
-    #     )
+        is_approved_guest = False
 
-    #     if not is_approved:
-    #         data["exact_address"] = ""
+        if is_authenticated and not is_host:
+            is_approved_guest = (
+                instance.join_requests.filter(
+                    guest=user,
+                    status=(
+                        CookTogetherRequest
+                        .Status
+                        .APPROVED
+                    ),
+                ).exists()
+            )
 
-    #     return data
+        # Never publish personal email addresses.
+        if isinstance(data.get("host"), dict):
+            data["host"].pop("email", None)
+
+        # Protect the exact home address.
+        if not (is_host or is_approved_guest):
+            data["exact_address"] = ""
+
+        # Only the host can see the full invitation list.
+        if not is_host:
+            data["invited_members"] = []
+        else:
+            for member in data.get("invited_members", []):
+                member.pop("email", None)
+
+        return data
+
 
 
 class JoinRequestSerializer(
