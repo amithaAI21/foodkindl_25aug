@@ -22,6 +22,11 @@ from .services import (
     send_sos_to_contacts,
 )
 
+from rest_framework.permissions import (
+    IsAuthenticated,
+    AllowAny,
+)
+
 
 # ============================================================
 # TRUSTED CONTACTS
@@ -482,6 +487,101 @@ class ActiveSOSView(
 # MARK SAFE
 # ============================================================
 
+# ============================================================
+# UPDATE LIVE SOS LOCATION
+# ============================================================
+
+class SOSLocationUpdateView(APIView):
+
+    permission_classes = [
+        permissions.IsAuthenticated,
+    ]
+
+    def post(self, request, sos_id):
+
+        try:
+            sos = SOSEvent.objects.get(
+                id=sos_id,
+                user=request.user,
+                status="active",
+            )
+
+        except SOSEvent.DoesNotExist:
+
+            return Response(
+                {
+                    "detail": "Active SOS event not found."
+                },
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        serializer = SOSEventSerializer(
+            sos,
+            data=request.data,
+            partial=True,
+        )
+
+        serializer.is_valid(
+            raise_exception=True
+        )
+
+        sos = serializer.save(
+            location_updated_at=timezone.now()
+        )
+
+        return Response(
+            {
+                "success": True,
+                "latitude": sos.latitude,
+                "longitude": sos.longitude,
+                "location_accuracy": sos.location_accuracy,
+                "location_updated_at": sos.location_updated_at,
+            },
+            status=status.HTTP_200_OK,
+        )
+
+# ============================================================
+# PUBLIC SOS LOCATION TRACKING
+# ============================================================
+
+class PublicSOSTrackingView(APIView):
+
+    permission_classes = [
+        permissions.AllowAny,
+    ]
+
+    authentication_classes = []
+
+    def get(self, request, tracking_token):
+
+        try:
+            sos = SOSEvent.objects.get(
+                tracking_token=tracking_token,
+                status="active",
+            )
+
+        except SOSEvent.DoesNotExist:
+
+            return Response(
+                {
+                    "active": False,
+                    "detail": "SOS tracking is no longer active.",
+                },
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        return Response(
+            {
+                "active": True,
+                "latitude": sos.latitude,
+                "longitude": sos.longitude,
+                "location_accuracy": sos.location_accuracy,
+                "location_updated_at": sos.location_updated_at,
+                "activated_at": sos.activated_at,
+            },
+            status=status.HTTP_200_OK,
+        )        
+        
 class SOSMarkSafeView(
     APIView
 ):

@@ -1,0 +1,27 @@
+.fk-grocery-now { margin: 22px 0 0; color:#fff5f0; }
+.fk-grocery-now * { box-sizing: border-box; }
+.fk-grocery-now-header { display:flex; align-items:center; justify-content:space-between; gap:18px; padding:20px 22px; background:linear-gradient(110deg,#3a1c12,#25130f); border:1px solid #67331f; border-radius:16px; }
+.fk-grocery-now-kicker { display:block; font-size:10px; letter-spacing:.1em; font-weight:800; color:#ff824f; margin-bottom:6px; }
+.fk-grocery-now-header h3,.fk-grocery-now-body h4 { font-size:17px; margin:0 0 6px; color:#fff; }
+.fk-grocery-now-header p,.fk-grocery-now-body p { margin:0; font-size:13px; color:#d9b9a7; line-height:1.5; }
+.fk-grocery-now-toggle { border:0; border-radius:9px; color:white; background:#f15d26; padding:12px 17px; display:inline-flex; align-items:center; justify-content:center; gap:8px; cursor:pointer; flex-shrink:0; }
+.fk-grocery-now-body { background:#100b09; margin-top:10px; border:1px solid #443028; border-radius:16px; padding:18px; }
+.fk-grocery-now-shopping-header {display:flex;justify-content:space-between;align-items:start; gap:12px; border-bottom:1px solid #3b2923;padding-bottom:14px; }
+.fk-grocery-now-close { background:#221b18; color:#fff; border:1px solid #48322a; border-radius:8px; padding:7px; cursor:pointer; }
+.fk-grocery-now-items {display:grid;gap:8px;margin:12px 0;}
+.fk-grocery-now-item {display:flex;align-items:center;gap:12px;border:1px solid #382722;background:#211916;padding:13px;border-radius:10px;cursor:pointer; font-size:13px;}
+.fk-grocery-now-item input {accent-color:#ec612e; width:16px;height:16px;}
+.fk-grocery-now-count {display:flex;align-items:center;gap:7px;font-size:12px;color:#bda99e;margin-bottom:19px;}
+.fk-grocery-now-count button {margin-left:auto;background:transparent;color:#ff946b;border:0;cursor:pointer;font-size:12px;}
+.fk-grocery-now-stores-title {margin-top:10px;margin-bottom:12px;}
+.fk-grocery-now-stores {display:grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap:10px;}
+.fk-grocery-now-store {min-width:0;display:flex;align-items:center; gap:10px; border:1px solid #3c302c; border-radius:10px; padding:16px 12px; text-decoration:none; background:#181312; color:#fff;}
+.fk-grocery-now-store:hover {border-color:#f36a35;}
+.fk-grocery-now-store-icon {display:flex;align-items:center;justify-content:center;border-radius:8px;background:#ffcc22;color:#211500;font-size:16px;font-weight:900;width:32px;height:32px;flex-shrink:0;}
+.fk-grocery-now-insert .fk-grocery-now-store-icon {background:#f87e22;}
+.fk-grocery-now-store-copy {display:grid;gap:3px;flex:1;min-width:0;}
+.fk-grocery-now-store-copy strong {font-size:13px;}
+.fk-grocery-now-store-copy small {font-size:11px;color:#bfa99e;line-height:1.4;}
+.fk-grocery-now-store>svg {flex-shrink:0;}
+.fk-grocery-now-note,.fk-grocery-now-disclosure {margin-top:12px !important;font-size:11px !important;}
+@media(max-width:780px){.fk-grocery-now-stores{grid-template-columns:1fr;} .fk-grocery-now-header{align-items:stretch;flex-direction:column;}.fk-grocery-now-toggle{width:100%;}}

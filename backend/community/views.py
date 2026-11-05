@@ -2917,3 +2917,76 @@ def ai_ingredient_recipe_book(
                 .HTTP_500_INTERNAL_SERVER_ERROR
             ),
         )
+
+from django.conf import settings
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+from rest_framework import status
+import requests
+
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def reverse_geocode(request):
+    try:
+        latitude = float(request.query_params.get("lat", ""))
+        longitude = float(request.query_params.get("lon", ""))
+    except (ValueError, TypeError):
+        return Response(
+            {"detail": "Valid latitude and longitude are required."},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    if not (-90 <= latitude <= 90 and -180 <= longitude <= 180):
+        return Response(
+            {"detail": "Coordinates are out of range."},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    api_key = settings.GEOAPIFY_API_KEY
+
+    if not api_key:
+        return Response(
+            {"detail": "Location service is not configured."},
+            status=status.HTTP_503_SERVICE_UNAVAILABLE,
+        )
+
+    try:
+        response = requests.get(
+            "https://api.geoapify.com/v1/geocode/reverse",
+            params={
+                "lat": latitude,
+                "lon": longitude,
+                "apiKey": api_key,
+                "format": "json",
+            },
+            timeout=10,
+        )
+        response.raise_for_status()
+        results = response.json().get("results", [])
+
+        if not results:
+            return Response({"location_name": ""})
+
+        location = results[0]
+
+        area = (
+            location.get("suburb")
+            or location.get("district")
+            or location.get("city")
+            or ""
+        )
+        city = location.get("city") or location.get("town") or ""
+
+        location_name = ", ".join(
+            dict.fromkeys(part for part in (area, city) if part)
+        )
+
+        return Response({"location_name": location_name})
+
+    except (requests.RequestException, ValueError):
+        return Response(
+            {"detail": "Unable to resolve location."},
+            status=status.HTTP_502_BAD_GATEWAY,
+        )

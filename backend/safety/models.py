@@ -1,5 +1,6 @@
 from django.contrib.auth.models import User
 from django.db import models
+import uuid
 
 
 class TrustedContact(models.Model):
@@ -49,30 +50,20 @@ class TrustedContact(models.Model):
         )
 
 
+
 class SOSEvent(models.Model):
 
     STATUS_CHOICES = [
-        (
-            "active",
-            "Active",
-        ),
-        (
-            "safe",
-            "User Marked Safe",
-        ),
-        (
-            "cancelled",
-            "Cancelled",
-        ),
+        ("active", "Active"),
+        ("safe", "User Marked Safe"),
+        ("cancelled", "Cancelled"),
     ]
-
 
     user = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
         related_name="sos_events",
     )
-
 
     latitude = models.DecimalField(
         max_digits=9,
@@ -81,7 +72,6 @@ class SOSEvent(models.Model):
         blank=True,
     )
 
-
     longitude = models.DecimalField(
         max_digits=9,
         decimal_places=6,
@@ -89,12 +79,10 @@ class SOSEvent(models.Model):
         blank=True,
     )
 
-
     location_accuracy = models.FloatField(
         null=True,
         blank=True,
     )
-
 
     status = models.CharField(
         max_length=20,
@@ -103,29 +91,32 @@ class SOSEvent(models.Model):
         db_index=True,
     )
 
-
     activated_at = models.DateTimeField(
         auto_now_add=True,
     )
-
 
     resolved_at = models.DateTimeField(
         null=True,
         blank=True,
     )
 
+    tracking_token = models.UUIDField(
+        default=uuid.uuid4,
+        unique=True,
+        editable=False,
+    )
+
+    location_updated_at = models.DateTimeField(
+        null=True,
+        blank=True,
+    )
 
     class Meta:
-        ordering = [
-            "-activated_at",
-        ]
-
+        ordering = ["-activated_at"]
 
     def __str__(self):
-        return (
-            f"SOS - {self.user.email} - "
-            f"{self.status}"
-        )
+        return f"SOS - {self.user.email} - {self.status}"
+
         
 class AdminSystemAlert(models.Model):
 

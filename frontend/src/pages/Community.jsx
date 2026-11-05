@@ -1130,68 +1130,85 @@ export default function Community({
      LOCATION
   ========================================================== */
 
-  function addCurrentLocation() {
-    setError("");
-    setSuccess("");
+  async function addCurrentLocation() {
+  setError("");
+  setSuccess("");
 
-    if (
-      !navigator.geolocation
-    ) {
-      setError(
-        "Location services are not supported by this browser."
-      );
-
-      return;
-    }
-
-    setLocating(true);
-
-    navigator.geolocation
-      .getCurrentPosition(
-        (position) => {
-          setForm(
-            (previous) => ({
-              ...previous,
-
-              latitude:
-                Number(
-                  position
-                    .coords
-                    .latitude
-                ).toFixed(6),
-
-              longitude:
-                Number(
-                  position
-                    .coords
-                    .longitude
-                ).toFixed(6),
-            })
-          );
-
-          setSuccess(
-            "Current location coordinates added."
-          );
-
-          setLocating(false);
-        },
-
-        () => {
-          setError(
-            "FoodKindl could not access your location."
-          );
-
-          setLocating(false);
-        },
-
-        {
-          enableHighAccuracy:
-            true,
-
-          timeout: 10000,
-        }
-      );
+  if (!navigator.geolocation) {
+    setError("Location services are not supported by this browser.");
+    return;
   }
+
+  setLocating(true);
+
+  navigator.geolocation.getCurrentPosition(
+    async (position) => {
+      const latitude = Number(position.coords.latitude).toFixed(6);
+      const longitude = Number(position.coords.longitude).toFixed(6);
+
+      // Save GPS coordinates immediately.
+      setForm((previous) => ({
+        ...previous,
+        latitude,
+        longitude,
+      }));
+
+      try {
+        // Your Django backend should proxy this lookup so that
+        // the Geoapify API key remains on the server.
+        const response = await api.get("/geo/reverse/", {
+          params: {
+            lat: latitude,
+            lon: longitude,
+          },
+        });
+
+        const locationName =
+          response.data?.location_name ||
+          [response.data?.suburb, response.data?.city]
+            .filter(Boolean)
+            .join(", ");
+
+        if (locationName) {
+          setForm((previous) => ({
+            ...previous,
+            location_name: locationName,
+          }));
+
+          setSuccess(`Location added: ${locationName}`);
+        } else {
+          setSuccess(
+            "Coordinates added. Please enter your area or city manually."
+          );
+        }
+      } catch (error) {
+        console.error("Reverse geocoding failed:", error);
+
+        setSuccess(
+          "Coordinates added. Please enter your area or city manually."
+        );
+      } finally {
+        setLocating(false);
+      }
+    },
+    (error) => {
+      console.error("Geolocation failed:", error);
+
+      setError(
+        error.code === 1
+          ? "Location permission denied. Please allow location access."
+          : "Unable to detect your location. Enter your area manually."
+      );
+
+      setLocating(false);
+    },
+    {
+      enableHighAccuracy: true,
+      timeout: 10000,
+      maximumAge: 60000,
+    }
+  );
+}
 
 
   /* ==========================================================

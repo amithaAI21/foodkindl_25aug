@@ -1,710 +1,926 @@
-import { useEffect, useMemo, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import {
-  MapContainer,
-  Marker,
-  Polyline,
-  TileLayer,
-  useMap,
-} from "react-leaflet";
-import "leaflet/dist/leaflet.css";
-import L from "leaflet";
-import "./FoodJourney.css";
 
-const pin = (colour) =>
-  L.divIcon({
-    className: "fj-pin-wrapper",
-    html: `<span style="
-      display:block;width:20px;height:20px;
-      border:3px solid white;border-radius:50%;
-      background:${colour};
-      box-shadow:0 2px 8px #0006;
-    "></span>`,
-    iconSize: [20, 20],
-    iconAnchor: [10, 10],
-  });
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
+import { loadGoogleMaps } from "../components/googleMaps";
+import api from "../api";
+import "./FoodWalkDashboard.css";
+import FoodWalkVoiceAssistant from "../components/FoodWalkVoiceAssistant";
 
-const startPin = pin("#239b6b");
-const endPin = pin("#f75b42");
-const foodPin = pin("#ec8a31");
-const livePin = pin("#247cff");
+const MAX_STOPS = 4;
 
-function distanceMetres(a, b) {
-  const rad = Math.PI / 180;
-  const dLat = (b[0] - a[0]) * rad;
-  const dLon = (b[1] - a[1]) * rad;
-  const x = Math.sin(dLat / 2) ** 2 +
-    Math.cos(a[0] * rad) * Math.cos(b[0] * rad) * Math.sin(dLon / 2) ** 2;
-  return 12742000 * Math.asin(Math.min(1, Math.sqrt(x)));
-}
+function toPoint(place) {
+  const lat = Number(place?.latitude ?? place?.lat);
+  const lng = Number(place?.longitude ?? place?.lng);
 
-function turnText(step) {
-  const maneuver = step?.maneuver || {};
-  const road = step?.name ? ` onto ${step.name}` : "";
-  if (maneuver.type === "arrive") return "Arrive at your stop";
-  if (maneuver.type === "depart") return `Head out${road}`;
-  if (maneuver.type === "roundabout") return `Enter the roundabout${road}`;
-  if (maneuver.type === "turn" || maneuver.type === "fork" || maneuver.type === "merge") {
-    return `${maneuver.modifier ? `Go ${maneuver.modifier}` : "Continue"}${road}`;
+  if (
+    !Number.isFinite(lat) ||
+    !Number.isFinite(lng) ||
+    Math.abs(lat) > 90 ||
+    Math.abs(lng) > 180
+  ) {
+    return null;
   }
-  return `Continue${road}`;
+
+  return { lat, lng };
 }
 
-function FollowLocation({ position, enabled }) {
-  const map = useMap();
-  useEffect(() => {
-    if (enabled && position) map.panTo(position);
-  }, [map, position, enabled]);
-  return null;
+function readableTime(minutes) {
+  const value = Math.max(0, Math.round(Number(minutes) || 0));
+  const hours = Math.floor(value / 60);
+  const mins = value % 60;
+
+  return hours ? `${hours} hr ${mins} min` : `${mins} min`;
 }
 
-function FitRoute({ points }) {
-  const map = useMap();
+function decodePolyline(encoded) {
+  if (!encoded || typeof encoded !== "string") return [];
 
-  useEffect(() => {
-    if (points.length > 1) {
-      map.fitBounds(points, { padding: [30, 30] });
+  const points = [];
+  let index = 0;
+  let latitude = 0;
+  let longitude = 0;
+
+  try {
+    while (index < encoded.length) {
+      let result = 0;
+      let shift = 0;
+      let byte;
+
+      do {
+        if (index >= encoded.length) return [];
+        byte = encoded.charCodeAt(index++) - 63;
+        result |= (byte & 0x1f) << shift;
+        shift += 5;
+      } while (byte >= 0x20);
+
+      latitude += result & 1 ? ~(result >> 1) : result >> 1;
+
+      result = 0;
+      shift = 0;
+
+      do {
+        if (index >= encoded.length) return [];
+        byte = encoded.charCodeAt(index++) - 63;
+        result |= (byte & 0x1f) << shift;
+        shift += 5;
+      } while (byte >= 0x20);
+
+      longitude += result & 1 ? ~(result >> 1) : result >> 1;
+
+      points.push({
+        lat: latitude / 1e5,
+        lng: longitude / 1e5,
+      });
     }
-  }, [map, points]);
 
-  return null;
+    return points;
+  } catch {
+    return [];
+  }
 }
 
-function shortPlaceName(value) {
-  return String(value || "")
-    .split(",")[0]
-    .trim();
+function extractRoutePoints(route) {
+  const geojson =
+    route?.polyline?.geoJsonLinestring?.coordinates ||
+    route?.polyline?.geoJsonLineString?.coordinates ||
+    route?.geoJsonLinestring?.coordinates;
+
+  if (Array.isArray(geojson) && geojson.length) {
+    return geojson
+      .map((point) => ({
+        lat: Number(point[1]),
+        lng: Number(point[0]),
+      }))
+      .filter(
+        (point) =>
+          Number.isFinite(point.lat) &&
+          Number.isFinite(point.lng)
+      );
+  }
+
+  const encoded =
+    route?.polyline?.encodedPolyline ||
+    route?.encodedPolyline;
+
+  return decodePolyline(encoded);
 }
 
-function formatDuration(value) {
-  const minutes = Math.max(0, Math.round(Number(value) || 0));
-  const hours = Math.floor(minutes / 60);
-  const remainder = minutes % 60;
+function plannedRoutePoints(coordinates) {
+  if (!Array.isArray(coordinates)) return [];
 
-  return hours ? `${hours} hr ${remainder} min` : `${remainder} min`;
+  return coordinates
+    .filter((point) => Array.isArray(point) && point.length >= 2)
+    .map(([lng, lat]) => ({
+      lat: Number(lat),
+      lng: Number(lng),
+    }))
+    .filter(
+      (point) =>
+        Number.isFinite(point.lat) &&
+        Number.isFinite(point.lng)
+    );
 }
 
-function formatTime(date) {
-  return date.toLocaleTimeString("en-IN", {
-    hour: "numeric",
-    minute: "2-digit",
-    hour12: true,
-  });
+function distanceMeters(a, b) {
+  if (!a || !b) return Infinity;
+  const r = Math.PI / 180;
+  const dLat = (b.lat - a.lat) * r;
+  const dLng = (b.lng - a.lng) * r;
+  const h = Math.sin(dLat / 2) ** 2 + Math.cos(a.lat * r) * Math.cos(b.lat * r) * Math.sin(dLng / 2) ** 2;
+  return 12742000 * Math.asin(Math.min(1, Math.sqrt(h)));
 }
 
-function addMinutes(date, minutes) {
-  return new Date(date.getTime() + minutes * 60_000);
+function extractDirections(route) {
+  return (route?.legs || [])
+    .flatMap((leg) => leg.steps || [])
+    .map((step) => {
+      const instruction =
+        step?.navigationInstruction?.instructions ||
+        step?.instruction ||
+        "Continue along the route";
+
+      return {
+        text: String(instruction).replace(/<[^>]+>/g, " "),
+        distance: Number(step.distanceMeters || 0),
+        // Routes API step endpoints, when requested in the response field mask.
+        endPoint: toPoint(step?.endLocation?.latLng || step?.endLocation),
+      };
+    });
 }
 
-function localTimeValue(date) {
-  return `${String(date.getHours()).padStart(2, "0")}:${String(
-    date.getMinutes()
-  ).padStart(2, "0")}`;
-}
+function getApiError(error) {
+  const data = error?.response?.data;
 
-function validPoint(latitude, longitude) {
+  if (typeof data?.detail === "string") return data.detail;
+  if (typeof data?.error === "string") return data.error;
+
+  if (Array.isArray(data?.detail)) {
+    return data.detail.join(" ");
+  }
+
   return (
-    Number.isFinite(Number(latitude)) &&
-    Number.isFinite(Number(longitude))
+    error?.message ||
+    "Unable to calculate the route. Please try again."
   );
 }
 
-function parseRequest(mealPreference, foodWish) {
-  const raw = `${mealPreference} ${foodWish}`.toLowerCase();
-  const meal = /\bbreakfast\b/.test(raw) ? "Breakfast"
-    : /\bbrunch\b/.test(raw) ? "Brunch"
-    : /\blunch\b/.test(raw) ? "Lunch"
-    : /\bdinner\b/.test(raw) ? "Dinner"
-    : /\b(chai|tea|coffee)\b/.test(raw) ? "Tea or coffee"
-    : /\bsnacks?\b/.test(raw) ? "Snack" : "";
-  const dish = raw.replace(/\b(for|the|a|an|some|near|around|time|prefer|want|would|like|quick|breakfast|brunch|lunch|dinner|chai|tea|coffee|snacks?|vegetarian)\b/g, " ")
-    .replace(/\s+/g, " ").trim();
-  return { meal, dish, vegetarian: /\b(vegetarian|pure veg)\b/.test(raw) };
-}
+function GoogleJourneyMap({
+  coordinates,
+  chosen,
+  live,
+  navigationPoints,
+}) {
+  const container = useRef(null);
+  const map = useRef(null);
+  const overlays = useRef([]);
 
-function matchesDish(place, dish) {
-  if (!dish) return true;
-  const searchable = [place.name, place.category, place.cuisine,
-    place.description, ...(Array.isArray(place.menuItems) ? place.menuItems : [])]
-    .filter(Boolean).join(" ").toLowerCase();
-  return searchable.includes(dish);
-}
+  const [ready, setReady] = useState(false);
+  const [mapError, setMapError] = useState("");
 
-function mealFits(meal, arrival) {
-  const hour = arrival.getHours() + arrival.getMinutes() / 60;
-  if (meal === "Breakfast") return hour >= 6 && hour < 11;
-  if (meal === "Brunch") return hour >= 10 && hour < 13;
-  if (meal === "Lunch") return hour >= 12 && hour < 16;
-  if (meal === "Dinner") return hour >= 18 || hour < 1;
-  if (meal === "Tea or coffee") return hour >= 6 && hour < 23;
-  if (meal === "Snack") return hour >= 10 && hour < 23;
-  return true;
-}
+  useEffect(() => {
+    let cancelled = false;
 
-function suggestedLabel(place, arrival, requestedMeal) {
-  if (requestedMeal && mealFits(requestedMeal, arrival)) return `${requestedMeal} stop`;
-  const hour = arrival.getHours();
-  const category = `${place.category || ""} ${place.cuisine || ""}`.toLowerCase();
-  if (/cafe|café|coffee|tea|chai/.test(category)) return "Coffee or chai stop";
-  if (hour >= 6 && hour < 11) return "Breakfast stop";
-  if (hour >= 11 && hour < 15) return "Lunch stop";
-  if (hour >= 15 && hour < 18) return "Snack stop";
-  return "Dinner stop";
+    loadGoogleMaps()
+      .then((gm) => {
+        if (cancelled || !container.current) return;
+
+        map.current = new gm.Map(container.current, {
+          center: { lat: 12.9716, lng: 77.5946 },
+          zoom: 12,
+          streetViewControl: false,
+          mapTypeControl: false,
+          fullscreenControl: true,
+          zoomControl: true,
+        });
+
+        setReady(true);
+      })
+      .catch((error) => {
+        if (!cancelled) {
+          setMapError(error.message);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+
+      overlays.current.forEach((object) => {
+        object.setMap?.(null);
+      });
+
+      overlays.current = [];
+      map.current = null;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!ready || !map.current) return;
+
+    const gm = window.google.maps;
+
+    overlays.current.forEach((object) => {
+      object.setMap?.(null);
+    });
+
+    overlays.current = [];
+
+    const bounds = new gm.LatLngBounds();
+    const originalPoints = plannedRoutePoints(coordinates);
+
+    const path =
+      navigationPoints.length > 1
+        ? navigationPoints
+        : originalPoints;
+
+    if (path.length > 1) {
+      const outline = new gm.Polyline({
+        map: map.current,
+        path,
+        strokeColor: "#ffffff",
+        strokeOpacity: 0.95,
+        strokeWeight: 10,
+        zIndex: 10,
+      });
+
+      const routeLine = new gm.Polyline({
+        map: map.current,
+        path,
+        strokeColor: "#ef633e",
+        strokeOpacity: 1,
+        strokeWeight: 6,
+        zIndex: 11,
+      });
+
+      overlays.current.push(outline, routeLine);
+
+      path.forEach((point) => bounds.extend(point));
+    }
+
+    function addMarker(point, label, color, title) {
+      if (!point) return;
+
+      const marker = new gm.Marker({
+        map: map.current,
+        position: point,
+        title,
+        label: {
+          text: String(label),
+          color: "#ffffff",
+          fontWeight: "bold",
+        },
+        icon: {
+          path: gm.SymbolPath.CIRCLE,
+          scale: 15,
+          fillColor: color,
+          fillOpacity: 1,
+          strokeColor: "#ffffff",
+          strokeWeight: 3,
+        },
+      });
+
+      overlays.current.push(marker);
+      bounds.extend(point);
+    }
+
+    if (originalPoints.length) {
+      addMarker(
+        originalPoints[0],
+        "A",
+        "#16866b",
+        "Starting point"
+      );
+
+      addMarker(
+        originalPoints[originalPoints.length - 1],
+        "B",
+        "#375bd4",
+        "Destination"
+      );
+    }
+
+    chosen.forEach((place, index) => {
+      addMarker(
+        toPoint(place),
+        index + 1,
+        "#f36d49",
+        place.name
+      );
+    });
+
+    if (live) {
+      const marker = new gm.Marker({
+        map: map.current,
+        position: live,
+        title: "Your current location",
+        icon: {
+          path: gm.SymbolPath.CIRCLE,
+          scale: 9,
+          fillColor: "#2876fa",
+          fillOpacity: 1,
+          strokeColor: "#ffffff",
+          strokeWeight: 3,
+        },
+      });
+
+      overlays.current.push(marker);
+      bounds.extend(live);
+    }
+
+    if (!bounds.isEmpty()) {
+      map.current.fitBounds(bounds, 55);
+    }
+  }, [ready, coordinates, chosen, live, navigationPoints]);
+
+  return (
+    <div
+      className="fj-google-map-wrap"
+      style={{ width: "100%", minHeight: 440 }}
+    >
+      {mapError && (
+        <p className="fw-error" role="alert">
+          {mapError}
+        </p>
+      )}
+
+      <div
+        ref={container}
+        className="fj-google-map"
+        style={{
+          height: "min(65vh, 620px)",
+          minHeight: 440,
+          width: "100%",
+          borderRadius: 18,
+        }}
+        aria-label="FoodKindl Google route map"
+      />
+    </div>
+  );
 }
 
 export default function FoodJourney({
-  origin = "Starting point",
-  destination = "Destination",
-  travelMinutes = 0,
-  travelMode = "car",
-  places = [],
-  routeCoordinates = [],
-  mealPreference = "",
-  foodWish = "",
+  origin: inputOrigin,
+  destination: inputDestination,
+  travelMinutes: inputTravelMinutes,
+  travelMode: inputTravelMode,
+  places: inputPlaces,
+  routeCoordinates: inputCoordinates,
+  mealPreference: inputMealPreference,
+  foodWish: inputFoodWish,
+  selectedIds: inputIds,
 }) {
+  const location = useLocation();
   const navigate = useNavigate();
-  const [departure, setDeparture] = useState(() => new Date());
-  const [showTimePicker, setShowTimePicker] = useState(false);
-  const [selectedIds, setSelectedIds] = useState([]);
-  const [navigationActive, setNavigationActive] = useState(false);
-  const [position, setPosition] = useState(null);
-  const [gpsError, setGpsError] = useState("");
-  const [targetIndex, setTargetIndex] = useState(0);
-  const [liveRoute, setLiveRoute] = useState(null);
-  const [plannedRoute, setPlannedRoute] = useState(null);
-  const [routeError, setRouteError] = useState("");
-  const [routeLoading, setRouteLoading] = useState(false);
-  const lastRouteRef = useRef({ at: 0, point: null });
 
-  const routePoints = useMemo(
+  const plan = location.state?.foodJourney || {};
+
+  const origin = inputOrigin ?? plan.origin ?? "Start";
+  const destination =
+    inputDestination ?? plan.destination ?? "Destination";
+
+  const travelMinutes =
+    inputTravelMinutes ?? plan.travelMinutes ?? 0;
+
+  const travelMode =
+    inputTravelMode ?? plan.travelMode ?? "car";
+
+  const places = inputPlaces ?? plan.places ?? [];
+
+  const routeCoordinates =
+    inputCoordinates ?? plan.routeCoordinates ?? [];
+
+  const mealPreference =
+    inputMealPreference ?? plan.mealPreference ?? "";
+
+  const foodWish = inputFoodWish ?? plan.foodWish ?? "";
+
+  const [ids, setIds] = useState(() =>
+    (inputIds || plan.selectedIds || []).map(String)
+  );
+
+  const [departure, setDeparture] = useState(() =>
+    new Date().toTimeString().slice(0, 5)
+  );
+
+  const [navigation, setNavigation] = useState(false);
+  const [live, setLive] = useState(null);
+  const [gpsError, setGpsError] = useState("");
+  const [routeError, setRouteError] = useState("");
+  const [routeInfo, setRouteInfo] = useState(null);
+  const [navigationPoints, setNavigationPoints] = useState([]);
+  const [loadingRoute, setLoadingRoute] = useState(false);
+
+  const requestRef = useRef(null);
+  const liveRef = useRef(null);
+  const routeKeyRef = useRef("");
+  const stepIndexRef = useRef(0);
+  const [spokenInstruction, setSpokenInstruction] = useState("");
+
+  const selected = useMemo(
     () =>
-      (Array.isArray(routeCoordinates) ? routeCoordinates : [])
-        .map((point) => {
-          // Coordinates from your Food Walk API are [longitude, latitude].
-          if (Array.isArray(point)) {
-            return [Number(point[1]), Number(point[0])];
+      places
+        .filter((place) => ids.includes(String(place.id)))
+        .sort(
+          (a, b) =>
+            Number(a.routeMinutes || 0) -
+            Number(b.routeMinutes || 0)
+        ),
+    [places, ids]
+  );
+
+  const selectedKey = selected.map((place) => place.id).join(",");
+
+  const totalMinutes =
+    Number(travelMinutes) +
+    selected.reduce(
+      (sum, place) =>
+        sum + Number(place.stopMinutes || 30),
+      0
+    );
+
+  const destinationPoint = useMemo(() => {
+    const points = plannedRoutePoints(routeCoordinates);
+    return points.length ? points[points.length - 1] : null;
+  }, [routeCoordinates]);
+
+  const stopPoints = useMemo(
+    () => selected.map(toPoint).filter(Boolean),
+    [selected]
+  );
+
+  // User-selected fallback: Bike uses car-road routing (DRIVE).
+  // These are driving directions, not verified bicycle-safe directions.
+  const isBicycle = ["bike", "bicycle", "cycling"].includes(String(travelMode).toLowerCase());
+  const backendMode = {
+    walk: "WALK",
+    walking: "WALK",
+    bike: "DRIVE",
+    bicycle: "DRIVE",
+    cycling: "DRIVE",
+    motorcycle: "TWO_WHEELER",
+    scooter: "TWO_WHEELER",
+    car: "DRIVE",
+    driving: "DRIVE",
+  }[String(travelMode).toLowerCase()] || "WALK";
+  const calculateRoute = useCallback(
+    async (startPoint) => {
+      if (!startPoint || !destinationPoint) {
+        setRouteError(
+          "The start or destination coordinates are unavailable."
+        );
+        return;
+      }
+
+      requestRef.current?.abort();
+
+      const controller = new AbortController();
+      requestRef.current = controller;
+
+      setLoadingRoute(true);
+      setRouteError("");
+      setRouteInfo(null);
+      setNavigationPoints([]);
+      setSpokenInstruction("");
+      stepIndexRef.current = 0;
+
+      try {
+        // Routes API: calculate one segment per food stop.
+        // The existing /dineout/route/ endpoint supports
+        // an origin, a destination and a travel mode.
+        const pointsToVisit = [
+          ...stopPoints,
+          destinationPoint,
+        ];
+
+        let currentPoint = startPoint;
+        const fullPath = [];
+        const allDirections = [];
+
+        let totalDistance = 0;
+        let totalDuration = 0;
+
+        for (const point of pointsToVisit) {
+          if (controller.signal.aborted) return;
+
+          const response = await api.post(
+            "/dineout/route/",
+            {
+              origin: {
+                latitude: currentPoint.lat,
+                longitude: currentPoint.lng,
+              },
+              destination: {
+                latitude: point.lat,
+                longitude: point.lng,
+              },
+              travel_mode: backendMode,
+            },
+            {
+              signal: controller.signal,
+              timeout: 30000,
+            }
+          );
+
+          const route = response.data?.route;
+
+          if (!route) {
+            throw new Error(
+              "Django returned no route for one of the stops."
+            );
           }
 
-          return [Number(point?.latitude), Number(point?.longitude)];
-        })
-        .filter(
-          ([latitude, longitude]) =>
-            validPoint(latitude, longitude) &&
-            Math.abs(latitude) <= 90 &&
-            Math.abs(longitude) <= 180
-        ),
-    [routeCoordinates]
-  );
+          const segmentPath = extractRoutePoints(route);
 
-  const startPoint = routePoints[0];
-  const endPoint = routePoints[routePoints.length - 1];
+          if (segmentPath.length < 2) {
+            throw new Error(
+              "Google returned a route without usable map coordinates."
+            );
+          }
 
-  const candidates = useMemo(() => {
-    const duration = Number(travelMinutes);
+          // Avoid duplicating the shared endpoint between segments.
+          if (fullPath.length) {
+            fullPath.push(...segmentPath.slice(1));
+          } else {
+            fullPath.push(...segmentPath);
+          }
 
-    if (!Number.isFinite(duration) || duration <= 0) return [];
+          totalDistance += Number(route.distanceMeters || 0);
+          totalDuration +=
+            parseFloat(String(route.duration || "0")) || 0;
 
-    const unique = new Map();
+          allDirections.push(...extractDirections(route));
 
-    for (const place of Array.isArray(places) ? places : []) {
-      const position = Number(place.routeMinutes);
+          currentPoint = point;
+        }
 
-      if (
-        place?.id == null ||
-        !place.name ||
-        place.routeMinutes == null ||
-        !Number.isFinite(position) ||
-        position < 0 ||
-        position > duration
-      ) {
-        continue;
+        if (!controller.signal.aborted) {
+          setNavigationPoints(fullPath);
+          // No announcement until the GPS confirms proximity to a maneuver.
+          setSpokenInstruction("");
+
+          setRouteInfo({
+            distance: totalDistance,
+            duration: totalDuration,
+            directions: allDirections,
+          });
+        }
+      } catch (error) {
+        if (!controller.signal.aborted) {
+          setRouteError(getApiError(error));
+          setNavigationPoints([]);
+          setRouteInfo(null);
+          setSpokenInstruction("");
+        }
+      } finally {
+        if (requestRef.current === controller) {
+          setLoadingRoute(false);
+        }
       }
-
-      unique.set(String(place.id), {
-        ...place,
-        routeMinutes: position,
-        stopMinutes: Math.max(5, Number(place.stopMinutes) || 30),
-      });
-    }
-
-    return [...unique.values()].sort(
-      (a, b) => a.routeMinutes - b.routeMinutes
-    );
-  }, [places, travelMinutes]);
-
-  const wish = `${mealPreference} ${foodWish}`.trim();
-  const request = useMemo(
-    () => parseRequest(mealPreference, foodWish),
-    [mealPreference, foodWish]
+    },
+    [backendMode, destinationPoint, stopPoints]
   );
 
-  const rankedPlaces = useMemo(() => candidates.map((place) => {
-    const arrival = addMinutes(departure, place.routeMinutes);
-    const dishMatch = matchesDish(place, request.dish);
-    const timeMatch = mealFits(request.meal, arrival);
-    const vegMatch = !request.vegetarian || place.vegetarian === true;
-    return { ...place, dishMatch, timeMatch, vegMatch,
-      score: (dishMatch ? 100 : 0) + (timeMatch ? 30 : 0) +
-        (vegMatch ? 20 : 0) - (Number(place.detourKm) || 0) * 10 };
-  }), [candidates, departure, request]);
-
-  const confirmedMatches = rankedPlaces.filter(
-    (place) => place.dishMatch && place.timeMatch && place.vegMatch
-  );
-
-  const recommendations = useMemo(() => {
-    const limit = Number(travelMinutes) < 90 ? 1 :
-      Number(travelMinutes) < 240 ? 2 : 4;
-    return [...rankedPlaces]
-      .filter((place) => place.vegMatch && place.timeMatch)
-      .sort((a, b) => b.score - a.score || a.routeMinutes - b.routeMinutes)
-      .slice(0, limit)
-      .sort((a, b) => a.routeMinutes - b.routeMinutes);
-  }, [rankedPlaces, travelMinutes]);
-
-  const selectedStops = useMemo(() => candidates.filter((place) =>
-    selectedIds.includes(String(place.id))
-  ), [candidates, selectedIds]);
-
+  // Start or stop GPS tracking.
   useEffect(() => {
-    if (!startPoint || !endPoint || selectedStops.length === 0) {
-      setPlannedRoute(null);
-      setRouteError("");
-      setRouteLoading(false);
+    if (!navigation) {
+      setLive(null);
+      liveRef.current = null;
+      routeKeyRef.current = "";
+      requestRef.current?.abort();
+      setLoadingRoute(false);
+      setRouteInfo(null);
+      setNavigationPoints([]);
+      setSpokenInstruction("");
       return;
     }
-    const stops = [...selectedStops].sort((a, b) => a.routeMinutes - b.routeMinutes);
-    if (stops.some((place) => !validPoint(place.latitude, place.longitude))) {
-      setPlannedRoute(null);
-      setRouteError("A selected restaurant has no map coordinates.");
-      return;
-    }
-    const controller = new AbortController();
-    const mode = travelMode === "walking" ? "foot" :
-      travelMode === "bicycle" || travelMode === "bike" ? "bike" : "car";
-    const profile = mode === "foot" ? "walking" : "driving";
-    const points = [startPoint, ...stops.map((place) =>
-      [Number(place.latitude), Number(place.longitude)]), endPoint];
-    const coordinates = points.map(([lat, lon]) => `${lon},${lat}`).join(";");
-    const url = `https://routing.openstreetmap.de/routed-${mode}/route/v1/${profile}/` +
-      `${coordinates}?overview=full&geometries=geojson&steps=false`;
-    setRouteLoading(true);
-    setPlannedRoute(null);
-    setRouteError("");
-    fetch(url, { signal: controller.signal })
-      .then((response) => {
-        if (!response.ok) throw new Error("Routing service unavailable");
-        return response.json();
-      })
-      .then((payload) => {
-        const route = payload.routes?.[0];
-        if (!route?.geometry?.coordinates?.length) throw new Error("No route via the restaurant was found");
-        setPlannedRoute({
-          points: route.geometry.coordinates.map(([lon, lat]) => [lat, lon]),
-          minutes: route.duration / 60,
-          distanceKm: route.distance / 1000,
-        });
-      })
-      .catch((error) => {
-        if (error.name !== "AbortError") setRouteError(
-          "A road route through this restaurant could not be calculated. Try another stop."
-        );
-      })
-      .finally(() => {
-        if (!controller.signal.aborted) setRouteLoading(false);
-      });
-    return () => controller.abort();
-  }, [selectedStops, startPoint, endPoint, travelMode]);
-  const navigationTargets = useMemo(() => [
-    ...(startPoint ? [{ name: shortPlaceName(origin), point: startPoint }] : []),
-    ...selectedStops
-      .filter((place) => validPoint(place.latitude, place.longitude))
-      .sort((a, b) => a.routeMinutes - b.routeMinutes)
-      .map((place) => ({
-        name: place.name,
-        point: [Number(place.latitude), Number(place.longitude)],
-      })),
-    ...(endPoint ? [{ name: shortPlaceName(destination), point: endPoint }] : []),
-  ], [selectedStops, startPoint, origin, endPoint, destination]);
-  const currentTarget = navigationTargets[targetIndex];
 
-  useEffect(() => {
-    if (!navigationActive) return;
     if (!navigator.geolocation) {
-      setGpsError("This device does not support GPS location.");
-      setNavigationActive(false);
+      setGpsError("Browser geolocation is unavailable.");
+      setNavigation(false);
       return;
     }
+
+    setGpsError("");
+
     const watchId = navigator.geolocation.watchPosition(
       ({ coords }) => {
-        setPosition([coords.latitude, coords.longitude]);
+        const point = {
+          lat: coords.latitude,
+          lng: coords.longitude,
+          accuracy: coords.accuracy,
+        };
+
+        liveRef.current = point;
+        setLive(point);
         setGpsError("");
       },
-      (error) => setGpsError(error.code === 1
-        ? "Allow location access in your browser to start navigation."
-        : "GPS location is unavailable. Move to an open area and try again."),
-      { enableHighAccuracy: true, maximumAge: 3000, timeout: 15000 }
-    );
-    return () => navigator.geolocation.clearWatch(watchId);
-  }, [navigationActive]);
-
-  useEffect(() => {
-    if (!navigationActive || !position || !currentTarget) return;
-    if (distanceMetres(position, currentTarget.point) < 70) {
-      if (targetIndex < navigationTargets.length - 1) {
-        setTargetIndex((index) => index + 1);
-        lastRouteRef.current = { at: 0, point: null };
-      } else {
-        setNavigationActive(false);
-        setLiveRoute(null);
-        setGpsError("You have reached your destination.");
+      (error) => {
+        setGpsError(
+          error.code === 1
+            ? "Allow location permission to navigate."
+            : "Could not retrieve your current location."
+        );
+      },
+      {
+        enableHighAccuracy: true,
+        maximumAge: 5000,
+        timeout: 15000,
       }
-    }
-  }, [navigationActive, position, currentTarget, targetIndex, navigationTargets.length]);
+    );
+
+    return () => {
+      navigator.geolocation.clearWatch(watchId);
+    };
+  }, [navigation]);
+
+  // Calculate once when navigation starts or stops change.
+  // Do not call Routes API on every GPS update.
+  useEffect(() => {
+    if (!navigation || !live || !destinationPoint) return;
+
+    const key = `${backendMode}:${selectedKey}`;
+
+    if (routeKeyRef.current === key) return;
+
+    routeKeyRef.current = key;
+    calculateRoute(live);
+  }, [
+    navigation,
+    live,
+    destinationPoint,
+    backendMode,
+    selectedKey,
+    calculateRoute,
+  ]);
 
   useEffect(() => {
-    if (!navigationActive || !position || !currentTarget) return;
-    const previous = lastRouteRef.current;
-    if (Date.now() - previous.at < 15000 && previous.point &&
-        distanceMetres(previous.point, position) < 35) return;
-    lastRouteRef.current = { at: Date.now(), point: position };
-    const controller = new AbortController();
-    const mode = travelMode === "walking" ? "foot" :
-      travelMode === "bicycle" || travelMode === "bike" ? "bike" : "car";
-    const profile = mode === "foot" ? "walking" : "driving";
-    const [lat, lon] = position;
-    const [targetLat, targetLon] = currentTarget.point;
-    const url = `https://routing.openstreetmap.de/routed-${mode}/route/v1/${profile}/` +
-      `${lon},${lat};${targetLon},${targetLat}?overview=full&geometries=geojson&steps=true`;
-    fetch(url, { signal: controller.signal })
-      .then((response) => {
-        if (!response.ok) throw new Error("Routing unavailable");
-        return response.json();
-      })
-      .then((payload) => {
-        const route = payload.routes?.[0];
-        if (!route?.geometry?.coordinates?.length) throw new Error("No road route found");
-        const steps = route.legs?.flatMap((leg) => leg.steps || []) || [];
-        setLiveRoute({
-          points: route.geometry.coordinates.map(([x, y]) => [y, x]),
-          distance: route.distance,
-          duration: route.duration,
-          instruction: turnText(steps.find((step) =>
-            step.maneuver?.type !== "depart" && step.maneuver?.type !== "arrive") || steps[0]),
-        });
-      })
-      .catch((error) => {
-        if (error.name !== "AbortError") {
-          setLiveRoute(null);
-          setGpsError("Live road directions are temporarily unavailable. GPS position is still shown.");
-        }
-      });
-    return () => controller.abort();
-  }, [navigationActive, position, currentTarget, travelMode]);
+    return () => requestRef.current?.abort();
+  }, []);
+  // Only announce a real maneuver when GPS gets close to its endpoint.
+  // Missing step coordinates means we cannot safely time automatic prompts.
+  useEffect(() => {
+    if (!navigation || !live || !routeInfo?.directions?.length || Number(live.accuracy) > 35) return;
+    const steps = routeInfo.directions;
+    let i = stepIndexRef.current;
+    while (i < steps.length && !steps[i].endPoint) i += 1;
+    if (i >= steps.length) return;
+    if (distanceMeters(live, steps[i].endPoint) <= 65) {
+      const upcoming = steps[i + 1];
+      if (upcoming?.text) setSpokenInstruction(upcoming.text);
+      stepIndexRef.current = i + 1;
+    }
+  }, [live, navigation, routeInfo]);
 
-  const foodStopMinutes = selectedStops.reduce(
-    (total, place) => total + place.stopMinutes,
-    0
-  );
 
-  const actualTravelMinutes = plannedRoute?.minutes ?? Number(travelMinutes);
-  const totalMinutes = actualTravelMinutes + foodStopMinutes;
+  function toggle(id) {
+    const value = String(id);
 
-  function arrivalAt(place) {
-    const earlierStopMinutes = selectedStops
-      .filter((selected) => selected.routeMinutes < place.routeMinutes)
-      .reduce((total, selected) => total + selected.stopMinutes, 0);
-
-    return addMinutes(
-      departure,
-      place.routeMinutes + earlierStopMinutes
+    setIds((previous) =>
+      previous.includes(value)
+        ? previous.filter((item) => item !== value)
+        : previous.length < MAX_STOPS
+          ? [...previous, value]
+          : previous
     );
   }
 
-  function toggleStop(place) {
-    const id = String(place.id);
-
-    setSelectedIds((current) =>
-      current.includes(id)
-        ? current.filter((item) => item !== id)
-        : [...current, id]
-    );
-  }
-
-  function changeDeparture(value) {
-    if (!value) return;
-
-    const [hours, minutes] = value.split(":").map(Number);
-    const next = new Date(departure);
-    next.setHours(hours, minutes, 0, 0);
-    setDeparture(next);
-  }
-
-  function startNavigation() {
-    if (navigationActive) {
-      setNavigationActive(false);
-      setLiveRoute(null);
+  function updateRouteFromCurrentLocation() {
+    if (!liveRef.current) {
+      setRouteError(
+        "Waiting for your current GPS location."
+      );
       return;
     }
-    if (!endPoint) {
-      setGpsError("Build a route before starting navigation.");
-      return;
-    }
-    setTargetIndex(0);
-    setPosition(null);
-    setLiveRoute(null);
-    setGpsError("");
-    lastRouteRef.current = { at: 0, point: null };
-    setNavigationActive(true);
+
+    calculateRoute(liveRef.current);
   }
 
   return (
-    <main className="fj-page">
-      <header className="fj-header">
+    <main className="fj-google-page">
+      <header className="fj-new-header">
         <div>
-          <div className="fj-logo">
+          <b>
             Food<span>Kindl</span>
-          </div>
-          <div className="fj-logo-subtitle">F O O D &nbsp; W A L K</div>
+          </b>
+          <small>YOUR FOOD JOURNEY</small>
         </div>
 
-        <button
-          type="button"
-          className="fj-back"
-          onClick={() => navigate("/food-walk")}
-        >
+        <button onClick={() => navigate("/food-walk")}>
           ← Edit route
         </button>
       </header>
 
-      <h1>Your food journey</h1>
-
-      <p className="fj-route-title">
-        📍 {shortPlaceName(origin)}
-        <span aria-hidden="true"> → </span>
-        <strong>{shortPlaceName(destination)}</strong>
-      </p>
-
-      <div className="fj-time-actions">
-        <button
-          type="button"
-          className="fj-primary"
-          onClick={() => {
-            setDeparture(new Date());
-            setShowTimePicker(false);
-          }}
-        >
-          ▶ &nbsp; Start now
-        </button>
-
-        <button
-          type="button"
-          className="fj-secondary"
-          onClick={() => setShowTimePicker((current) => !current)}
-        >
-          ◷ &nbsp; Change time
-        </button>
+      <div className="fj-title">
+        <h1>Your food journey</h1>
+        <p>
+          📍 {origin} → {destination}
+        </p>
       </div>
 
-      {showTimePicker && (
-        <label className="fj-picker">
-          Departure time
-          <input
-            type="time"
-            value={localTimeValue(departure)}
-            onChange={(event) => changeDeparture(event.target.value)}
+      <div className="fj-summaries">
+        <div>
+          <small>TRAVEL</small>
+          <b>{readableTime(travelMinutes)}</b>
+        </div>
+
+        <div>
+          <small>WITH STOPS</small>
+          <b>{readableTime(totalMinutes)}</b>
+        </div>
+
+        <div>
+          <small>FOOD STOPS</small>
+          <b>{selected.length} selected</b>
+        </div>
+
+        <div>
+          <small>TRAVEL MODE</small>
+          <b>{isBicycle ? "Bike (car-road route)" : travelMode}</b>
+        </div>
+      </div>
+
+      <div className="fj-journey-body">
+        <div className="fj-journey-map-col">
+          {isBicycle && (
+            <p className="fw-error" role="note">
+              Bike is using car-road directions as requested. This route may include
+              roads unsuitable or prohibited for bicycles, and its ETA is for cars.
+              Check road signs and local cycling rules before riding.
+            </p>
+          )}
+          <GoogleJourneyMap
+            coordinates={routeCoordinates}
+            chosen={selected}
+            live={navigation ? live : null}
+            navigationPoints={navigationPoints}
           />
-        </label>
-      )}
 
-      <section className="fj-summary" aria-label="Trip duration">
-        <div className="fj-summary-top">
-          <div>
-            <span className="fj-summary-icon">
-              {travelMode === "walking"
-                ? "🚶"
-                : travelMode === "bike" || travelMode === "bicycle"
-                ? "🚲"
-                : "🚗"}
-            </span>
+          <div className="fj-navbar">
+            <button
+              type="button"
+              className="fw-build"
+              onClick={() => setNavigation((value) => !value)}
+            >
+              {navigation
+                ? "■ Stop live navigation"
+                : "▶ Start live navigation"}
+            </button>
+
             <span>
-              <small>Travel</small>
-              <strong>{formatDuration(actualTravelMinutes)}</strong>
+              {navigation
+                ? "GPS tracking is active"
+                : "Start navigation from your current location"}
             </span>
           </div>
 
-          <div>
-            <span className="fj-summary-icon">🍴</span>
-            <span>
-              <small>Selected food stops</small>
-              <strong>{formatDuration(foodStopMinutes)}</strong>
-            </span>
-          </div>
+          {navigation && (
+            <div style={{ marginTop: 12 }}>
+              <button
+                type="button"
+                onClick={updateRouteFromCurrentLocation}
+                disabled={!live || loadingRoute}
+              >
+                {loadingRoute
+                  ? "Calculating route..."
+                  : "↻ Update route from here"}
+              </button>
+            </div>
+          )}
+
+          {live?.accuracy != null && (
+            <p style={{ fontSize: 13, opacity: 0.8 }}>
+              GPS accuracy: approximately{" "}
+              {Math.round(live.accuracy)} metres.
+            </p>
+          )}
+
+          <FoodWalkVoiceAssistant
+  navigationActive={navigation}
+  instruction={spokenInstruction}
+  onStopNavigation={() => setNavigation(false)}
+  onUpdateRoute={updateRouteFromCurrentLocation}
+/>
+
+          {gpsError && (
+            <p className="fw-error" role="alert">
+              {gpsError}
+            </p>
+          )}
+
+          {routeError && (
+            <p className="fw-error" role="alert">
+              {routeError}
+            </p>
+          )}
+
+          {navigation && routeInfo && (
+            <div className="fj-live-summary">
+              <b>
+                {(routeInfo.distance / 1000).toFixed(1)} km
+                {" · "}
+                {readableTime(routeInfo.duration / 60)}
+              </b>
+
+              <p>
+                Route calculated from your last GPS position.
+                Use Update route after moving or deviating.
+              </p>
+
+              <h3>Route directions</h3>
+
+              {routeInfo.directions.length ? (
+                <ol>
+                  {routeInfo.directions.map(
+                    (step, index) => (
+                      <li key={index}>
+                        {step.text}
+                        {step.distance > 0
+                          ? ` · ${step.distance} m`
+                          : ""}
+                      </li>
+                    )
+                  )}
+                </ol>
+              ) : (
+                <p>
+                  Route is available. Detailed turn
+                  instructions were not returned.
+                </p>
+              )}
+            </div>
+          )}
         </div>
 
-        <div className="fj-total">
-          Total trip about <strong>{formatDuration(totalMinutes)}</strong>
-        </div>
-      </section>
+        <aside className="fj-journey-sidebar">
+          <h2>Plan your stops</h2>
 
-      {routePoints.length > 1 && (
-        <section className="fj-map" aria-label="Planned route map">
-          <MapContainer
-            center={startPoint}
-            zoom={11}
-            scrollWheelZoom={false}
-            className="fj-leaflet-map"
-          >
-            <TileLayer
-              attribution="&copy; OpenStreetMap contributors"
-              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-            />
-            {(selectedStops.length === 0 || plannedRoute) && (
-              <Polyline
-                positions={plannedRoute?.points || routePoints}
-                pathOptions={{ color: "#f75b42", weight: 5 }}
-              />
-            )}
-            <Marker position={startPoint} icon={startPin} />
-            <Marker position={endPoint} icon={endPin} />
-            {position && navigationActive && (
-              <Marker position={position} icon={livePin} />
-            )}
-            {liveRoute?.points?.length > 1 && navigationActive && (
-              <Polyline positions={liveRoute.points}
-                pathOptions={{ color: "#247cff", weight: 6 }} />
-            )}
-
-            {selectedStops
-              .filter((place) =>
-                validPoint(place.latitude, place.longitude)
-              )
-              .map((place) => (
-                <Marker
-                  key={place.id}
-                  position={[
-                    Number(place.latitude),
-                    Number(place.longitude),
-                  ]}
-                  icon={foodPin}
-                />
-              ))}
-
-            <FitRoute points={plannedRoute?.points || routePoints} />
-            <FollowLocation position={position} enabled={navigationActive} />
-          </MapContainer>
-        </section>
-      )}
-
-      {routeLoading && <p className="fj-note" role="status">
-        Calculating the road route through your selected food stop…
-      </p>}
-      {routeError && <p className="fj-empty" role="alert">{routeError}</p>}
-
-      {navigationActive && (
-        <section className="fj-live-status" role="status" aria-live="polite"
-          style={{ margin: "18px 0", padding: "16px 18px", borderRadius: 16,
-            background: "#eaf2ff", color: "#173b70" }}>
-          <strong>Live GPS navigation · Next: {currentTarget?.name || "Destination"}</strong>
-          <p>{liveRoute?.instruction || "Locating you and finding a road route…"}</p>
-          {liveRoute && <small>
-            {(liveRoute.distance / 1000).toFixed(1)} km · about {formatDuration(liveRoute.duration / 60)} to next stop
-          </small>}
-        </section>
-      )}
-      {gpsError && <p className="fj-empty" role="alert">{gpsError}</p>}
-
-      {request.dish && confirmedMatches.length === 0 &&
-        recommendations.length > 0 && (
-          <p className="fj-empty">
-            We could not confirm {request.dish} at a suitable stop on this
-            route. Here are other places along the way. Check menus and
-            opening hours before visiting.
+          <p>
+            Choose up to four food stops. The route will be
+            recalculated when your selection changes.
           </p>
-        )}
-                
 
-      <section className="fj-timeline" aria-label="Suggested stops">
-        {recommendations.length === 0 ? (
-          <div className="fj-empty">
-            {candidates.length === 0
-              ? "No restaurants were returned for this route. Try another route."
-              : `No suitable stop was found for ${wish || "this trip"} at the selected time. Try a different departure time or preference.`}
-          </div>
-        ) : (
-          recommendations.map((place) => {
-            const selected = selectedIds.includes(String(place.id));
-            const arrival = arrivalAt(place);
-            const label = suggestedLabel(place, arrival, request.meal);
-            const area = shortPlaceName(place.area);
+          <label className="fw-field">
+            Departure time
+            <input
+              type="time"
+              value={departure}
+              onChange={(event) =>
+                setDeparture(event.target.value)
+              }
+            />
+          </label>
 
-            return (
-              <div className="fj-timeline-row" key={place.id}>
-                <div className="fj-time">
-                  <strong>{formatTime(arrival)}</strong>
-                  <span className={`fj-dot ${selected ? "selected" : ""}`}>
-                    {selected ? "✓" : ""}
-                  </span>
+          {(mealPreference || foodWish) && (
+            <p className="fj-wish">
+              🍴 Your wish:{" "}
+              {[mealPreference, foodWish]
+                .filter(Boolean)
+                .join(" · ")}
+            </p>
+          )}
+
+          {places.length ? (
+            places.slice(0, 30).map((place) => (
+              <article
+                key={place.id}
+                className="fj-stop-row"
+              >
+                <div>
+                  <b>{place.name}</b>
+
+                  <small>
+                    {place.category || "Food stop"}
+                    {" · "}
+                    About {place.routeMinutes || "?"} min
+                    into the trip
+                  </small>
                 </div>
 
-                <article className="fj-stop-card">
-                  <div className="fj-stop-icon" aria-hidden="true">
-                    {/coffee|cafe|café|chai|tea/i.test(
-                      `${place.name} ${place.category}`
-                    )
-                      ? "☕"
-                      : "🍽️"}
-                  </div>
+                <button
+                  className={
+                    ids.includes(String(place.id))
+                      ? "chosen"
+                      : ""
+                  }
+                  onClick={() => toggle(place.id)}
+                >
+                  {ids.includes(String(place.id))
+                    ? "✓ Selected"
+                    : "+ Add"}
+                </button>
+              </article>
+            ))
+          ) : (
+            <p>No food stops found for this route.</p>
+          )}
 
-                  <div className="fj-stop-details">
-                    <span className="fj-meal-label">
-                      {label}
-                      {area ? ` near ${area}` : ""}
-                    </span>
-
-                    <h2>{place.name}</h2>
-                    {request.dish && place.dishMatch && (
-                      <p className="fj-cuisine">Listing mentions {request.dish}</p>
-                    )}
-
-                    <p className="fj-meta">
-                      {Number(place.detourKm || 0).toFixed(2)} km from
-                      route · {place.stopMinutes} min stop
-                    </p>
-
-                    {place.cuisine && (
-                      <p className="fj-cuisine">{place.cuisine}</p>
-                    )}
-                  </div>
-
-                  <button
-                    type="button"
-                    className={`fj-add ${selected ? "selected" : ""}`}
-                    onClick={() => toggleStop(place)}
-                  >
-                    {selected ? "✓ Added" : "+ Add stop"}
-                  </button>
-                </article>
-              </div>
-            );
-          })
-        )}
-      </section>
-
-      <p className="fj-note">
-        ⓘ &nbsp; Arrival times are estimates. Restaurant opening hours
-        have not been verified.
-      </p>
-
-      <button
-        type="button"
-        className="fj-navigation"
-        onClick={startNavigation}
-        disabled={routePoints.length < 2 || routeLoading ||
-          (selectedStops.length > 0 && !plannedRoute)}
-      >
-        ➤ &nbsp; {navigationActive ? "End navigation" : "Start live navigation"}
-      </button>
+          <button
+            className="fw-build"
+            onClick={() => navigate("/food-walk")}
+          >
+            Plan another Food Walk →
+          </button>
+        </aside>
+      </div>
     </main>
   );
 }

@@ -93,6 +93,15 @@ def apply_profile_privacy(member_data, viewer, member):
     member_data['interests'] = ''
     member_data['favorite_cuisines'] = ''
     member_data['food_connection_preferences'] = ''
+    # A serializer may expose profile fields both at root and nested in `profile`.
+    # Redact both locations to prevent leaking private food preferences.
+    nested_profile = member_data.get('profile')
+    if isinstance(nested_profile, dict):
+        nested_profile = dict(nested_profile)
+        for key in ('dietary_preference', 'interests', 'favorite_cuisines',
+                    'food_connection_preferences'):
+            nested_profile[key] = ''
+        member_data['profile'] = nested_profile
     return member_data
 
 def normalize_food_values(value):
@@ -571,11 +580,24 @@ class FoodMatchView(APIView):
                 member_verified = bool(getattr(other_profile, 'is_verified', False))
                 if not (member_gender == 'female' and member_verified):
                     continue
-            match = calculate_food_match(current_profile, other_profile)
+            # Legacy endpoint: Connect.jsx no longer calls this endpoint; its
+            # food score is calculated locally from profile fields visible to
+            # the requesting member. Keep this API for older consumers, but
+            # never disclose a score inferred from a private profile.
+            can_match = can_view_full_profile(request.user, member)
+            match = calculate_food_match(current_profile, other_profile) if can_match else None
             member_data = FoodMatchMemberSerializer(member, context={'request': request}).data
             member_data = apply_profile_privacy(member_data, request.user, member)
-            results.append({**member_data, 'id': member.id, 'user_id': member.id, 'member_id': member.id, 'food_match': match['score'], 'match_score': match['score'], 'match_percentage': match['score'], 'match_reasons': match['reasons'], 'common_cuisines': match['common_cuisines'], 'common_interests': match['common_interests'], 'common_connection_preferences': match['common_connection_preferences']})
-        results.sort(key=lambda item: item.get('food_match', 0), reverse=True)
+            results.append({**member_data, 'id': member.id, 'user_id': member.id,
+                            'member_id': member.id,
+                            'food_match': match['score'] if match else None,
+                            'match_score': match['score'] if match else None,
+                            'match_percentage': match['score'] if match else None,
+                            'match_reasons': match['reasons'] if match else [],
+                            'common_cuisines': match['common_cuisines'] if match else [],
+                            'common_interests': match['common_interests'] if match else [],
+                            'common_connection_preferences': match['common_connection_preferences'] if match else []})
+        results.sort(key=lambda item: item.get('food_match') if item.get('food_match') is not None else -1, reverse=True)
         return Response({'count': len(results), 'results': results}, status=status.HTTP_200_OK)
 
 class FoodKindlPeopleView(APIView):
@@ -591,7 +613,9 @@ class FoodKindlPeopleView(APIView):
         results = []
         for member in members:
             profile = member.profile
-            match = calculate_food_match(current_profile, profile)
+            # Do not infer compatibility from hidden private profile fields.
+            can_match = can_view_full_profile(request.user, member)
+            match = calculate_food_match(current_profile, profile) if can_match else None
             full_name = member.get_full_name().strip() or member.username or member.email or f'FoodKindl member {member.id}'
             profile_photo = profile.profile_image_1_url or ''
             if not profile_photo and profile.profile_image_1:
@@ -601,8 +625,8 @@ class FoodKindlPeopleView(APIView):
                     profile_photo = ''
             location_parts = [profile.locality, profile.city]
             location_label = ', '.join([item.strip() for item in location_parts if item and item.strip()])
-            results.append({'id': member.id, 'user_id': member.id, 'full_name': full_name, 'username': member.username, 'profile_photo': profile_photo, 'location_label': location_label, 'is_verified': bool(profile.is_verified), 'food_match_percentage': match.get('score', 0)})
-        results.sort(key=lambda item: (item.get('food_match_percentage', 0), item.get('is_verified', False)), reverse=True)
+            results.append({'id': member.id, 'user_id': member.id, 'full_name': full_name, 'username': member.username, 'profile_photo': profile_photo, 'location_label': location_label, 'is_verified': bool(profile.is_verified), 'food_match_percentage': match['score'] if match else None})
+        results.sort(key=lambda item: (item.get('food_match_percentage') if item.get('food_match_percentage') is not None else -1, item.get('is_verified', False)), reverse=True)
         return Response({'count': len(results), 'results': results[:20]}, status=status.HTTP_200_OK)
 
 class BlockedMembersView(APIView):

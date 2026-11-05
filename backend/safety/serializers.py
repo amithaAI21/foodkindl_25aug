@@ -111,6 +111,8 @@ class SOSEventSerializer(
             "status",
             "activated_at",
             "resolved_at",
+            "tracking_token",
+            "location_updated_at",
         )
 
         read_only_fields = (
@@ -118,6 +120,8 @@ class SOSEventSerializer(
             "status",
             "activated_at",
             "resolved_at",
+            "tracking_token",
+            "location_updated_at",
         )
 
 

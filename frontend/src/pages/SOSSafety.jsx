@@ -13,433 +13,306 @@ import {
   X,
 } from "lucide-react";
 
-import {
-  useEffect,
-  useRef,
-  useState,
-} from "react";
-
-import {
-  Link,
-} from "react-router-dom";
+import { useEffect, useRef, useState } from "react";
+import { Link } from "react-router-dom";
 
 import api from "../api";
-
 import "../styles/SOSSafety.css";
 
-
 export default function SOSSafety() {
+  // =====================================================
+  // TRUSTED CONTACTS STATE
+  // =====================================================
 
-  // =========================================================
-  // TRUSTED CONTACTS
-  // =========================================================
+  const [contacts, setContacts] = useState([]);
+  const [loadingContacts, setLoadingContacts] = useState(true);
+  const [contactsError, setContactsError] = useState("");
 
-  const [
-    contacts,
-    setContacts,
-  ] = useState([]);
+  const [showContactForm, setShowContactForm] = useState(false);
+  const [savingContact, setSavingContact] = useState(false);
+  const [deletingContactId, setDeletingContactId] = useState(null);
 
-  const [
-    loadingContacts,
-    setLoadingContacts,
-  ] = useState(true);
-
-  const [
-    contactsError,
-    setContactsError,
-  ] = useState("");
-
-  const [
-    showContactForm,
-    setShowContactForm,
-  ] = useState(false);
-
-  const [
-    savingContact,
-    setSavingContact,
-  ] = useState(false);
-
-  const [
-    deletingContactId,
-    setDeletingContactId,
-  ] = useState(null);
-
-  const [
-    contactForm,
-    setContactForm,
-  ] = useState({
+  const [contactForm, setContactForm] = useState({
     name: "",
     relationship: "",
     phone_number: "",
   });
 
-
-  // =========================================================
+  // =====================================================
   // SOS STATE
-  // =========================================================
+  // =====================================================
 
-  const [
-    sosActive,
-    setSosActive,
-  ] = useState(false);
+  const [sosActive, setSosActive] = useState(false);
+  const [sosId, setSosId] = useState(null);
+  const [sosLoading, setSosLoading] = useState(false);
 
-  const [
-    sosId,
-    setSosId,
-  ] = useState(null);
+  const [sosMessage, setSosMessage] = useState("");
+  const [sosError, setSosError] = useState("");
 
-  const [
-    sosLoading,
-    setSosLoading,
-  ] = useState(false);
+  const [sosLocation, setSosLocation] = useState(null);
 
-  const [
-    sosMessage,
-    setSosMessage,
-  ] = useState("");
+  const [smsSentCount, setSmsSentCount] = useState(0);
+  const [smsFailedCount, setSmsFailedCount] = useState(0);
 
-  const [
-    sosError,
-    setSosError,
-  ] = useState("");
+  const [deliveryKnown, setDeliveryKnown] = useState(false);
 
-  const [
-    sosLocation,
-    setSosLocation,
-  ] = useState(null);
+  const liveWatchIdRef = useRef(null);
+  const componentMountedRef = useRef(true);
 
-  const [
-    holdProgress,
-    setHoldProgress,
-  ] = useState(0);
+  // =====================================================
+  // STOP LIVE GPS TRACKING
+  // =====================================================
 
-  const [
-    smsSentCount,
-    setSmsSentCount,
-  ] = useState(0);
+  function stopLiveTracking() {
+    if (
+      liveWatchIdRef.current !== null &&
+      navigator.geolocation
+    ) {
+      navigator.geolocation.clearWatch(
+        liveWatchIdRef.current
+      );
+    }
 
-  const [
-    smsFailedCount,
-    setSmsFailedCount,
-  ] = useState(0);
+    liveWatchIdRef.current = null;
+  }
 
-  /*
-    We only show SMS sent/failed status if the
-    current browser session actually received a
-    delivery result from Django.
+  // =====================================================
+  // START CONTINUOUS GPS TRACKING
+  // =====================================================
 
-    This avoids showing "SMS: 0 failed" after
-    refreshing an already-active SOS.
-  */
-  const [
-    deliveryKnown,
-    setDeliveryKnown,
-  ] = useState(false);
+  function startLiveTracking(sosEventId) {
+    if (!sosEventId || !navigator.geolocation) {
+      console.error("GPS is not supported.");
+      return;
+    }
 
+    stopLiveTracking();
 
-  // =========================================================
-  // HOLD TIMER
-  // =========================================================
+    liveWatchIdRef.current =
+      navigator.geolocation.watchPosition(
+        async (position) => {
+          const location = {
+            latitude: position.coords.latitude,
+            longitude: position.coords.longitude,
+            accuracy: position.coords.accuracy,
+          };
 
-  const holdTimerRef =
-    useRef(null);
+          if (componentMountedRef.current) {
+            setSosLocation(location);
+          }
 
-  const holdIntervalRef =
-    useRef(null);
+          try {
+            await api.post(
+              `/safety/sos/${sosEventId}/location/`,
+              {
+                latitude: location.latitude,
+                longitude: location.longitude,
+                location_accuracy: location.accuracy,
+              }
+            );
 
-  const holdStartedAtRef =
-    useRef(null);
+            console.log(
+              "Live GPS location updated:",
+              location
+            );
+          } catch (error) {
+            console.error(
+              "GPS update failed:",
+              error.response?.data || error
+            );
+          }
+        },
 
-  const HOLD_DURATION =
-    3000;
+        (error) => {
+          console.error(
+            "Live GPS tracking error:",
+            error.message
+          );
+        },
 
+        {
+          enableHighAccuracy: true,
+          maximumAge: 0,
+          timeout: 20000,
+        }
+      );
+  }
 
-  // =========================================================
+  // =====================================================
   // LOAD TRUSTED CONTACTS
-  // =========================================================
+  // =====================================================
 
   async function loadContacts() {
-
     try {
-
-      setLoadingContacts(
-        true
-      );
-
+      setLoadingContacts(true);
       setContactsError("");
 
-      const response =
-        await api.get(
-          "/safety/trusted-contacts/"
-        );
+      const response = await api.get(
+        "/safety/trusted-contacts/"
+      );
 
       const data =
-        response.data?.results ||
-        response.data;
+        response.data?.results || response.data;
 
-      setContacts(
-        Array.isArray(data)
-          ? data
-          : []
-      );
-
-    } catch (
-      requestError
-    ) {
-
+      if (componentMountedRef.current) {
+        setContacts(
+          Array.isArray(data) ? data : []
+        );
+      }
+    } catch (requestError) {
       console.error(
         "Unable to load trusted contacts:",
-        requestError.response?.data ||
-        requestError
+        requestError.response?.data || requestError
       );
 
-      setContactsError(
-        requestError
-          .response
-          ?.data
-          ?.detail ||
-        "Unable to load trusted contacts."
-      );
-
+      if (componentMountedRef.current) {
+        setContactsError(
+          requestError.response?.data?.detail ||
+            "Unable to load trusted contacts."
+        );
+      }
     } finally {
-
-      setLoadingContacts(
-        false
-      );
-
+      if (componentMountedRef.current) {
+        setLoadingContacts(false);
+      }
     }
   }
 
-
-  // =========================================================
+  // =====================================================
   // LOAD ACTIVE SOS
-  // =========================================================
+  // =====================================================
 
   async function loadActiveSOS() {
-
     try {
+      const response = await api.get(
+        "/safety/sos/active/"
+      );
 
-      const response =
-        await api.get(
-          "/safety/sos/active/"
-        );
+      if (!componentMountedRef.current) return;
 
       if (
         response.data?.active === true &&
         response.data?.sos
       ) {
+        const sos = response.data.sos;
 
-        const sos =
-          response.data.sos;
+        setSosActive(true);
+        setSosId(sos.id);
 
-        /*
-          The backend says an SOS event is still active.
-
-          We restore the event, but we DO NOT invent an SMS
-          delivery result because ActiveSOSView currently
-          does not return sms_sent / sms_failed.
-        */
-
-        setSosActive(
-          true
-        );
-
-        setSosId(
-          sos.id
-        );
-
-        setDeliveryKnown(
-          false
-        );
-
-        setSmsSentCount(
-          0
-        );
-
-        setSmsFailedCount(
-          0
-        );
+        setDeliveryKnown(false);
+        setSmsSentCount(0);
+        setSmsFailedCount(0);
 
         if (
           sos.latitude != null &&
           sos.longitude != null
         ) {
-
           setSosLocation({
-            latitude:
-              Number(
-                sos.latitude
-              ),
-
-            longitude:
-              Number(
-                sos.longitude
-              ),
-
-            accuracy:
-              sos.location_accuracy,
+            latitude: Number(sos.latitude),
+            longitude: Number(sos.longitude),
+            accuracy: sos.location_accuracy,
           });
-
         } else {
-
-          setSosLocation(
-            null
-          );
-
+          setSosLocation(null);
         }
 
+        if (sos.id) {
+          startLiveTracking(sos.id);
+        }
       } else {
+        stopLiveTracking();
 
-        setSosActive(
-          false
-        );
-
-        setSosId(
-          null
-        );
-
-        setDeliveryKnown(
-          false
-        );
-
+        setSosActive(false);
+        setSosId(null);
+        setSosLocation(null);
+        setDeliveryKnown(false);
       }
-
-    } catch (
-      requestError
-    ) {
-
+    } catch (requestError) {
       console.warn(
         "Unable to load active SOS:",
-        requestError.response?.data ||
-        requestError
+        requestError.response?.data || requestError
       );
-
     }
   }
 
-
-  // =========================================================
-  // INITIAL LOAD
-  // =========================================================
+  // =====================================================
+  // INITIAL LOAD AND CLEANUP
+  // =====================================================
 
   useEffect(() => {
+    componentMountedRef.current = true;
 
     loadContacts();
-
     loadActiveSOS();
 
+    return () => {
+      componentMountedRef.current = false;
+      stopLiveTracking();
+    };
+
+    // Initial data loading only.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-
-  // =========================================================
+  // =====================================================
   // CONTACT FORM CHANGE
-  // =========================================================
+  // =====================================================
 
-  function handleContactChange(
-    event
-  ) {
+  function handleContactChange(event) {
+    const { name, value } = event.target;
 
-    const {
-      name,
-      value,
-    } = event.target;
-
-    setContactForm(
-      (
-        current
-      ) => ({
-        ...current,
-
-        [name]:
-          value,
-      })
-    );
+    setContactForm((current) => ({
+      ...current,
+      [name]: value,
+    }));
   }
 
-
-  // =========================================================
+  // =====================================================
   // ADD TRUSTED CONTACT
-  // =========================================================
+  // =====================================================
 
-  async function addTrustedContact(
-    event
-  ) {
-
+  async function addTrustedContact(event) {
     event.preventDefault();
 
     setContactsError("");
 
-    if (
-      !contactForm.name.trim()
-    ) {
-
+    if (!contactForm.name.trim()) {
       setContactsError(
         "Please enter the contact name."
       );
-
       return;
     }
 
-    if (
-      !contactForm
-        .phone_number
-        .trim()
-    ) {
-
+    if (!contactForm.phone_number.trim()) {
       setContactsError(
         "Please enter a phone number."
       );
-
       return;
     }
 
-    if (
-      contacts.length >= 3
-    ) {
-
+    if (contacts.length >= 3) {
       setContactsError(
         "You can add up to 3 trusted contacts."
       );
-
       return;
     }
 
-
     try {
+      setSavingContact(true);
 
-      setSavingContact(
-        true
+      const response = await api.post(
+        "/safety/trusted-contacts/",
+        {
+          name: contactForm.name.trim(),
+          relationship: contactForm.relationship.trim(),
+          phone_number: contactForm.phone_number.trim(),
+        }
       );
 
-      const response =
-        await api.post(
-          "/safety/trusted-contacts/",
-          {
-            name:
-              contactForm
-                .name
-                .trim(),
-
-            relationship:
-              contactForm
-                .relationship
-                .trim(),
-
-            phone_number:
-              contactForm
-                .phone_number
-                .trim(),
-          }
-        );
-
-      setContacts(
-        (
-          current
-        ) => [
-          ...current,
-          response.data,
-        ]
-      );
+      setContacts((current) => [
+        ...current,
+        response.data,
+      ]);
 
       setContactForm({
         name: "",
@@ -447,676 +320,363 @@ export default function SOSSafety() {
         phone_number: "",
       });
 
-      setShowContactForm(
-        false
-      );
-
-    } catch (
-      requestError
-    ) {
-
+      setShowContactForm(false);
+    } catch (requestError) {
       console.error(
         "Unable to add trusted contact:",
-        requestError.response?.data ||
-        requestError
+        requestError.response?.data || requestError
       );
 
       setContactsError(
-        requestError
-          .response
-          ?.data
-          ?.phone_number
-          ?.[0] ||
-
-        requestError
-          .response
-          ?.data
-          ?.detail ||
-
-        "Unable to add trusted contact."
+        requestError.response?.data?.phone_number?.[0] ||
+          requestError.response?.data?.detail ||
+          "Unable to add trusted contact."
       );
-
     } finally {
-
-      setSavingContact(
-        false
-      );
-
+      setSavingContact(false);
     }
   }
 
-
-  // =========================================================
+  // =====================================================
   // DELETE TRUSTED CONTACT
-  // =========================================================
+  // =====================================================
 
-  async function deleteTrustedContact(
-    contact
-  ) {
+  async function deleteTrustedContact(contact) {
+    if (!contact?.id) return;
 
-    if (!contact?.id) {
-      return;
-    }
+    const confirmed = window.confirm(
+      `Remove ${contact.name} from your trusted contacts?`
+    );
 
-    const confirmed =
-      window.confirm(
-        `Remove ${contact.name} from your trusted contacts?`
-      );
-
-    if (!confirmed) {
-      return;
-    }
-
+    if (!confirmed) return;
 
     try {
-
-      setDeletingContactId(
-        contact.id
-      );
+      setDeletingContactId(contact.id);
 
       await api.delete(
         `/safety/trusted-contacts/${contact.id}/`
       );
 
-      setContacts(
-        (
-          current
-        ) =>
-          current.filter(
-            (
-              item
-            ) =>
-              item.id !==
-              contact.id
-          )
+      setContacts((current) =>
+        current.filter(
+          (item) => item.id !== contact.id
+        )
       );
-
-    } catch (
-      requestError
-    ) {
-
+    } catch (requestError) {
       console.error(
         "Unable to remove trusted contact:",
-        requestError.response?.data ||
-        requestError
+        requestError.response?.data || requestError
       );
 
       setContactsError(
-        requestError
-          .response
-          ?.data
-          ?.detail ||
-        "Unable to remove trusted contact."
+        requestError.response?.data?.detail ||
+          "Unable to remove trusted contact."
       );
-
     } finally {
-
-      setDeletingContactId(
-        null
-      );
-
+      setDeletingContactId(null);
     }
   }
 
-
-  // =========================================================
-  // LOCATION
-  // =========================================================
+  // =====================================================
+  // GET BEST AVAILABLE GPS LOCATION
+  // =====================================================
 
   function getCurrentLocation() {
+    return new Promise((resolve, reject) => {
+      if (!navigator.geolocation) {
+        reject(
+          new Error(
+            "GPS is not supported by this browser."
+          )
+        );
+        return;
+      }
 
-    return new Promise(
-      (
-        resolve,
-        reject
-      ) => {
+      let bestPosition = null;
+      let watchId = null;
+      let timeoutId = null;
+      let settled = false;
 
-        if (
-          !navigator.geolocation
-        ) {
+      const finish = (error = null) => {
+        if (settled) return;
 
-          reject(
-            new Error(
-              "Location is not supported."
-            )
-          );
+        settled = true;
 
-          return;
+        if (watchId !== null) {
+          navigator.geolocation.clearWatch(watchId);
         }
 
-        navigator.geolocation
-          .getCurrentPosition(
+        if (timeoutId !== null) {
+          window.clearTimeout(timeoutId);
+        }
 
-            (
-              position
-            ) => {
-
-              resolve({
-                latitude:
-                  position
-                    .coords
-                    .latitude,
-
-                longitude:
-                  position
-                    .coords
-                    .longitude,
-
-                accuracy:
-                  position
-                    .coords
-                    .accuracy,
-              });
-
-            },
-
-            (
-              error
-            ) => {
-
-              reject(
-                error
-              );
-
-            },
-
-            {
-              enableHighAccuracy:
-                true,
-
-              timeout:
-                10000,
-
-              maximumAge:
-                0,
-            }
-
+        if (bestPosition) {
+          resolve({
+            latitude: bestPosition.coords.latitude,
+            longitude: bestPosition.coords.longitude,
+            accuracy: bestPosition.coords.accuracy,
+          });
+        } else {
+          reject(
+            error ||
+              new Error(
+                "Unable to obtain your GPS location."
+              )
           );
+        }
+      };
 
-      }
-    );
+      watchId = navigator.geolocation.watchPosition(
+        (position) => {
+          // Keep the location with the best accuracy.
+          if (
+            !bestPosition ||
+            position.coords.accuracy <
+              bestPosition.coords.accuracy
+          ) {
+            bestPosition = position;
+          }
+
+          // Accept early if accuracy is within 50 metres.
+          if (position.coords.accuracy <= 50) {
+            finish();
+          }
+        },
+
+        (error) => {
+          console.error("GPS error:", error);
+
+          if (bestPosition) {
+            finish();
+          } else {
+            finish(error);
+          }
+        },
+
+        {
+          enableHighAccuracy: true,
+          maximumAge: 0,
+          timeout: 15000,
+        }
+      );
+
+      // Wait up to 12 seconds for a better GPS reading.
+      timeoutId = window.setTimeout(() => {
+        finish();
+      }, 12000);
+    });
   }
 
-
-  // =========================================================
-  // ACTIVATE SOS
-  // =========================================================
+  // =====================================================
+  // ACTIVATE SOS - ONE TAP
+  // =====================================================
 
   async function activateSOS() {
-
-    if (
-      sosLoading
-    ) {
+    if (sosLoading || sosActive) {
       return;
     }
 
-    /*
-      If there is an active SOS that was successfully
-      delivered, don't accidentally send it again.
-    */
-    if (
-      sosActive &&
-      deliveryKnown &&
-      smsSentCount > 0
-    ) {
-      return;
-    }
-
-    if (
-      contacts.length === 0
-    ) {
-
+    if (contacts.length === 0) {
       setSosError(
         "Please add at least one trusted contact before activating SOS."
       );
-
       return;
     }
 
-
-    setSosLoading(
-      true
-    );
+    setSosLoading(true);
 
     setSosError("");
-
     setSosMessage("");
 
-    setSmsSentCount(
-      0
-    );
+    setSmsSentCount(0);
+    setSmsFailedCount(0);
 
-    setSmsFailedCount(
-      0
-    );
+    setDeliveryKnown(false);
 
-    setDeliveryKnown(
-      false
-    );
-
-
-    let location =
-      null;
-
+    let location = null;
 
     try {
-
-      // =====================================================
-      // GET LOCATION
-      // =====================================================
+      // STEP 1: GET GPS LOCATION
 
       try {
+        location = await getCurrentLocation();
 
-        location =
-          await getCurrentLocation();
-
-        setSosLocation(
-          location
-        );
-
-      } catch (
-        locationError
-      ) {
-
+        setSosLocation(location);
+      } catch (locationError) {
         console.warn(
           "Location unavailable:",
           locationError
         );
 
-        setSosLocation(
-          null
-        );
-
+        setSosLocation(null);
       }
 
+      // STEP 2: SEND SOS REQUEST TO DJANGO
 
-      // =====================================================
-      // SEND SOS TO DJANGO
-      // =====================================================
+      const response = await api.post(
+        "/safety/sos/",
+        {
+          latitude:
+            location?.latitude != null
+              ? location.latitude.toFixed(6)
+              : null,
 
-      const response =
-        await api.post(
-          "/safety/sos/",
-          {
-            latitude:
-              location?.latitude != null
-                ? location.latitude.toFixed(6)
-                : null,
+          longitude:
+            location?.longitude != null
+              ? location.longitude.toFixed(6)
+              : null,
 
-            longitude:
-              location?.longitude != null
-                ? location.longitude.toFixed(6)
-                : null,
-
-            location_accuracy:
-              location?.accuracy ??
-              null,
-          }
-        );
-
+          location_accuracy:
+            location?.accuracy ?? null,
+        }
+      );
 
       console.log(
         "SOS backend response:",
         response.data
       );
 
+      // STEP 3: SAVE SOS ID
 
-      // =====================================================
-      // SAVE SOS EVENT ID
-      // =====================================================
+      const sosData =
+        response.data?.sos || response.data;
 
       const returnedSosId =
-        response.data?.id ||
-        null;
+        sosData?.id || null;
 
-      setSosId(
-        returnedSosId
-      );
+      setSosId(returnedSosId);
 
+      // A successful API response means the SOS event
+      // was created, even if SMS delivery failed.
 
-      // =====================================================
-      // READ SMS RESULT
-      // =====================================================
+      setSosActive(true);
 
-      const smsSent =
-        Number(
-          response.data?.sms_sent ??
+      if (returnedSosId) {
+        startLiveTracking(returnedSosId);
+      }
+
+      // STEP 4: GET SMS DELIVERY RESULT
+
+      const smsSent = Number(
+        response.data?.sms_sent ??
           response.data?.sms_started ??
+          sosData?.sms_sent ??
+          sosData?.sms_started ??
           0
-        );
+      );
 
-      const smsFailed =
-        Number(
-          response.data?.sms_failed ??
+      const smsFailed = Number(
+        response.data?.sms_failed ??
+          sosData?.sms_failed ??
           0
-        );
-
-
-      setSmsSentCount(
-        smsSent
       );
 
-      setSmsFailedCount(
-        smsFailed
-      );
+      setSmsSentCount(smsSent);
+      setSmsFailedCount(smsFailed);
 
-      setDeliveryKnown(
-        true
-      );
+      setDeliveryKnown(true);
 
+      // STEP 5: SMS SUCCESS
 
-      // =====================================================
-      // SMS SUCCESS
-      // =====================================================
-
-      if (
-        smsSent > 0
-      ) {
-
-        setSosActive(
-          true
-        );
-
+      if (smsSent > 0) {
         setSosMessage(
           response.data?.detail ||
-          "SOS activated. Emergency SMS alerts were sent."
+            "SOS activated. Emergency SMS alerts were sent."
         );
 
         setSosError("");
-
         return;
       }
 
-
-      // =====================================================
-      // SMS FAILED
-      //
-      // IMPORTANT:
-      // Do not display "SOS Active" when no SMS was sent.
-      // The backend record may exist, but the emergency
-      // notification itself failed.
-      // =====================================================
-
-      setSosActive(
-        false
-      );
+      // STEP 6: SMS FAILED
 
       setSosMessage("");
 
       setSosError(
         response.data?.detail ||
-        "SOS was recorded, but the emergency SMS alert could not be sent. Please try again."
+          "SOS is active, but SMS delivery may have failed. Contact emergency services if needed."
       );
-
-
-    } catch (
-      requestError
-    ) {
-
+    } catch (requestError) {
       console.error(
         "SOS activation failed:",
         requestError.response?.status,
-        requestError.response?.data ||
-        requestError
+        requestError.response?.data || requestError
       );
 
-      setSosActive(
-        false
-      );
+      setSosActive(false);
+      setSosId(null);
+      setDeliveryKnown(false);
 
-      setDeliveryKnown(
-        false
-      );
+      stopLiveTracking();
 
       setSosError(
-        requestError
-          .response
-          ?.data
-          ?.detail ||
-        "Unable to activate SOS. Please try again."
+        requestError.response?.data?.detail ||
+          "Unable to activate SOS. Please try again."
       );
-
     } finally {
-
-      setSosLoading(
-        false
-      );
-
-      setHoldProgress(
-        0
-      );
-
+      setSosLoading(false);
     }
   }
 
-
-  // =========================================================
-  // START SOS HOLD
-  // =========================================================
-
-  function startSOSHold() {
-
-    if (
-      sosLoading ||
-      sosActive
-    ) {
-      return;
-    }
-
-    clearSOSHold();
-
-    holdStartedAtRef.current =
-      Date.now();
-
-
-    holdIntervalRef.current =
-      window.setInterval(
-        () => {
-
-          const elapsed =
-            Date.now() -
-            holdStartedAtRef.current;
-
-          const progress =
-            Math.min(
-              (
-                elapsed /
-                HOLD_DURATION
-              ) * 100,
-              100
-            );
-
-          setHoldProgress(
-            progress
-          );
-
-        },
-        50
-      );
-
-
-    holdTimerRef.current =
-      window.setTimeout(
-        () => {
-
-          clearSOSHold(
-            false
-          );
-
-          activateSOS();
-
-        },
-        HOLD_DURATION
-      );
-  }
-
-
-  // =========================================================
-  // CLEAR SOS HOLD
-  // =========================================================
-
-  function clearSOSHold(
-    resetProgress = true
-  ) {
-
-    if (
-      holdTimerRef.current
-    ) {
-
-      window.clearTimeout(
-        holdTimerRef.current
-      );
-
-      holdTimerRef.current =
-        null;
-
-    }
-
-    if (
-      holdIntervalRef.current
-    ) {
-
-      window.clearInterval(
-        holdIntervalRef.current
-      );
-
-      holdIntervalRef.current =
-        null;
-
-    }
-
-    holdStartedAtRef.current =
-      null;
-
-
-    if (
-      resetProgress
-    ) {
-
-      setHoldProgress(
-        0
-      );
-
-    }
-  }
-
-
-  // =========================================================
-  // TIMER CLEANUP
-  // =========================================================
-
-  useEffect(() => {
-
-    return () => {
-
-      clearSOSHold();
-
-    };
-
-  }, []);
-
-
-  // =========================================================
+  // =====================================================
   // MARK SAFE
-  // =========================================================
+  // =====================================================
 
   async function markSafe() {
-
     if (!sosId) {
-
-      setSosActive(
-        false
-      );
-
-      setDeliveryKnown(
-        false
-      );
-
+      setSosActive(false);
+      setDeliveryKnown(false);
+      setSosLocation(null);
+      stopLiveTracking();
       return;
     }
 
-
     try {
-
-      setSosLoading(
-        true
-      );
-
+      setSosLoading(true);
       setSosError("");
-
 
       await api.post(
         `/safety/sos/${sosId}/safe/`
       );
 
+      // Stop sending GPS updates after marking safe.
+      stopLiveTracking();
 
-      setSosActive(
-        false
-      );
+      setSosActive(false);
+      setSosId(null);
+      setSosLocation(null);
 
-      setSosId(
-        null
-      );
+      setSmsSentCount(0);
+      setSmsFailedCount(0);
 
-      setSosLocation(
-        null
-      );
-
-      setSmsSentCount(
-        0
-      );
-
-      setSmsFailedCount(
-        0
-      );
-
-      setDeliveryKnown(
-        false
-      );
+      setDeliveryKnown(false);
 
       setSosMessage(
         "You have been marked safe."
       );
-
-
-    } catch (
-      requestError
-    ) {
-
+    } catch (requestError) {
       console.error(
         "Unable to mark safe:",
-        requestError.response?.data ||
-        requestError
+        requestError.response?.data || requestError
       );
 
       setSosError(
-        requestError
-          .response
-          ?.data
-          ?.detail ||
-        "Unable to update your safety status."
+        requestError.response?.data?.detail ||
+          "Unable to update your safety status."
       );
-
     } finally {
-
-      setSosLoading(
-        false
-      );
-
+      setSosLoading(false);
     }
   }
 
-
-  // =========================================================
-  // PAGE
-  // =========================================================
+  // =====================================================
+  // PAGE UI
+  // =====================================================
 
   return (
     <main className="sos-safety-page">
 
-      {/* =====================================================
-          TOP
-      ===================================================== */}
+      {/* TOPBAR */}
 
       <div className="sos-topbar">
         <Link
@@ -1128,405 +688,233 @@ export default function SOSSafety() {
         </Link>
       </div>
 
-
-      {/* =====================================================
-          HERO
-      ===================================================== */}
+      {/* HERO */}
 
       <section className="sos-hero">
-
         <div className="sos-hero-pill">
-
-          <ShieldAlert
-            size={16}
-          />
-
+          <ShieldAlert size={16} />
           PERSONAL SAFETY
-
         </div>
 
-
         <h1>
-
           SOS &amp;{" "}
-
-          <span>
-            Trusted Contacts
-          </span>
-
+          <span>Trusted Contacts</span>
         </h1>
 
-
         <p>
-          Add people you trust. Holding SOS
-          automatically sends emergency SMS
-          alerts through FoodKindl.
+          Add people you trust. Tap SOS once to send
+          an emergency alert and your available location.
         </p>
-
       </section>
 
-
-      {/* =====================================================
-          MAIN
-      ===================================================== */}
+      {/* MAIN LAYOUT */}
 
       <section className="sos-layout">
 
-
-        {/* ===================================================
-            TRUSTED CONTACTS
-        =================================================== */}
+        {/* TRUSTED CONTACTS */}
 
         <article className="sos-panel trusted-contacts-panel">
 
           <div className="sos-panel-header">
-
             <div>
-
               <span className="sos-kicker">
                 YOUR SAFETY NETWORK
               </span>
 
-
-              <h2>
-                Trusted Contacts
-              </h2>
-
+              <h2>Trusted Contacts</h2>
 
               <p>
-                Add up to three people who
-                should receive your SOS alerts.
+                Add up to three people who should
+                receive your SOS alerts.
               </p>
-
             </div>
-
 
             <div className="trusted-contact-count">
               {contacts.length}/3
             </div>
-
           </div>
 
-
-          {/* ERROR */}
+          {/* CONTACT ERROR */}
 
           {contactsError && (
-
             <div className="sos-error-message">
-
-              <AlertTriangle
-                size={16}
-              />
-
+              <AlertTriangle size={16} />
               {contactsError}
-
             </div>
-
           )}
-
 
           {/* LOADING */}
 
           {loadingContacts && (
-
             <div className="trusted-contact-empty">
               Loading trusted contacts...
             </div>
-
           )}
 
+          {/* EMPTY CONTACTS */}
 
-          {/* EMPTY */}
-
-          {
-            !loadingContacts &&
-            contacts.length === 0 &&
-            (
-
+          {!loadingContacts &&
+            contacts.length === 0 && (
               <div className="trusted-contact-empty">
-
-                <ContactRound
-                  size={31}
-                />
-
+                <ContactRound size={31} />
 
                 <strong>
                   No trusted contacts yet
                 </strong>
 
-
                 <span>
                   Add someone before using SOS.
                 </span>
-
               </div>
-
-            )
-          }
-
+            )}
 
           {/* CONTACT LIST */}
 
-          {
-            !loadingContacts &&
-            contacts.length > 0 &&
-            (
-
+          {!loadingContacts &&
+            contacts.length > 0 && (
               <div className="trusted-contact-list">
+                {contacts.map((contact) => (
+                  <div
+                    key={contact.id}
+                    className="trusted-contact-row"
+                  >
+                    <div className="trusted-contact-icon">
+                      <UserRound size={20} />
+                    </div>
 
-                {
-                  contacts.map(
-                    (
-                      contact
-                    ) => (
+                    <div className="trusted-contact-info">
+                      <strong>
+                        {contact.name}
+                      </strong>
 
-                      <div
-                        key={
-                          contact.id
-                        }
-                        className="trusted-contact-row"
-                      >
+                      <span>
+                        {contact.relationship ||
+                          "Trusted contact"}
+                      </span>
 
-                        <div className="trusted-contact-icon">
+                      <small>
+                        <Phone size={12} />
+                        {contact.phone_number}
+                      </small>
+                    </div>
 
-                          <UserRound
-                            size={20}
-                          />
-
-                        </div>
-
-
-                        <div className="trusted-contact-info">
-
-                          <strong>
-                            {contact.name}
-                          </strong>
-
-
-                          <span>
-
-                            {
-                              contact.relationship ||
-                              "Trusted contact"
-                            }
-
-                          </span>
-
-
-                          <small>
-
-                            <Phone
-                              size={12}
-                            />
-
-                            {contact.phone_number}
-
-                          </small>
-
-                        </div>
-
-
-                        <button
-                          type="button"
-                          className="trusted-contact-delete"
-                          disabled={
-                            deletingContactId ===
-                            contact.id
-                          }
-                          onClick={() =>
-                            deleteTrustedContact(
-                              contact
-                            )
-                          }
-                          aria-label={
-                            `Remove ${contact.name}`
-                          }
-                        >
-
-                          {
-                            deletingContactId ===
-                            contact.id
-                              ? "..."
-                              : (
-                                  <Trash2
-                                    size={17}
-                                  />
-                                )
-                          }
-
-                        </button>
-
-                      </div>
-
-                    )
-                  )
-                }
-
+                    <button
+                      type="button"
+                      className="trusted-contact-delete"
+                      disabled={
+                        deletingContactId === contact.id
+                      }
+                      onClick={() =>
+                        deleteTrustedContact(contact)
+                      }
+                      aria-label={`Remove ${contact.name}`}
+                    >
+                      {deletingContactId === contact.id
+                        ? "..."
+                        : <Trash2 size={17} />}
+                    </button>
+                  </div>
+                ))}
               </div>
+            )}
 
-            )
-          }
+          {/* ADD CONTACT BUTTON */}
 
-
-          {/* ADD CONTACT */}
-
-          {
-            contacts.length < 3 &&
-            !showContactForm &&
-            (
-
+          {contacts.length < 3 &&
+            !showContactForm && (
               <button
                 type="button"
                 className="add-trusted-contact-button"
                 onClick={() =>
-                  setShowContactForm(
-                    true
-                  )
+                  setShowContactForm(true)
                 }
               >
-
-                <Plus
-                  size={18}
-                />
-
+                <Plus size={18} />
                 Add Trusted Contact
-
               </button>
+            )}
 
-            )
-          }
-
-
-          {/* ADD CONTACT FORM */}
+          {/* CONTACT FORM */}
 
           {showContactForm && (
-
             <form
               className="trusted-contact-form"
-              onSubmit={
-                addTrustedContact
-              }
+              onSubmit={addTrustedContact}
             >
-
               <div className="trusted-contact-form-header">
-
                 <strong>
                   Add Trusted Contact
                 </strong>
-
 
                 <button
                   type="button"
                   aria-label="Close"
                   onClick={() => {
-
-                    setShowContactForm(
-                      false
-                    );
+                    setShowContactForm(false);
 
                     setContactForm({
                       name: "",
                       relationship: "",
                       phone_number: "",
                     });
-
                   }}
                 >
-
-                  <X
-                    size={18}
-                  />
-
+                  <X size={18} />
                 </button>
-
               </div>
 
-
               <label>
-
                 Name
 
                 <input
                   type="text"
                   name="name"
-                  value={
-                    contactForm.name
-                  }
-                  onChange={
-                    handleContactChange
-                  }
+                  value={contactForm.name}
+                  onChange={handleContactChange}
                   placeholder="Full name"
                   required
                 />
-
               </label>
 
-
               <label>
-
                 Relationship
 
                 <input
                   type="text"
                   name="relationship"
-                  value={
-                    contactForm.relationship
-                  }
-                  onChange={
-                    handleContactChange
-                  }
-                  placeholder="Wife, husband, friend..."
+                  value={contactForm.relationship}
+                  onChange={handleContactChange}
+                  placeholder="Friend, family..."
                 />
-
               </label>
 
-
               <label>
-
                 Phone number
 
                 <input
                   type="tel"
                   name="phone_number"
-                  value={
-                    contactForm.phone_number
-                  }
-                  onChange={
-                    handleContactChange
-                  }
+                  value={contactForm.phone_number}
+                  onChange={handleContactChange}
                   placeholder="+91 98765 43210"
                   required
                 />
-
               </label>
-
 
               <button
                 type="submit"
                 className="save-trusted-contact-button"
-                disabled={
-                  savingContact
-                }
+                disabled={savingContact}
               >
-
-                {
-                  savingContact
-                    ? "Saving..."
-                    : "Save Trusted Contact"
-                }
-
+                {savingContact
+                  ? "Saving..."
+                  : "Save Trusted Contact"}
               </button>
-
             </form>
-
           )}
-
         </article>
 
-
-        {/* ===================================================
-            SOS CONTROL
-        =================================================== */}
+        {/* SOS CONTROL */}
 
         <article
           className={
@@ -1535,205 +923,112 @@ export default function SOSSafety() {
               : "sos-panel sos-control-panel"
           }
         >
-
           <div className="sos-control-top">
-
             <span className="sos-kicker">
               EMERGENCY CONTROL
             </span>
 
-
             <h2>
-
-              {
-                sosActive
-                  ? "SOS Active"
-                  : "Hold for SOS"
-              }
-
+              {sosActive
+                ? "SOS Active"
+                : "Tap for SOS"}
             </h2>
 
-
             <p>
-
-              {
-                sosActive
-                  ? (
-                      deliveryKnown
-                        ? "Emergency SMS alerts were sent to your trusted contacts."
-                        : "An SOS event is currently active."
-                    )
-                  : (
-                      "Hold for three seconds to send an emergency SMS alert."
-                    )
-              }
-
+              {sosActive
+                ? deliveryKnown
+                  ? "Emergency SMS alerts were processed for your trusted contacts."
+                  : "An SOS event is currently active."
+                : "Tap once to send an emergency SMS alert and your current location."}
             </p>
-
           </div>
 
-
-          {/* =================================================
-              SOS BUTTON
-          ================================================= */}
+          {/* ONE-TAP SOS BUTTON */}
 
           {!sosActive && (
-
             <button
               type="button"
               className="sos-hold-button"
-
-              onMouseDown={
-                startSOSHold
-              }
-
-              onMouseUp={() =>
-                clearSOSHold()
-              }
-
-              onMouseLeave={() =>
-                clearSOSHold()
-              }
-
-              onTouchStart={
-                startSOSHold
-              }
-
-              onTouchEnd={() =>
-                clearSOSHold()
-              }
-
-              onTouchCancel={() =>
-                clearSOSHold()
-              }
-
-              disabled={
-                sosLoading
-              }
+              onClick={activateSOS}
+              disabled={sosLoading}
+              aria-label="Activate SOS"
             >
-
-              <span
-                className="sos-progress-ring"
-                style={{
-                  "--sos-progress":
-                    `${holdProgress}%`,
-                }}
-              />
-
-
-              <ShieldAlert
-                size={44}
-              />
-
+              <ShieldAlert size={44} />
 
               <strong>
-
-                {
-                  sosLoading
-                    ? "SENDING..."
-                    : "SOS"
-                }
-
+                {sosLoading ? "SENDING..." : "SOS"}
               </strong>
 
-
               <small>
-                Hold for 3 seconds
+                Tap once to activate SOS
               </small>
-
             </button>
-
           )}
 
-
-          {/* =================================================
-              ACTIVE SOS
-          ================================================= */}
+          {/* ACTIVE SOS */}
 
           {sosActive && (
-
             <div className="sos-active-state">
-
               <div className="sos-active-icon">
-
-                <AlertTriangle
-                  size={38}
-                />
-
+                <AlertTriangle size={38} />
               </div>
-
 
               <strong>
                 SOS Activated
               </strong>
 
+              {/* GPS LOCATION STATUS */}
 
-              {
-                sosLocation
-                  ? (
+              {sosLocation ? (
+                <div className="sos-location-ready">
+                  <MapPin size={15} />
 
-                      <div className="sos-location-ready">
+                  <span>
+                    Location attached
 
-                        <MapPin
-                          size={15}
-                        />
+                    <small>
+                      GPS accuracy:{" "}
+                      {Number.isFinite(
+                        Number(sosLocation.accuracy)
+                      )
+                        ? `${Math.round(
+                            Number(sosLocation.accuracy)
+                          )} metres`
+                        : "Unknown"}
+                    </small>
+                  </span>
+                </div>
+              ) : (
+                <div className="sos-location-unavailable">
+                  <MapPin size={15} />
+                  Location unavailable
+                </div>
+              )}
 
-                        Location attached
+              {/* GPS ACCURACY WARNING */}
 
-                      </div>
+              {sosLocation &&
+                Number(sosLocation.accuracy) > 100 && (
+                  <div className="gps-warning">
+                    GPS accuracy is low. Move to an open
+                    area for a better location reading.
+                  </div>
+                )}
 
-                    )
-                  : (
-
-                      <div className="sos-location-unavailable">
-
-                        <MapPin
-                          size={15}
-                        />
-
-                        Location unavailable
-
-                      </div>
-
-                    )
-              }
-
-
-              {/* =============================================
-                  DELIVERY STATUS
-
-                  Only show this if the current browser
-                  actually received the SMS result.
-              ============================================= */}
+              {/* SMS DELIVERY STATUS */}
 
               {deliveryKnown && (
-
                 <div className="sos-sms-result">
-
-                  {
-                    smsSentCount > 0
-                      ? (
-                          <CheckCircle2
-                            size={18}
-                          />
-                        )
-                      : (
-                          <AlertTriangle
-                            size={18}
-                          />
-                        )
-                  }
-
+                  {smsSentCount > 0
+                    ? <CheckCircle2 size={18} />
+                    : <AlertTriangle size={18} />}
 
                   <div>
-
                     <strong>
                       Alert delivery status
                     </strong>
 
-
                     <div className="sos-channel-results">
-
                       <span
                         className={
                           smsSentCount > 0
@@ -1741,201 +1036,114 @@ export default function SOSSafety() {
                             : "failed"
                         }
                       >
-
                         SMS:{" "}
-
-                        {
-                          smsSentCount > 0
-                            ? `${smsSentCount} sent`
-                            : `${smsFailedCount} failed`
-                        }
-
+                        {smsSentCount > 0
+                          ? `${smsSentCount} sent`
+                          : `${smsFailedCount} failed`}
                       </span>
-
                     </div>
-
                   </div>
-
                 </div>
-
               )}
 
-
               {!deliveryKnown && (
-
                 <div className="sos-sms-result">
-
-                  <ShieldCheck
-                    size={18}
-                  />
+                  <ShieldCheck size={18} />
 
                   <div>
-
                     <strong>
                       SOS remains active
                     </strong>
 
                     <div className="sos-channel-results">
-
                       <span>
                         Delivery status was recorded
                         during the original activation.
                       </span>
-
                     </div>
-
                   </div>
-
                 </div>
-
               )}
 
-
-              {/* =============================================
-                  I'M SAFE
-              ============================================= */}
+              {/* I'M SAFE BUTTON */}
 
               <button
                 type="button"
                 className="mark-safe-button"
-                onClick={
-                  markSafe
-                }
-                disabled={
-                  sosLoading
-                }
+                onClick={markSafe}
+                disabled={sosLoading}
               >
+                <CheckCircle2 size={18} />
 
-                <CheckCircle2
-                  size={18}
-                />
-
-                {
-                  sosLoading
-                    ? "Updating..."
-                    : "I'm Safe"
-                }
-
+                {sosLoading
+                  ? "Updating..."
+                  : "I'm Safe"}
               </button>
-
             </div>
-
           )}
 
-
-          {/* =================================================
-              SUCCESS
-          ================================================= */}
+          {/* SUCCESS MESSAGE */}
 
           {sosMessage && (
-
             <div className="sos-success-message">
-
-              <CheckCircle2
-                size={16}
-              />
-
+              <CheckCircle2 size={16} />
               {sosMessage}
-
             </div>
-
           )}
 
-
-          {/* =================================================
-              ERROR
-          ================================================= */}
+          {/* ERROR MESSAGE */}
 
           {sosError && (
-
             <div className="sos-error-message">
-
-              <AlertTriangle
-                size={16}
-              />
-
+              <AlertTriangle size={16} />
               {sosError}
-
             </div>
-
           )}
 
-
-          {/* =================================================
-              INFO
-          ================================================= */}
+          {/* INFORMATION */}
 
           <div className="sos-info-list">
-
             <div>
-
-              <ShieldCheck
-                size={16}
-              />
+              <ShieldCheck size={16} />
 
               <span>
-                FoodKindl sends emergency SMS
-                alerts to your trusted contacts
-                when SOS is activated.
+                FoodKindl sends emergency SMS alerts
+                to your trusted contacts when SOS is activated.
               </span>
-
             </div>
 
-
             <div>
-
-              <MapPin
-                size={16}
-              />
+              <MapPin size={16} />
 
               <span>
                 Your current location is included
                 when location permission is granted.
               </span>
-
             </div>
-
 
             <div>
-
-              <ShieldCheck
-                size={16}
-              />
+              <ShieldCheck size={16} />
 
               <span>
-                If SMS delivery fails, you can
-                try activating SOS again.
+                If SMS delivery fails, contact your
+                trusted contacts or local emergency services.
               </span>
-
             </div>
-
           </div>
-
         </article>
-
       </section>
 
-
-      {/* =====================================================
-          DISCLAIMER
-      ===================================================== */}
+      {/* DISCLAIMER */}
 
       <section className="sos-disclaimer">
-
-        <AlertTriangle
-          size={20}
-        />
-
+        <AlertTriangle size={20} />
 
         <p>
-          FoodKindl does not provide emergency
-          services. SOS helps alert people you
-          trust and does not replace local
-          emergency services.
+          FoodKindl does not provide emergency services.
+          SOS helps alert people you trust and does not
+          replace local emergency services.
         </p>
-
       </section>
-
     </main>
   );
 }

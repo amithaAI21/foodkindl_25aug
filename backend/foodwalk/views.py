@@ -1,1265 +1,316 @@
+"""Google-backed Food Walk API. Required: GOOGLE_MAPS_API_KEY with Geocoding,
+Places API (New), Routes API enabled, plus an active billing account.
+"""
 import math
-
 import os
-
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 import requests
-
-from geopy.exc import GeocoderServiceError, GeocoderTimedOut
-
-from geopy.geocoders import Nominatim
-
+from django.conf import settings
 from rest_framework import status
-
 from rest_framework.decorators import api_view
-
 from rest_framework.response import Response
 
 from .models import Restaurant
 
-ROUTE_URLS = {
-
-    "walking": "https://routing.openstreetmap.de/routed-foot/route/v1/walking",
-
-    "bike": "https://routing.openstreetmap.de/routed-bike/route/v1/bicycle",
-
-    "car": "https://routing.openstreetmap.de/routed-car/route/v1/driving",
-
-}
-
-PHOTON_URL = "https://photon.komoot.io/api/"
-
-GEOAPIFY_PLACES_URL = "https://api.geoapify.com/v2/places"
-
-GEOAPIFY_API_KEY = os.environ.get("GEOAPIFY_API_KEY", "").strip()
-
-MAX_RECOMMENDED_STOPS = 4
-
-MAX_DETOUR_KM = 1.5
-
-PHOTON_TIMEOUT_SECONDS = 7
-
-PHOTON_RESULTS_PER_ROUTE_POINT = 25
-
-GEOAPIFY_TIMEOUT_SECONDS = 15
-
-# Do not show restaurants clustered around either input location.  Food Walk
-
-# stops must be genuinely between the start and destination.
-
-START_EXCLUSION_PROGRESS = 0.08
-
-END_EXCLUSION_PROGRESS = 0.96
-
-HEADERS = {"User-Agent": "FoodKindl Food Walk/1.0"}
-
-def choose_travel_mode(straight_line_distance_km):
-
-    """Choose a practical mode before requesting the road route.
-
-    Up to 5 km: walking
-
-    Over 5 km and up to 15 km: bike
-
-    Over 15 km: car
-
-    Using straight-line distance here avoids requesting a multi-thousand-km
-
-    walking route before we know that a car route is required.
-
-    """
-
-    if straight_line_distance_km <= 5:
-
-        return "walking"
-
-    if straight_line_distance_km <= 15:
-
-        return "bike"
-
-    return "car"
-
-def distance_km(lat1, lng1, lat2, lng2):
-
-    earth_radius = 6371.0
-
-    lat_diff = math.radians(lat2 - lat1)
-
-    lng_diff = math.radians(lng2 - lng1)
-
-    val = (
-
-        math.sin(lat_diff / 2) ** 2
-
-        + math.cos(math.radians(lat1))
-
-        * math.cos(math.radians(lat2))
-
-        * math.sin(lng_diff / 2) ** 2
-
-    )
-
-    return earth_radius * 2 * math.atan2(math.sqrt(val), math.sqrt(1 - val))
-
-def get_route_samples(coordinates, total_samples=10):
-
-    """Return distance-even search points, not coordinate-index samples.
-
-    OSRM often returns many geometry coordinates close to the start of a trip.
-
-    Sampling by coordinate index therefore biases every restaurant search toward
-
-    the start. This samples by travelled distance instead.
-
-    """
-
-    if len(coordinates) <= 2:
-
-        return coordinates[:]
-
-    segment_lengths = [
-
-        distance_km(a[1], a[0], b[1], b[0])
-
-        for a, b in zip(coordinates, coordinates[1:])
-
-    ]
-
-    total_length = sum(segment_lengths)
-
-    if total_length <= 0:
-
-        return [coordinates[0], coordinates[-1]]
-
-    targets = [total_length * index / (total_samples - 1) for index in range(total_samples)]
-
-    samples = []
-
-    travelled = 0.0
-
-    segment_index = 0
-
-    for target in targets:
-
-        while (
-
-            segment_index < len(segment_lengths) - 1
-
-            and travelled + segment_lengths[segment_index] < target
-
-        ):
-
-            travelled += segment_lengths[segment_index]
-
-            segment_index += 1
-
-        start_lng, start_lat = coordinates[segment_index]
-
-        end_lng, end_lat = coordinates[segment_index + 1]
-
-        segment_length = segment_lengths[segment_index]
-
-        ratio = 0 if segment_length == 0 else (target - travelled) / segment_length
-
-        samples.append([
-
-            start_lng + (end_lng - start_lng) * ratio,
-
-            start_lat + (end_lat - start_lat) * ratio,
-
-        ])
-
+GOOGLE_KEY = os.getenv("GOOGLE_MAPS_API_KEY", "").strip()
+TIMEOUT = 15
+MAX_STOPS = 4
+MAX_DETOUR_KM = 2.0
+
+
+def api_key():
+    return GOOGLE_KEY or getattr(settings, "GOOGLE_MAPS_API_KEY", "")
+
+
+def google_get(url, params):
+    response = requests.get(url, params={**params, "key": api_key()}, timeout=TIMEOUT)
+    response.raise_for_status()
+    return response.json()
+
+
+def google_post(url, body, field_mask=None):
+    headers = {"X-Goog-Api-Key": api_key(), "Content-Type": "application/json"}
+    if field_mask:
+        headers["X-Goog-FieldMask"] = field_mask
+    response = requests.post(url, json=body, headers=headers, timeout=TIMEOUT)
+    response.raise_for_status()
+    return response.json()
+
+
+def geocode(value):
+    # Accept a GPS start as "latitude,longitude" directly, without a
+    # Google Geocoding request or exposing it in a geocoding query.
+    parts = str(value).strip().split(",")
+    if len(parts) == 2:
+        try:
+            latitude, longitude = (float(part.strip()) for part in parts)
+            if -90 <= latitude <= 90 and -180 <= longitude <= 180:
+                return {"name": "Current location", "latitude": latitude, "longitude": longitude}
+        except ValueError:
+            pass
+    result = google_get("https://maps.googleapis.com/maps/api/geocode/json", {"address": value, "region": "in"})
+    if result.get("status") != "OK" or not result.get("results"):
+        raise ValueError(f"Location not found: {value}")
+    item = result["results"][0]
+    point = item["geometry"]["location"]
+    return {"name": item["formatted_address"], "latitude": float(point["lat"]), "longitude": float(point["lng"])}
+
+
+def haversine(a, b):
+    lat1, lng1 = a
+    lat2, lng2 = b
+    p1, p2 = math.radians(lat1), math.radians(lat2)
+    dlat, dlng = p2-p1, math.radians(lng2-lng1)
+    h = math.sin(dlat/2)**2 + math.cos(p1)*math.cos(p2)*math.sin(dlng/2)**2
+    return 6371 * 2 * math.asin(min(1, math.sqrt(h)))
+
+
+def decode_polyline(encoded):
+    coords, idx, lat, lng = [], 0, 0, 0
+    while idx < len(encoded):
+        diffs = []
+        for _ in (0, 1):
+            shift = result = 0
+            while True:
+                char = ord(encoded[idx]) - 63
+                idx += 1
+                result |= (char & 31) << shift
+                shift += 5
+                if char < 32:
+                    break
+            diffs.append(~(result >> 1) if result & 1 else result >> 1)
+        lat += diffs[0]
+        lng += diffs[1]
+        coords.append([lng / 1e5, lat / 1e5])  # GeoJSON [longitude, latitude]
+    return coords
+
+
+def route_sample_points(coords, count=10):
+    """Sample approximately uniformly by distance, not polyline vertex count."""
+    if len(coords) < 2:
+        return coords
+    lengths = [haversine((a[1], a[0]), (b[1], b[0])) for a, b in zip(coords, coords[1:])]
+    total = sum(lengths)
+    if total <= 0:
+        return [coords[0], coords[-1]]
+    samples, accumulated, seg = [], 0., 0
+    for i in range(count):
+        target = total * i / (count - 1)
+        while seg < len(lengths) - 1 and accumulated + lengths[seg] < target:
+            accumulated += lengths[seg]
+            seg += 1
+        weight = max(0., min(1., (target - accumulated) / (lengths[seg] or 1)))
+        a, b = coords[seg], coords[seg + 1]
+        samples.append([a[0] + weight * (b[0] - a[0]), a[1] + weight * (b[1] - a[1])])
     return samples
 
-def route_position_and_detour(latitude, longitude, route_coordinates):
 
-    """Find the nearest route segment and distance-based trip progress."""
+def route_position(point, coords):
+    """Closest projection onto route; reports fraction along and perpendicular distance."""
+    if len(coords) < 2:
+        return 0, float("inf")
+    lat, lon = point
+    lat_factor = math.cos(math.radians(lat))
+    lengths = [haversine((a[1], a[0]), (b[1], b[0])) for a, b in zip(coords, coords[1:])]
+    total = sum(lengths) or 1
+    best, best_progress, travelled = float("inf"), 0., 0.
+    for (lon1, lat1), (lon2, lat2), length in zip(coords, coords[1:], lengths):
+        dx, dy = (lon2-lon1)*lat_factor, lat2-lat1
+        denom = dx*dx + dy*dy
+        t = max(0, min(1, (((lon-lon1)*lat_factor*dx + (lat-lat1)*dy)/denom))) if denom else 0
+        near = (lat1 + t*(lat2-lat1), lon1 + t*(lon2-lon1))
+        detour = haversine(point, near)
+        if detour < best:
+            best, best_progress = detour, (travelled + t*length)/total
+        travelled += length
+    return best_progress, best
 
-    if len(route_coordinates) < 2:
 
-        return 0.0, float("inf")
-
-    point_lat_rad = math.radians(latitude)
-
-    point_lng_rad = math.radians(longitude)
-
-    mean_lat_rad = math.radians(
-
-        sum(point[1] for point in route_coordinates) / len(route_coordinates)
-
+def nearby(sample):
+    lon, lat = sample
+    result = google_post(
+        "https://places.googleapis.com/v1/places:searchNearby",
+        {"includedTypes": ["restaurant", "cafe", "bakery", "meal_takeaway"],
+         "maxResultCount": 20,
+         "locationRestriction": {"circle": {"center": {"latitude": lat, "longitude": lon}, "radius": 1400}}},
+        "places.id,places.displayName,places.location,places.primaryType,places.rating,places.priceLevel,places.businessStatus,places.photos,places.currentOpeningHours.openNow",
     )
-
-    earth_radius_km = 6371.0
-
-    total_length = 0.0
-
-    travelled = 0.0
-
-    best_distance = float("inf")
-
-    best_progress_distance = 0.0
-
-    for (lng1, lat1), (lng2, lat2) in zip(route_coordinates, route_coordinates[1:]):
-
-        x1 = earth_radius_km * math.radians(lng1) * math.cos(mean_lat_rad)
-
-        y1 = earth_radius_km * math.radians(lat1)
-
-        x2 = earth_radius_km * math.radians(lng2) * math.cos(mean_lat_rad)
-
-        y2 = earth_radius_km * math.radians(lat2)
-
-        px = earth_radius_km * point_lng_rad * math.cos(mean_lat_rad)
-
-        py = earth_radius_km * point_lat_rad
-
-        dx, dy = x2 - x1, y2 - y1
-
-        segment_sq = dx * dx + dy * dy
-
-        ratio = 0.0 if segment_sq == 0 else max(0.0, min(1.0, ((px - x1) * dx + (py - y1) * dy) / segment_sq))
-
-        nearest_x, nearest_y = x1 + ratio * dx, y1 + ratio * dy
-
-        detour = math.hypot(px - nearest_x, py - nearest_y)
-
-        segment_length = math.sqrt(segment_sq)
-
-        if detour < best_distance:
-
-            best_distance = detour
-
-            best_progress_distance = travelled + segment_length * ratio
-
-        travelled += segment_length
-
-        total_length += segment_length
-
-    return best_progress_distance / total_length if total_length else 0.0, best_distance
-
-def get_category(amenity, cuisine):
-
-    cuisine = (cuisine or "").lower()
-
-    if amenity == "ice_cream" or "dessert" in cuisine:
-
-        return "Dessert"
-
-    if amenity == "bakery":
-
-        return "Bakery"
-
-    if amenity == "cafe":
-
-        return "Café"
-
-    if amenity == "fast_food":
-
-        return "Quick Bite"
-
-    if amenity == "food_court":
-
-        return "Food Court"
-
-    return "Restaurant"
-
-def get_estimated_cost(amenity):
-
-    price_map = {
-
-        "bakery": 120,
-
-        "ice_cream": 140,
-
-        "fast_food": 180,
-
-        "cafe": 220,
-
-        "food_court": 260,
-
-        "restaurant": 350,
-
-    }
-
-    return price_map.get(amenity, 250)
-
-def get_places_from_database(route_coordinates):
-
-    places = []
-
-    for restaurant in Restaurant.objects.all():
-
-        progress, detour = route_position_and_detour(
-
-            restaurant.latitude,
-
-            restaurant.longitude,
-
-            route_coordinates,
-
-        )
-
-        if (
-
-            detour > MAX_DETOUR_KM
-
-            or progress < START_EXCLUSION_PROGRESS
-
-            or progress > END_EXCLUSION_PROGRESS
-
-        ):
-
-            continue
-
-        places.append(
-
-            {
-
-                "id": f"foodkindl-{restaurant.id}",
-
-                "name": restaurant.name,
-
-                "latitude": restaurant.latitude,
-
-                "longitude": restaurant.longitude,
-
-                "cuisine": restaurant.cuisine or "",
-
-                "amenity": "restaurant",
-
-                "category": "Restaurant",
-
-                "estimated_cost": 350,
-
-                "route_progress": round(progress * 100),
-
-                "distance_from_route_km": round(detour, 2),
-
-                "source": "foodkindl",
-
-            }
-
-        )
-
-    return places
-
-def get_places_from_geoapify(
-
-    route_coordinates,
-
-    route_samples,
-
-    maximum_detour_km,
-
-):
-
-    """Fetch restaurant POIs around points distributed along the route."""
-
-    if not GEOAPIFY_API_KEY:
-
-        print("Geoapify skipped: GEOAPIFY_API_KEY is missing")
-
-        return [], "missing_api_key"
-
-    search_points = route_samples[1:-1]
-
-    radius_m = min(20000, max(3000, int(maximum_detour_km * 1000)))
-
-    def fetch_point(sample):
-
-        longitude, latitude = sample
-
-        response = requests.get(
-
-            GEOAPIFY_PLACES_URL,
-
-            params={
-
-                "categories": (
-
-                    "catering.restaurant,catering.cafe,"
-
-                    "catering.fast_food,catering.food_court"
-
-                ),
-
-                "filter": f"circle:{longitude},{latitude},{radius_m}",
-
-                "bias": f"proximity:{longitude},{latitude}",
-
-                "limit": 40,
-
-                "lang": "en",
-
-                "apiKey": GEOAPIFY_API_KEY,
-
-            },
-
-            headers=HEADERS,
-
-            timeout=GEOAPIFY_TIMEOUT_SECONDS,
-
-        )
-
-        response.raise_for_status()
-
-        return response.json().get("features", [])
-
-    features = []
-
-    errors = []
-
-    with ThreadPoolExecutor(max_workers=6) as executor:
-
-        futures = [executor.submit(fetch_point, point) for point in search_points]
-
-        for future in as_completed(futures):
-
-            try:
-
-                features.extend(future.result())
-
-            except requests.HTTPError as exc:
-
-                status_code = (
-
-                    exc.response.status_code
-
-                    if exc.response is not None
-
-                    else "unknown"
-
-                )
-
-                errors.append(f"HTTP {status_code}")
-
-                print("Geoapify HTTP error:", status_code, exc)
-
-            except (requests.RequestException, ValueError) as exc:
-
-                errors.append(type(exc).__name__)
-
-                print("Geoapify lookup error:", exc)
-
-    places = []
-
-    seen = set()
-
-    for feature in features:
-
-        properties = feature.get("properties") or {}
-
-        coordinates = (feature.get("geometry") or {}).get("coordinates") or []
-
-        name = str(properties.get("name") or "").strip()
-
-        if not name or len(coordinates) < 2:
-
-            continue
-
-        longitude = float(properties.get("lon", coordinates[0]))
-
-        latitude = float(properties.get("lat", coordinates[1]))
-
-        place_id = properties.get("place_id") or f"{latitude:.6f}-{longitude:.6f}"
-
-        unique_id = f"geoapify-{place_id}"
-
-        if unique_id in seen:
-
-            continue
-
-        seen.add(unique_id)
-
-        progress, detour = route_position_and_detour(
-
-            latitude,
-
-            longitude,
-
-            route_coordinates,
-
-        )
-
-        if (
-
-            detour > maximum_detour_km
-
-            or progress < START_EXCLUSION_PROGRESS
-
-            or progress > END_EXCLUSION_PROGRESS
-
-        ):
-
-            continue
-
-        raw = ((properties.get("datasource") or {}).get("raw") or {})
-
-        cuisine = str(properties.get("cuisine") or raw.get("cuisine") or "")
-
-        categories = properties.get("categories") or []
-
-        if "catering.cafe" in categories:
-
-            amenity = "cafe"
-
-        elif "catering.fast_food" in categories:
-
-            amenity = "fast_food"
-
-        elif "catering.food_court" in categories:
-
-            amenity = "food_court"
-
-        else:
-
-            amenity = str(raw.get("amenity") or "restaurant")
-
-        places.append(
-
-            {
-
-                "id": unique_id,
-
-                "name": name,
-
-                "amenity": amenity,
-
-                "cuisine": cuisine.replace(";", ", "),
-
-                "latitude": latitude,
-
-                "longitude": longitude,
-
-                "category": get_category(amenity, cuisine),
-
-                "estimated_cost": get_estimated_cost(amenity),
-
-                "route_progress": round(progress * 100),
-
-                "distance_from_route_km": round(detour, 2),
-
-                "source": "geoapify",
-
-            }
-
-        )
-
-    diagnostic = "ok" if places else ", ".join(sorted(set(errors))) or "no_results"
-
-    return sorted(
-
-        places,
-
-        key=lambda place: (
-
-            place["route_progress"],
-
-            place["distance_from_route_km"],
-
-        ),
-
-    ), diagnostic
-
-def get_places_from_photon(route_coordinates, route_samples):
-
-    """Fetch named restaurants around middle-route points from Photon.
-
-    Photon is an OSM-powered search service. Unlike Overpass, it needs no
-
-    query language or API key. We deliberately search only the middle route
-
-    points, then validate every returned location against the actual route.
-
-    """
-
-    places = []
-
-    seen = set()
-
-    def fetch_sample(sample):
-        longitude, latitude = sample
-        try:
-
-            response = requests.get(
-
-                PHOTON_URL,
-
-                params={
-
-                    "q": "restaurant",
-
-                    "lat": latitude,
-
-                    "lon": longitude,
-
-                    "limit": PHOTON_RESULTS_PER_ROUTE_POINT,
-
-                    "lang": "en",
-
-                },
-
-                headers=HEADERS,
-
-                timeout=PHOTON_TIMEOUT_SECONDS,
-
-            )
-
-            response.raise_for_status()
-
-            return response.json().get("features", [])
-
-        except (requests.RequestException, ValueError) as exc:
-
-            print("Photon lookup error:", exc)
-
-            return []
-
-    # Keep the fallback responsive even when several Photon requests time out.
-    with ThreadPoolExecutor(max_workers=6) as executor:
-        batches = list(executor.map(fetch_sample, route_samples[1:-1]))
-
-    for features in batches:
-        for feature in features:
-
-            properties = feature.get("properties") or {}
-
-            coordinates = (feature.get("geometry") or {}).get("coordinates") or []
-
-            if len(coordinates) < 2:
-
-                continue
-
-            name = str(properties.get("name") or "").strip()
-
-            if not name:
-
-                continue
-
-            lon, lat = float(coordinates[0]), float(coordinates[1])
-
-            osm_type = properties.get("osm_type") or "place"
-
-            osm_id = properties.get("osm_id") or f"{lat:.5f}-{lon:.5f}"
-
-            unique_id = f"photon-{osm_type}-{osm_id}"
-
-            if unique_id in seen:
-
-                continue
-
-            seen.add(unique_id)
-
-            progress, detour = route_position_and_detour(lat, lon, route_coordinates)
-
-            if (
-
-                detour > MAX_DETOUR_KM
-
-                or progress < START_EXCLUSION_PROGRESS
-
-                or progress > END_EXCLUSION_PROGRESS
-
-            ):
-
-                continue
-
-            amenity = str(properties.get("osm_value") or "restaurant")
-
-            cuisine = str(properties.get("cuisine") or "")
-
-            places.append(
-
-                {
-
-                    "id": unique_id,
-
-                    "name": name,
-
-                    "amenity": amenity,
-
-                    "cuisine": cuisine,
-
-                    "latitude": lat,
-
-                    "longitude": lon,
-
-                    "category": get_category(amenity, cuisine),
-
-                    "estimated_cost": get_estimated_cost(amenity),
-
-                    "route_progress": round(progress * 100),
-
-                    "distance_from_route_km": round(detour, 2),
-
-                    "source": "photon",
-
-                }
-
-            )
-
-    return sorted(places, key=lambda p: (p["route_progress"], p["distance_from_route_km"]))
-
-
-def get_destination_places(latitude, longitude, radius_metres=2000):
-    """Named mapped eateries near the destination, independent of route stops."""
-    places = []
-    seen = set()
-
-    def add(name, lat, lon, identifier, amenity, cuisine, source):
-        try:
-            lat, lon = float(lat), float(lon)
-        except (ValueError, TypeError):
-            return
-        name = str(name or "").strip()
-        if not name or not (-90 <= lat <= 90 and -180 <= lon <= 180):
-            return
-        distance = distance_km(latitude, longitude, lat, lon)
-        if distance > radius_metres / 1000:
-            return
-        key = (name.casefold(), round(lat, 4), round(lon, 4))
-        if key in seen:
-            return
-        seen.add(key)
-        places.append({
-            "id": f"destination-{source}-{identifier}",
-            "name": name,
-            "latitude": lat,
-            "longitude": lon,
-            "category": get_category(amenity, cuisine),
-            "cuisine": str(cuisine or "").replace(";", ", ").replace("_", " "),
-            "distance_from_destination_km": round(distance, 2),
-            "source": source,
-        })
-
-    # Query the existing local restaurants even if the external service fails.
-    for restaurant in Restaurant.objects.all():
-        add(restaurant.name, restaurant.latitude, restaurant.longitude,
-            restaurant.pk, "restaurant", restaurant.cuisine, "foodkindl")
-
-    if GEOAPIFY_API_KEY:
-        try:
-            response = requests.get(
-                GEOAPIFY_PLACES_URL,
-                params={
-                    "categories": "catering.restaurant,catering.cafe,catering.fast_food,catering.food_court",
-                    "filter": f"circle:{longitude},{latitude},{radius_metres}",
-                    "bias": f"proximity:{longitude},{latitude}",
-                    "limit": 100,
-                    "lang": "en",
-                    "apiKey": GEOAPIFY_API_KEY,
-                },
-                headers=HEADERS,
-                timeout=GEOAPIFY_TIMEOUT_SECONDS,
-            )
-            response.raise_for_status()
-            for feature in response.json().get("features", []):
-                props = feature.get("properties") or {}
-                coordinates = (feature.get("geometry") or {}).get("coordinates") or []
-                if len(coordinates) < 2:
-                    continue
-                raw = ((props.get("datasource") or {}).get("raw") or {})
-                categories = props.get("categories") or []
-                amenity = next((category.split(".", 1)[1] for category in categories
-                                if category in {"catering.restaurant", "catering.cafe",
-                                                "catering.fast_food", "catering.food_court"}),
-                               "restaurant")
-                add(props.get("name"), coordinates[1], coordinates[0],
-                    props.get("place_id") or f"{coordinates[1]}-{coordinates[0]}",
-                    amenity, props.get("cuisine") or raw.get("cuisine"), "geoapify")
-        except (requests.RequestException, ValueError) as exc:
-            print("Destination Geoapify lookup error:", exc)
-
-    # Photon provides a fallback when Geoapify is unavailable or unconfigured.
-    if not any(place["source"] == "geoapify" for place in places):
-        for term in ("restaurant", "cafe"):
-            try:
-                response = requests.get(
-                    PHOTON_URL,
-                    params={"q": term, "lat": latitude, "lon": longitude,
-                            "limit": 100, "lang": "en"},
-                    headers=HEADERS, timeout=PHOTON_TIMEOUT_SECONDS,
-                )
-                response.raise_for_status()
-                for feature in response.json().get("features", []):
-                    props = feature.get("properties") or {}
-                    coordinates = (feature.get("geometry") or {}).get("coordinates") or []
-                    if len(coordinates) < 2:
-                        continue
-                    amenity = props.get("osm_value") or props.get("type") or ""
-                    if amenity not in {"restaurant", "cafe", "fast_food", "food_court"}:
-                        continue
-                    add(props.get("name"), coordinates[1], coordinates[0],
-                        f"{props.get('osm_type', 'place')}-{props.get('osm_id', '')}",
-                        amenity, props.get("cuisine"), "photon")
-            except (requests.RequestException, ValueError) as exc:
-                print("Destination Photon lookup error:", exc)
-
-    return sorted(places, key=lambda place: place["distance_from_destination_km"])
+    return result.get("places", [])
+
+
+def estimate_cost(place):
+    # Clearly an approximate food budget, not a Google-provided menu price.
+    return {"PRICE_LEVEL_INEXPENSIVE": 150, "PRICE_LEVEL_MODERATE": 300,
+            "PRICE_LEVEL_EXPENSIVE": 600, "PRICE_LEVEL_VERY_EXPENSIVE": 900}.get(place.get("priceLevel"), 250)
+
+
+def category(kind):
+    return {"cafe": "Café", "bakery": "Bakery", "meal_takeaway": "Quick Bite"}.get(kind, "Restaurant")
+
+
+@api_view(["GET"])
+def location_suggestions(request):
+    query = str(request.query_params.get("q", "")).strip()
+    if len(query) < 2:
+        return Response([])
+    if not api_key():
+        return Response({"error": "GOOGLE_MAPS_API_KEY is not configured."}, status=503)
+    try:
+        result = google_get("https://maps.googleapis.com/maps/api/geocode/json", {"address": query, "region": "in", "components": "country:IN"})
+        if result.get("status") not in ("OK", "ZERO_RESULTS"):
+            raise ValueError(result.get("error_message") or result.get("status"))
+        items = []
+        for item in result.get("results", [])[:8]:
+            loc = item["geometry"]["location"]
+            items.append({"id": item["place_id"], "place_id": item["place_id"],
+                          "name": item["formatted_address"].split(",")[0],
+                          "label": item["formatted_address"], "display_name": item["formatted_address"],
+                          "latitude": loc["lat"], "longitude": loc["lng"]})
+        return Response(items)
+    except (requests.RequestException, ValueError) as exc:
+        return Response({"error": f"Google location search failed: {exc}"}, status=502)
 
 
 @api_view(["POST"])
-
 def build_food_walk(request):
-
-    start = str(request.data.get("start", "")).strip()
-
-    end = str(request.data.get("end", "")).strip()
-
-    requested_travel_mode = str(request.data.get("travel_mode", "auto")).lower()
-
-    # The React frontend may use "bicycle", while this backend and the route
-
-    # service use "bike".
-
-    if requested_travel_mode == "bicycle":
-
-        requested_travel_mode = "bike"
-
-    try:
-
-        budget_per_person = int(request.data.get("budget_per_person", 1000))
-
-    except (TypeError, ValueError):
-
-        budget_per_person = 1000
-
-    budget_per_person = max(200, min(budget_per_person, 10000))
-
+    if not api_key():
+        return Response({"error": "Set GOOGLE_MAPS_API_KEY on the Django backend."}, status=503)
+    start = str(request.data.get("start") or "").strip()
+    end = str(request.data.get("end") or "").strip()
     if not start or not end:
-
-        return Response({"error": "Please choose both a start and destination."}, status=400)
-
-    if requested_travel_mode not in {*ROUTE_URLS, "auto"}:
-
-        return Response(
-
-            {"error": "Travel mode must be auto, walking, bike, bicycle, or car."},
-
-            status=400,
-
-        )
-
+        return Response({"error": "Choose a start and destination."}, status=400)
     try:
-
-        geolocator = Nominatim(user_agent="FoodKindl-FoodWalk/1.0", timeout=8)
-
-        start_loc = geolocator.geocode(start)
-
-        end_loc = geolocator.geocode(end)
-
-    except (GeocoderTimedOut, GeocoderServiceError):
-
-        return Response({"error": "Location service is temporarily unavailable."}, status=503)
-
-    if not start_loc or not end_loc:
-
-        return Response({"error": "Start or end location not found."}, status=400)
-
-    start_lat, start_lon = float(start_loc.latitude), float(start_loc.longitude)
-
-    end_lat, end_lon = float(end_loc.latitude), float(end_loc.longitude)
-
-    straight_line_distance_km = distance_km(
-
-        start_lat,
-
-        start_lon,
-
-        end_lat,
-
-        end_lon,
-
-    )
-
-    automatic_mode = choose_travel_mode(straight_line_distance_km)
-
-    # "auto" chooses by distance. An explicit bike or car choice is always
-
-    # respected, regardless of distance. Only an unsuitable walking request is
-
-    # automatically upgraded for a route above 5 km.
-
-    travel_mode = requested_travel_mode
-
-    if requested_travel_mode == "auto":
-
-        travel_mode = automatic_mode
-
-    elif requested_travel_mode == "walking" and straight_line_distance_km > 5:
-
-        travel_mode = automatic_mode
-
-    elif requested_travel_mode == "bike":
-
-        travel_mode = "bike"
-
-    elif requested_travel_mode == "car":
-
-        travel_mode = "car"
-
-    route_timeout_seconds = 45 if straight_line_distance_km > 500 else 25
-
+        budget = max(200, min(int(request.data.get("budget_per_person", 1000)), 10000))
+    except (ValueError, TypeError):
+        budget = 1000
+    requested = str(request.data.get("travel_mode") or "auto").lower()
+    if requested not in ("auto", "walking", "bike", "bicycle", "car"):
+        return Response({"error": "Unsupported travel mode."}, status=400)
+    food_type = str(request.data.get("food_type") or "all")
     try:
-
-        route_resp = requests.get(
-
-            f"{ROUTE_URLS[travel_mode]}/{start_lon},{start_lat};{end_lon},{end_lat}",
-
-            params={"overview": "full", "geometries": "geojson"},
-
-            headers=HEADERS,
-
-            timeout=route_timeout_seconds,
-
+        # The frontend passes a GPS coordinate as "lat,lng" when 'Current location' is selected.
+        origin, destination = geocode(start), geocode(end)
+        straight = haversine((origin["latitude"], origin["longitude"]),
+                             (destination["latitude"], destination["longitude"]))
+        mode = ("walking" if straight <= 5 else "bike" if straight <= 15 else "car") if requested == "auto" else requested
+        if mode == "bicycle":
+            mode = "bike"
+        if mode == "walking" and straight > 5:
+            return Response({"error": "Walking routes are limited to 5 km. Select Bike or Car."}, status=400)
+        # Bike intentionally uses car-road routing as a fallback.
+        # Not suitable as verified cycling navigation.
+        google_mode = {"walking": "WALK", "bike": "DRIVE", "car": "DRIVE"}[mode]
+        route_data = google_post(
+            "https://routes.googleapis.com/directions/v2:computeRoutes",
+            {"origin": {"location": {"latLng": {"latitude": origin["latitude"], "longitude": origin["longitude"]}}},
+             "destination": {"location": {"latLng": {"latitude": destination["latitude"], "longitude": destination["longitude"]}}},
+             "travelMode": google_mode, "polylineQuality": "HIGH_QUALITY",
+             "computeAlternativeRoutes": False},
+            "routes.distanceMeters,routes.duration,routes.polyline.encodedPolyline",
         )
-
-        route_resp.raise_for_status()
-
-        route_data = route_resp.json()
-
         routes = route_data.get("routes", [])
-
         if not routes:
-
-            raise ValueError("No route found")
-
+            return Response({"error": "Google Routes did not find a suitable route."}, status=422)
         route = routes[0]
-
-        geometry = route.get("geometry", {})
-
-        coords = geometry.get("coordinates", [])
-
-        if not coords:
-
-            raise ValueError("No route geometry")
-
-    except (requests.RequestException, ValueError):
-
-        return Response({"error": "Could not create route. Try nearby locations."}, status=502)
-
-    route_distance_km = round(route.get("distance", 0) / 1000, 1)
-
-    if route_distance_km > 150:
-
-        sample_count = min(24, max(12, math.ceil(route_distance_km / 35) + 2))
-
-        maximum_detour_km = 15.0
-
-    elif route_distance_km > 25:
-
-        sample_count = 12
-
-        maximum_detour_km = 5.0
-
-    else:
-
-        # Sample the full route about every 2 km. Eight samples leave gaps
-        # where nearby restaurants cannot be returned by the POI provider.
-        sample_count = min(18, max(8, math.ceil(route_distance_km / 2) + 1))
-
-        maximum_detour_km = MAX_DETOUR_KM
-
-    route_samples = get_route_samples(coords, total_samples=sample_count)
-
-    database_places = get_places_from_database(coords)
-
-    external_places, geoapify_status = get_places_from_geoapify(
-
-        coords,
-
-        route_samples,
-
-        maximum_detour_km,
-
-    )
-
-    restaurant_provider = "geoapify" if external_places else None
-
-    # A few Geoapify hits can all be near one portion of the route. Supplement
-    # sparse results from Photon instead of treating any hit as full coverage.
-    if len(external_places) < 10:
-        photon_places = get_places_from_photon(coords, route_samples)
-        if photon_places:
-            restaurant_provider = "geoapify+photon" if external_places else "photon"
-            external_places += photon_places
-
-    all_places = database_places + external_places
-
-    # Deduplicate places by (name, lat, lon)
-
-    unique = {}
-
-    for place in all_places:
-
-        key = (place["name"].lower(), round(place["latitude"], 4), round(place["longitude"], 4))
-
-        if key not in unique:
-
-            unique[key] = place
-
-    places = sorted(unique.values(), key=lambda p: (p["route_progress"], p["distance_from_route_km"]))
-
-    recommended_stops = []
-
-    total_cost = 0
-
-    selected_categories = set()
-
-    preferred_positions = [0.18, 0.42, 0.67, 0.88]
-
-    for preferred_pos in preferred_positions:
-
-        candidates = [
-
-            p for p in places
-
-            if p["id"] not in {stop["id"] for stop in recommended_stops}
-
-            and total_cost + p["estimated_cost"] <= budget_per_person
-
-        ]
-
-        if not candidates:
-
-            continue
-
-        def score(place):
-
-            route_penalty = abs(place["route_progress"] / 100 - preferred_pos) * 100
-
-            detour_penalty = place["distance_from_route_km"] * 22
-
-            dup_penalty = 18 if place["category"] in selected_categories else 0
-
-            cost_penalty = place["estimated_cost"] / 80
-
-            return route_penalty + detour_penalty + dup_penalty + cost_penalty
-
-        best_place = min(candidates, key=score)
-
-        recommended_stops.append(best_place)
-
-        selected_categories.add(best_place["category"])
-
-        total_cost += best_place["estimated_cost"]
-
-        if len(recommended_stops) >= MAX_RECOMMENDED_STOPS:
-
-            break
-
-    recommended_ids = {place["id"] for place in recommended_stops}
-    other_places = [place for place in places if place["id"] not in recommended_ids]
-
-    duration_min = round(route.get("duration", 0) / 60)
-
-    destination_places = get_destination_places(end_lat, end_lon)
-
-    return Response({
-
-        "route": geometry,
-
-        "travel_mode": travel_mode,
-
-        "requested_travel_mode": requested_travel_mode,
-
-        "straight_line_distance_km": round(straight_line_distance_km, 1),
-
-        "distance_km": route_distance_km,
-
-        "duration_minutes": duration_min,
-
-        "budget_per_person": budget_per_person,
-
-        "estimated_total_per_person": total_cost,
-
-        "maximum_detour_km": maximum_detour_km,
-
-        "restaurant_search_samples": sample_count,
-
-        "restaurant_provider": restaurant_provider,
-
-        "restaurant_candidates_found": len(all_places),
-
-        "geoapify_status": geoapify_status,
-
-        "start": {
-
-            "name": start_loc.address,
-
-            "latitude": start_lat,
-
-            "longitude": start_lon,
-
-        },
-
-        "end": {
-
-            "name": end_loc.address,
-
-            "latitude": end_lat,
-
-            "longitude": end_lon,
-
-        },
-
-        "destination_places": destination_places,
-        "recommended_stops": recommended_stops,
-        "other_places": other_places[:100],
-
-        "places": places[:60],
-
-        "warning": (
-
-            f"Travel mode was changed from {requested_travel_mode} to {travel_mode} because of the route distance."
-
-            if requested_travel_mode not in {"auto", travel_mode} else None
-
-        ),
-
-        "message": (
-
-            "No named food places were found near this route. Try a shorter route or try again shortly."
-
-            if not places else None
-
-        )
-
-    })
-
-@api_view(["GET"])
-
-def location_suggestions(request):
-
-    """Photon autocomplete in the response shape used by LocationAutocomplete."""
-
-    query = str(request.query_params.get("q", "")).strip()
-
-    if len(query) < 2:
-
-        return Response([])
-
-    try:
-
-        requested_limit = int(request.query_params.get("limit", 8))
-
-    except (TypeError, ValueError):
-
-        requested_limit = 8
-
-    requested_limit = max(1, min(requested_limit, 10))
-
-    try:
-
-        response = requests.get(
-
-            PHOTON_URL,
-
-            params={
-
-                "q": query,
-
-                "limit": requested_limit,
-
-                "lang": "en",
-
-                # India bounding box: west, south, east, north.
-
-                "bbox": "68.1,6.5,97.5,37.6",
-
-            },
-
-            headers=HEADERS,
-
-            timeout=PHOTON_TIMEOUT_SECONDS,
-
-        )
-
-        response.raise_for_status()
-
-        features = response.json().get("features", [])
-
-    except (requests.RequestException, ValueError):
-
-        return Response(
-
-            {"error": "Location search is temporarily unavailable."},
-
-            status=status.HTTP_503_SERVICE_UNAVAILABLE,
-
-        )
-
-    suggestions = []
-
-    seen = set()
-
-    for feature in features:
-
-        properties = feature.get("properties") or {}
-
-        coordinates = (feature.get("geometry") or {}).get("coordinates") or []
-
-        if len(coordinates) < 2:
-
-            continue
-
-        longitude, latitude = float(coordinates[0]), float(coordinates[1])
-
-        name = str(properties.get("name") or properties.get("osm_key") or "Location").strip()
-
-        city = str(properties.get("city") or "").strip()
-
-        state_name = str(properties.get("state") or "").strip()
-
-        country = str(properties.get("country") or "India").strip()
-
-        display_name = ", ".join(part for part in [name, city, state_name, country] if part)
-
-        key = (name.lower(), round(latitude, 5), round(longitude, 5))
-
-        if key in seen:
-
-            continue
-
-        seen.add(key)
-
-        osm_id = properties.get("osm_id")
-
-        suggestions.append(
-
-            {
-
-                "id": osm_id or f"{latitude:.5f}-{longitude:.5f}",
-
-                "place_id": osm_id,
-
-                "osm_id": osm_id,
-
-                "name": name,
-
-                "label": display_name,
-
-                "display_name": display_name,
-
-                "latitude": latitude,
-
-                "longitude": longitude,
-
-                "locality": city or state_name,
-
-                "area": state_name,
-
-                "city": city,
-
-                "state": state_name,
-
-                "country": country,
-
-                "properties": properties,
-
-            }
-
-        )
-
-    return Response(suggestions)
+        coords = decode_polyline(route["polyline"]["encodedPolyline"])
+        kms = route["distanceMeters"] / 1000
+        samples = route_sample_points(coords, max(6, min(14, math.ceil(kms / 2) + 2)))
+        external, warnings = [], []
+        with ThreadPoolExecutor(max_workers=4) as executor:
+            futures = [executor.submit(nearby, s) for s in samples[1:-1]]
+            for future in as_completed(futures):
+                try:
+                    external.extend(future.result())
+                except (requests.RequestException, ValueError, KeyError) as exc:
+                    warnings.append(str(exc))
+        places, seen = [], set()
+        for item in external:
+            loc = item.get("location") or {}
+            lat, lon = loc.get("latitude"), loc.get("longitude")
+            if lat is None or lon is None or not item.get("id") or item.get("id") in seen:
+                continue
+            seen.add(item["id"])
+            progress, detour = route_position((float(lat), float(lon)), coords)
+            if detour > MAX_DETOUR_KM or not (0.08 <= progress <= 0.96):
+                continue
+            kind = item.get("primaryType", "restaurant")
+            if item.get("businessStatus") == "CLOSED_PERMANENTLY":
+                continue
+            # No guaranteed vegetarian or non-vegetarian field in Places Nearby.
+            # Do not falsely label results; return all and expose the limitation.
+            places.append({"id": f"google-{item['id']}", "place_id": item["id"],
+                           "name": (item.get("displayName") or {}).get("text", "Food stop"),
+                           "latitude": lat, "longitude": lon, "category": category(kind),
+                           "cuisine": "", "rating": item.get("rating"),
+                           "open_now": (item.get("currentOpeningHours") or {}).get("openNow"),
+                           "photo_resource": next((photo.get("name") for photo in item.get("photos", []) if photo.get("name")), None),
+                           "estimated_cost": estimate_cost(item),
+                           "estimated_cost_is_approximate": True,
+                           "route_progress": round(progress * 100),
+                           "distance_from_route_km": round(detour, 2), "source": "google"})
+        for restaurant in Restaurant.objects.all():
+            if restaurant.latitude is None or restaurant.longitude is None:
+                continue
+            progress, detour = route_position((float(restaurant.latitude), float(restaurant.longitude)), coords)
+            if 0.08 <= progress <= 0.96 and detour <= MAX_DETOUR_KM:
+                places.append({"id": f"foodkindl-{restaurant.id}", "name": restaurant.name,
+                               "latitude": float(restaurant.latitude), "longitude": float(restaurant.longitude),
+                               "category": "Restaurant", "cuisine": restaurant.cuisine or "",
+                               "estimated_cost": 300, "estimated_cost_is_approximate": True,
+                               "route_progress": round(progress * 100),
+                               "distance_from_route_km": round(detour, 2), "source": "foodkindl"})
+        places.sort(key=lambda p: (p["route_progress"], p["distance_from_route_km"]))
+        unique, named = [], set()
+        for item in places:
+            key = (item["name"].casefold(), round(float(item["latitude"]), 4), round(float(item["longitude"]), 4))
+            if key not in named:
+                named.add(key)
+                unique.append(item)
+        recommended, total = [], 0
+        for target in (18, 42, 67, 88):
+            options = [p for p in unique if p not in recommended and total + p["estimated_cost"] <= budget]
+            if not options:
+                break
+            best = min(options, key=lambda p: abs(p["route_progress"] - target) + p["distance_from_route_km"] * 20)
+            recommended.append(best)
+            total += best["estimated_cost"]
+            if len(recommended) >= MAX_STOPS:
+                break
+        # Fetch a small number of genuine Google restaurant photo URLs.
+        # No API key is sent to the browser; Google returns an expiring public photoUri.
+        photo_candidates = [p for p in unique if p.get("photo_resource")][:12]
+        def load_photo(place):
+            resource = place["photo_resource"]
+            try:
+                result = google_get(
+                    f"https://places.googleapis.com/v1/{resource}/media",
+                    {"maxWidthPx": 640, "skipHttpRedirect": "true"},
+                )
+                return place["id"], result.get("photoUri")
+            except (requests.RequestException, ValueError, KeyError):
+                return place["id"], None
+        if photo_candidates:
+            with ThreadPoolExecutor(max_workers=4) as executor:
+                photos = dict(executor.map(load_photo, photo_candidates))
+            for place in unique:
+                place["photo_url"] = photos.get(place["id"])
+        for place in unique:
+            place.pop("photo_resource", None)
+        selected_ids = {p["id"] for p in recommended}
+        seconds = int(str(route.get("duration", "0s")).rstrip("s").split(".")[0])
+        return Response({"route": {"type": "LineString", "coordinates": coords}, "travel_mode": mode,
+                         "requested_travel_mode": requested, "routing_mode": google_mode,
+                         "route_warning": "Bike uses car-road routing, not bicycle-safe directions." if mode == "bike" else "",
+                         "distance_km": round(kms, 1),
+                         "duration_minutes": round(seconds / 60), "budget_per_person": budget,
+                         "estimated_total_per_person": total, "start": origin, "end": destination,
+                         "restaurant_provider": "google", "restaurant_candidates_found": len(unique),
+                         "maximum_detour_km": MAX_DETOUR_KM,
+                         "recommended_stops": recommended,
+                         "other_places": [p for p in unique if p["id"] not in selected_ids][:100],
+                         "places": unique,
+                         "food_preference_note": "Vegetarian classification requires verified menu data; results are not certified vegetarian." if food_type != "all" else "",
+                         "warning": "Some Google Places searches failed; results may be incomplete." if warnings else ""})
+    except (requests.RequestException, ValueError, KeyError, IndexError) as exc:
+        return Response({"error": f"Google Maps route or places failed: {exc}"}, status=502)

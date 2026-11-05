@@ -1,0 +1,214 @@
+/* FoodKindl Dine Out – premium layout. Imported LAST by DineOut.jsx */
+.dineout-page:not(.dineout-plan-page) {
+  display:block !important; grid-template-columns:none !important; width:100% !important;
+  max-width:1440px !important; margin:0 auto !important; padding:28px clamp(18px,4vw,58px) 80px !important;
+  box-sizing:border-box !important; background:linear-gradient(170deg,#1e0c07,#160906 80%) !important;
+  color:#fceee7;
+}
+.dineout-page:not(.dineout-plan-page) > *, .dineout-page .fk-search-panel > * {min-width:0;max-width:100%;box-sizing:border-box}
+.dineout-page:not(.dineout-plan-page) .dineout-hero {
+ display:flex !important;flex-wrap:wrap;justify-content:space-between;align-items:center;
+ width:100% !important;grid-column:1/-1!important;position:relative;
+ background:linear-gradient(90deg,rgba(23,9,4,.98),rgba(63,22,10,.8));
+ padding:30px clamp(18px,3vw,40px)!important;margin:0 0 18px!important;
+ border:1px solid #5c3224;border-radius:19px;min-height:148px;
+}
+.dineout-page .dineout-hero h1{font:700 clamp(32px,4vw,56px)/1.08 Georgia,serif !important;letter-spacing:-.025em;margin:6px 0 10px!important;color:#fff4eb!important}
+.dineout-page .dineout-hero .hero-card{max-width:230px}
+.dineout-page .fk-search-panel{display:flex!important;flex-direction:column!important;gap:12px!important;grid-column:1/-1!important;width:100%!important;margin:0 0 22px!important}
+.dineout-page .fk-search-panel .location-card,.dineout-page .fk-search-panel .mood-card,.dineout-page .fk-filters-panel{
+ display:block!important;position:relative!important;float:none!important;flex:none!important;
+ width:100%!important;max-width:none!important;min-height:0!important;height:auto!important;
+ margin:0!important;padding:20px clamp(16px,2.6vw,28px)!important;
+ border:1px solid #603322!important;border-radius:17px!important;
+ background:linear-gradient(110deg,#30140d,#231008)!important;box-shadow:0 6px 24px #0002;
+}
+.dineout-page .fk-section-head{display:flex!important;align-items:center!important;gap:12px!important;margin-bottom:12px!important;text-align:left!important}
+.dineout-page .fk-section-head h2{font:700 21px/1.25 Georgia,serif!important;color:#fff0e6!important;margin:0 0 4px!important;text-align:left!important}
+.dineout-page .fk-section-head p{color:#d9bdac!important;font-size:13px!important;margin:0!important;text-align:left!important}
+.dineout-page .fk-section-symbol{display:grid;place-items:center;flex:0 0 42px;width:42px;height:42px;border-radius:12px;background:#522015;color:#ff8c55}
+.dineout-page .fk-location-row{display:grid!important;grid-template-columns:minmax(0,1fr) auto!important;gap:12px!important;align-items:center!important}
+.dineout-page .location-search,.dineout-page .fk-name-search{position:relative!important;display:block!important;min-width:0!important;width:100%!important}
+.dineout-page .fk-location-row .location-input-wrap{display:flex!important;position:relative!important;align-items:center!important;gap:9px!important;min-width:0!important;width:100%!important;background:#fffaf7!important;border:1px solid #dbc8bd!important;border-radius:10px!important;padding:0 12px!important;height:48px!important}
+.dineout-page .fk-location-row .location-input-wrap input{flex:1!important;min-width:0!important;width:100%!important;border:0!important;background:transparent!important;color:#321b14!important;padding:10px 2px!important;font-size:14px!important;box-shadow:none!important}
+.dineout-page .fk-location-row .location-input-wrap svg{color:#794734!important;flex-shrink:0}
+.dineout-page .fk-gps-button{white-space:nowrap!important;display:flex!important;align-items:center!important;justify-content:center!important;gap:8px!important;min-height:48px!important;width:auto!important;padding:0 17px!important;border:1px solid #d8663c!important;background:#25120d!important;color:#ffe7d9!important;border-radius:10px!important}
+.dineout-page .fk-help-text{font-size:12px!important;color:#caad9d!important;margin:9px 0 0!important;line-height:1.5!important}
+.dineout-page .location-suggestions{position:relative!important;z-index:20!important;width:100%!important;max-width:none!important;margin-top:8px!important}
+.dineout-page .fk-name-search{display:flex!important;align-items:center!important;gap:12px!important;padding:0 14px!important;min-height:48px!important;background:#180b07!important;border:1px solid #724734!important;border-radius:10px!important;color:#f5b18d!important}
+.dineout-page .fk-name-search input{width:100%!important;min-width:0!important;flex:1!important;min-height:46px!important;background:transparent!important;border:0!important;box-shadow:none!important;color:#fff2e9!important;font-size:14px!important;padding:8px 0!important}
+.dineout-page .fk-name-search input::placeholder{color:#b9a498!important}
+.dineout-page .fk-filters-title{display:flex!important;justify-content:space-between!important;align-items:center!important;gap:15px!important;margin-bottom:14px!important}
+.dineout-page .fk-filters-title .fk-section-head{margin:0!important}
+.dineout-page .fk-reset{width:auto!important;min-width:115px;padding:9px 12px!important;border:1px solid #98523b!important;border-radius:9px!important;color:#fce7da!important;background:transparent!important}
+.dineout-page .fk-filter-grid{display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:18px 16px!important;align-items:end!important}
+.dineout-page .fk-field{min-width:0!important;display:flex!important;flex-direction:column!important;gap:8px!important;font-size:12px!important;color:#f6dfd0!important;font-weight:600!important}
+.dineout-page .fk-field>label{font-size:12px!important;color:#f6dfd0!important}
+.dineout-page .fk-field select{display:block!important;width:100%!important;min-width:0!important;min-height:43px!important;color:#fbece2!important;background:#1d0d08!important;border:1px solid #734431!important;border-radius:9px!important;padding:9px!important;font-size:13px!important}
+.dineout-page .fk-choice-row{display:flex!important;flex-wrap:wrap!important;gap:8px!important}
+.dineout-page .fk-choice-row button,.dineout-page .fk-filter-grid .osm-segments button{width:auto!important;flex:1 0 auto!important;min-height:40px!important;padding:9px 12px!important;border:1px solid #74503e!important;border-radius:9px!important;background:#2d1811!important;color:#f8e9df!important;font-size:12px!important;white-space:normal!important}
+.dineout-page .fk-choice-row button.active,.dineout-page .fk-filter-grid .osm-segments button.active{background:#ee663a!important;color:#1e0d07!important;border-color:#f77c4e!important;font-weight:700!important}
+.dineout-page .fk-filter-grid .osm-segments{display:flex!important;flex-wrap:wrap!important;gap:7px!important}
+.dineout-page .fk-radius{justify-content:center!important}
+.dineout-page .fk-radius strong{color:#ff9368!important}
+.dineout-page .fk-radius input{width:100%!important;accent-color:#f47647!important}
+.dineout-page .fk-open-filter{display:flex!important;align-items:center!important;gap:9px!important;flex-wrap:wrap!important;border:1px solid #734431!important;border-radius:10px!important;padding:12px!important;min-height:46px!important;color:#f7e4d9!important;font-weight:700!important}
+.dineout-page .fk-open-filter input{width:17px!important;height:17px!important;accent-color:#ef6e42!important}
+.dineout-page .fk-open-filter small{width:100%;font-size:10px;font-weight:400;color:#c4a999}
+.dineout-page .fk-search-submit{display:flex!important;align-items:center!important;justify-content:center!important;gap:10px!important;width:100%!important;max-width:none!important;min-height:49px!important;margin-top:19px!important;border-radius:11px!important;background:linear-gradient(90deg,#ff8453,#f35f35)!important;color:#1d0a05!important;font-weight:800!important;font-size:15px!important}
+.dineout-page:not(.dineout-plan-page) .results-layout{display:grid!important;grid-template-columns:minmax(0,1.45fr) minmax(330px,1fr)!important;gap:18px!important;align-items:start!important;width:100%!important;grid-column:1/-1!important;margin-top:12px!important}
+.dineout-page .restaurant-list{min-width:0!important;width:100%!important;max-width:none!important}
+.dineout-page .map-panel{min-width:0!important;width:100%!important;max-width:none!important;position:sticky!important;top:18px!important;overflow:hidden!important;border-radius:16px!important;min-height:390px!important}
+.dineout-page .map-panel>div{min-height:390px!important}
+.dineout-page .results-heading h2{font:700 clamp(25px,3vw,34px)/1.2 Georgia,serif!important;color:#fff0e6!important}
+.dineout-page .restaurant-card{min-width:0!important;border:1px solid #643728!important;border-radius:13px!important;background:#2a150d!important;margin:0 0 12px!important;overflow:hidden!important}
+.dineout-page .restaurant-card .restaurant-actions{display:flex!important;gap:8px!important;flex-wrap:wrap!important}
+.dineout-page .fk-open-badge,.dineout-page .fk-closed-badge{display:inline-block;margin:5px 5px 5px 0;padding:4px 8px;border-radius:99px;font-size:11px;font-weight:700}
+.dineout-page .fk-open-badge{background:#1c5131;color:#c5f8d6}.dineout-page .fk-closed-badge{background:#4b2e27;color:#f2c6b8}
+@media(max-width:1000px){.dineout-page .fk-filter-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}.dineout-page:not(.dineout-plan-page) .results-layout{grid-template-columns:minmax(0,1fr)!important}.dineout-page .map-panel{position:relative!important;top:auto!important}}
+@media(max-width:620px){.dineout-page:not(.dineout-plan-page){padding:14px 12px 60px!important}.dineout-page .fk-location-row{grid-template-columns:1fr!important}.dineout-page .fk-gps-button{width:100%!important}.dineout-page .fk-filter-grid{grid-template-columns:1fr!important}.dineout-page .fk-filters-title{align-items:flex-start!important;flex-wrap:wrap!important}.dineout-page .dineout-hero .hero-card{display:none!important}}
+
+/* Compact discovery controls — retain existing FoodKindl colours */
+.dineout-page .fk-discovery-panel{margin-bottom:16px!important}
+.dineout-page .fk-discovery-card{padding:22px clamp(16px,2.5vw,28px)!important}
+.dineout-page .fk-discovery-fields{display:grid;grid-template-columns:1.2fr 1fr;gap:16px;align-items:start}
+.dineout-page .fk-discovery-fields label,.dineout-page .fk-quick-group>span{display:block;color:#f4d5c4;font-size:12px;font-weight:700;margin:0 0 8px}
+.dineout-page .fk-discovery-fields .location-input-wrap{min-height:48px}
+.dineout-page .fk-location-success{font-size:12px;color:#9ee5b3;margin:8px 0 0}
+.dineout-page .fk-quick-filters{display:flex;flex-wrap:wrap;align-items:end;gap:16px;margin-top:18px;padding-top:17px;border-top:1px solid #633a2c}
+.dineout-page .fk-quick-group{min-width:0}
+.dineout-page .fk-source{flex:0 1 auto}
+.dineout-page .fk-place-type{flex:0 1 auto}
+.dineout-page .fk-quick-filters .fk-choice-row,.dineout-page .fk-quick-filters .osm-segments{display:flex;gap:7px;flex-wrap:wrap}
+.dineout-page .fk-quick-filters button:not(.fk-more-filters-toggle){border:1px solid #79503e;border-radius:9px;padding:10px 12px;background:#2d1811;color:#f8e9df;font-size:12px;cursor:pointer}
+.dineout-page .fk-quick-filters button.active{background:#ee663a!important;color:#210c04!important;border-color:#ee663a!important;font-weight:700}
+.dineout-page .fk-quick-open{display:flex;align-items:center;gap:8px;color:#ffeadc;font-size:12px;font-weight:700;margin-bottom:10px;cursor:pointer}
+.dineout-page .fk-quick-open input{accent-color:#ff794a;width:17px;height:17px}
+.dineout-page .fk-more-filters-toggle{margin-left:auto;margin-bottom:3px;display:flex;align-items:center;gap:7px;border:1px solid #9a5d43;border-radius:9px;padding:12px 14px;background:#381d14;color:#ffdcc9;cursor:pointer;font-size:12px}
+.dineout-page .fk-advanced-filters{margin-top:16px;padding:16px;background:#1e0e09;border:1px solid #754533;border-radius:12px}
+.dineout-page .fk-advanced-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.dineout-page .fk-advanced-head h3{font:700 17px Georgia,serif;color:#fff2e6;margin:0}
+.dineout-page .fk-advanced-filters .fk-filter-grid{grid-template-columns:repeat(4,minmax(0,1fr))!important}
+.dineout-page .fk-advanced-filters .osm-segments{display:flex;gap:6px;flex-wrap:wrap}
+.dineout-page .fk-advanced-filters .osm-segments button{flex:1 1 auto;border:1px solid #79503e;border-radius:9px;padding:10px;background:#2d1811;color:#f8e9df;cursor:pointer}
+.dineout-page .fk-advanced-filters .osm-segments button.active{background:#ee663a;color:#27120c;font-weight:700}
+.dineout-page .fk-results-tools{display:flex;align-items:center;gap:14px;flex-wrap:wrap;color:#e8c5b2;font-size:12px}
+.dineout-page .fk-results-tools label{display:flex;gap:8px;align-items:center}
+.dineout-page .fk-results-tools select{background:#25100b;border:1px solid #82513b;color:#fff0e8;border-radius:8px;padding:8px;min-width:132px}
+@media(max-width:950px){.dineout-page .fk-discovery-fields{grid-template-columns:1fr}.dineout-page .fk-advanced-filters .fk-filter-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}}
+@media(max-width:620px){.dineout-page .fk-quick-filters{display:grid;grid-template-columns:1fr;gap:12px}.dineout-page .fk-more-filters-toggle{margin-left:0;width:100%;justify-content:center}.dineout-page .fk-advanced-filters .fk-filter-grid{grid-template-columns:1fr!important}.dineout-page .fk-results-tools{justify-content:flex-start}}
+
+
+/* Dashboard-style shell: same visual language as FoodKindl dashboard. */
+.dineout-page.fk-dashboard-shell:not(.dineout-plan-page){
+  display:grid!important;grid-template-columns:190px minmax(0,1fr)!important;gap:18px!important;
+  max-width:1660px!important;padding:18px 22px 65px!important;background:#100805!important;
+  align-items:start!important;
+}
+.fk-dine-main-content{min-width:0;width:100%}
+.dineout-page.fk-dashboard-shell:not(.dineout-plan-page) > .fk-dine-main-content > *{max-width:100%;box-sizing:border-box}
+.fk-dine-sidebar{position:sticky;top:18px;min-width:0;padding:20px 10px;border:1px solid #4c281d;border-radius:15px;background:#211009;min-height:440px}
+.fk-dine-sidebar-title{padding:5px 12px 21px;font:800 22px Georgia,serif;color:#fff0e6}
+.fk-dine-sidebar-title span{color:#f47746}
+.fk-dine-sidebar-nav{display:grid;gap:7px}
+.fk-dine-sidebar-nav button{width:100%;display:block;border:0;border-radius:9px;background:transparent;padding:13px 12px;color:#e4d4c9;text-align:left;font:600 13px Arial,sans-serif;cursor:pointer}
+.fk-dine-sidebar-nav button:hover{background:#452215}
+.fk-dine-sidebar-nav button.active{color:#fff;background:linear-gradient(90deg,#f46a34,#bc390e)}
+.fk-dine-sidebar-nav button.fk-dine-sos{color:#ff7357;background:#33110e;border:1px solid #5d2119}
+.dineout-page.fk-dashboard-shell:not(.dineout-plan-page) .results-layout{grid-template-columns:minmax(0,1.3fr) minmax(360px,.95fr)!important;gap:18px!important}
+.dineout-page .map-panel.fk-dine-map-card{padding:14px!important;min-height:0!important;overflow:visible!important;background:#25120d!important;border:1px solid #6b3928!important;box-shadow:none!important}
+.dineout-page .map-panel.fk-dine-map-card > div{min-height:0!important}
+.fk-dine-map-heading{display:flex;align-items:start;justify-content:space-between;gap:10px;margin:2px 0 13px}
+.fk-dine-map-eyebrow{color:#f58b59;font-weight:800;font-size:10px;letter-spacing:.12em}
+.fk-dine-map-heading h2{font:700 20px/1.25 Georgia,serif;color:#fff0e7;margin:6px 0!important;overflow-wrap:anywhere}
+.fk-dine-map-heading p{font:400 12px/1.5 Arial,sans-serif;color:#cda990;margin:0}
+.fk-dine-map-reset{flex:0 0 auto;background:#3a1e15;border:1px solid #b86d48;border-radius:9px;color:#ffe9da;padding:9px 11px;cursor:pointer}
+.dineout-page .fk-dine-map-canvas{height:420px!important;min-height:420px!important;overflow:hidden;border-radius:12px;background:#3e241a;position:relative}
+.dineout-page .fk-dine-map-canvas > *{width:100%!important;height:100%!important;min-height:420px!important}
+.fk-dine-selected-summary{display:grid;gap:7px;margin-top:13px;color:#fff0e7}
+.fk-dine-selected-summary strong{font-size:16px}.fk-dine-selected-summary span{font-size:12px;color:#d7b5a2}
+.fk-dine-map-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px}
+.fk-dine-map-actions button{border:1px solid #a46145;color:#fce0cf;background:#3a1d12;padding:10px 12px;border-radius:9px;cursor:pointer}
+.fk-dine-map-actions button.fk-dine-map-primary{border-color:#ef7040;background:#ed653b;color:#180905;font-weight:800}
+.fk-dine-map-tip{color:#cba994;font-size:12px;margin:12px 2px 2px}
+@media(max-width:1250px){.dineout-page.fk-dashboard-shell:not(.dineout-plan-page){grid-template-columns:155px minmax(0,1fr)!important}.dineout-page.fk-dashboard-shell:not(.dineout-plan-page) .results-layout{grid-template-columns:minmax(0,1fr)!important}.dineout-page .map-panel.fk-dine-map-card{position:relative!important;top:auto!important}}
+@media(max-width:800px){.dineout-page.fk-dashboard-shell:not(.dineout-plan-page){display:block!important;padding:14px 12px 50px!important}.fk-dine-sidebar{position:relative;top:auto;min-height:0;margin-bottom:15px;padding:10px}.fk-dine-sidebar-title{padding:4px 9px}.fk-dine-sidebar-nav{display:flex;overflow-x:auto;gap:4px}.fk-dine-sidebar-nav button{width:auto;white-space:nowrap;padding:10px}.dineout-page .fk-dine-map-canvas{height:350px!important;min-height:350px!important}}
+
+
+/* FILTER SIDEBAR — replaces redundant dashboard navigation */
+.dineout-page.fk-dashboard-shell:not(.dineout-plan-page){
+  grid-template-columns:minmax(235px,268px) minmax(0,1fr)!important;
+  max-width:1740px!important;gap:18px!important;
+}
+.dineout-page .fk-filter-sidebar{
+  padding:0!important;min-height:0!important;overflow:hidden;
+  background:linear-gradient(170deg,#32180f,#200e09)!important;
+  border:1px solid #6b3a28!important;top:18px!important;
+}
+.fk-filter-side-header{padding:21px 18px 15px;border-bottom:1px solid #5b3023}
+.fk-filter-side-title{display:flex;align-items:center;gap:9px;font:700 23px Georgia,serif;color:#fff1e8}
+.fk-filter-side-title svg{color:#ff8857}
+.fk-filter-side-header p{color:#d5b1a0;font-size:12px;margin:7px 0 0}
+.fk-filter-side-body{padding:14px 15px 18px;display:flex;flex-direction:column;gap:17px}
+.fk-side-group{display:flex;flex-direction:column;gap:9px;min-width:0}
+.fk-side-label{font-size:12px;font-weight:700;color:#f9e3d5}
+.fk-side-field select{min-height:42px;width:100%;background:#1b0c07;border:1px solid #80503c;color:#fff1e7;padding:9px 10px;border-radius:9px}
+.fk-side-field input[type=range]{width:100%;accent-color:#f97948}
+.fk-side-field strong{color:#ff966c}
+.fk-side-choice{display:flex;flex-wrap:wrap;gap:7px}
+.fk-side-choice button{flex:1 1 auto;min-height:35px;border:1px solid #80513e;background:#2b170f;color:#fbe5d9;border-radius:9px;padding:8px 9px;cursor:pointer;font-size:12px;text-align:center}
+.fk-side-choice button.active{background:#f57646!important;color:#2a1007!important;border-color:#f57646!important;font-weight:800!important}
+.fk-side-source button{flex-basis:100%}
+.fk-side-check{display:flex;flex-direction:row;align-items:flex-start;gap:10px;padding:12px;border:1px solid #81503c;border-radius:10px;cursor:pointer}
+.fk-side-check input{width:17px;height:17px;accent-color:#ff794a;flex-shrink:0}
+.fk-side-check span{font-size:13px;font-weight:700;color:#fff0e6}
+.fk-side-check small{display:block;font-size:11px;font-weight:400;color:#ba9d90;margin-top:4px}
+.fk-side-reset{border:1px solid #a56649;border-radius:9px;background:#3f2117;color:#ffe3d3;min-height:39px;cursor:pointer}
+.fk-side-footnote{font-size:11px;line-height:1.55;color:#cba695;margin:0}
+.dineout-page .fk-discovery-fields{grid-template-columns:minmax(0,1.2fr) minmax(0,1fr)}
+.dineout-page .fk-discovery-card{padding:20px!important}
+.dineout-page .fk-search-submit{margin-top:14px!important}
+@media(max-width:1100px){.dineout-page.fk-dashboard-shell:not(.dineout-plan-page){grid-template-columns:210px minmax(0,1fr)!important}}
+@media(max-width:800px){
+ .dineout-page.fk-dashboard-shell:not(.dineout-plan-page){display:block!important}
+ .dineout-page .fk-filter-sidebar{position:relative!important;top:auto!important;min-height:0!important;margin-bottom:16px!important}
+ .fk-filter-side-body{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:15px}
+ .fk-side-source button{flex-basis:auto}
+}
+@media(max-width:480px){.fk-filter-side-body{grid-template-columns:1fr}}
+
+/* MARKETPLACE LAYOUT: Filters in left rail, uncluttered search + results on right */
+.dineout-page.fk-dashboard-shell:not(.dineout-plan-page) {
+  grid-template-columns: minmax(235px, 265px) minmax(0,1fr)!important;
+  gap: 20px!important;
+  align-items:start!important;
+}
+.dineout-page .fk-filter-sidebar { position:sticky!important; top:16px!important; max-height:calc(100vh - 30px); overflow-y:auto!important; }
+.dineout-page .fk-dine-main-content { min-width:0; }
+.dineout-page .dineout-hero { margin-bottom:12px!important; }
+.dineout-page .dineout-hero .hero-card {display:none!important;}
+.dineout-page .fk-discovery-panel {margin:0 0 17px!important;}
+.dineout-page .fk-discovery-card {padding:20px 22px!important;}
+.dineout-page .fk-discovery-fields { grid-template-columns:minmax(0, 1.15fr) minmax(0,1fr)!important; gap:18px!important; }
+.dineout-page .fk-search-submit {margin-top:14px!important;}
+.dineout-page .results-layout {margin-top:12px!important;}
+.dineout-page .fk-side-group {margin:0;}
+.dineout-page .fk-filter-side-header{position:sticky;top:0;z-index:2;background:#2c150d;}
+.dineout-page .fk-side-reset{font-weight:700;}
+@media(max-width:960px){
+  .dineout-page.fk-dashboard-shell:not(.dineout-plan-page){grid-template-columns:210px minmax(0,1fr)!important;gap:12px!important;}
+  .dineout-page .fk-discovery-fields{grid-template-columns:1fr!important;}
+}
+@media(max-width:700px){
+  .dineout-page.fk-dashboard-shell:not(.dineout-plan-page){display:block!important;}
+  .dineout-page .fk-filter-sidebar{position:relative!important;max-height:none!important;top:auto!important;}
+  .dineout-page .fk-filter-side-body{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;}
+}
+@media(max-width:440px){.dineout-page .fk-filter-side-body{grid-template-columns:1fr;}}
+
+/* Focused restaurant map, browser GPS and driving route */
+.dineout-page .fk-focused-map-root{width:100%;height:100%;min-height:420px;display:flex;flex-direction:column;background:#29170f}
+.dineout-page .fk-focused-map-canvas{flex:1;min-height:350px;width:100%;height:100%}
+.dineout-page .fk-focused-map-status{color:#ffe7d7;background:#321c14;padding:11px 13px;font-size:13px;line-height:1.5;margin:0;border-top:1px solid #70422d}
+.dineout-page .fk-dine-map-canvas:has(.fk-focused-map-root){height:auto!important;min-height:420px!important}
+.dineout-page .fk-dine-map-canvas:has(.fk-focused-map-root)>.fk-focused-map-root{min-height:420px!important}

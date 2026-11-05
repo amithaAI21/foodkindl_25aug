@@ -53,7 +53,7 @@ const EMPTY_RESTAURANT = {
   wheelchair_accessible: false,
   serves_vegetarian: true,
   serves_non_vegetarian: true,
-  accepts_foodkindl_booking: false,
+  accepts_foodkindl_booking: true,
 };
 
 const EMPTY_MENU_FORM = {

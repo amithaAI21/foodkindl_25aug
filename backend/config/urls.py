@@ -2,7 +2,7 @@ from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import include, path
-
+from community.views import reverse_geocode
 from rest_framework_simplejwt.views import (
     TokenRefreshView,
 )
@@ -74,6 +74,11 @@ urlpatterns = [
     path("api/", include("cooktogether.urls")),
     path("api/dineout/", include("dineout.urls")),
     path("api/foodwalk/", include("foodwalk.urls")),
+    path(
+    "api/geo/reverse/",
+    reverse_geocode,
+    name="reverse-geocode",
+),
 
 ]
 

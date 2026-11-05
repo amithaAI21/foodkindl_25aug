@@ -17,6 +17,7 @@ import {
 } from "react-router-dom";
 
 import { useAuth } from "../context/AuthContext";
+import api from "../api";
 
 import "../styles/login.css";
 
@@ -101,6 +102,9 @@ export default function Login() {
   });
 
   const [error, setError] = useState("");
+  const [verificationNeeded, setVerificationNeeded] = useState(false);
+  const [resendingVerification, setResendingVerification] = useState(false);
+  const [resendMessage, setResendMessage] = useState("");
 
   const [submitting, setSubmitting] = useState(false);
 
@@ -147,6 +151,7 @@ export default function Login() {
     }));
 
     setError("");
+    setResendMessage("");
   }
 
   /* =======================================================
@@ -199,6 +204,36 @@ export default function Login() {
   }
 
   /* =======================================================
+     RESEND EMAIL VERIFICATION
+     The backend returns the same message for unknown addresses.
+  ======================================================= */
+
+  async function resendVerification() {
+    if (!email) {
+      setResendMessage("Enter your email address above to resend the verification link.");
+      return;
+    }
+
+    setResendingVerification(true);
+    setResendMessage("");
+    try {
+      await api.post("/auth/email/verification/resend/", { email });
+      setResendMessage(
+        "If your account is awaiting verification, a new link will be sent. Check Inbox and Spam."
+      );
+    } catch (err) {
+      console.error("FoodKindl verification resend failed:", err?.response?.status || err?.message);
+      setResendMessage(
+        err?.response?.status === 429
+          ? "Too many requests. Please try again later."
+          : "Unable to send the verification email right now. Please try again."
+      );
+    } finally {
+      setResendingVerification(false);
+    }
+  }
+
+  /* =======================================================
      SUBMIT LOGIN
   ======================================================= */
 
@@ -211,6 +246,7 @@ export default function Login() {
 
     setSubmitting(true);
     setError("");
+    setResendMessage("");
 
     let loggedIn = authenticated;
 
@@ -246,6 +282,10 @@ export default function Login() {
       await finishLogin(currentUser);
 
     } catch (err) {
+      const rawCode = err?.response?.data?.code;
+      const codes = Array.isArray(rawCode) ? rawCode : [rawCode];
+      const needsEmailVerification = codes.includes("email_not_verified");
+      setVerificationNeeded(needsEmailVerification);
       console.error("FoodKindl login error:", {
         status: err?.response?.status,
         data: err?.response?.data,
@@ -370,6 +410,38 @@ export default function Login() {
               >
                 The verification link is invalid or expired.
                 Please request a new link.
+              </div>
+            )}
+
+            {/* RESEND VERIFICATION — for blocked logins and expired links */}
+            {(verificationNeeded || verification === "0") && (
+              <div className="login-verification-help" style={{
+                padding: "14px 16px",
+                marginBottom: 16,
+                border: "1px solid rgba(239, 98, 63, 0.5)",
+                borderRadius: 12,
+                background: "rgba(239, 98, 63, 0.08)",
+              }}>
+                <strong>Verify your email to unlock FoodKindl</strong>
+                <p style={{ margin: "8px 0", fontSize: 13 }}>
+                  Check your inbox and Spam folder. If you did not receive a link,
+                  enter your email below and request another one.
+                </p>
+                <button
+                  type="button"
+                  disabled={resendingVerification || submitting}
+                  onClick={resendVerification}
+                  style={{
+                    background: "#e76b43", color: "white", border: 0,
+                    borderRadius: 8, padding: "10px 14px", cursor: "pointer",
+                    fontWeight: 700,
+                  }}
+                >
+                  {resendingVerification ? "Sending…" : "Resend verification email"}
+                </button>
+                {resendMessage && <p role="status" style={{ margin: "10px 0 0", fontSize: 13 }}>
+                  {resendMessage}
+                </p>}
               </div>
             )}
 

@@ -448,3 +448,48 @@ body:has(.ai-kitchen-simple) { background: #21110b; }
     transition: none;
   }
 }
+
+
+.ai-amazon-shopping {
+  margin-top: 24px;
+  padding: 22px;
+  border: 1px solid #78442c;
+  border-radius: 16px;
+  background: #21120d;
+  color: #fff;
+}
+
+.ai-amazon-shopping h3 {
+  margin: 0 0 8px;
+}
+
+.ai-amazon-shopping p,
+.ai-amazon-shopping small {
+  color: #d6bcb0;
+  line-height: 1.5;
+}
+
+.ai-amazon-shopping ul {
+  padding-left: 22px;
+  margin: 16px 0;
+}
+
+.ai-amazon-button {
+  display: inline-flex;
+  margin: 12px 0;
+  padding: 13px 22px;
+  border-radius: 10px;
+  background: #ff9900;
+  color: #171717;
+  text-decoration: none;
+  font-weight: 700;
+}
+
+.ai-amazon-button:hover {
+  background: #ffb733;
+}
+
+.ai-amazon-shopping small {
+  display: block;
+  margin-top: 10px;
+}

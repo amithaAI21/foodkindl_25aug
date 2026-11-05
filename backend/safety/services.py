@@ -112,18 +112,24 @@ def get_user_name(
 # LOCATION LINK
 # ============================================================
 
-def build_location_url(
-    sos_event,
-):
-    """
-    Build a Google Maps location URL when
-    latitude and longitude are available.
-    """
+def build_location_url(sos_event):
+
+    frontend_url = getattr(
+        settings,
+        "FOODKINDL_FRONTEND_URL",
+        "",
+    ).rstrip("/")
+
+    if frontend_url and sos_event.tracking_token:
+
+        return (
+            f"{frontend_url}/sos/track/"
+            f"{sos_event.tracking_token}/"
+        )
 
     if (
         sos_event.latitude is not None
-        and
-        sos_event.longitude is not None
+        and sos_event.longitude is not None
     ):
 
         return (
@@ -131,7 +137,6 @@ def build_location_url(
             f"{sos_event.latitude},"
             f"{sos_event.longitude}"
         )
-
 
     return "Location unavailable."
 

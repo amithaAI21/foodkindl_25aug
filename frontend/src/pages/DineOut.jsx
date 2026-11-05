@@ -1,12 +1,12 @@
+
 // src/pages/DineOut.jsx
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
 
-import RestaurantRouteMap from "../components/RestaurantRouteMap";
 
 import RestaurantDashboard, { RestaurantSummary } from "../components/RestaurantDashboard";
 
-import GoogleRestaurantMap from "../components/GoogleRestaurantMap";
+import FocusedRestaurantMap from "../components/FocusedRestaurantMap";
 
 import {
 
@@ -51,6 +51,8 @@ import "../styles/DineOutReference.css";
 import "../styles/DineOutOSM.css";
 
 import "../styles/DineOutPlanPage.css";
+import "../styles/DineOutPremium.css";
+import "../styles/FocusedRestaurantMapFix.css";
 
 import api from "../api";
 
@@ -210,6 +212,110 @@ function cuisineTokens(restaurant) {
 
     .filter(Boolean);
 
+}
+
+// A Google Places "open now" flag is the most reliable source when available.
+// When absent, derive a best-effort status from weekly hours, including
+// opening intervals that continue after midnight (e.g. Sat 6:30 AM–1 AM Sun).
+const RESTAURANT_DAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+
+function parseRestaurantClock(value) {
+  const match = String(value || "").replace(/[\u200e\u200f\u202f\u00a0]/g, " ")
+    .match(/(\d{1,2})(?::(\d{2}))?\s*([AP])\.?M\.?/i);
+  if (!match) return null;
+  const hour = Number(match[1]);
+  const minute = Number(match[2] || 0);
+  if (hour < 1 || hour > 12 || minute > 59) return null;
+  return (hour % 12) * 60 + minute + (match[3].toUpperCase() === "P" ? 720 : 0);
+}
+
+function weeklyHoursOpenNow(restaurant, now = new Date()) {
+  const hoursCandidates = [
+    restaurant?.currentOpeningHours,
+    restaurant?.current_opening_hours,
+    restaurant?.regularOpeningHours,
+    restaurant?.regular_opening_hours,
+    restaurant?.opening_hours,
+  ];
+  const descriptions = hoursCandidates.map(hours =>
+    Array.isArray(hours?.weekdayDescriptions) ? hours.weekdayDescriptions
+    : Array.isArray(hours?.weekday_descriptions) ? hours.weekday_descriptions
+    : Array.isArray(hours?.weekday_text) ? hours.weekday_text
+    : typeof hours === "string"
+      ? hours.split(/;\s*(?=(?:Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday)\s*:)/i)
+      : []
+  ).find(value => value.length) || [];
+  if (!descriptions.length) return null;
+
+  const timezone = restaurant?.timeZoneId || restaurant?.timezone || restaurant?.time_zone;
+  const address = String(restaurant?.formattedAddress || restaurant?.formatted_address || restaurant?.address || "");
+  // For India-based listings, use IST. Otherwise require an explicit timezone;
+  // browser-local time can be wrong for a restaurant in another country.
+  const zone = timezone || (/\bIndia\b|\bBengaluru\b|\bBangalore\b|\bKarnataka\b/i.test(address)
+    ? "Asia/Kolkata" : null);
+  if (!zone) return null;
+
+  let dayIndex;
+  let minuteNow;
+  try {
+    const parts = new Intl.DateTimeFormat("en-US", {
+      timeZone: zone, weekday: "long", hour: "numeric", minute: "2-digit", hourCycle: "h23",
+    }).formatToParts(now);
+    const dayName = parts.find(p => p.type === "weekday")?.value;
+    dayIndex = RESTAURANT_DAYS.indexOf(dayName);
+    minuteNow = Number(parts.find(p => p.type === "hour")?.value) * 60
+      + Number(parts.find(p => p.type === "minute")?.value);
+    if (dayIndex < 0 || !Number.isFinite(minuteNow)) return null;
+  } catch {
+    return null;
+  }
+
+  const entries = Object.create(null);
+  descriptions.forEach(text => {
+    const match = String(text).match(/^\s*(Sunday|Monday|Tuesday|Wednesday|Thursday|Friday|Saturday)\s*:\s*(.*)$/i);
+    if (match) entries[RESTAURANT_DAYS.find(day => day.toLowerCase() === match[1].toLowerCase())] = match[2].trim();
+  });
+  const currentDay = RESTAURANT_DAYS[dayIndex];
+  const previousDay = RESTAURANT_DAYS[(dayIndex + 6) % 7];
+  if (!(currentDay in entries) || !(previousDay in entries)) return null;
+
+  function intervals(dayName) {
+    const value = entries[dayName] || "";
+    if (/^open 24 hours$/i.test(value)) return [[0, 1440]];
+    if (/^closed$/i.test(value)) return [];
+    // Typical Google weekday descriptions use an en dash or thin-spaced en dash.
+    const pieces = value.split(/\s*[,;]\s*(?=\d{1,2}(?::\d{2})?\s*[AP]M)/i);
+    const parsed = [];
+    for (const piece of pieces) {
+      const match = piece.replace(/[\u200e\u200f\u202f\u00a0\u2009]/g, " ")
+        .match(/^\s*(.*?)\s*[–—-]\s*(.*?)\s*$/);
+      if (!match) return null;
+      const from = parseRestaurantClock(match[1]);
+      const to = parseRestaurantClock(match[2]);
+      if (from === null || to === null) return null;
+      parsed.push([from, to <= from ? to + 1440 : to]);
+    }
+    return parsed;
+  }
+
+  const today = intervals(currentDay);
+  const yesterday = intervals(previousDay);
+  if (!today || !yesterday) return null;
+  if (today.some(([start, end]) => minuteNow >= start && minuteNow < end)) return true;
+  if (yesterday.some(([, end]) => end > 1440 && minuteNow < end - 1440)) return true;
+  return false;
+}
+
+function openNowStatus(restaurant) {
+  const raw = restaurant?.currentOpeningHours?.openNow
+    ?? restaurant?.current_opening_hours?.open_now
+    ?? restaurant?.opening_hours?.open_now
+    ?? restaurant?.openNow
+    ?? restaurant?.open_now
+    ?? restaurant?.is_open;
+  if (raw === true || raw === 1 || raw === "true") return true;
+  if (raw === false || raw === 0 || raw === "false") return false;
+  return weeklyHoursOpenNow(restaurant);
 }
 
 function cuisineLabel(token) {
@@ -480,6 +586,7 @@ export default function DineOut() {
 
   const [searchedRestaurantQuery, setSearchedRestaurantQuery] = useState("");
   const [minimumRating, setMinimumRating] = useState(0);
+  const [openNowOnly, setOpenNowOnly] = useState(false);
   const [restaurantSort, setRestaurantSort] = useState("distance");
 
   const [locationSuggestions, setLocationSuggestions] = useState([]);
@@ -489,6 +596,7 @@ export default function DineOut() {
   const [selectedRestaurant, setSelectedRestaurant] = useState(() => routeLocation.state?.selectedRestaurant ?? null);
 
   const [highlightedRestaurant, setHighlightedRestaurant] = useState(null);
+  const [focusRequest, setFocusRequest] = useState(0);
 
   const [detailsRestaurant, setDetailsRestaurant] = useState(null);
 
@@ -531,6 +639,9 @@ export default function DineOut() {
   ---------------------------------------------------------- */
 
   const [locationLoading, setLocationLoading] = useState(false);
+  const [gpsLoading, setGpsLoading] = useState(false);
+  const [gpsNotice, setGpsNotice] = useState("");
+  const [gpsOrigin, setGpsOrigin] = useState(null);
 
   const [restaurantLoading, setRestaurantLoading] = useState(false);
 
@@ -797,12 +908,13 @@ export default function DineOut() {
         (foodFilter === "veg" && ["yes", "only"].includes(vegetarian));
 
       const matchesCuisine = cuisine === "All cuisines" || cuisineValues.includes(cuisine);
+      const matchesOpen = !openNowOnly || openNowStatus(restaurant) === true;
 
       const matchesSearch = !query || `${name} ${cuisineText}`.toLowerCase().includes(query);
       const numericRating = Number(restaurant?.rating);
       const matchesRating = minimumRating === 0 || (restaurant?.rating != null && Number.isFinite(numericRating) && numericRating >= minimumRating);
 
-      if (!matchesType || !matchesFood || !matchesCuisine || !matchesSearch || !matchesRating) return false;
+      if (!matchesType || !matchesFood || !matchesCuisine || !matchesSearch || !matchesRating || !matchesOpen) return false;
 
       seen.add(key);
 
@@ -814,7 +926,7 @@ export default function DineOut() {
       return (Number(a.distance_km) || 0) - (Number(b.distance_km) || 0);
     });
 
-  }, [restaurants, searchedRestaurantQuery, placeType, foodFilter, cuisine, restaurantSource, minimumRating, restaurantSort]);
+  }, [restaurants, searchedRestaurantQuery, placeType, foodFilter, cuisine, restaurantSource, minimumRating, restaurantSort, openNowOnly]);
 
   useEffect(() => {
 
@@ -987,7 +1099,7 @@ export default function DineOut() {
 
       setSearchedRestaurantQuery(queryOverride.trim());
 
-      setCuisine("All cuisines");
+      // Keep the selected cuisine when refreshing search results.
 
       const searchedMetres = Number(response.data?.searched_radius_metres);
 
@@ -1123,6 +1235,8 @@ export default function DineOut() {
     setHighlightedRestaurant(null);
 
     setSearchedLocation("");
+    setGpsNotice("");
+    setGpsOrigin(null);
 
   }
 
@@ -1155,6 +1269,8 @@ export default function DineOut() {
     setSearchedLocation("");
 
     setPageError("");
+    setGpsNotice("");
+    setGpsOrigin(null);
 
   }
 
@@ -1187,6 +1303,8 @@ export default function DineOut() {
     setLocationSuggestions([]);
 
     setLocationLoading(false);
+    setGpsNotice("");
+    setGpsOrigin(null);
 
   }
 
@@ -1197,67 +1315,67 @@ export default function DineOut() {
   ---------------------------------------------------------- */
 
   function useCurrentLocation() {
-
-    restaurantRequestRef.current += 1;
-
-    restaurantAbortRef.current?.abort();
-
-    setRestaurantLoading(false);
+    // GPS is optional: users can always select a city/area manually.
+    setPageError("");
+    setGpsNotice("");
 
     if (!navigator.geolocation) {
-
-      setPageError("Location is not supported by this browser.");
-
+      setPageError("Your browser cannot access GPS. Type a city or area above and select a suggestion instead.");
       return;
-
     }
 
+    if (!window.isSecureContext) {
+      setPageError("Location requires HTTPS (or localhost). Type a city or area above instead.");
+      return;
+    }
+
+    setGpsLoading(true);
     navigator.geolocation.getCurrentPosition(
-
       ({ coords }) => {
+        setGpsLoading(false);
+        const latitude = Number(coords.latitude);
+        const longitude = Number(coords.longitude);
+        if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
+          setPageError("Could not read your coordinates. Enter a city or area manually.");
+          return;
+        }
 
-        const latitude = coords.latitude;
-
-        const longitude = coords.longitude;
-
+        // Cancel older searches only after GPS succeeded, preserving manual search on failure.
+        restaurantRequestRef.current += 1;
+        restaurantAbortRef.current?.abort();
+        setRestaurantLoading(false);
         autocompleteRequestRef.current += 1;
-
         skipAutocompleteRef.current = true;
-
         setLocation("Current location");
-
         setLocationSuggestions([]);
-
-        setCoordinates({
-
-          latitude,
-
-          longitude,
-
-        });
-
+        setCoordinates({ latitude, longitude });
+        setGpsOrigin({ lat: latitude, lng: longitude, accuracy: Number(coords.accuracy), timestamp: Date.now() });
         setMapCenter([latitude, longitude]);
-
         setLocationSelected(true);
-
         setRestaurants([]);
-
         setSelectedRestaurant(null);
-
         setHighlightedRestaurant(null);
-
         setSearchedLocation("");
+        setPageError("");
 
+        const accuracy = Number(coords.accuracy);
+        setGpsNotice(
+          Number.isFinite(accuracy)
+            ? `Location detected (accuracy ±${Math.round(accuracy)} m). You can refine your search by selecting an area manually.`
+            : "Location detected. You can refine your search by selecting an area manually."
+        );
       },
-
-      () => {
-
-        setPageError("Unable to access your current location.");
-
+      (error) => {
+        setGpsLoading(false);
+        const reason = error?.code === 1
+          ? "Location permission was denied."
+          : error?.code === 3
+            ? "Location request timed out."
+            : "Your current location is unavailable.";
+        setPageError(`${reason} Type a city or area above, choose a suggestion, and press Search. GPS is not required for Dine Out.`);
       },
-
+      { enableHighAccuracy: true, maximumAge: 0, timeout: 15000 },
     );
-
   }
 
   async function searchPlaces() {
@@ -1270,8 +1388,11 @@ export default function DineOut() {
       setPageError("Enter at least two characters in the restaurant name.");
       return;
     }
-    // Name-only search should show external Google results, not partner-only data.
-    if (!locationSelected) setRestaurantSource("other");
+    // Name-only discovery uses other restaurants; partner discovery requires a selected area.
+    if (!locationSelected && restaurantSource === "partner") {
+      setPageError("Choose an area suggestion to search FoodKindl Partner restaurants, or switch to Other Restaurants for a name-only search.");
+      return;
+    }
 
     setLocationSuggestions([]);
 
@@ -1300,15 +1421,13 @@ export default function DineOut() {
     setPageError("");
 
     setHighlightedRestaurant(restaurant);
+    setFocusRequest(n => n + 1);
 
     setMapCenter([getLatitude(restaurant), getLongitude(restaurant)]);
 
-    document.getElementById("dineout-map")?.scrollIntoView({
-
-      behavior: "smooth",
-
-      block: "center",
-
+    // Keep users in restaurant discovery; do not switch to the directions screen.
+    window.requestAnimationFrame(() => {
+      document.getElementById("dineout-map")?.scrollIntoView({ behavior: "smooth", block: "nearest" });
     });
 
   }
@@ -1755,7 +1874,69 @@ export default function DineOut() {
 
   return (
 
-    <main className={`dineout-page${isPlanPage ? " dineout-plan-page" : ""}`}>
+    <main className={`dineout-page fk-dashboard-shell${isPlanPage ? " dineout-plan-page" : ""}`}>
+      {!isPlanPage && (
+        <aside className="fk-dine-sidebar fk-filter-sidebar" aria-label="Restaurant filters">
+          <div className="fk-filter-side-header">
+            <div className="fk-filter-side-title"><Sparkles size={19} /> Filters</div>
+            <p>Find your ideal dining spot.</p>
+          </div>
+          <div className="fk-filter-side-body">
+            <div className="fk-side-group">
+              <span className="fk-side-label">Restaurant source</span>
+              <div className="fk-side-choice fk-side-source">
+                <button type="button" className={restaurantSource === "partner" ? "active" : ""} aria-pressed={restaurantSource === "partner"} onClick={() => setRestaurantSource("partner")}>FoodKindl Partners</button>
+                <button type="button" className={restaurantSource === "other" ? "active" : ""} aria-pressed={restaurantSource === "other"} onClick={() => setRestaurantSource("other")}>Other Restaurants</button>
+              </div>
+            </div>
+            <div className="fk-side-group">
+              <span className="fk-side-label">Place type</span>
+              <div className="fk-side-choice">
+                {PLACE_TYPES.map(([value,label]) => (
+                  <button key={value} type="button" className={placeType === value ? "active" : ""} aria-pressed={placeType === value} onClick={() => setPlaceType(value)}>{label}</button>
+                ))}
+              </div>
+            </div>
+            <label className="fk-side-group fk-side-check">
+              <input type="checkbox" checked={openNowOnly} onChange={e => setOpenNowOnly(e.target.checked)} />
+              <span>Open now <small>Only places listed as open</small></span>
+            </label>
+            <label className="fk-side-group fk-side-field">
+              <span className="fk-side-label">Minimum rating</span>
+              <select value={minimumRating} onChange={e => setMinimumRating(Number(e.target.value))}>
+                <option value={0}>Any rating</option><option value={3}>3.0★ and above</option>
+                <option value={3.5}>3.5★ and above</option><option value={4}>4.0★ and above</option>
+                <option value={4.5}>4.5★ and above</option>
+              </select>
+            </label>
+            <div className="fk-side-group">
+              <span className="fk-side-label">Food preference</span>
+              <div className="fk-side-choice">
+                {[["all", "All"], ["veg", "Vegetarian options"]].map(([value,label]) => (
+                  <button type="button" key={value} className={foodFilter === value ? "active" : ""} aria-pressed={foodFilter === value} onClick={() => setFoodFilter(value)}>{label}</button>
+                ))}
+              </div>
+            </div>
+            <label className="fk-side-group fk-side-field">
+              <span className="fk-side-label">Cuisine</span>
+              <select value={cuisine} onChange={e => setCuisine(e.target.value)}>
+                <option value="All cuisines">All cuisines</option>
+                {availableCuisines.map(item => <option value={item} key={item}>{cuisineLabel(item)}</option>)}
+              </select>
+            </label>
+            <label className="fk-side-group fk-side-field">
+              <span className="fk-side-label">Search radius: <strong>{radiusKm} km</strong></span>
+              <input type="range" min="1" max="5" step="1" value={radiusKm} onChange={e => setRadiusKm(Number(e.target.value))} />
+            </label>
+            <button type="button" className="fk-side-reset" onClick={() => {
+              setRestaurantSource("other"); setPlaceType("all"); setOpenNowOnly(false);
+              setMinimumRating(0); setFoodFilter("all"); setCuisine("All cuisines"); setRadiusKm(5);
+            }}>↺ Reset filters</button>
+            <p className="fk-side-footnote">Radius applies when an area is selected. Some filters require listing data.</p>
+          </div>
+        </aside>
+      )}
+      <div className="fk-dine-main-content">
 
       {!isPlanPage && <>
 
@@ -1789,273 +1970,59 @@ export default function DineOut() {
 
       </section>
 
-      <section className="location-card">
-
-        <div className="section-heading">
-
-          <p className="eyebrow">FIND AN AREA</p>
-
-          <h2>Where do you want to dine?</h2>
-
-          <p>Search a locality, neighbourhood, landmark or city.</p>
-
-        </div>
-
-        <div className="location-search">
-
-          <div className="location-input-wrap">
-
-            <MapPin size={20} />
-
-            <input
-
-              type="text"
-
-              value={location}
-
-              onChange={handleLocationChange}
-
-              placeholder="Choose a location"
-
-              autoComplete="off"
-
-            />
-
-            {location && (
-
-              <button
-
-                type="button"
-
-                className="icon-button"
-
-                onClick={clearLocation}
-
-                aria-label="Clear location"
-
-              >
-
-                <X size={18} />
-
-              </button>
-
-            )}
-
+      <div className="fk-search-panel fk-discovery-panel">
+        <section className="location-card fk-discovery-card" aria-label="Discover restaurants">
+          <div className="fk-section-head">
+            <span className="fk-section-symbol"><MapPin size={20}/></span>
+            <div><h2>Find your next dining spot</h2><p>Choose an area, or look up a restaurant by name.</p></div>
           </div>
-
-          <button
-
-            type="button"
-
-            className="secondary-button"
-
-            onClick={useCurrentLocation}
-
-          >
-
-            <MapPin size={17} />
-
-            Use my current location
-
-          </button>
-
-          {locationLoading && (
-
-            <p className="search-status">Searching locations...</p>
-
-          )}
-
-          {locationSuggestions.length > 0 && (
-
-            <div className="location-suggestions">
-
-              {locationSuggestions.map((place, index) => (
-
-                <button
-
-                  key={place.id || index}
-
-                  type="button"
-
-                  className="location-suggestion"
-
-                  onClick={() => selectLocation(place)}
-
-                >
-
-                  <MapPin size={18} />
-
-                  <span>
-
-                    <strong>{place.name || place.display_name}</strong>
-
-                    <small>{place.display_name || ""}</small>
-
-                  </span>
-
+          <div className="fk-discovery-fields">
+            <div className="fk-discovery-location">
+              <label htmlFor="fk-area-input">City, area or landmark</label>
+              <div className="fk-location-row">
+                <div className="location-input-wrap">
+                  <MapPin size={19}/>
+                  <input id="fk-area-input" type="text" value={location} onChange={handleLocationChange}
+                    placeholder="e.g. Indiranagar, Bengaluru" autoComplete="off"/>
+                  {location && <button type="button" className="icon-button" onClick={clearLocation} aria-label="Clear location"><X size={18}/></button>}
+                </div>
+                <button type="button" className="secondary-button fk-gps-button" onClick={useCurrentLocation} disabled={gpsLoading}
+                  aria-busy={gpsLoading}>
+                  <Navigation size={17}/>{gpsLoading ? "Detecting..." : "Use my location"}
                 </button>
-
-              ))}
-
+              </div>
+              {gpsLoading && <p className="search-status" role="status">Detecting your location...</p>}
+              {!gpsLoading && gpsNotice && <p className="fk-location-success" role="status">📍 {gpsNotice}</p>}
+              {!gpsLoading && locationSelected && !gpsNotice && <p className="fk-location-success" role="status">✓ Area selected. Search nearby restaurants below.</p>}
+              {locationLoading && <p className="search-status" role="status">Finding areas...</p>}
+              {locationSuggestions.length > 0 && <div className="location-suggestions">
+                {locationSuggestions.map((place, index) => <button key={place.id || index}
+                  type="button" className="location-suggestion" onClick={() => selectLocation(place)}>
+                  <MapPin size={18}/><span><strong>{place.name || place.display_name}</strong>
+                  <small>{place.display_name || ""}</small></span>
+                </button>)}
+              </div>}
+              {!locationSelected && !gpsLoading && !locationLoading && !pageError && (
+                <p className="fk-help-text">Location is optional. Search by area or restaurant name.</p>
+              )}
             </div>
-
-          )}
-
-        </div>
-
-      </section>
-
-      <section className="mood-card">
-
-        <div className="mood-header">
-
-          <div>
-
-            <p className="eyebrow">FOODKINDL DINE OUT</p>
-
-            <h2>What are you in the mood for?</h2>
-
-            <p>
-
-              Select a location for nearby dining, or search by restaurant name anywhere in India.
-
-            </p>
-
+            <div className="fk-discovery-name">
+              <label htmlFor="fk-restaurant-input">Restaurant name (optional)</label>
+              <div className="fk-name-search"><Search size={18}/>
+                <input id="fk-restaurant-input" type="search" value={restaurantQuery}
+                  onChange={e => setRestaurantQuery(e.target.value)}
+                  onKeyDown={e => { if (e.key === "Enter") void searchPlaces(); }}
+                  placeholder="Search restaurant name, cuisine or keyword"/>
+              </div>
+              <p className="fk-help-text">Leave blank to discover restaurants in your selected area.</p>
+            </div>
           </div>
-
-          <Sparkles size={26} />
-
-        </div>
-
-        <div className="filters">
-
-          <input
-              type="search"
-              value={restaurantQuery}
-              onChange={(event) => setRestaurantQuery(event.target.value)}
-              onKeyDown={(event) => { if (event.key === "Enter") void searchPlaces(); }}
-              placeholder="Search restaurants without choosing a location"
-              aria-label="Search restaurants by name"
-            />
-
-          <button
-
-            type="button"
-
-            className="primary-button"
-
-            onClick={searchPlaces}
-
-            disabled={restaurantLoading}
-
-          >
-
-            <Search size={17} />
-
-            {restaurantLoading ? "Searching..." : "Search"}
-
+          <button className="primary-button fk-search-submit" type="button" onClick={searchPlaces}
+            disabled={restaurantLoading} aria-busy={restaurantLoading}>
+            <Search size={18}/>{restaurantLoading ? "Searching restaurants..." : "Search Restaurants"}
           </button>
-
-        </div>
-
-      </section>
-
-      <section className="fk-source-picker" aria-label="Choose restaurant source"
-
-        style={{ margin: "18px 0", padding: 16, borderRadius: 14, border: "1px solid rgba(212,125,82,.35)" }}>
-
-        <h2 style={{ fontSize: "1.1rem", marginBottom: 12 }}>Choose restaurants</h2>
-
-        <div role="group" aria-label="Restaurant listing type"
-
-          style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: 10 }}>
-
-          <button type="button" aria-pressed={restaurantSource === "partner"}
-
-            className={restaurantSource === "partner" ? "primary-button" : "secondary-button"}
-
-            onClick={() => { setRestaurantSource("partner"); if (locationSelected) void fetchRestaurants(coordinates.latitude, coordinates.longitude, cuisine, "partner"); }}>FoodKindl Partners</button>
-
-          <button type="button" aria-pressed={restaurantSource === "other"}
-
-            className={restaurantSource === "other" ? "primary-button" : "secondary-button"}
-
-            onClick={() => { setRestaurantSource("other"); if (locationSelected) void fetchRestaurants(coordinates.latitude, coordinates.longitude, cuisine, "other"); }}>Other Restaurants</button>
-
-        </div>
-
-        <p style={{ marginTop: 10, fontSize: 13, opacity: 0.8 }}>
-
-          {restaurantSource === "partner"
-
-            ? "Restaurants registered with FoodKindl. Book a table when bookings are enabled."
-
-            : "Restaurants discovered through Google Places. Plan a Dine Out; FoodKindl table bookings are partner-only."}
-
-        </p>
-
-      </section>
-
-      <section aria-label="Ratings and sorting" style={{display:"flex", flexWrap:"wrap", gap:14, alignItems:"center", margin:"16px 0", padding:14, border:"1px solid rgba(212,125,82,.35)", borderRadius:12}}>
-        <label style={{display:"flex", gap:8, alignItems:"center"}}>Minimum rating
-          <select value={minimumRating} onChange={e => setMinimumRating(Number(e.target.value))} aria-label="Minimum Google rating">
-            <option value={0}>Any rating (including unrated)</option>
-            <option value={3}>3.0★ and above</option>
-            <option value={3.5}>3.5★ and above</option>
-            <option value={4}>4.0★ and above</option>
-            <option value={4.5}>4.5★ and above</option>
-          </select>
-        </label>
-        <label style={{display:"flex", gap:8, alignItems:"center"}}>Sort by
-          <select value={restaurantSort} onChange={e => setRestaurantSort(e.target.value)} aria-label="Sort restaurants">
-            <option value="distance">Nearest first</option>
-            <option value="rating">Highest rated</option>
-            <option value="reviews">Most reviewed</option>
-          </select>
-        </label>
-        <button type="button" className="secondary-button" onClick={() => {setMinimumRating(0);setRestaurantSort("distance");setPlaceType("all");setFoodFilter("all");setCuisine("All cuisines");}}>Reset filters</button>
-      </section>
-      <section className="osm-discovery-filters" aria-label="Restaurant filters">
-
-        <div className="osm-filter-group"><span>Places</span><div className="osm-segments">
-
-          {PLACE_TYPES.map(([value, label]) => <button key={value} type="button" className={placeType === value ? "active" : ""}
-
-            aria-pressed={placeType === value} onClick={() => setPlaceType(value)}>{label}</button>)}
-
-        </div></div>
-
-        <div className="osm-filter-group"><span>Food</span><div className="osm-segments">
-
-          {[["all", "All"], ["veg", "Vegetarian options"]].map(([value, label]) =>
-
-            <button key={value} type="button" className={foodFilter === value ? "active" : ""}
-
-              aria-pressed={foodFilter === value} onClick={() => setFoodFilter(value)}>{label}</button>)}
-
-        </div></div>
-
-        <label className="osm-radius">Radius <strong>{radiusKm} km</strong>
-
-          <input type="range" min="1" max="5" step="1" value={radiusKm}
-
-            onChange={(event) => { setRadiusKm(Number(event.target.value)); setRestaurants([]); setSearchCoverage(""); }}
-
-            aria-label="Search radius in kilometres" />
-
-        </label>
-
-        <small>Google Places may return fewer places than the 100-result limit.</small>
-
-        <div className="osm-filter-group"><span>Cuisine</span><div className="osm-segments">
-
-          {["All cuisines", ...availableCuisines].map((item) => <button key={item} type="button" className={cuisine === item ? "active" : ""}
-
-            aria-pressed={cuisine === item} onClick={() => setCuisine(item)}>{item === "All cuisines" ? item : cuisineLabel(item)}</button>)}
-
-        </div></div>
-
-      </section>
+        </section>
+      </div>
 
       {pageError && (
 
@@ -2081,7 +2048,14 @@ export default function DineOut() {
 
             </div>
 
-            <span>{visibleRestaurants.length} {visibleRestaurants.length === 1 ? "place" : "places"}</span>
+            <div className="fk-results-tools">
+              <span>{visibleRestaurants.length} {visibleRestaurants.length === 1 ? "place" : "places"}</span>
+              <label>Sort by <select value={restaurantSort} onChange={e => setRestaurantSort(e.target.value)}>
+                <option value="distance">Nearest first</option>
+                <option value="rating">Highest rated</option>
+                <option value="reviews">Most reviewed</option>
+              </select></label>
+            </div>
 
           </div>
 
@@ -2113,7 +2087,7 @@ export default function DineOut() {
 
                     ? "No restaurants match these filters. Try another cuisine or place type."
 
-                    : "Select a location and press Search. Only Google Places listings with a name and location will appear."}
+                    : "Enter an area or restaurant name, then press Search Restaurants."}
 
             </div>
 
@@ -2142,6 +2116,8 @@ export default function DineOut() {
                 <h3>{restaurant.name}</h3>
 
                 <RestaurantSummary restaurant={restaurant} />
+                {openNowStatus(restaurant) === true && <span className="fk-open-badge">● Open now</span>}
+                {openNowStatus(restaurant) === false && <span className="fk-closed-badge">Closed now</span>}
 
                 {restaurant.is_foodkindl_partner && (
 
@@ -2233,34 +2209,41 @@ export default function DineOut() {
 
         </div>
 
-        <aside id="dineout-map" className="map-panel">
-
-          {highlightedRestaurant ? <>
-
-            <div style={{display:'flex',gap:8,flexWrap:'wrap',marginBottom:12}}>
-
-              <button type="button" className="secondary-button" onClick={() => {setHighlightedRestaurant(null);setDetailsRestaurant(null);}}>Show all restaurant pins</button>
-
-              <button type="button" className="secondary-button" onClick={()=>setDetailsRestaurant(highlightedRestaurant)}>Restaurant details</button>
-
+        <aside id="dineout-map" className="map-panel fk-dine-map-card" aria-label="Restaurant map">
+          <div className="fk-dine-map-heading">
+            <div>
+              <span className="fk-dine-map-eyebrow">EXPLORE THE AREA</span>
+              <h2>{highlightedRestaurant ? highlightedRestaurant.name : "Restaurants near you"}</h2>
+              <p>{highlightedRestaurant ? "Only this restaurant is shown · route from your location" : `${visibleRestaurants.length} restaurant locations`}</p>
             </div>
-
-            <RestaurantRouteMap key={highlightedRestaurant.id} invitation={{
-
-              id: highlightedRestaurant.id, latitude: getLatitude(highlightedRestaurant),
-
-              longitude: getLongitude(highlightedRestaurant), restaurant_name: highlightedRestaurant.name,
-
-              restaurant_address: highlightedRestaurant.address || highlightedRestaurant.location_label,
-
-              restaurant_external_id: String(highlightedRestaurant.id || '')
-
-            }} />
-
-          </> : <GoogleRestaurantMap center={mapCenter} restaurants={visibleRestaurants}
-
-            highlightedRestaurant={null} onSelect={openRestaurantDetails} />}
-
+            {highlightedRestaurant && (
+              <button type="button" className="fk-dine-map-reset" onClick={() => setHighlightedRestaurant(null)}>
+                Show all restaurants
+              </button>
+            )}
+          </div>
+          <div className="fk-dine-map-canvas">
+            <FocusedRestaurantMap
+              center={mapCenter}
+              restaurants={highlightedRestaurant ? [] : visibleRestaurants}
+              highlightedRestaurant={highlightedRestaurant}
+              focusRequest={focusRequest}
+              currentLocation={gpsOrigin}
+              onSelect={viewRestaurantOnMap}
+            />
+          </div>
+          {highlightedRestaurant ? (
+            <div className="fk-dine-selected-summary">
+              <strong>{highlightedRestaurant.name}</strong>
+              <span>{highlightedRestaurant.address || highlightedRestaurant.location_label || "Restaurant location"}</span>
+              <div className="fk-dine-map-actions">
+                <button type="button" onClick={() => setDetailsRestaurant(highlightedRestaurant)}>View details</button>
+                <button type="button" className="fk-dine-map-primary" onClick={() => chooseRestaurant(highlightedRestaurant)}>Plan a Dine Out</button>
+              </div>
+            </div>
+          ) : (
+            <p className="fk-dine-map-tip">Select a restaurant or click <b>View on map</b> to focus its pin.</p>
+          )}
         </aside>
 
       </section>
@@ -2633,6 +2616,7 @@ export default function DineOut() {
 
       />
 
+      </div>
     </main>
 
   );

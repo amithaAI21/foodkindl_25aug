@@ -726,7 +726,7 @@ class Restaurant(models.Model):
     )
 
     accepts_foodkindl_booking = models.BooleanField(
-        default=False,
+        default=True,
         db_index=True,
     )
 

@@ -52,6 +52,9 @@ const LandingPage = lazy(() =>
 
 );
 
+const PublicSOSTracking = lazy(
+  () => import("./pages/PublicSOSTracking")
+);
 
 
 const Login = lazy(() =>
@@ -1866,8 +1869,14 @@ export default function App() {
 
           =============================================== */}
 
-
-
+          <Route
+          path="/sos/track/:trackingToken"
+          element={
+            <Suspense fallback={<div>Loading SOS tracking...</div>}>
+              <PublicSOSTracking />
+            </Suspense>
+          }
+        />
           <Route
 
             path="/safety-verification"

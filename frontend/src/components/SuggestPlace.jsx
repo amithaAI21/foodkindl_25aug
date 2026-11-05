@@ -166,41 +166,62 @@ export default function SuggestPlace() {
 
 
   function useCurrentLocation() {
-    setError("");
+  setError("");
+  setMessage("");
 
-    if (
-      !navigator.geolocation
-    ) {
-      setError(
-        "Location is not supported on this device."
-      );
+  if (!navigator.geolocation) {
+    setError("Location is not supported on this device.");
+    return;
+  }
 
-      return;
-    }
+  navigator.geolocation.getCurrentPosition(
+    async (position) => {
+      const latitude = position.coords.latitude.toFixed(6);
+      const longitude = position.coords.longitude.toFixed(6);
 
+      // Always fill coordinates first
+      setForm((current) => ({
+        ...current,
+        latitude,
+        longitude,
+      }));
 
-    navigator.geolocation.getCurrentPosition(
-      position => {
-        updateField(
-          "latitude",
-          position.coords.latitude
-            .toFixed(6)
-        );
+      try {
+        const response = await api.get("/geo/reverse/", {
+          params: {
+            lat: latitude,
+            lon: longitude,
+          },
+        });
 
-        updateField(
-          "longitude",
-          position.coords.longitude
-            .toFixed(6)
-        );
-      },
+        const location = response.data;
 
-      () => {
-        setError(
-          "Unable to get your location."
+        setForm((current) => ({
+          ...current,
+          locality: location.suburb || current.locality,
+          city: location.city || current.city,
+        }));
+
+        setMessage("Location detected successfully.");
+      } catch (error) {
+        console.error("Reverse geocoding failed:", error);
+
+        setMessage(
+          "Coordinates added. Please enter your locality and city manually."
         );
       }
-    );
-  }
+    },
+    () => {
+      setError(
+        "Unable to detect your location. Please enter it manually."
+      );
+    },
+    {
+      enableHighAccuracy: true,
+      timeout: 10000,
+    }
+  );
+}
 
 
   async function handleSubmit(

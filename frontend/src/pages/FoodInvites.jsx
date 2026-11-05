@@ -260,6 +260,7 @@ function normalizeDineOut(invite) {
 
 
 export default function FoodInvites() {
+  console.log("FOOD INVITES COMPONENT RENDERING");
   const navigate =
     useNavigate();
 
@@ -468,38 +469,21 @@ export default function FoodInvites() {
           ).values()
         );
 
-      unique.sort(
-        (
-          first,
-          second
-        ) => {
-          const firstDate =
-            inviteDateValue(first);
+      unique.sort((first, second) => {
+  const firstCreated = Date.parse(first.created_at || "");
+  const secondCreated = Date.parse(second.created_at || "");
 
-          const secondDate =
-            inviteDateValue(second);
+  const firstTime = Number.isFinite(firstCreated)
+    ? firstCreated
+    : 0;
 
-          if (
-            firstDate === null &&
-            secondDate === null
-          ) {
-            return 0;
-          }
+  const secondTime = Number.isFinite(secondCreated)
+    ? secondCreated
+    : 0;
 
-          if (firstDate === null) {
-            return 1;
-          }
-
-          if (secondDate === null) {
-            return -1;
-          }
-
-          return (
-            firstDate -
-            secondDate
-          );
-        }
-      );
+  // Newest created event appears first.
+  return secondTime - firstTime;
+});
 
       setInvites(unique);
     } catch (requestError) {

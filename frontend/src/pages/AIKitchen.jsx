@@ -37,6 +37,7 @@ import AIRecipeSearch from "../components/AIRecipeSearch";
 import GroceryCompareOptions from "../components/GroceryCompareOptions";
 
 import "../styles/ai_kitchen.css";
+
 import "../styles/ai_kitchen_simple.css";
 
 export default function AIKitchen() {
@@ -50,13 +51,21 @@ export default function AIKitchen() {
   // =========================================================
 
   const [searchParams, setSearchParams] = useSearchParams();
+
   const activeTab = searchParams.get("mode");
+
   function openMode(mode) {
+
     setSearchParams({ mode });
+
   }
+
   function goBack() {
+
     if (activeTab) setSearchParams({});
+
     else navigate("/dashboard");
+
   }
 
   // =========================================================
@@ -169,54 +178,15 @@ export default function AIKitchen() {
 
       [];
 
-    function cleanGroceryName(rawValue) {
-
+function cleanGroceryName(rawValue) {
       let value = String(rawValue || "").trim();
-
-      // -----------------------------------------------------
-
-      // REMOVE COMMON RECIPE QUANTITIES / UNITS
-
-      //
-
-      // Examples:
-
-      // "1 tbsp olive oil"          -> "olive oil"
-
-      // "1 tsp salt"                -> "salt"
-
-      // "1/2 tsp black pepper"      -> "black pepper"
-
-      // "1 clove garlic, minced"    -> "garlic"
-
-      // "1 tsp paprika (optional)"  -> "paprika"
-
-      // -----------------------------------------------------
-
-      value = value.replace(/^\s*\d+(?:\s*[-/]\s*\d+)?(?:\.\d+)?\s*/i, "");
-      value = value.replace(
-        /^(?:to\s+)?(?:tsp|teaspoons?|tbsp|tablespoons?|cups?|ml|millilit(?:er|re)s?|lit(?:er|re)s?|g|grams?|kg|kilograms?|oz|ounces?|lb|lbs|pounds?|cloves?|pieces?|pcs?|pinch(?:es)?|bunch(?:es)?|cans?|packets?|packs?)\b\.?\s*/i,
-        "",
-      );
+      value = value.replace(/^\d+(?:\.\d+|\/\d+)?\s*/i, "");
+      value = value.replace(/^(?:tsp|teaspoons?|tbsp|tablespoons?|cups?|ml|millilit(?:er|re)s?|lit(?:er|re)s?|g|grams?|kg|kilograms?|oz|ounces?|cloves?|pieces?|pcs?|pinch(?:es)?|bunch(?:es)?|cans?|packs?)\b\.?\s*/i, "");
       value = value.replace(/\s*\([^)]*optional[^)]*\)\s*/gi, " ");
-      value = value.replace(/\s*\boptional\b\s*/gi, " ");
-      value = value.replace(
-        /\s*,\s*(?:minced|chopped|finely chopped|sliced|diced|crushed|grated|peeled|ground|to taste|as needed).*$/i,
-        "",
-      );
-
+      value = value.replace(/\boptional\b/gi, "");
+      value = value.replace(/,\s*(?:minced|chopped|sliced|diced|crushed|grated|peeled|ground|to taste|as needed).*$/i, "");
       value = value.replace(/\s+/g, " ").trim();
-
-      if (!value) {
-
-        return "";
-
-      }
-
-      // Product-style display name.
-
-      return value.charAt(0).toUpperCase() + value.slice(1);
-
+      return value ? value[0].toUpperCase() + value.slice(1) : "";
     }
 
     const cleanedItems = rawItems
@@ -474,45 +444,79 @@ export default function AIKitchen() {
   }
 
   return (
+
     <main className="ai-kitchen-page ai-kitchen-simple">
+
       <div className="ai-simple-wrap">
+
         <header className="ai-simple-topbar">
+
           <button type="button" onClick={goBack} className="ai-simple-back">
+
             <ArrowLeft size={18} /> {activeTab ? "Choose another option" : "Dashboard"}
+
           </button>
-          
+
         </header>
 
         {!activeTab && (
+
           <section className="ai-simple-home" aria-label="Choose how to cook">
+
             <span className="ai-simple-eyebrow">MAKE SOMETHING GOOD</span>
+
             <h1>What would you like to cook?</h1>
+
             <p>Choose one way to start. You can switch at any time.</p>
+
             <div className="ai-simple-choices">
+
               <button type="button" className="ai-simple-choice" onClick={() => openMode("ingredients")}>
+
                 <span className="ai-simple-choice-icon"><Utensils size={27} /></span>
+
                 <strong>Cook with what I have</strong>
+
                 <span>Add ingredients from your kitchen and get a recipe you can make.</span>
+
                 <b>Use my ingredients →</b>
+
               </button>
+
               <button type="button" className="ai-simple-choice" onClick={() => openMode("discover")}>
+
                 <span className="ai-simple-choice-icon"><BookOpen size={27} /></span>
+
                 <strong>Search any recipe</strong>
+
                 <span>Enter a dish you want to make and get its recipe.</span>
+
                 <b>Search for a dish →</b>
+
               </button>
+
             </div>
+
           </section>
+
         )}
 
         {activeTab === "ingredients" && (
+
           <section className="ai-simple-flow">
+
             <div className="ai-editorial-stage">
+
               <div className="ai-editorial-form">
+
                 <div className="ai-simple-heading">
+
                   <span className="ai-simple-eyebrow">COOK WITH WHAT I HAVE</span>
+
                   <h1>What’s cooking today?</h1>
+
                   <p>Add ingredients you have. We’ll create a recipe for you.</p>
+
                 </div>
 
           <div className="ai-ingredients-workspace">
@@ -748,10 +752,13 @@ export default function AIKitchen() {
             </button>
 
           </div>
+
               </div>
-              
+
             </div>
+
             <div className="ai-editorial-results">
+
             {/* ===============================================
 
                   RESULT
@@ -984,7 +991,7 @@ export default function AIKitchen() {
 
                         const cleanStep = String(step || "")
 
-                          .replace(/^\s*(?:step\s*)?\d+\s*[.)\-:]\s*/i, "")
+                            .replace(/^\s*(?:step\s*)?\d+\s*[.)\-:]\s*/i, "")
 
                           .trim();
 
@@ -1081,25 +1088,43 @@ export default function AIKitchen() {
             )}
 
             </div>
+
           </section>
+
         )}
 
         {activeTab === "discover" && (
+
           <section className="ai-simple-flow">
+
             <div className="ai-editorial-stage">
+
               <div className="ai-editorial-form">
+
                 <div className="ai-simple-heading">
+
                   <span className="ai-simple-eyebrow">SEARCH ANY RECIPE</span>
+
                   <h1>Have a dish in mind?</h1>
+
                   <p>Search for a dish and get ingredients and cooking steps.</p>
+
                 </div>
+
                 <AIRecipeSearch />
+
               </div>
-             
+
             </div>
+
           </section>
+
         )}
+
       </div>
+
     </main>
+
   );
+
 }

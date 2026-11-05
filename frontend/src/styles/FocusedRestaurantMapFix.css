@@ -1,0 +1,72 @@
+/* Keep route status visible: previous fixed-height + overflow:hidden clipped it. */
+.dineout-page .fk-dine-map-canvas:has(.fk-focused-map-root) {
+  height: auto !important;
+  min-height: 390px !important;
+  overflow: visible !important;
+}
+.dineout-page .fk-focused-map-root {
+  display: flex;
+  flex-direction: column;
+  height: auto !important;
+  min-height: 390px !important;
+  overflow: visible !important;
+}
+.dineout-page .fk-focused-map-canvas {
+  flex: none;
+  height: 380px !important;
+  min-height: 380px !important;
+  width: 100%;
+}
+.dineout-page .fk-focused-map-status {
+  padding: 11px 13px;
+  color: #ffe2ce;
+  background: #352018;
+  border: 1px solid #794b35;
+  border-radius: 8px;
+  margin-bottom: 10px;
+  font-size: 13px;
+  line-height: 1.45;
+}
+.dineout-page .fk-route-external-link {
+  display: block;
+  padding: 12px;
+  color: #ffd1b9;
+  background: #44251a;
+  text-align: center;
+  font-size: 13px;
+}
+@media(max-width: 800px) {
+  .dineout-page .fk-focused-map-canvas { height: 310px !important; min-height: 310px !important; }
+}
+
+/* Clear explanation of the two pins */
+.dineout-page .fk-gps-pin-legend { display:flex; align-items:center; gap:9px; flex-wrap:wrap; font-size:12px; color:#ffe8d9; margin:3px 0 10px; }
+.dineout-page .fk-gps-blue-dot,.dineout-page .fk-gps-orange-dot { display:inline-block; width:12px; height:12px; border:2px solid white; border-radius:50%; }
+.dineout-page .fk-gps-blue-dot {background:#1677ff;}
+.dineout-page .fk-gps-orange-dot {background:#f46a3f; margin-left:10px;}
+.dineout-page .fk-retry-gps {padding:10px 13px; color:#fff; background:#6d3623; border:1px solid #f46a3f; border-radius:9px; margin:0 0 10px; cursor:pointer;}
+
+
+
+.fk-travel-modes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 12px 0;
+}
+
+.fk-travel-modes button {
+  background: #27160f;
+  color: white;
+  border: 1px solid #75432c;
+  padding: 10px 18px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.fk-travel-modes button.active {
+  background: #f46a3f;
+  color: white;
+  border-color: #f46a3f;
+  font-weight: 600;
+}
