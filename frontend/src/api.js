@@ -11,10 +11,9 @@ const DEFAULT_BACKEND_URL = import.meta.env.DEV
 
 // Use the confirmed Render backend in production.
 // Allow environment overrides during local development.
-const rawBackendUrl = import.meta.env.DEV
-  ? import.meta.env.VITE_BACKEND_URL || DEFAULT_BACKEND_URL
-  : DEFAULT_BACKEND_URL;
-
+const rawBackendUrl =
+  import.meta.env.VITE_BACKEND_URL || DEFAULT_BACKEND_URL;
+  
 const backendUrl = String(rawBackendUrl)
   .trim()
   .replace(/\/+$/, "")
