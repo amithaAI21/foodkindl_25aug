@@ -7,7 +7,7 @@ import axios from "axios";
 
 const DEFAULT_BACKEND_URL = import.meta.env.DEV
   ? "http://127.0.0.1:8000"
-  : "https://foodkindl-25aug.onrender.com";
+  : "https://foodkindl-25aug-uns4.onrender.com";
 
 // Use the confirmed Render backend in production.
 // Allow environment overrides during local development.

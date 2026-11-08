@@ -92,7 +92,7 @@ FAST2SMS_API_KEY = os.environ.get(
 
 # MAP / PLACES SERVICES
 
-GOOGLE_MAPS_API_KEY = config("GOOGLE_MAPS_API_KEY", default="")
+GOOGLE_MAPS_API_KEY = config("GOOGLE_MAPS_API_KEY", default="").strip()
 
 GEOAPIFY_API_KEY = config("GEOAPIFY_API_KEY", default="")
 
