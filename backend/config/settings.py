@@ -8,7 +8,7 @@ import dj_database_url
 
 from dotenv import load_dotenv
 
-FOODKINDL_REFERRAL_FEE = "25.00"
+FOODKINDL_REFERRAL_FEE = "10.00"
 
 from decouple import config
 
@@ -542,7 +542,7 @@ CSRF_TRUSTED_ORIGINS = get_env_list(
 
         "https://myfoodkindlapps.netlify.app,"
 
-        "https://foodkindl-25aug.onrender.com,"
+        "https://foodkindl-25aug-uns4.onrender.com,"
 
         "https://foodkindl.com,"
 
@@ -718,7 +718,7 @@ PUBLIC_BACKEND_URL = (
 
     os.environ.get("PUBLIC_BACKEND_URL", "").strip()
 
-    or ("http://localhost:8888" if DEBUG else "https://foodkindl-25aug.onrender.com")
+    or ("http://localhost:8888" if DEBUG else "https://foodkindl-25aug-uns4.onrender.com")
 
 ).rstrip("/")
 
