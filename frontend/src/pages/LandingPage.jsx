@@ -1990,14 +1990,6 @@ export default function LandingPage() {
 
 
 
-            <span className="fk-coming-badge">
-
-              Coming Soon
-
-            </span>
-
-
-
             <span className="fk-safety-icon sos">
 
               <MessageCircle size={24} />

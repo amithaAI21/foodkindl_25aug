@@ -175,7 +175,6 @@ export default function SafetyCentre() {
                   feature.comingSoon &&
                   (
                     <span className="safety-centre-coming">
-                      Coming Soon
                     </span>
                   )
                 }

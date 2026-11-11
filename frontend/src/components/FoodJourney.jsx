@@ -130,20 +130,49 @@ function distanceMeters(a, b) {
   return 12742000 * Math.asin(Math.min(1, Math.sqrt(h)));
 }
 
+function distanceFromRouteMeters(point, path) {
+  if (!point || !Array.isArray(path) || path.length < 2) return Infinity;
+  const earth = 111320;
+  const latScale = Math.cos((point.lat * Math.PI) / 180);
+  let closest = Infinity;
+
+  for (let index = 0; index < path.length - 1; index += 1) {
+    const a = path[index];
+    const b = path[index + 1];
+    const ax = (a.lng - point.lng) * earth * latScale;
+    const ay = (a.lat - point.lat) * earth;
+    const bx = (b.lng - point.lng) * earth * latScale;
+    const by = (b.lat - point.lat) * earth;
+    const dx = bx - ax;
+    const dy = by - ay;
+    const denominator = dx * dx + dy * dy;
+    const fraction = denominator
+      ? Math.max(0, Math.min(1, -(ax * dx + ay * dy) / denominator))
+      : 0;
+    closest = Math.min(closest, Math.hypot(ax + fraction * dx, ay + fraction * dy));
+  }
+  return closest;
+}
+
 function extractDirections(route) {
   return (route?.legs || [])
     .flatMap((leg) => leg.steps || [])
     .map((step) => {
       const instruction =
         step?.navigationInstruction?.instructions ||
+        step?.html_instructions ||
         step?.instruction ||
-        "Continue along the route";
+        (step?.maneuver ? `Continue with the ${step.maneuver} maneuver` : "Continue along the route");
 
       return {
         text: String(instruction).replace(/<[^>]+>/g, " "),
         distance: Number(step.distanceMeters || 0),
         // Routes API step endpoints, when requested in the response field mask.
-        endPoint: toPoint(step?.endLocation?.latLng || step?.endLocation),
+        endPoint: toPoint(
+          step?.endLocation?.latLng ||
+          step?.endLocation ||
+          step?.end_location
+        ),
       };
     });
 }
@@ -173,6 +202,7 @@ function GoogleJourneyMap({
   const container = useRef(null);
   const map = useRef(null);
   const overlays = useRef([]);
+  const liveOverlays = useRef([]);
 
   const [ready, setReady] = useState(false);
   const [mapError, setMapError] = useState("");
@@ -209,6 +239,8 @@ function GoogleJourneyMap({
       });
 
       overlays.current = [];
+      liveOverlays.current.forEach((object) => object.setMap?.(null));
+      liveOverlays.current = [];
       map.current = null;
     };
   }, []);
@@ -307,29 +339,52 @@ function GoogleJourneyMap({
       );
     });
 
-    if (live) {
-      const marker = new gm.Marker({
-        map: map.current,
-        position: live,
-        title: "Your current location",
-        icon: {
-          path: gm.SymbolPath.CIRCLE,
-          scale: 9,
-          fillColor: "#2876fa",
-          fillOpacity: 1,
-          strokeColor: "#ffffff",
-          strokeWeight: 3,
-        },
-      });
-
-      overlays.current.push(marker);
-      bounds.extend(live);
-    }
-
     if (!bounds.isEmpty()) {
       map.current.fitBounds(bounds, 55);
     }
-  }, [ready, coordinates, chosen, live, navigationPoints]);
+  }, [ready, coordinates, chosen, navigationPoints]);
+
+  // Keep the GPS marker separate so GPS updates do not redraw or refit the route.
+  useEffect(() => {
+    if (!ready || !map.current) return;
+    const gm = window.google.maps;
+    liveOverlays.current.forEach((object) => object.setMap?.(null));
+    liveOverlays.current = [];
+    if (!live) return;
+
+    const marker = new gm.Marker({
+      map: map.current,
+      position: live,
+      title: "Your current location",
+      icon: {
+        path: gm.SymbolPath.CIRCLE,
+        scale: 9,
+        fillColor: "#2876fa",
+        fillOpacity: 1,
+        strokeColor: "#ffffff",
+        strokeWeight: 3,
+      },
+      zIndex: 100,
+    });
+    liveOverlays.current.push(marker);
+
+    const accuracy = Number(live.accuracy);
+    if (accuracy > 0) {
+      const circle = new gm.Circle({
+        map: map.current,
+        center: live,
+        radius: accuracy,
+        strokeColor: "#2876fa",
+        strokeOpacity: 0.65,
+        strokeWeight: 1,
+        fillColor: "#2876fa",
+        fillOpacity: 0.1,
+      });
+      liveOverlays.current.push(circle);
+    }
+
+    map.current.panTo(live);
+  }, [ready, live]);
 
   return (
     <div
@@ -413,6 +468,8 @@ export default function FoodJourney({
   const requestRef = useRef(null);
   const liveRef = useRef(null);
   const routeKeyRef = useRef("");
+  const lastRouteOriginRef = useRef(null);
+  const lastRerouteAtRef = useRef(0);
   const stepIndexRef = useRef(0);
   const [spokenInstruction, setSpokenInstruction] = useState("");
 
@@ -483,6 +540,8 @@ export default function FoodJourney({
       }
 
       requestRef.current?.abort();
+      lastRouteOriginRef.current = { lat: startPoint.lat, lng: startPoint.lng };
+      lastRerouteAtRef.current = Date.now();
 
       const controller = new AbortController();
       requestRef.current = controller;
@@ -566,8 +625,10 @@ export default function FoodJourney({
 
         if (!controller.signal.aborted) {
           setNavigationPoints(fullPath);
-          // No announcement until the GPS confirms proximity to a maneuver.
-          setSpokenInstruction("");
+          setSpokenInstruction(
+            allDirections[0]?.text ||
+            `Navigation route refreshed. Continue toward ${destination}.`
+          );
 
           setRouteInfo({
             distance: totalDistance,
@@ -597,6 +658,8 @@ export default function FoodJourney({
       setLive(null);
       liveRef.current = null;
       routeKeyRef.current = "";
+      lastRouteOriginRef.current = null;
+      lastRerouteAtRef.current = 0;
       requestRef.current?.abort();
       setLoadingRoute(false);
       setRouteInfo(null);
@@ -612,6 +675,9 @@ export default function FoodJourney({
     }
 
     setGpsError("");
+    routeKeyRef.current = "";
+    lastRouteOriginRef.current = null;
+    lastRerouteAtRef.current = 0;
 
     const watchId = navigator.geolocation.watchPosition(
       ({ coords }) => {
@@ -644,14 +710,29 @@ export default function FoodJourney({
     };
   }, [navigation]);
 
-  // Calculate once when navigation starts or stops change.
-  // Do not call Routes API on every GPS update.
+  // Build the first route immediately. While navigating, refresh it after
+  // 250 m of movement or when GPS shows the user is 75 m off the route.
+  // A 45-second minimum interval prevents excessive Google Routes requests.
   useEffect(() => {
-    if (!navigation || !live || !destinationPoint) return;
+    if (!navigation || !live || !destinationPoint || loadingRoute) return;
+    if (Number(live.accuracy) > 75) return;
 
     const key = `${backendMode}:${selectedKey}`;
+    const planChanged = routeKeyRef.current !== key;
+    const previousOrigin = lastRouteOriginRef.current;
+    const movedMeters = previousOrigin
+      ? distanceMeters(previousOrigin, live)
+      : Infinity;
+    const path = navigationPoints.length > 1
+      ? navigationPoints
+      : plannedRoutePoints(routeCoordinates);
+    const offRouteMeters = distanceFromRouteMeters(live, path);
+    const enoughTimePassed = Date.now() - lastRerouteAtRef.current >= 45000;
+    const needsFirstRoute = !previousOrigin || (!routeInfo && !routeError);
+    const shouldRefresh = planChanged || needsFirstRoute ||
+      (enoughTimePassed && (movedMeters >= 250 || offRouteMeters >= 75));
 
-    if (routeKeyRef.current === key) return;
+    if (!shouldRefresh) return;
 
     routeKeyRef.current = key;
     calculateRoute(live);
@@ -662,20 +743,25 @@ export default function FoodJourney({
     backendMode,
     selectedKey,
     calculateRoute,
+    loadingRoute,
+    routeInfo,
+    routeError,
+    navigationPoints,
+    routeCoordinates,
   ]);
 
   useEffect(() => {
     return () => requestRef.current?.abort();
   }, []);
-  // Only announce a real maneuver when GPS gets close to its endpoint.
-  // Missing step coordinates means we cannot safely time automatic prompts.
+  // Announce the next turn shortly before its endpoint. Ordinary mobile GPS
+  // accuracy can vary, so tolerate fixes up to 75 m while keeping prompts useful.
   useEffect(() => {
-    if (!navigation || !live || !routeInfo?.directions?.length || Number(live.accuracy) > 35) return;
+    if (!navigation || !live || !routeInfo?.directions?.length || Number(live.accuracy) > 75) return;
     const steps = routeInfo.directions;
     let i = stepIndexRef.current;
     while (i < steps.length && !steps[i].endPoint) i += 1;
     if (i >= steps.length) return;
-    if (distanceMeters(live, steps[i].endPoint) <= 65) {
+    if (distanceMeters(live, steps[i].endPoint) <= 80) {
       const upcoming = steps[i + 1];
       if (upcoming?.text) setSpokenInstruction(upcoming.text);
       stepIndexRef.current = i + 1;
@@ -806,11 +892,11 @@ export default function FoodJourney({
           )}
 
           <FoodWalkVoiceAssistant
-  navigationActive={navigation}
-  instruction={spokenInstruction}
-  onStopNavigation={() => setNavigation(false)}
-  onUpdateRoute={updateRouteFromCurrentLocation}
-/>
+            navigationActive={navigation}
+            instruction={spokenInstruction}
+            onStopNavigation={() => setNavigation(false)}
+            onUpdateRoute={updateRouteFromCurrentLocation}
+          />
 
           {gpsError && (
             <p className="fw-error" role="alert">
@@ -833,8 +919,7 @@ export default function FoodJourney({
               </b>
 
               <p>
-                Route calculated from your last GPS position.
-                Use Update route after moving or deviating.
+                Route refreshes as you move and when GPS detects that you are off course.
               </p>
 
               <h3>Route directions</h3>
