@@ -14,7 +14,7 @@ from rest_framework import permissions, status
 from rest_framework.response import Response
 from rest_framework.throttling import UserRateThrottle
 from rest_framework.views import APIView
-
+from django.utils import timezone
 from .google_places import PlacesUnavailable, search_google_places, restaurant_photo_url
 from invites.models import Restaurant as FoodKindlRestaurant
 
@@ -238,6 +238,20 @@ class PlacesSearchThrottle(UserRateThrottle):
     rate = "30/min"
 
 
+def partner_is_open_now(opening_time, closing_time):
+    if opening_time is None or closing_time is None:
+        return None  # Hours not set; status is unknown.
+
+    current_time = timezone.localtime().time()
+
+    if opening_time < closing_time:
+        return opening_time <= current_time < closing_time
+
+    if opening_time > closing_time:  # Overnight hours, e.g. 18:00–02:00
+        return current_time >= opening_time or current_time < closing_time
+
+    return False
+
 class RestaurantRecommendationView(APIView):
     permission_classes = [permissions.IsAuthenticated]
     throttle_classes = [PlacesSearchThrottle]
@@ -261,7 +275,7 @@ class RestaurantRecommendationView(APIView):
         if has_location and not (math.isfinite(latitude) and math.isfinite(longitude)
                 and -90 <= latitude <= 90 and -180 <= longitude <= 180):
             return Response({"detail": "Invalid coordinates."}, status=400)
-        radius = max(500, min(radius, 5000)) if has_location else None
+        radius = max(500, min(radius, 20000)) if has_location else None
         limit = max(1, min(limit, 100))
         source = request.query_params.get("source", "other").strip().lower()
         place_type = request.query_params.get("place_type", "all").strip().lower()
@@ -292,7 +306,7 @@ class RestaurantRecommendationView(APIView):
             rows = FoodKindlRestaurant.objects.filter(
                 is_active=True, is_foodkindl_partner=True,
                 latitude__isnull=False, longitude__isnull=False,
-            )
+            ).prefetch_related("menu_items")
             for restaurant in rows:
                 lat, lon = float(restaurant.latitude), float(restaurant.longitude)
                 if not (math.isfinite(lat) and math.isfinite(lon)):
@@ -319,22 +333,65 @@ class RestaurantRecommendationView(APIView):
                 if diet in {"nonveg", "non_veg", "non-veg"} and not restaurant.serves_non_vegetarian:
                     continue
                 partners.append({
-                    "id": f"foodkindl-{restaurant.pk}", "name": restaurant.name,
-                    "latitude": lat, "longitude": lon, "distance_km": round(km, 2),
-                    "amenity": amenity, "category": amenity, "cuisine": cuisine_label,
-                    "address": restaurant.address or ", ".join(filter(None, [restaurant.locality, restaurant.city])),
-                    "phone": restaurant.phone_number, "website": restaurant.website,
-                    "opening_hours": (f"{restaurant.opening_time:%H:%M}-{restaurant.closing_time:%H:%M}"
-                                      if restaurant.opening_time and restaurant.closing_time else ""),
-                    "diet_vegetarian": "yes" if restaurant.serves_vegetarian else "no",
-                    "diet_non_vegetarian": "yes" if restaurant.serves_non_vegetarian else "no",
-                    "wheelchair": "yes" if restaurant.wheelchair_accessible else "no",
-                    "internet_access": "yes" if restaurant.has_wifi else "no",
-                    "payment_methods": ["cards"] if restaurant.accepts_cards else [],
-                    "source": "foodkindl", "is_foodkindl_partner": True,
-                    "accepts_foodkindl_booking": restaurant.accepts_foodkindl_booking,
-                    "image_url": restaurant.image_url,
-                })
+    "id": f"foodkindl-{restaurant.pk}",
+    "name": restaurant.name,
+    "latitude": lat,
+    "longitude": lon,
+    "distance_km": round(km, 2),
+    "amenity": amenity,
+    "category": amenity,
+    "cuisine": cuisine_label,
+    "address": restaurant.address or ", ".join(
+        filter(None, [restaurant.locality, restaurant.city])
+    ),
+    "phone": restaurant.phone_number,
+    "website": restaurant.website,
+    "opening_hours": (
+        f"{restaurant.opening_time:%H:%M}-{restaurant.closing_time:%H:%M}"
+        if restaurant.opening_time and restaurant.closing_time else ""
+    ),
+    "opening_time": (
+        restaurant.opening_time.isoformat()
+        if restaurant.opening_time else None
+    ),
+    "closing_time": (
+        restaurant.closing_time.isoformat()
+        if restaurant.closing_time else None
+    ),
+    "open_now": partner_is_open_now(
+        restaurant.opening_time,
+        restaurant.closing_time,
+    ),
+    "menu_items": [
+        {
+            "name": item.name,
+            "description": item.description or "",
+            "price": str(item.price) if item.price is not None else "",
+        }
+        for item in restaurant.menu_items.all()
+        if item.is_available
+    ],
+    "diet_vegetarian": "yes" if restaurant.serves_vegetarian else "no",
+    "diet_non_vegetarian": "yes" if restaurant.serves_non_vegetarian else "no",
+    "wheelchair": "yes" if restaurant.wheelchair_accessible else "no",
+    "internet_access": "yes" if restaurant.has_wifi else "Menuno",
+    "payment_methods": ["cards"] if restaurant.accepts_cards else [],
+    "source": "foodkindl",
+    "is_foodkindl_partner": True,
+    "accepts_foodkindl_booking": restaurant.accepts_foodkindl_booking,
+    "image_url": restaurant.image_url,
+    "menu_items": [
+    {
+        "name": item.name,
+        "description": item.description or "",
+        "price": str(item.price),
+        "is_popular": item.is_popular,
+        "is_available": item.is_available,
+    }
+    for item in restaurant.menu_items.all()
+    if item.is_available
+],
+})
             partners.sort(key=lambda p: p["distance_km"])
 
         if source == "partner":
@@ -440,3 +497,139 @@ class RestaurantRecommendationView(APIView):
             "partner_restaurants_found": len(partners),
             "external_search_unavailable": unavailable, "warning": warning,
         })
+
+
+import json
+import os
+import re
+
+
+class CuisinePredictionView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+    throttle_classes = [PlacesSearchThrottle]
+
+    def post(self, request):
+        description = str(request.data.get("description", "")).strip()
+
+        if not description:
+            return Response(
+                {"detail": "Enter a cuisine or restaurant description."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        if len(description) > 1000:
+            return Response(
+                {"detail": "Description must be 1,000 characters or fewer."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        token = os.environ.get("HF_TOKEN", "").strip()
+        model = os.environ.get(
+            "FOODKINDL_AI_MODEL",
+            "openai/gpt-oss-20b",
+        ).strip()
+
+        if not token:
+            return Response(
+                {"detail": "Cuisine prediction is not configured on the backend."},
+                status=status.HTTP_503_SERVICE_UNAVAILABLE,
+            )
+
+        prompt = f"""
+Classify the cuisine types described by the user.
+Examples: "Kerala" -> ["Kerala cuisine"],
+"Asian fusion" -> ["Asian fusion"],
+"Bengali food" -> ["Bengali cuisine"].
+
+Return JSON only in this format:
+{{"cuisines": ["Cuisine name"]}}
+
+Return an empty list if the description does not give enough information.
+Do not infer diet (vegetarian/non-vegetarian) from cuisine.
+
+Description: {description}
+""".strip()
+
+        try:
+            response = requests.post(
+                "https://router.huggingface.co/v1/chat/completions",
+                headers={"Authorization": f"Bearer {token}"},
+                json={
+                    "model": model,
+                    "messages": [
+                        {
+                            "role": "system",
+                            "content": (
+                                "Classify cuisine descriptions. Return JSON only "
+                                'in this format: {"cuisines":["Kerala","Bengali"]}. '
+                                "Use cuisine names without the word cuisine. "
+                                "Return an empty list if unclear."
+                            ),
+                        },
+                        {"role": "user", "content": description},
+                    ],
+                    "temperature": 0.1,
+                    "max_tokens": 150,
+                },
+                timeout=30,
+            )
+
+            if not response.ok:
+                logger.error(
+                    "Hugging Face cuisine request failed: status=%s body=%s",
+                    response.status_code,
+                    response.text[:500],
+                )
+                return Response(
+                    {"detail": "Cuisine prediction is temporarily unavailable."},
+                    status=status.HTTP_503_SERVICE_UNAVAILABLE,
+                )
+
+            payload = response.json()
+            content = payload["choices"][0]["message"].get("content", "")
+
+            if isinstance(content, list):
+                content = " ".join(
+                    part.get("text", "")
+                    for part in content
+                    if isinstance(part, dict)
+                )
+
+            match = re.search(r"\{[\s\S]*\}", str(content))
+            if not match:
+                logger.error("Cuisine model returned no JSON object.")
+                return Response(
+                    {"detail": "Cuisine prediction is temporarily unavailable."},
+                    status=status.HTTP_503_SERVICE_UNAVAILABLE,
+                )
+
+            result = json.loads(match.group(0))
+            cuisines = result.get("cuisines", [])
+
+            if not isinstance(cuisines, list):
+                cuisines = []
+
+            cuisines = [
+                item.strip()
+                for item in cuisines
+                if isinstance(item, str) and item.strip()
+            ][:5]
+
+            return Response({
+                "description": description,
+                "cuisines": cuisines,
+                "source": "AI prediction",
+            })
+
+        except requests.RequestException:
+            logger.exception("Could not reach the Hugging Face cuisine service.")
+        except (KeyError, IndexError, TypeError, ValueError):
+            logger.exception("Could not parse the cuisine model response.")
+
+        return Response(
+            {"detail": "Cuisine prediction is temporarily unavailable."},
+            status=status.HTTP_503_SERVICE_UNAVAILABLE,
+        )
+            
+
+        

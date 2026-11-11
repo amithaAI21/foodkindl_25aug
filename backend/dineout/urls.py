@@ -11,8 +11,10 @@ from .views import (
 from .photo_views import restaurant_photo
 
 # Updated Google Places restaurant discovery
-from .restaurant_discovery import RestaurantRecommendationView
-
+from .restaurant_discovery import (
+    CuisinePredictionView,
+    RestaurantRecommendationView,
+)
 # Restaurant navigation and directions
 from .route_views import RestaurantRouteView
 
@@ -63,4 +65,10 @@ urlpatterns = [
         "",
         include(router.urls),
     ),
+    path(
+            "restaurants/predict-cuisine/",
+            CuisinePredictionView.as_view(),
+            name="restaurant-cuisine-prediction",
+),
 ]
+

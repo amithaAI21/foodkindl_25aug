@@ -1,4 +1,3 @@
-
 from rest_framework import generics, permissions
 
 from .models import Restaurant
@@ -28,9 +27,12 @@ class PartnerRestaurantListCreateView(generics.ListCreateAPIView):
     ]
 
     def get_queryset(self):
-        return Restaurant.objects.filter(
-            owner=self.request.user
-        ).order_by("-created_at")
+        return (
+            Restaurant.objects
+            .filter(owner=self.request.user)
+            .prefetch_related("images")
+            .order_by("-created_at")
+        )
 
     def perform_create(self, serializer):
         serializer.save(
@@ -48,8 +50,10 @@ class PartnerRestaurantDetailView(generics.RetrieveUpdateAPIView):
     ]
 
     def get_queryset(self):
-        return Restaurant.objects.filter(
-            owner=self.request.user
+        return (
+            Restaurant.objects
+            .filter(owner=self.request.user)
+            .prefetch_related("images")
         )
 
     def perform_update(self, serializer):

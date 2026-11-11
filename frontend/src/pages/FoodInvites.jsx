@@ -46,7 +46,7 @@ const INVITE_TYPES = [
     label: "Food Walk",
     icon: "🚶",
     description:
-      "Discover great food along a walk, drive or journey and invite others to join your route.",
+      "Discover great food along a walk, drive or journey.",
     buttonText: "Plan a Food Walk",
     route: "/food-walk",
   },

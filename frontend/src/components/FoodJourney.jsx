@@ -400,6 +400,7 @@ export default function FoodJourney({
   const [departure, setDeparture] = useState(() =>
     new Date().toTimeString().slice(0, 5)
   );
+  const [placeQuery, setPlaceQuery] = useState("");
 
   const [navigation, setNavigation] = useState(false);
   const [live, setLive] = useState(null);
@@ -428,6 +429,17 @@ export default function FoodJourney({
   );
 
   const selectedKey = selected.map((place) => place.id).join(",");
+
+  const filteredPlaces = useMemo(() => {
+    const query = placeQuery.trim().toLocaleLowerCase();
+    if (!query) return places;
+
+    return places.filter((place) =>
+      [place.name, place.category, place.cuisine, place.address]
+        .filter(Boolean)
+        .some((value) => String(value).toLocaleLowerCase().includes(query))
+    );
+  }, [places, placeQuery]);
 
   const totalMinutes =
     Number(travelMinutes) +
@@ -878,8 +890,17 @@ export default function FoodJourney({
             </p>
           )}
 
-          {places.length ? (
-            places.slice(0, 30).map((place) => (
+          <input
+            type="search"
+            value={placeQuery}
+            onChange={(event) => setPlaceQuery(event.target.value)}
+            placeholder="Search restaurants, e.g. Nandhana Palace Dasarahalli"
+            aria-label="Search food stops"
+            style={{ width: "100%", margin: "0 0 12px", padding: "10px 12px" }}
+          />
+
+          {filteredPlaces.length ? (
+            filteredPlaces.map((place) => (
               <article
                 key={place.id}
                 className="fj-stop-row"
@@ -910,7 +931,11 @@ export default function FoodJourney({
               </article>
             ))
           ) : (
-            <p>No food stops found for this route.</p>
+            <p>
+              {placeQuery
+                ? `No food stops match “${placeQuery}”. Try a shorter name.`
+                : "No food stops were returned for this route. Try building the route again."}
+            </p>
           )}
 
           <button

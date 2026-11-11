@@ -1,0 +1,267 @@
+.fk-cuisine-assistant {
+  display: grid;
+  gap: 9px;
+}
+
+.fk-cuisine-assistant > .fk-side-label {
+  color: #f5dfd2;
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.fk-cuisine-help {
+  margin: 0;
+  color: #cdb7ac;
+  font-size: 0.82rem;
+  line-height: 1.45;
+}
+
+.fk-cuisine-input {
+  width: 100%;
+  min-height: 88px;
+  box-sizing: border-box;
+  resize: vertical;
+  padding: 12px 14px;
+  border: 1px solid #68402f;
+  border-radius: 12px;
+  background: #1a0d09;
+  color: #fff5ef;
+  font: inherit;
+  line-height: 1.45;
+}
+
+.fk-cuisine-input::placeholder {
+  color: #a99083;
+}
+
+.fk-cuisine-input:focus {
+  outline: 2px solid #ff7948;
+  outline-offset: 2px;
+}
+
+.fk-cuisine-detect-button {
+  width: 100%;
+  min-height: 42px;
+  padding: 10px 14px;
+  border: 0;
+  border-radius: 10px;
+  background: #ff7948;
+  color: #24110a;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background-color 160ms ease, transform 160ms ease;
+}
+
+.fk-cuisine-detect-button:hover:not(:disabled) {
+  background: #ff9069;
+  transform: translateY(-1px);
+}
+
+.fk-cuisine-detect-button:focus-visible,
+.fk-cuisine-chips button:focus-visible {
+  outline: 2px solid #fff5ef;
+  outline-offset: 2px;
+}
+
+.fk-cuisine-detect-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.fk-cuisine-results {
+  display: grid;
+  gap: 9px;
+  color: #f5dfd2;
+  font-size: 0.85rem;
+}
+
+.fk-cuisine-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.fk-cuisine-chips button {
+  padding: 7px 11px;
+  border: 1px solid #9a5a3d;
+  border-radius: 999px;
+  background: #351b12;
+  color: #fff1e8;
+  font: inherit;
+  cursor: pointer;
+}
+
+.fk-cuisine-chips button:hover {
+  background: #ff7948;
+  color: #24110a;
+}
+
+.fk-cuisine-chips button.is-selected {
+  border-color: #ff7948;
+  background: #ff7948;
+  color: #24110a;
+  font-weight: 700;
+}
+
+.fk-cuisine-selection-message {
+  margin: 12px 0 0;
+  padding: 11px 14px;
+  border: 1px solid rgba(255, 121, 72, 0.55);
+  border-radius: 10px;
+  background: rgba(255, 121, 72, 0.1);
+  color: #ffe4d6;
+  line-height: 1.45;
+}
+
+.fk-radius-presets {
+  display: flex;
+  gap: 8px;
+  margin: 8px 0;
+}
+
+.fk-radius-presets button {
+  min-width: 68px;
+  padding: 7px 12px;
+  border: 1px solid #754b39;
+  border-radius: 999px;
+  background: #351b12;
+  color: #f5dfd2;
+  font: inherit;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.fk-radius-presets button.is-active {
+  border-color: #ff7948;
+  background: #ff7948;
+  color: #24110a;
+  font-weight: 700;
+}
+
+.fk-radius-presets button:focus-visible {
+  outline: 2px solid #fff5ef;
+  outline-offset: 2px;
+}
+
+.fk-cuisine-error {
+  margin: 0;
+  color: #ffab8e;
+  font-size: 0.85rem;
+  line-height: 1.4;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fk-cuisine-detect-button {
+    transition: none;
+  }
+}
+
+.fk-dish-explainer, .fk-dish-explainer p { margin: 0; line-height: 1.45; }
+
+.fk-dish-explainer {
+  display: grid;
+  gap: 6px;
+  margin: 14px 0;
+  padding: 14px 16px;
+  border: 1px solid rgba(255, 121, 72, 0.42);
+  border-radius: 12px;
+  background: #24130e;
+  color: #f8e7dc;
+  line-height: 1.5;
+}
+.fk-dish-explainer p { margin: 0; color: #ead4c8; }
+/* Search descriptions sourced from the Wikipedia summary API. */
+.fk-dish-explainer {
+  display: grid;
+  gap: 6px;
+  margin: 14px 0;
+  padding: 14px 16px;
+  border: 1px solid rgba(255, 121, 72, 0.42);
+  border-radius: 12px;
+  background: #24130e;
+  color: #f8e7dc;
+  line-height: 1.5;
+}
+.fk-dish-explainer p { display: -webkit-box; max-height: 2.9em; margin: 0; overflow: hidden; color: #ead4c8; line-height: 1.45; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
+.fk-wiki-source { color: #ffad8b; font-size: 0.82rem; text-decoration: underline; }
+
+/* Restaurant details live at the bottom of the results page. */
+.fk-restaurant-detail {
+  position: relative;
+  width: min(1100px, 100%);
+  box-sizing: border-box;
+  margin: 36px auto 24px;
+  padding: clamp(18px, 3vw, 30px);
+  scroll-margin-top: 24px;
+  border: 1px solid #754b39;
+  border-radius: 18px;
+  background: #24130e;
+  color: #fff5ef;
+}
+.fk-restaurant-detail-close {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border: 1px solid #754b39;
+  border-radius: 50%;
+  background: #351b12;
+  color: #fff5ef;
+  cursor: pointer;
+}
+.fk-restaurant-detail-heading {
+  display: grid;
+  grid-template-columns: minmax(180px, 260px) minmax(0, 1fr);
+  align-items: center;
+  gap: 22px;
+  padding-right: 48px;
+}
+.fk-restaurant-detail-heading .restaurant-image {
+  width: 100%;
+  height: 190px;
+  min-height: 190px;
+  aspect-ratio: 4 / 3;
+  overflow: hidden;
+  border: 1px solid #533526;
+  border-radius: 14px;
+  background: #160b08;
+}
+.fk-restaurant-detail-heading .restaurant-image img { width: 100%; height: 100%; object-fit: cover; object-position: center; }
+.fk-detail-eyebrow { color: #ff9069; font-size: 0.75rem; font-weight: 800; letter-spacing: 0.08em; }
+.fk-restaurant-detail-heading h2 { margin: 6px 0; color: #fff5ef; font-size: clamp(1.5rem, 4vw, 2.2rem); line-height: 1.15; }
+.fk-detail-rating, .fk-detail-cuisine { margin: 6px 0 0; color: #ead4c8; }
+.fk-restaurant-detail-facts { display: grid; gap: 12px; margin: 22px 0; padding: 16px; border: 1px solid #533526; border-radius: 12px; }
+.fk-restaurant-detail-facts > div { display: grid; grid-template-columns: 140px minmax(0, 1fr); gap: 14px; line-height: 1.5; }
+.fk-restaurant-detail-facts strong { color: #d8a58d; }
+.fk-restaurant-detail-facts a { color: #ffad8b; }
+.fk-restaurant-menu-panel { padding: 18px; border: 1px solid #754b39; border-radius: 14px; background: #1b0f0b; }
+.fk-restaurant-menu-panel h3 { margin: 0 0 14px; font-size: 1.35rem; }
+.fk-food-description { display: grid; gap: 7px; margin-bottom: 14px; padding: 12px 14px; border-radius: 10px; background: #2a1710; line-height: 1.5; }
+.fk-food-description p { display: -webkit-box; max-height: 2.9em; margin: 0; overflow: hidden; color: #ead4c8; line-height: 1.45; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
+.fk-food-description .fk-wiki-source { justify-self: start; }
+.fk-menu-items { display: grid; gap: 0; margin: 0; padding: 0; list-style: none; }
+.fk-menu-items li { display: flex; justify-content: space-between; gap: 14px; padding: 12px 0; border-top: 1px solid #4b3024; }
+.fk-menu-items li span { display: grid; gap: 4px; }
+.fk-menu-items small, .fk-menu-unavailable { color: #d6bfb2; line-height: 1.5; }
+.fk-menu-unavailable { margin: 0; }
+.fk-menu-price { white-space: nowrap; color: #ffad8b; }
+.fk-confirm-food-button { display: inline-flex; align-items: center; gap: 8px; margin-top: 16px; padding: 11px 15px; border-radius: 10px; background: #ff7948; color: #24110a; font-weight: 800; text-decoration: none; }
+.fk-restaurant-detail-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 18px; }
+.fk-view-details-button { display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
+@media (max-width: 600px) {
+  .fk-restaurant-detail { margin: 24px 0; border-radius: 14px; }
+  .fk-restaurant-detail-heading { grid-template-columns: 100px minmax(0, 1fr); gap: 12px; padding-right: 36px; }
+  .fk-restaurant-detail-heading .restaurant-image { height: 100px; min-height: 100px; }
+  .fk-restaurant-detail-facts > div { grid-template-columns: 1fr; gap: 3px; }
+}
+
+.fk-food-reference-row { display: grid; grid-template-columns: minmax(150px, 220px) minmax(0, 1fr); align-items: start; gap: 14px; }
+.fk-food-reference-figure { margin: 0; }
+.fk-food-reference-image { display: block; width: 100%; height: 145px; object-fit: cover; border: 1px solid #533526; border-radius: 10px; background: #160b08; }
+.fk-food-reference-figure figcaption { margin-top: 5px; color: #cdb7ac; font-size: 0.72rem; line-height: 1.3; }
+.fk-food-reference-copy { display: grid; align-content: start; gap: 8px; min-width: 0; }
+@media (max-width: 600px) { .fk-food-reference-row { grid-template-columns: 1fr; } .fk-food-reference-figure { max-width: 260px; } }

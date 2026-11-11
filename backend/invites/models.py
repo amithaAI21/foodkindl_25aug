@@ -747,7 +747,7 @@ class Restaurant(models.Model):
     default=False,
     help_text="Restaurant welcomes guests without advance reservations.",
 )
-
+    
     class Meta:
         ordering = [
             "-rating",

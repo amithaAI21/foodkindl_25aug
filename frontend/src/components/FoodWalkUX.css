@@ -1,0 +1,44 @@
+/* Small UX additions for the Food Walk planner. */
+.fw-help-text {
+  margin: -6px 0 12px;
+  color: #d9bcae;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.fw-panel .fw-field-heading {
+  margin-top: 14px;
+  color: #fff5ef;
+}
+
+.fw-panel .fw-field input {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 44px;
+}
+
+.fw-panel input::placeholder {
+  color: #b89c8e;
+  opacity: 1;
+}
+
+.fw-panel .fw-build {
+  min-height: 48px;
+  font-weight: 700;
+}
+
+@media (max-width: 700px) {
+  .fw-panel {
+    min-width: 0;
+    width: 100%;
+  }
+
+  .fw-panel form {
+    gap: 8px;
+  }
+
+  .fw-mode-chips,
+  .fw-meals {
+    flex-wrap: wrap;
+  }
+}

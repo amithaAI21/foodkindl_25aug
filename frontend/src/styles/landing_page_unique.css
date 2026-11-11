@@ -5105,3 +5105,184 @@ html[data-page-hidden="true"] *::after {
     border-radius: 12px;
   }
 }
+
+/* Make the landing page footer easier to read */
+.fk-footer {
+  font-size: 15px;
+}
+
+.fk-footer-brand img {
+  width: 68px;
+  height: 68px;
+}
+
+.fk-footer-brand p {
+  margin-top: 12px;
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+.fk-footer h4 {
+  margin-bottom: 14px;
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+.fk-footer-grid > div:not(.fk-footer-brand) a,
+.fk-footer-social-column a {
+  font-size: 14px;
+  line-height: 1.8;
+}
+
+.fk-footer-social-column svg {
+  width: 18px;
+  height: 18px;
+}
+
+.fk-footer-bottom p {
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+@media (max-width: 600px) {
+  .fk-footer {
+    font-size: 14px;
+  }
+
+  .fk-footer-brand p,
+  .fk-footer-grid > div:not(.fk-footer-brand) a,
+  .fk-footer-social-column a {
+    font-size: 13px;
+  }
+
+  .fk-footer-bottom p {
+    font-size: 11px;
+  }
+}
+
+.fk-footer-bottom p {
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+@media (max-width: 600px) {
+  .fk-footer-bottom p {
+    font-size: 12px;
+  }
+}
+
+.fk-footer {
+  background-color: #030201;
+  color: #ffffff;
+}
+
+.fk-footer h4,
+.fk-footer p,
+.fk-footer a,
+.fk-footer-brand p,
+.fk-footer-bottom p {
+  color: #ffffff;
+}
+
+.fk-footer a:hover {
+  color: #ff7043;
+}
+
+.fk-footer-bottom {
+  border-top-color: rgba(255, 255, 255, 0.2);
+}
+
+.fk-food-walk-shell-single {
+  grid-template-columns: minmax(0, 840px);
+  justify-content: center;
+}
+
+/* ==========================================================
+   FOOD WALK — CENTERED, FULL-WIDTH VIDEO (FINAL OVERRIDE)
+   The illustrative route has been removed from the JSX.
+   Override older two-column rules above.
+========================================================== */
+.fk-landing #food-walk .fk-food-walk-shell.fk-food-walk-shell-single {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  margin: 28px auto 0 !important;
+  justify-items: center !important;
+  align-items: stretch !important;
+  gap: 0 !important;
+}
+
+.fk-landing #food-walk .fk-food-walk-shell-single > .fk-food-walk-video {
+  grid-column: 1 / -1 !important;
+  justify-self: center !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
+  padding: clamp(16px, 2.5vw, 32px) !important;
+  margin: 0 auto !important;
+  text-align: center;
+  align-items: stretch;
+}
+
+.fk-landing #food-walk .fk-food-walk-shell-single .fk-food-walk-video-player {
+  display: block !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  height: auto !important;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  object-position: center;
+  margin: 16px auto 0 !important;
+}
+
+@media (max-width: 600px) {
+  .fk-landing #food-walk {
+    padding-left: 12px !important;
+    padding-right: 12px !important;
+  }
+  .fk-landing #food-walk .fk-food-walk-shell-single > .fk-food-walk-video {
+    padding: 12px !important;
+  }
+}
+
+
+/* ==========================================================
+   FOOD WALK — FINAL COMPACT VIDEO SIZE
+   Single centered video, wide but shorter on desktop/mobile.
+   Keep this override last to beat the legacy layout rules.
+========================================================== */
+.fk-landing #food-walk .fk-food-walk-shell.fk-food-walk-shell-single {
+  display: flex !important;
+  justify-content: center !important;
+  align-items: stretch !important;
+  width: 100% !important;
+  max-width: 100% !important;
+}
+
+.fk-landing #food-walk .fk-food-walk-shell-single > .fk-food-walk-video {
+  flex: 1 1 100% !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  margin: 0 auto !important;
+  text-align: center;
+}
+
+.fk-landing #food-walk .fk-food-walk-shell-single .fk-food-walk-video-player {
+  display: block !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  height: clamp(280px, 31vw, 400px) !important;
+  aspect-ratio: auto !important;
+  object-fit: cover !important;
+  object-position: center !important;
+  margin: 16px auto 0 !important;
+  border-radius: 18px;
+}
+
+@media (max-width: 768px) {
+  .fk-landing #food-walk .fk-food-walk-shell-single .fk-food-walk-video-player {
+    height: 220px !important;
+    border-radius: 12px;
+  }
+}

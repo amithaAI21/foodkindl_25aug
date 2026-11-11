@@ -212,3 +212,98 @@
 .dineout-page .fk-focused-map-status{color:#ffe7d7;background:#321c14;padding:11px 13px;font-size:13px;line-height:1.5;margin:0;border-top:1px solid #70422d}
 .dineout-page .fk-dine-map-canvas:has(.fk-focused-map-root){height:auto!important;min-height:420px!important}
 .dineout-page .fk-dine-map-canvas:has(.fk-focused-map-root)>.fk-focused-map-root{min-height:420px!important}
+
+
+.fk-cuisine-assistant {
+  display: grid;
+  gap: 9px;
+}
+
+.fk-cuisine-assistant > label {
+  color: #f5dfd2;
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.fk-cuisine-help {
+  margin: 0;
+  color: #cdb7ac;
+  font-size: 0.82rem;
+  line-height: 1.45;
+}
+
+.fk-cuisine-input {
+  width: 100%;
+  box-sizing: border-box;
+  min-height: 88px;
+  resize: vertical;
+  padding: 12px 14px;
+  border: 1px solid #68402f;
+  border-radius: 12px;
+  background: #1a0d09;
+  color: #fff5ef;
+  font: inherit;
+  line-height: 1.45;
+}
+
+.fk-cuisine-input::placeholder {
+  color: #a99083;
+}
+
+.fk-cuisine-input:focus {
+  outline: 2px solid #ff7948;
+  outline-offset: 2px;
+}
+
+.fk-cuisine-detect-button {
+  width: 100%;
+  min-height: 42px;
+  padding: 10px 14px;
+  border: 0;
+  border-radius: 10px;
+  background: #ff7948;
+  color: #24110a;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.fk-cuisine-detect-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.fk-cuisine-results {
+  display: grid;
+  gap: 9px;
+  color: #f5dfd2;
+  font-size: 0.85rem;
+}
+
+.fk-cuisine-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.fk-cuisine-chips button {
+  padding: 7px 11px;
+  border: 1px solid #9a5a3d;
+  border-radius: 999px;
+  background: #351b12;
+  color: #fff1e8;
+  font: inherit;
+  cursor: pointer;
+}
+
+.fk-cuisine-chips button:hover {
+  background: #ff7948;
+  color: #24110a;
+}
+
+.fk-cuisine-error {
+  margin: 0;
+  color: #ffab8e;
+  font-size: 0.85rem;
+  line-height: 1.4;
+}

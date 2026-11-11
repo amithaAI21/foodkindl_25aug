@@ -516,7 +516,7 @@ export default function Community({
 
   const API_BASE = (
     import.meta.env.VITE_BACKEND_URL ||
-    "https://foodkindl-25aug.onrender.com"
+    "https://foodkindl-25aug-uns4.onrender.com"
   ).replace(/\/+$/, "");
 
 

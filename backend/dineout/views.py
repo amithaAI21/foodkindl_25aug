@@ -311,6 +311,7 @@ class RestaurantRecommendationView(APIView):
                 "is_foodkindl_partner": True,
                 "accepts_foodkindl_booking": restaurant.accepts_foodkindl_booking,
                 "image_url": restaurant.image_url,
+                "menu_items": getattr(restaurant, "menu_items", []) or [],
             })
         partner_results.sort(key=lambda place: place["distance_km"])
 
@@ -377,6 +378,7 @@ class RestaurantRecommendationView(APIView):
                                     for key, value in tags.items()
                                     if key.startswith("payment:") and str(value).lower() == "yes"],
                 "source": "google", "is_foodkindl_partner": False,
+                "menu_items": [],
                 "google_place_id": place.get("google_place_id"),
                 "rating": place.get("rating"), "review_count": place.get("review_count"),
                 "attributions": place.get("attributions", []),
@@ -874,6 +876,39 @@ class DineOutViewSet(
 
 
     @action(
+    detail=True,
+    methods=["post"],
+    url_path="cancel-booking",
+    )
+    @transaction.atomic
+    def cancel_booking(self, request, pk=None):
+        dine_out = get_object_or_404(
+            DineOut.objects.select_for_update(),
+            pk=pk,
+        )
+
+        if dine_out.host_id != request.user.id:
+            return Response(
+                {"detail": "Only the Dine Out host can cancel this booking."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        if dine_out.booking_status == DineOut.BookingStatus.CANCELLED:
+            return Response(self.get_serializer(dine_out).data)
+
+        if dine_out.booking_status != DineOut.BookingStatus.BOOKED:
+            return Response(
+                {"detail": "Only a confirmed booking can be cancelled."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        dine_out.booking_status = DineOut.BookingStatus.CANCELLED
+        dine_out.save(update_fields=["booking_status", "updated_at"])
+
+        return Response(self.get_serializer(dine_out).data)
+        
+    
+    @action(
 
         detail=False,
 
@@ -1238,3 +1273,5 @@ class DineOutMemberListView(ListAPIView):
             .order_by("first_name", "username")
 
         )
+
+

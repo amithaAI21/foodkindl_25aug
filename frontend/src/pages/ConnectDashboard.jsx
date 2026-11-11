@@ -65,7 +65,7 @@ import {
   ChefHat,
 
 
-
+  CalendarDays,
   ShieldAlert,
 
 
@@ -2848,197 +2848,47 @@ export default function ConnectDashboard() {
 
 
         <aside className="cd-left-sidebar">
-
-
-
-          <nav className="cd-side-nav">
-
-
-
-            <Link to="/">
-
-
-
-              <Home size={19} />
-
-
-
-              <span>Home</span>
-
-
-
-            </Link>
-
-
-
-            <Link
-
-
-
-              to="/discover"
-
-
-
-              className="active"
-
-
-
-            >
-
-
-
-              <Search size={19} />
-
-
-
-              <span>Discover</span>
-
-
-
-            </Link>
-
-
-
-            <Link to="/ai-kitchen">
-
-
-
-              <Sparkles size={19} />
-
-
-
-              <span>AI Kitchen</span>
-
-
-
-            </Link>
-
-
-
-            <Link to="/food-invites">
-
-
-
-              <ChefHat size={19} />
-
-
-
-              <span>Food Invites</span>
-
-
-
-            </Link>
-
-
-
-            <Link to="/notifications">
-
-
-
-              <Bell size={19} />
-
-
-
-              <span>
-
-
-
-                Notifications
-
-
-
-              </span>
-
-
-
-              {incomingRequests.length > 0 && (
-
-
-
-                <span className="cd-side-count">
-
-
-
-                  {incomingRequests.length}
-
-
-
-                </span>
-
-
-
-              )}
-
-
-
-            </Link>
-
-
-
-            {/* <Link to="/food-invites#my-plans">
-
-
-
-              <CalendarDays size={19} />
-
-
-
-              <span>My Plans</span>
-
-
-
-            </Link> */}
-
-
-
-            <Link
-
-
-
-              to="/sos-safety"
-
-
-
-              className="cd-sos-nav"
-
-
-
-            >
-
-
-
-              <ShieldAlert size={19} />
-
-
-
-              <span>SOS Alert</span>
-
-
-
-            </Link>
-
-
-
-            <Link to="/profile">
-
-
-
-              <CircleUserRound size={19} />
-
-
-
-              <span>Profile</span>
-
-
-
-            </Link>
-
-
-
-          </nav>
-
-
-
+<nav className="cd-side-nav">
+  <Link to="/">
+    <Home size={19} />
+    <span>Home</span>
+  </Link>
+
+  <Link to="/discover" className="active">
+    <Search size={19} />
+    <span>Discover</span>
+  </Link>
+
+  <Link to="/ai-kitchen">
+    <Sparkles size={19} />
+    <span>AI Kitchen</span>
+  </Link>
+
+  <Link to="/food-invites">
+    <ChefHat size={19} />
+    <span>Food Invites</span>
+  </Link>
+
+<Link to="/calendar">
+  <CalendarDays size={19} />
+  <span>Calendar</span>
+</Link>
+
+  <Link to="/notifications">
+    <Bell size={19} />
+    <span>Notifications</span>
+  </Link>
+
+  <Link to="/sos-safety" className="cd-sos-nav">
+    <ShieldAlert size={19} />
+    <span>SOS Alert</span>
+  </Link>
+
+  <Link to="/profile">
+    <CircleUserRound size={19} />
+    <span>Profile</span>
+  </Link>
+</nav>
         </aside>
 
 

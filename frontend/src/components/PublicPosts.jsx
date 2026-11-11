@@ -15,7 +15,7 @@ import "../styles/public_posts.css";
 
 const API_BASE = (
   import.meta.env.VITE_BACKEND_URL ||
-  "https://foodkindl-25aug.onrender.com"
+  "https://foodkindl-25aug-uns4.onrender.com"
 ).replace(/\/+$/, "");
 
 function getMediaUrl(path) {

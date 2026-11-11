@@ -1,1211 +1,368 @@
-import React, {
-  useCallback,
-  useEffect,
-  useMemo,
-  useState,
-} from "react";
-
+import { useCallback, useEffect, useState } from "react";
+import { Bell, Check, MapPin, X } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
-import {
-  CalendarDays,
-  ChevronLeft,
-  ChevronRight,
-  Clock3,
-  MapPin,
-  RefreshCw,
-  Utensils,
-  UsersRound,
-  X,
-} from "lucide-react";
-
 import api from "../api";
-import "../styles/Notifications.css";
+import "../styles/NotificationsCenter.css";
 
-const COOK_TOGETHER_ENDPOINT = "/cook-togethers/";
-const DINE_OUT_ENDPOINT = "/dineout/dine-outs/";
+const COOK_TOGETHER_URL = "/cook-togethers/";
+const DINE_OUT_URL = "/dineout/dine-outs/";
 
-/* =========================================================
-   API HELPERS
-========================================================= */
-
-function extractResults(response) {
+function getRows(response) {
   const data = response?.data;
 
-  if (Array.isArray(data)) {
-    return data;
-  }
-
-  if (Array.isArray(data?.results)) {
-    return data.results;
-  }
+  if (Array.isArray(data)) return data;
+  if (Array.isArray(data?.results)) return data.results;
 
   return [];
 }
 
-function getDateValue(event) {
-  if (event?.starts_at) {
-    const date = new Date(event.starts_at);
-
-    return Number.isNaN(date.getTime())
-      ? null
-      : date;
-  }
-
-  if (!event?.event_date) {
-    return null;
-  }
-
-  const date = new Date(
-    `${event.event_date}T${
-      event.start_time || "00:00:00"
-    }`
+function getHostName(event) {
+  return (
+    event.host_name ||
+    event.host?.name ||
+    event.host?.full_name ||
+    event.host?.username ||
+    "A FoodKindl member"
   );
-
-  return Number.isNaN(date.getTime())
-    ? null
-    : date;
 }
 
-function getTimeLabel(event) {
-  const date = getDateValue(event);
-
-  if (!date) {
-    return "Time not specified";
+function getEventName(event, type) {
+  if (type === "dine_out") {
+    return event.title || event.restaurant_name || "Dine Out";
   }
 
-  return new Intl.DateTimeFormat("en-IN", {
-    hour: "numeric",
-    minute: "2-digit",
-  }).format(date);
+  return event.title || event.dish || "Cook Together";
 }
 
-function getFullDateLabel(event) {
-  const date = getDateValue(event);
+function getEventDate(event) {
+  let dateValue = null;
 
-  if (!date) {
+  if (event.starts_at) {
+    dateValue = new Date(event.starts_at);
+  } else if (event.event_date) {
+    dateValue = new Date(
+      `${event.event_date}T${event.start_time || "00:00:00"}`
+    );
+  }
+
+  if (!dateValue || Number.isNaN(dateValue.getTime())) {
     return "Date not specified";
   }
 
-  return new Intl.DateTimeFormat("en-IN", {
-    weekday: "long",
+  return dateValue.toLocaleString("en-IN", {
+    weekday: "short",
     day: "numeric",
-    month: "long",
+    month: "short",
     year: "numeric",
     hour: "numeric",
     minute: "2-digit",
-  }).format(date);
+  });
 }
 
-function dateKey(date) {
-  if (!date) return "";
-
-  const year = date.getFullYear();
-
-  const month = String(
-    date.getMonth() + 1
-  ).padStart(2, "0");
-
-  const day = String(
-    date.getDate()
-  ).padStart(2, "0");
-
-  return `${year}-${month}-${day}`;
-}
-
-/* =========================================================
-   NORMALIZE COOK TOGETHER
-========================================================= */
-
-function normalizeCookTogether(invite) {
-  return {
-    ...invite,
-
-    calendar_type: "cook_together",
-
-    unique_key: `cook-${invite.id}`,
-
-    type_label: "Cook Together",
-
-    type_icon: "🍳",
-
-    details_route:
-      `/food-invites/${invite.id}`,
-
-    title:
-      invite.title ||
-      invite.dish ||
-      "Cook Together",
-
-    location:
-      invite.location_name ||
-      invite.exact_address ||
-      "Location not specified",
-
-    attendees:
-      Number(
-        invite.approved_guest_count ||
-        invite.accepted_guests ||
-        0
-      ),
-
-    eventDate: getDateValue(invite),
-  };
-}
-
-/* =========================================================
-   NORMALIZE DINE OUT
-========================================================= */
-
-function normalizeDineOut(invite) {
-  return {
-    ...invite,
-
-    calendar_type: "dine_out",
-
-    unique_key: `dine-${invite.id}`,
-
-    type_label: "Dine Out",
-
-    type_icon: "🍽️",
-
-    details_route:
-      `/dine-out/${invite.id}`,
-
-    title:
-      invite.title ||
-      invite.restaurant_name ||
-      "Dine Out",
-
-    location:
-      invite.restaurant_address ||
-      invite.restaurant_name ||
-      "Location not specified",
-
-    attendees:
-      Number(
-        invite.accepted_guests ||
-        invite.approved_guest_count ||
-        0
-      ),
-
-    eventDate: getDateValue(invite),
-  };
-}
-
-/* =========================================================
-   CALENDAR HELPERS
-========================================================= */
-
-function buildCalendarDays(currentMonth) {
-  const year = currentMonth.getFullYear();
-  const month = currentMonth.getMonth();
-
-  const firstDay =
-    new Date(year, month, 1);
-
-  const lastDay =
-    new Date(year, month + 1, 0);
-
-  const startOffset =
-    firstDay.getDay();
-
-  const totalDays =
-    lastDay.getDate();
-
-  const previousMonthLastDay =
-    new Date(year, month, 0)
-      .getDate();
-
-  const cells = [];
-
-  /* Previous month */
-
-  for (
-    let i = startOffset - 1;
-    i >= 0;
-    i--
-  ) {
-    const day =
-      previousMonthLastDay - i;
-
-    const date =
-      new Date(
-        year,
-        month - 1,
-        day
-      );
-
-    cells.push({
-      date,
-      currentMonth: false,
-    });
+function getDetailsPath(invitation) {
+  if (invitation.notificationType === "dine_out") {
+    return `/dine-out/${invitation.id}`;
   }
 
-  /* Current month */
-
-  for (
-    let day = 1;
-    day <= totalDays;
-    day++
-  ) {
-    cells.push({
-      date:
-        new Date(
-          year,
-          month,
-          day
-        ),
-
-      currentMonth: true,
-    });
-  }
-
-  /* Next month */
-
-  let nextDay = 1;
-
-  while (cells.length < 42) {
-    cells.push({
-      date:
-        new Date(
-          year,
-          month + 1,
-          nextDay
-        ),
-
-      currentMonth: false,
-    });
-
-    nextDay++;
-  }
-
-  return cells;
+  return `/food-invites/${invitation.id}`;
 }
-
-/* =========================================================
-   COMPONENT
-========================================================= */
 
 export default function Notifications() {
   const navigate = useNavigate();
 
-  const today = useMemo(
-    () => new Date(),
-    []
-  );
+  const [invitations, setInvitations] = useState([]);
+  const [visitPrompts, setVisitPrompts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [busyKey, setBusyKey] = useState("");
+  const [error, setError] = useState("");
+  const [message, setMessage] = useState("");
 
-  const [
-    currentMonth,
-    setCurrentMonth,
-  ] = useState(
-    new Date(
-      today.getFullYear(),
-      today.getMonth(),
-      1
-    )
-  );
+  const loadNotifications = useCallback(async () => {
+    setLoading(true);
+    setError("");
 
-  const [
-    events,
-    setEvents,
-  ] = useState([]);
+    const [cookResult, dineResult, visitResult] =
+      await Promise.allSettled([
+        api.get(
+          `${COOK_TOGETHER_URL}my-invitations/?status=pending`
+        ),
+        api.get(`${DINE_OUT_URL}invitations/`),
+        api.get(`${DINE_OUT_URL}visit-feedback-due/`),
+      ]);
 
-  const [
-    loading,
-    setLoading,
-  ] = useState(true);
+    const nextInvitations = [];
 
-  const [
-    error,
-    setError,
-  ] = useState("");
-
-  const [
-    selectedEvent,
-    setSelectedEvent,
-  ] = useState(null);
-
-  /* =======================================================
-     LOAD APPROVED EVENTS
-  ======================================================= */
-
-  const loadCalendarEvents =
-    useCallback(async () => {
-
-      setLoading(true);
-      setError("");
-
-      try {
-        /*
-         * COOK TOGETHER
-         *
-         * Your FoodInvites.jsx already uses:
-         * my-invitations/?status=approved
-         */
-
-        const requests = [
-          {
-            type: "cook-approved",
-            request: api.get(
-              `${COOK_TOGETHER_ENDPOINT}` +
-              "my-invitations/?status=approved"
-            ),
-          },
-
-          /*
-           * Include events created by the
-           * logged-in user as well.
-           */
-
-          {
-            type: "cook-hosted",
-            request: api.get(
-              `${COOK_TOGETHER_ENDPOINT}` +
-              "created-by-me/"
-            ),
-          },
-
-          /*
-           * DINE OUT
-           *
-           * Your current FoodInvites page
-           * already uses the main endpoint.
-           */
-
-          {
-            type: "dine",
-            request: api.get(
-              DINE_OUT_ENDPOINT
-            ),
-          },
-        ];
-
-        const results =
-          await Promise.allSettled(
-            requests.map(
-              item => item.request
-            )
-          );
-
-        let calendarEvents = [];
-
-        results.forEach(
-          (result, index) => {
-
-            if (
-              result.status !==
-              "fulfilled"
-            ) {
-              console.error(
-                "CALENDAR REQUEST FAILED:",
-                requests[index].type,
-                result.reason
-              );
-
-              return;
-            }
-
-            const rows =
-              extractResults(
-                result.value
-              );
-
-            if (
-              requests[index].type ===
-                "cook-approved" ||
-              requests[index].type ===
-                "cook-hosted"
-            ) {
-              calendarEvents.push(
-                ...rows.map(
-                  normalizeCookTogether
-                )
-              );
-
-              return;
-            }
-
-            /*
-             * DINE OUT:
-             *
-             * Only display:
-             * - events hosted by the user
-             * - events the user accepted/joined
-             *
-             * Do NOT show every public Dine Out.
-             */
-
-            const approvedDineOuts =
-              rows.filter(invite => {
-
-                const isHost =
-                  Boolean(
-                    invite.is_host
-                  );
-
-                const response =
-                  String(
-                    invite.my_response_status ||
-                    ""
-                  ).toLowerCase();
-
-                return (
-                  isHost ||
-                  response === "accepted"
-                );
-              });
-
-            calendarEvents.push(
-              ...approvedDineOuts.map(
-                normalizeDineOut
-              )
-            );
-          }
-        );
-
-        /*
-         * Remove duplicates.
-         */
-
-        calendarEvents =
-          Array.from(
-            new Map(
-              calendarEvents.map(
-                event => [
-                  event.unique_key,
-                  event,
-                ]
-              )
-            ).values()
-          );
-
-        /*
-         * Events without dates cannot
-         * be positioned on a calendar.
-         */
-
-        calendarEvents =
-          calendarEvents.filter(
-            event =>
-              event.eventDate
-          );
-
-        /*
-         * Sort by date.
-         */
-
-        calendarEvents.sort(
-          (a, b) =>
-            a.eventDate.getTime() -
-            b.eventDate.getTime()
-        );
-
-        setEvents(
-          calendarEvents
-        );
-
-      } catch (requestError) {
-
-        console.error(
-          "FOODKINDL CALENDAR ERROR:",
-          requestError
-        );
-
-        setError(
-          requestError
-            ?.response
-            ?.data
-            ?.detail ||
-          "Unable to load your FoodKindl calendar."
-        );
-
-      } finally {
-
-        setLoading(false);
-
-      }
-
-    }, []);
-
-  useEffect(() => {
-    loadCalendarEvents();
-  }, [loadCalendarEvents]);
-
-  /*
-   * Refresh when user returns to page.
-   *
-   * Useful after accepting an invite.
-   */
-
-  useEffect(() => {
-
-    function refreshCalendar() {
-      loadCalendarEvents();
+    if (cookResult.status === "fulfilled") {
+      nextInvitations.push(
+        ...getRows(cookResult.value).map((event) => ({
+          ...event,
+          notificationType: "cook_together",
+          key: `cook-${event.id}`,
+        }))
+      );
     }
 
-    window.addEventListener(
-      "focus",
-      refreshCalendar
-    );
-
-    return () => {
-      window.removeEventListener(
-        "focus",
-        refreshCalendar
+    if (dineResult.status === "fulfilled") {
+      nextInvitations.push(
+        ...getRows(dineResult.value)
+          .filter(
+            (event) =>
+              String(event.my_response_status || "").toLowerCase() ===
+              "pending"
+          )
+          .map((event) => ({
+            ...event,
+            notificationType: "dine_out",
+            key: `dine-${event.id}`,
+          }))
       );
-    };
+    }
 
-  }, [loadCalendarEvents]);
+    setInvitations(nextInvitations);
 
-  /* =======================================================
-     CALENDAR
-  ======================================================= */
+    if (visitResult.status === "fulfilled") {
+      setVisitPrompts(
+        getRows(visitResult.value).map((event) => ({
+          ...event,
+          key: `visit-${event.id}`,
+        }))
+      );
+    } else {
+      // The visit-feedback API is optional until it is added to the backend.
+      setVisitPrompts([]);
+    }
 
-  const calendarDays =
-    useMemo(
-      () =>
-        buildCalendarDays(
-          currentMonth
-        ),
-      [currentMonth]
-    );
+    if (
+      cookResult.status === "rejected" &&
+      dineResult.status === "rejected"
+    ) {
+      setError("Unable to load invitations. Please try again.");
+    }
 
-  const eventsByDate =
-    useMemo(() => {
+    setLoading(false);
+  }, []);
 
-      const map = {};
+  useEffect(() => {
+    loadNotifications();
+  }, [loadNotifications]);
 
-      events.forEach(event => {
+  async function respondToInvitation(invitation, action) {
+    if (busyKey) return;
 
-        const key =
-          dateKey(
-            event.eventDate
-          );
+    setBusyKey(invitation.key);
+    setError("");
+    setMessage("");
 
-        if (!map[key]) {
-          map[key] = [];
-        }
+    try {
+      if (invitation.notificationType === "cook_together") {
+        const actionPath =
+          action === "accept"
+            ? "accept-invitation"
+            : "decline-invitation";
 
-        map[key].push(event);
-      });
-
-      return map;
-
-    }, [events]);
-
-  const upcomingEvents =
-    useMemo(() => {
-
-      const now =
-        Date.now();
-
-      return events
-        .filter(
-          event =>
-            event.eventDate
-              .getTime() >= now
-        )
-        .slice(0, 5);
-
-    }, [events]);
-
-  const monthLabel =
-    new Intl.DateTimeFormat(
-      "en-IN",
-      {
-        month: "long",
-        year: "numeric",
+        await api.post(
+          `${COOK_TOGETHER_URL}${invitation.id}/${actionPath}/`
+        );
+      } else {
+        await api.post(
+          `${DINE_OUT_URL}${invitation.id}/${action}/`
+        );
       }
-    ).format(currentMonth);
 
-  function previousMonth() {
+      setMessage(
+        action === "accept"
+          ? "Invitation accepted."
+          : "Invitation declined."
+      );
 
-    setCurrentMonth(
-      current =>
-        new Date(
-          current.getFullYear(),
-          current.getMonth() - 1,
-          1
-        )
-    );
-
+      await loadNotifications();
+    } catch (requestError) {
+      setError(
+        requestError.response?.data?.detail ||
+          "Unable to update this invitation."
+      );
+    } finally {
+      setBusyKey("");
+    }
   }
 
-  function nextMonth() {
+  async function answerVisitPrompt(event, visited) {
+    const key = `visit-${event.id}`;
 
-    setCurrentMonth(
-      current =>
-        new Date(
-          current.getFullYear(),
-          current.getMonth() + 1,
-          1
-        )
-    );
+    if (busyKey) return;
 
-  }
+    setBusyKey(key);
+    setError("");
+    setMessage("");
 
-  function goToday() {
+    try {
+      await api.post(
+        `${DINE_OUT_URL}${event.id}/visit-feedback/`,
+        { visited }
+      );
 
-    setCurrentMonth(
-      new Date(
-        today.getFullYear(),
-        today.getMonth(),
-        1
-      )
-    );
-
+      setMessage("Your visit response has been saved.");
+      await loadNotifications();
+    } catch (requestError) {
+      setError(
+        requestError.response?.data?.detail ||
+          "Unable to save your visit response."
+      );
+    } finally {
+      setBusyKey("");
+    }
   }
 
   return (
-    <main className="fk-calendar-page">
-
-      {/* HEADER */}
-
-      <section className="fk-calendar-header">
+    <main className="fk-notifications-page">
+      <header className="fk-notifications-header">
+        <Bell size={22} aria-hidden="true" />
 
         <div>
-
-          <span className="fk-calendar-eyebrow">
-            FOODKINDL PLANNER
-          </span>
-
-          <h1>
-            Your Food Calendar
-          </h1>
-
-          <p>
-            Accepted food experiences
-            automatically appear here.
-          </p>
-
+          <h1>Notifications</h1>
+          <p>Invitations and updates about your food plans.</p>
         </div>
 
         <button
           type="button"
-          className="fk-refresh"
-          onClick={
-            loadCalendarEvents
-          }
+          onClick={loadNotifications}
+          disabled={loading}
         >
-          <RefreshCw
-            size={17}
-            className={
-              loading
-                ? "spinning"
-                : ""
-            }
-          />
-
           Refresh
         </button>
-
-      </section>
+      </header>
 
       {error && (
-        <div className="fk-calendar-error">
+        <p className="fk-notice-error" role="alert">
           {error}
-        </div>
+        </p>
       )}
 
-      <section className="fk-calendar-layout">
+      {message && (
+        <p className="fk-notice-success" role="status">
+          {message}
+        </p>
+      )}
 
-        {/* ===============================================
-            MAIN CALENDAR
-        =============================================== */}
+      <section>
+        <h2>Invitations</h2>
 
-        <div className="fk-calendar-card">
+        {loading && <p>Loading notifications…</p>}
 
-          <div className="fk-calendar-toolbar">
+        {!loading && invitations.length === 0 && (
+          <p>You have no pending invitations.</p>
+        )}
 
-            <div className="fk-calendar-nav">
+        {invitations.map((invitation) => {
+          const type = invitation.notificationType;
+          const place =
+            type === "dine_out"
+              ? invitation.restaurant_address ||
+                invitation.restaurant_name
+              : invitation.location_name ||
+                invitation.exact_address;
 
-              <button
-                type="button"
-                onClick={
-                  previousMonth
-                }
-                aria-label="Previous month"
-              >
-                <ChevronLeft
-                  size={20}
-                />
-              </button>
+          return (
+            <article
+              className="fk-notification-card"
+              key={invitation.key}
+            >
+              <div className="fk-notification-copy">
+                <strong>
+                  {getHostName(invitation)} invited you to{" "}
+                  {type === "dine_out" ? "Dine Out" : "Cook Together"}
+                </strong>
 
-              <button
-                type="button"
-                onClick={
-                  nextMonth
-                }
-                aria-label="Next month"
-              >
-                <ChevronRight
-                  size={20}
-                />
-              </button>
+                <h3>{getEventName(invitation, type)}</h3>
 
-              <button
-                type="button"
-                className="fk-today-button"
-                onClick={goToday}
-              >
-                Today
-              </button>
+                <p>{getEventDate(invitation)}</p>
 
-            </div>
-
-            <h2>
-              {monthLabel}
-            </h2>
-
-            <div className="fk-event-legend">
-
-              <span>
-                <i className="cook" />
-                Cook Together
-              </span>
-
-              <span>
-                <i className="dine" />
-                Dine Out
-              </span>
-
-            </div>
-
-          </div>
-
-          {/* WEEK DAYS */}
-
-          <div className="fk-weekdays">
-
-            {[
-              "SUN",
-              "MON",
-              "TUE",
-              "WED",
-              "THU",
-              "FRI",
-              "SAT",
-            ].map(day => (
-              <div key={day}>
-                {day}
-              </div>
-            ))}
-
-          </div>
-
-          {/* DAYS */}
-
-          <div className="fk-calendar-grid">
-
-            {calendarDays.map(
-              (
-                calendarDay,
-                index
-              ) => {
-
-                const key =
-                  dateKey(
-                    calendarDay.date
-                  );
-
-                const dayEvents =
-                  eventsByDate[key] ||
-                  [];
-
-                const isToday =
-                  key ===
-                  dateKey(today);
-
-                return (
-                  <div
-                    key={
-                      `${key}-${index}`
-                    }
-                    className={[
-                      "fk-calendar-day",
-
-                      !calendarDay
-                        .currentMonth
-                        ? "outside"
-                        : "",
-
-                      isToday
-                        ? "today"
-                        : "",
-                    ]
-                      .filter(Boolean)
-                      .join(" ")}
-                  >
-
-                    <div className="fk-day-number">
-
-                      <span>
-                        {
-                          calendarDay
-                            .date
-                            .getDate()
-                        }
-                      </span>
-
-                    </div>
-
-                    <div className="fk-day-events">
-
-                      {dayEvents
-                        .slice(0, 3)
-                        .map(event => (
-
-                          <button
-                            type="button"
-                            key={
-                              event.unique_key
-                            }
-                            className={
-                              `fk-calendar-event ${
-                                event.calendar_type
-                              }`
-                            }
-                            onClick={() =>
-                              setSelectedEvent(
-                                event
-                              )
-                            }
-                          >
-
-                            <span className="fk-event-time">
-                              {
-                                getTimeLabel(
-                                  event
-                                )
-                              }
-                            </span>
-
-                            <span className="fk-event-title">
-                              {
-                                event.title
-                              }
-                            </span>
-
-                          </button>
-
-                        ))}
-
-                      {dayEvents.length >
-                        3 && (
-                        <button
-                          type="button"
-                          className="fk-more-events"
-                        >
-                          +
-                          {
-                            dayEvents.length -
-                            3
-                          }{" "}
-                          more
-                        </button>
-                      )}
-
-                    </div>
-
-                  </div>
-                );
-              }
-            )}
-
-          </div>
-
-          {loading && (
-            <div className="fk-calendar-loading">
-              Loading your food
-              experiences...
-            </div>
-          )}
-
-        </div>
-
-        {/* ===============================================
-            UPCOMING PANEL
-        =============================================== */}
-
-        <aside className="fk-upcoming-panel">
-
-          <div className="fk-upcoming-heading">
-
-            <div className="fk-upcoming-icon">
-              <CalendarDays
-                size={19}
-              />
-            </div>
-
-            <div>
-              <h3>
-                Upcoming
-              </h3>
-
-              <p>
-                Your next food moments
-              </p>
-            </div>
-
-          </div>
-
-          <div className="fk-upcoming-list">
-
-            {!loading &&
-              upcomingEvents.length ===
-                0 && (
-
-                <div className="fk-no-events">
-
-                  <CalendarDays
-                    size={32}
-                  />
-
-                  <strong>
-                    Nothing planned yet
-                  </strong>
-
+                {place && (
                   <p>
-                    Accepted invitations
-                    will appear here.
+                    <MapPin size={15} aria-hidden="true" />
+                    {place}
                   </p>
+                )}
+              </div>
 
-                </div>
-
-              )}
-
-            {upcomingEvents.map(
-              event => (
+              <div className="fk-notification-actions">
+                <button
+                  type="button"
+                  className="fk-notification-view"
+                  disabled={Boolean(busyKey)}
+                  onClick={() => navigate(getDetailsPath(invitation))}
+                >
+                  View details
+                </button>
 
                 <button
                   type="button"
-                  key={
-                    event.unique_key
-                  }
-                  className="fk-upcoming-event"
+                  disabled={Boolean(busyKey)}
                   onClick={() =>
-                    setSelectedEvent(
-                      event
-                    )
+                    respondToInvitation(invitation, "accept")
                   }
                 >
-
-                  <div
-                    className={
-                      `fk-upcoming-type ${
-                        event.calendar_type
-                      }`
-                    }
-                  >
-                    {event.type_icon}
-                  </div>
-
-                  <div className="fk-upcoming-copy">
-
-                    <span>
-                      {
-                        new Intl
-                          .DateTimeFormat(
-                            "en-IN",
-                            {
-                              day:
-                                "numeric",
-                              month:
-                                "short",
-                            }
-                          )
-                          .format(
-                            event.eventDate
-                          )
-                      }
-                    </span>
-
-                    <strong>
-                      {event.title}
-                    </strong>
-
-                    <small>
-                      {
-                        getTimeLabel(
-                          event
-                        )
-                      }
-                    </small>
-
-                  </div>
-
-                  <ChevronRight
-                    size={17}
-                  />
-
+                  <Check size={16} aria-hidden="true" />
+                  Accept
                 </button>
 
-              )
-            )}
-
-          </div>
-
-          <button
-            type="button"
-            className="fk-view-invites"
-            onClick={() =>
-              navigate(
-                "/food-invites"
-              )
-            }
-          >
-            <Utensils size={17} />
-
-            View Food Invites
-          </button>
-
-        </aside>
-
+                <button
+                  type="button"
+                  disabled={Boolean(busyKey)}
+                  onClick={() =>
+                    respondToInvitation(invitation, "decline")
+                  }
+                >
+                  <X size={16} aria-hidden="true" />
+                  Decline
+                </button>
+              </div>
+            </article>
+          );
+        })}
       </section>
 
-      {/* ===============================================
-          EVENT MODAL
-      =============================================== */}
+      <section>
+        <h2>Confirm your Dine Out visit</h2>
 
-      {selectedEvent && (
-
-        <div
-          className="fk-event-modal-backdrop"
-          onClick={() =>
-            setSelectedEvent(null)
-          }
-        >
-
-          <article
-            className="fk-event-modal"
-            onClick={event =>
-              event.stopPropagation()
-            }
-          >
-
-            <button
-              type="button"
-              className="fk-modal-close"
-              onClick={() =>
-                setSelectedEvent(
-                  null
-                )
-              }
+        {visitPrompts.length === 0 ? (
+          <p>No visit confirmations are due.</p>
+        ) : (
+          visitPrompts.map((event) => (
+            <article
+              className="fk-notification-card"
+              key={event.key}
             >
-              <X size={20} />
-            </button>
-
-            <div
-              className={
-                `fk-modal-icon ${
-                  selectedEvent
-                    .calendar_type
-                }`
-              }
-            >
-              {
-                selectedEvent
-                  .type_icon
-              }
-            </div>
-
-            <span className="fk-modal-type">
-              {
-                selectedEvent
-                  .type_label
-              }
-            </span>
-
-            <h2>
-              {
-                selectedEvent
-                  .title
-              }
-            </h2>
-
-            <div className="fk-modal-details">
-
-              <div>
-                <CalendarDays
-                  size={18}
-                />
-
-                <span>
-                  {
-                    getFullDateLabel(
-                      selectedEvent
-                    )
-                  }
-                </span>
+              <div className="fk-notification-copy">
+                <strong>Did you visit this restaurant?</strong>
+                <h3>
+                  {event.restaurant_name || event.title || "Dine Out"}
+                </h3>
+                <p>{getEventDate(event)}</p>
               </div>
 
-              <div>
-                <MapPin
-                  size={18}
-                />
+              <div className="fk-notification-actions">
+                <button
+                  type="button"
+                  disabled={Boolean(busyKey)}
+                  onClick={() => answerVisitPrompt(event, true)}
+                >
+                  Yes, I visited
+                </button>
 
-                <span>
-                  {
-                    selectedEvent
-                      .location
-                  }
-                </span>
+                <button
+                  type="button"
+                  disabled={Boolean(busyKey)}
+                  onClick={() => answerVisitPrompt(event, false)}
+                >
+                  No
+                </button>
               </div>
-
-              <div>
-                <UsersRound
-                  size={18}
-                />
-
-                <span>
-                  {
-                    selectedEvent
-                      .attendees
-                  }{" "}
-                  confirmed
-                </span>
-              </div>
-
-              <div>
-                <Clock3
-                  size={18}
-                />
-
-                <span>
-                  {
-                    getTimeLabel(
-                      selectedEvent
-                    )
-                  }
-                </span>
-              </div>
-
-            </div>
-
-            <button
-              type="button"
-              className="fk-open-event"
-              onClick={() =>
-                navigate(
-                  selectedEvent
-                    .details_route
-                )
-              }
-            >
-              View event details
-
-              <ChevronRight
-                size={18}
-              />
-            </button>
-
-          </article>
-
-        </div>
-
-      )}
-
+            </article>
+          ))
+        )}
+      </section>
     </main>
   );
 }

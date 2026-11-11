@@ -1,49 +1,21 @@
-
-import {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
-
+import { useEffect, useMemo, useState } from "react";
 import {
   Calendar,
   Check,
   Clock,
-  Navigation,
   Eye,
   MapPin,
+  Navigation,
   ShieldCheck,
   Users,
   Utensils,
   X,
 } from "lucide-react";
-
 import { Link, useParams } from "react-router-dom";
 
-import RestaurantRouteMap from "../components/RestaurantRouteMap";
-
-import api from "../api";
-import DineOutBookingPanel from "../components/DineOutBookingPanel";
-
-
+import api, { backendUrl } from "../api";
 import "../styles/DineOutDetails.css";
-import "../styles/DineOutDetailsGPS.css";
 
-/* ============================================================
-   HELPERS
-============================================================ */
-
-function validCoordinate(value, limit) {
-  return (
-    value !== null &&
-    value !== undefined &&
-    value !== "" &&
-    Number.isFinite(Number(value)) &&
-    Math.abs(Number(value)) <= limit
-  );
-}
 
 function memberName(member) {
   return (
@@ -54,351 +26,51 @@ function memberName(member) {
   );
 }
 
+
 function initials(name) {
   return String(name || "F")
     .split(" ")
     .filter(Boolean)
     .slice(0, 2)
-    .map((part) => part[0]?.toUpperCase())
+    .map(part => part[0]?.toUpperCase())
     .join("");
 }
 
-function getRequestErrorMessage(error) {
-  const data = error.response?.data;
-  const status = error.response?.status;
-
-  if (typeof data?.detail === "string") {
-    return data.detail;
-  }
-
-  if (status === 401) {
-    return "Your session has expired. Please log in again.";
-  }
-
-  if (status === 403) {
-    return "You do not have permission to perform this action.";
-  }
-
-  if (status === 404) {
-    return "The requested API or invitation was not found.";
-  }
-
-  if (status === 409) {
-    return "This request conflicts with the current invitation status.";
-  }
-
-  if (!error.response) {
-    return "Cannot connect to Django. Check the backend.";
-  }
-
-  return "Unable to complete your request.";
+function firstValue(...values) {
+  return values.find(value => typeof value === "string" && value.trim())?.trim() || "";
 }
 
-/* ============================================================
-   RESTAURANT GPS MAP
-============================================================ */
+function safeExternalUrl(value, allowBackendRelative = false) {
+  const raw = firstValue(value);
+  if (!raw) return "";
 
-function RestaurantGPSMap({ invitation }) {
-  return <RestaurantRouteMap invitation={invitation} />;
+  try {
+    const absolute = /^https?:\/\//i.test(raw)
+      ? raw
+      : raw.startsWith("//")
+        ? `${window.location.protocol}${raw}`
+        : raw.startsWith("/") && allowBackendRelative
+          ? `${backendUrl}${raw}`
+          : `https://${raw}`;
+    const url = new URL(absolute);
+    return ["http:", "https:"].includes(url.protocol) ? url.href : "";
+  } catch {
+    return "";
+  }
 }
 
-/* ============================================================
-   HOST ARRIVAL CHECK-IN
-============================================================ */
-
-function HostArrivalCheckIn({ dineOutId }) {
-  const [booking, setBooking] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [submitting, setSubmitting] = useState(false);
-
-  const [error, setError] = useState("");
-  const [notice, setNotice] = useState("");
-
-  const refresh = useCallback(async () => {
-    if (!dineOutId) {
-      setBooking(null);
-      setLoading(false);
-      return;
-    }
-
-    setLoading(true);
-    setError("");
-
-    try {
-      const eligibility = await api.get(
-        `/table-bookings/eligibility/${dineOutId}/`
-      );
-
-      const existingBooking =
-        eligibility.data?.booking || null;
-
-      if (!existingBooking) {
-        setBooking(null);
-        return;
-      }
-
-      const visitResponse = await api.get(
-        `/table-bookings/${existingBooking.id}/visit-status/`
-      );
-
-      setBooking(
-        visitResponse.data?.booking || existingBooking
-      );
-    } catch (requestError) {
-      setError(
-        getRequestErrorMessage(requestError)
-      );
-    } finally {
-      setLoading(false);
-    }
-  }, [dineOutId]);
-
-  useEffect(() => {
-    void refresh();
-  }, [refresh]);
-
-  /* --------------------------------------------------------
-     CHECK-IN
-  -------------------------------------------------------- */
-
-  async function checkIn() {
-    if (
-      !booking ||
-      booking.status !== "confirmed" ||
-      submitting ||
-      booking.member_checked_in_at ||
-      ["verified", "no_show", "disputed"].includes(
-        booking.visit_status
-      )
-    ) {
-      return;
-    }
-
-    setSubmitting(true);
-    setError("");
-    setNotice("");
-
-    try {
-      await api.post(
-        `/table-bookings/${booking.id}/check-in/`
-      );
-
-      setNotice(
-        "Your arrival was recorded. Waiting for restaurant verification."
-      );
-
-      await refresh();
-    } catch (requestError) {
-      setError(
-        getRequestErrorMessage(requestError)
-      );
-    } finally {
-      setSubmitting(false);
-    }
+function openingHoursText(value) {
+  if (typeof value === "string") return value.trim();
+  if (Array.isArray(value)) return value.filter(Boolean).join(" · ");
+  if (Array.isArray(value?.weekdayDescriptions)) {
+    return value.weekdayDescriptions.filter(Boolean).join(" · ");
   }
-
-  if (!dineOutId) {
-    return null;
+  if (Array.isArray(value?.weekday_text)) {
+    return value.weekday_text.filter(Boolean).join(" · ");
   }
-
-  if (!loading && !error && !booking) {
-    return null;
-  }
-
-  const checkedIn = Boolean(
-    booking?.member_checked_in_at
-  );
-
-  const verified =
-    booking?.visit_status === "verified";
-
-  const issue =
-    booking?.visit_status === "disputed" ||
-    booking?.visit_status === "no_show";
-
-  const isConfirmed =
-    booking?.status === "confirmed";
-
-  const canCheckIn =
-    isConfirmed &&
-    !checkedIn &&
-    !verified &&
-    !issue;
-
-  /* --------------------------------------------------------
-     CHECK-IN UI
-  -------------------------------------------------------- */
-
-  return (
-    <section
-      className="dineout-response-panel"
-      style={{ marginTop: 16 }}
-    >
-      <div style={{ width: "100%" }}>
-        <small>
-          VISIT CHECK-IN · HOST ONLY
-        </small>
-
-        <h3 style={{ marginTop: 8 }}>
-          Have you reached the restaurant?
-        </h3>
-
-        {loading ? (
-          <p>Checking your arrival status...</p>
-        ) : booking ? (
-          <>
-            <p>
-              Booking reference:{" "}
-              <strong>
-                {booking.booking_reference}
-              </strong>
-            </p>
-
-            <p>
-              Reservation:{" "}
-              <strong>
-                {booking.status}
-              </strong>
-            </p>
-
-            {verified ? (
-              <div role="status">
-                <p>
-                  <strong>
-                    Visit Verified
-                  </strong>
-                </p>
-
-                <p>
-                  Your arrival and the restaurant's
-                  confirmation have been recorded.
-                </p>
-              </div>
-            ) : issue ? (
-              <div role="status">
-                <p>
-                  <strong>
-                    Visit Requires Review
-                  </strong>
-                </p>
-
-                <p>
-                  Current status:{" "}
-                  {booking.visit_status}
-                </p>
-              </div>
-            ) : checkedIn ? (
-              <div role="status">
-                <p>
-                  <strong>
-                    You've Checked In
-                  </strong>
-                </p>
-
-                <p>
-                  Waiting for restaurant verification.
-                </p>
-              </div>
-            ) : isConfirmed ? (
-              <>
-                <p>
-                  When you arrive at the restaurant,
-                  tap the button below.
-                </p>
-
-                <button
-                  type="button"
-                  onClick={checkIn}
-                  disabled={
-                    !canCheckIn ||
-                    loading ||
-                    submitting
-                  }
-                  style={{
-                    padding: "12px 20px",
-                    background: "#257650",
-                    color: "#ffffff",
-                    border: "none",
-                    borderRadius: 8,
-                    fontWeight: 700,
-                    cursor:
-                      submitting
-                        ? "not-allowed"
-                        : "pointer",
-                  }}
-                >
-                  <MapPin
-                    size={17}
-                    style={{
-                      display: "inline-block",
-                      verticalAlign: "middle",
-                      marginRight: 8,
-                    }}
-                  />
-
-                  {submitting
-                    ? "Recording arrival..."
-                    : "I've Arrived"}
-                </button>
-
-                <p style={{ marginTop: 12 }}>
-                  <small>
-                    Check-in is available from
-                    2 hours before to 6 hours
-                    after your booking time.
-                  </small>
-                </p>
-
-                <p>
-                  <small>
-                    Your check-in records a claimed
-                    arrival. The restaurant must
-                    also verify your visit.
-                  </small>
-                </p>
-              </>
-            ) : (
-              <p>
-                Your table must be confirmed before
-                check-in becomes available.
-              </p>
-            )}
-          </>
-        ) : null}
-
-        {notice && (
-          <p role="status">
-            {notice}
-          </p>
-        )}
-
-        {error && (
-          <p
-            role="alert"
-            style={{ color: "#b64226" }}
-          >
-            {error}
-          </p>
-        )}
-
-        <button
-          type="button"
-          onClick={refresh}
-          disabled={loading || submitting}
-          style={{ marginTop: 12 }}
-        >
-          {loading
-            ? "Checking..."
-            : "Refresh arrival status"}
-        </button>
-      </div>
-    </section>
-  );
+  return "";
 }
 
-/* ============================================================
-   MAIN DINE OUT DETAILS PAGE
-============================================================ */
 
 export default function DineOutDetails() {
   const { dineOutId } = useParams();
@@ -406,20 +78,29 @@ export default function DineOutDetails() {
   const [invitation, setInvitation] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-
   const [responding, setResponding] = useState(false);
   const [responseMessage, setResponseMessage] = useState("");
+  const [restaurantImageError, setRestaurantImageError] = useState(false);
+  const [gettingDirections, setGettingDirections] = useState(false);
+  const [directionsUrl, setDirectionsUrl] = useState("");
+  const [directionsError, setDirectionsError] = useState("");
+  const [wikiFoodReference, setWikiFoodReference] = useState({
+    image: "",
+    description: "",
+    source: "",
+  });
 
-  /* --------------------------------------------------------
-     FETCH INVITATION
-  -------------------------------------------------------- */
+  const searchedFoodQuery = firstValue(
+    invitation?.searched_food,
+    invitation?.food_query,
+  );
 
-  const loadInvitation = useCallback(
-    async ({ showLoader = false } = {}) => {
-      if (showLoader) {
-        setLoading(true);
-      }
 
+  useEffect(() => {
+    let active = true;
+
+    async function loadInvitation() {
+      setLoading(true);
       setError("");
 
       try {
@@ -427,155 +108,195 @@ export default function DineOutDetails() {
           `/dineout/dine-outs/${dineOutId}/`
         );
 
-        setInvitation(response.data);
-        return true;
+        if (active) {
+          setInvitation(response.data);
+        }
       } catch (requestError) {
+        if (!active) return;
+
         const status = requestError.response?.status;
 
         if (status === 404) {
           setError(
-            "This invitation was not found or was not shared with you."
+            "This invitation was not found, or it was not shared with you."
           );
         } else if (status === 403) {
           setError(
-            "You do not have permission to view this invitation."
+            "This is a private invitation and you are not one of the selected guests."
           );
         } else {
           setError(
-            getRequestErrorMessage(requestError)
+            requestError.response?.data?.detail ||
+            "Unable to load the Dine Out invitation."
           );
         }
-
-        return false;
       } finally {
-        if (showLoader) {
-          setLoading(false);
-        }
+        if (active) setLoading(false);
       }
-    },
-    [dineOutId]
+    }
+
+    loadInvitation();
+
+    return () => {
+      active = false;
+    };
+  }, [dineOutId]);
+
+  // If the host submitted before the Wikipedia lookup completed, load the
+  // searched dish's reference image and description when an invitee opens it.
+  useEffect(() => {
+    const query = searchedFoodQuery;
+    const savedDescription = firstValue(
+      invitation?.food_description,
+      invitation?.searched_food_description,
+    );
+    const savedImage = safeExternalUrl(firstValue(
+      invitation?.food_image_url,
+      invitation?.searched_food_image_url,
+    ), true);
+
+    if (!query || (savedDescription && savedImage)) {
+      setWikiFoodReference({ image: "", description: "", source: "" });
+      return undefined;
+    }
+
+    let active = true;
+    const title = query.trim().replace(/\s+/g, "_");
+
+    async function loadFoodReference() {
+      try {
+        const response = await fetch(
+          `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(title)}`,
+          { headers: { Accept: "application/json" } },
+        );
+        if (!response.ok) return;
+
+        const data = await response.json();
+        if (!active || data.type === "disambiguation" || !data.extract) return;
+
+        const sentences = String(data.extract).replace(/\s+/g, " ").trim()
+          .match(/[^.!?]+[.!?]+|[^.!?]+$/g) || [];
+        const description = sentences.slice(0, 2).join(" ").trim();
+        const image = data.thumbnail?.source || data.originalimage?.source || "";
+        const source = data.content_urls?.desktop?.page || "";
+
+        setWikiFoodReference({ image, description, source });
+      } catch {
+        // Keep the saved values and omit the reference if Wikipedia is offline.
+      }
+    }
+
+    loadFoodReference();
+    return () => { active = false; };
+  }, [searchedFoodQuery, invitation?.food_description, invitation?.food_image_url,
+    invitation?.searched_food_description, invitation?.searched_food_image_url]);
+
+
+  const invitedMembers = useMemo(
+    () => Array.isArray(invitation?.invited_members)
+      ? invitation.invited_members
+      : [],
+    [invitation]
   );
 
-  useEffect(() => {
-    void loadInvitation({ showLoader: true });
-  }, [loadInvitation]);
-
-  /* --------------------------------------------------------
-     INVITED MEMBERS
-  -------------------------------------------------------- */
-
-  const invitedMembers = useMemo(() => {
-    return Array.isArray(invitation?.invited_members)
-      ? invitation.invited_members
-      : [];
-  }, [invitation]);
-
-  /* --------------------------------------------------------
-     ACCEPT / DECLINE / JOIN
-  -------------------------------------------------------- */
 
   async function respond(action) {
-    if (responding) return;
-
     setResponding(true);
     setResponseMessage("");
 
     try {
-      const response = await api.post(
+      await api.post(
         `/dineout/dine-outs/${dineOutId}/${action}/`
       );
 
-      const newStatus = response.data?.status;
-
-      setInvitation((current) => {
-        if (!current) return current;
-
-        const wasAccepted =
-          current.my_response_status === "accepted";
-
-        const isAccepted =
-          newStatus === "accepted";
-
-        let count = Number(
-          current.accepted_guests || 0
-        );
-
-        if (!wasAccepted && isAccepted) {
-          count += 1;
-        } else if (wasAccepted && !isAccepted) {
-          count = Math.max(0, count - 1);
-        }
-
-        return {
-          ...current,
-          my_response_status: newStatus,
-          accepted_guests: count,
-        };
-      });
-
-      if (action === "join") {
-        setResponseMessage(
-          "You joined this Dine Out."
-        );
-      } else if (action === "accept") {
-        setResponseMessage(
-          "You accepted the invitation."
-        );
-      } else if (
-        invitation?.visibility === "public"
-      ) {
-        setResponseMessage(
-          "You left this Dine Out."
-        );
-      } else {
-        setResponseMessage(
-          "You declined the invitation."
-        );
-      }
-
-      await loadInvitation();
-    } catch (requestError) {
-      console.error(
-        "DINE OUT RESPONSE ERROR:",
-        requestError
+      const refreshed = await api.get(
+        `/dineout/dine-outs/${dineOutId}/`
       );
 
+      setInvitation(refreshed.data);
+
       setResponseMessage(
-        getRequestErrorMessage(requestError)
+        action === "join"
+          ? "You joined this Dine Out."
+          : action === "accept"
+            ? "You accepted this Dine Out invitation."
+            : invitation.visibility === "public"
+              ? "You left this Dine Out."
+              : "You declined this Dine Out invitation."
+      );
+    } catch (requestError) {
+      setResponseMessage(
+        requestError.response?.data?.detail ||
+        "Unable to update your response."
       );
     } finally {
       setResponding(false);
     }
   }
 
-  /* ========================================================
-     LOADING AND ERROR STATES
-  ======================================================== */
+  function getDirectionsFromCurrentLocation() {
+    setDirectionsError("");
+    setDirectionsUrl("");
+
+    if (!navigator.geolocation) {
+      setDirectionsError("Location access is not available in this browser.");
+      return;
+    }
+
+    setGettingDirections(true);
+    navigator.geolocation.getCurrentPosition(
+      ({ coords }) => {
+        const destinationLat = Number(invitation?.latitude);
+        const destinationLng = Number(invitation?.longitude);
+        const destination = Number.isFinite(destinationLat) && Number.isFinite(destinationLng)
+          ? `${destinationLat},${destinationLng}`
+          : firstValue(invitation?.restaurant_address, invitation?.restaurant_name);
+
+        if (!destination) {
+          setDirectionsError("The restaurant location is not available for directions.");
+          setGettingDirections(false);
+          return;
+        }
+
+        const origin = `${coords.latitude},${coords.longitude}`;
+        const url = new URL("https://www.google.com/maps/dir/");
+        url.searchParams.set("api", "1");
+        url.searchParams.set("origin", origin);
+        url.searchParams.set("destination", destination);
+        url.searchParams.set("travelmode", "driving");
+        setDirectionsUrl(url.toString());
+        setGettingDirections(false);
+      },
+      (locationError) => {
+        const message = locationError.code === 1
+          ? "Allow location access in your browser to get directions."
+          : "Could not get your current location. Please try again.";
+        setDirectionsError(message);
+        setGettingDirections(false);
+      },
+      { enableHighAccuracy: true, timeout: 12000, maximumAge: 60000 },
+    );
+  }
+
 
   if (loading) {
     return (
       <main className="dineout-details-page">
         <section className="dineout-details-card dineout-details-state">
           <span className="dineout-details-loader" />
-          <p>Loading Dine Out invitation...</p>
+          <p>Loading Dine Out invitation…</p>
         </section>
       </main>
     );
   }
 
+
   if (error || !invitation) {
     return (
       <main className="dineout-details-page">
         <section className="dineout-details-card dineout-details-state">
-          <p className="dineout-details-error">
-            {error ||
-              "Unable to load the Dine Out invitation."}
-          </p>
-
-          <Link
-            to="/dine-out"
-            className="dineout-details-button"
-          >
+          <p className="dineout-details-error">{error}</p>
+          <Link to="/dine-out" className="dineout-details-button">
             Return to Dine Out
           </Link>
         </section>
@@ -583,17 +304,12 @@ export default function DineOutDetails() {
     );
   }
 
-  /* ========================================================
-     INVITATION INFORMATION
-  ======================================================== */
 
   const startsAt = invitation.starts_at
     ? new Date(invitation.starts_at)
     : null;
 
-  const validDate =
-    startsAt &&
-    !Number.isNaN(startsAt.getTime());
+  const validDate = startsAt && !Number.isNaN(startsAt.getTime());
 
   const formattedDate = validDate
     ? startsAt.toLocaleDateString("en-IN", {
@@ -611,79 +327,99 @@ export default function DineOutDetails() {
       })
     : "Time unavailable";
 
-  const isPrivate =
-    invitation.visibility === "invited_only";
-
-  const isPublic =
-    invitation.visibility === "public";
-
-  const isHost =
-    invitation.is_host === true;
-
-  const responseStatus =
-    invitation.my_response_status;
-
-  const acceptedGuests = Math.max(
-    0,
-    Number(invitation.accepted_guests) || 0
-  );
-
-  const maximumGuests = Math.max(
-    0,
-    Number(invitation.maximum_guests) || 0
-  );
-
-  const availablePlaces = Math.max(
-    0,
-    maximumGuests - acceptedGuests
-  );
-
-  const isFull =
-    maximumGuests > 0 &&
-    availablePlaces === 0;
-
+  const isPrivate = invitation.visibility === "invited_only";
+  const isPublic = invitation.visibility === "public";
+  const isHost = Boolean(invitation.is_host);
+  const responseStatus = invitation.my_response_status;
+  const acceptedGuests = Number(invitation.accepted_guests || 0);
+  const acceptedGuestMembers = Array.isArray(invitation.accepted_guest_members)
+    ? invitation.accepted_guest_members
+    : [];
+  const maximumGuests = Number(invitation.maximum_guests || 0);
+  const isFull = maximumGuests > 0 && acceptedGuests >= maximumGuests;
   const hasJoinedPublicEvent =
-    isPublic &&
-    responseStatus === "accepted";
+    isPublic && responseStatus === "accepted";
 
-  const selectedRestaurantId = String(
-    invitation.restaurant_external_id || ""
-  ).trim();
-
-  const isRegisteredPartnerSelection =
-    /^foodkindl-\d+$/.test(
-      selectedRestaurantId
-    );
-
-  const hostName =
-    invitation.host_name ||
-    invitation.host?.full_name ||
-    invitation.host?.username ||
-    "Dine Out Host";
-
-  const totalDiners =
-    acceptedGuests + 1;
-
-  /* ========================================================
-     PAGE UI
-  ======================================================== */
+  const restaurant = invitation.restaurant || invitation.selected_restaurant || {};
+  const restaurantImage = safeExternalUrl(firstValue(
+    invitation.restaurant_image_url,
+    invitation.restaurant_photo_url,
+    invitation.restaurant_image,
+    invitation.image_url,
+    invitation.photo_url,
+    restaurant.image_url,
+    restaurant.photo_url,
+    restaurant.image,
+    restaurant.images?.[0]?.image_url,
+    restaurant.images?.[0]?.url,
+  ), true);
+  const restaurantWebsite = safeExternalUrl(firstValue(
+    invitation.restaurant_website,
+    invitation.website,
+    invitation.website_url,
+    invitation.website_uri,
+    restaurant.website,
+    restaurant.website_url,
+    restaurant.website_uri,
+    restaurant.websiteUri,
+  ));
+  const restaurantWebsiteLabel = (() => {
+    if (!restaurantWebsite) return "";
+    try {
+      return new URL(restaurantWebsite).hostname.replace(/^www\./i, "");
+    } catch {
+      return "Visit website";
+    }
+  })();
+  const restaurantPhone = firstValue(
+    invitation.restaurant_phone,
+    restaurant.phone_number,
+    restaurant.phone,
+  );
+  const searchedFood = searchedFoodQuery;
+  const foodImage = safeExternalUrl(firstValue(
+    invitation.food_image_url,
+    invitation.searched_food_image_url,
+  ), true) || wikiFoodReference.image;
+  const foodDescription = firstValue(
+    invitation.food_description,
+    invitation.searched_food_description,
+  ) || wikiFoodReference.description;
+  const foodDescriptionSource = safeExternalUrl(firstValue(
+    invitation.food_description_source,
+    invitation.food_source_url,
+  )) || safeExternalUrl(wikiFoodReference.source);
+  const restaurantMenuItems = Array.isArray(invitation.restaurant_menu_items)
+    ? invitation.restaurant_menu_items.filter(item => item && (item.name || item.title))
+    : [];
+  const restaurantHours = openingHoursText(
+    invitation.restaurant_opening_hours ||
+    invitation.opening_hours ||
+    restaurant.opening_hours ||
+    restaurant.current_opening_hours
+  );
+  const restaurantType = firstValue(
+    invitation.restaurant_type,
+    restaurant.restaurant_type,
+    restaurant.category,
+  );
+  const host = invitation.host;
+  const guestResponses = Array.isArray(invitation.responses)
+    ? invitation.responses
+    : [];
+  const hostId = host?.id == null ? null : String(host.id);
+  const visibleInvitedMembers = invitedMembers.filter(member =>
+    hostId === null || String(member.id) !== hostId
+  );
+  const currentResponseStatus = responseStatus || "pending";
 
   return (
     <main className="dineout-details-page">
       <section className="dineout-details-card">
-
-        {/* ================================================
-            HEADER
-        ================================================ */}
-
         <header className="dineout-details-header">
           <div>
-            <p className="dineout-details-eyebrow">
-              FOODKINDL DINE OUT
-            </p>
-
+            <p className="dineout-details-eyebrow">FOODKINDL DINE OUT</p>
             <h1>{invitation.title}</h1>
-
             <p className="dineout-details-description">
               {invitation.description ||
                 invitation.meetup_notes ||
@@ -691,272 +427,241 @@ export default function DineOutDetails() {
             </p>
           </div>
 
-          <span
-            className={`dineout-visibility-badge ${
-              isPrivate ? "private" : "public"
-            }`}
-          >
-            {isPrivate ? (
-              <ShieldCheck size={16} />
-            ) : (
-              <Eye size={16} />
-            )}
-
-            {isPrivate
-              ? "Selected guests only"
-              : "Visible to everyone"}
+          <span className={`dineout-visibility-badge ${isPrivate ? "private" : "public"}`}>
+            {isPrivate ? <ShieldCheck size={16} /> : <Eye size={16} />}
+            {isPrivate ? "Selected guests only" : "Visible to everyone"}
           </span>
         </header>
 
-        {/* ================================================
-            RESTAURANT
-        ================================================ */}
-
-        <div className="dineout-details-restaurant">
-          <span className="dineout-details-icon">
-            <Utensils size={24} />
-          </span>
-
-          <div>
-            <small>
-              Selected restaurant
-            </small>
-
-            <strong>
-              {invitation.restaurant_name}
-            </strong>
-
-            <span>
-              {invitation.restaurant_cuisine ||
-                "Cuisine not specified"}
+        <section className="dineout-details-restaurant" aria-label="Selected restaurant">
+          {restaurantImage && !restaurantImageError ? (
+            <img
+              className="dineout-restaurant-photo"
+              src={restaurantImage}
+              alt={`${invitation.restaurant_name || "Selected restaurant"}`}
+              loading="lazy"
+              onError={() => setRestaurantImageError(true)}
+            />
+          ) : (
+            <span className="dineout-details-icon" aria-hidden="true">
+              <Utensils size={24} />
             </span>
+          )}
+          <div className="dineout-restaurant-summary">
+            <small>Selected restaurant{restaurantType ? ` · ${restaurantType}` : ""}</small>
+            <strong>{invitation.restaurant_name || "Restaurant details unavailable"}</strong>
+            <span>{invitation.restaurant_cuisine || "Cuisine not specified"}</span>
+            {restaurantHours && <span className="dineout-restaurant-hours">Hours: {restaurantHours}</span>}
+            <div className="dineout-restaurant-links">
+              {restaurantPhone && (
+                <a href={`tel:${restaurantPhone.replace(/[^+\d]/g, "")}`}>
+                  Call restaurant
+                </a>
+              )}
+              {restaurantWebsite && (
+                <a href={restaurantWebsite} target="_blank" rel="noreferrer">
+                  {restaurantWebsiteLabel}
+                </a>
+              )}
+            </div>
           </div>
-        </div>
+        </section>
 
-        {/* ================================================
-            DATE / TIME / LOCATION / GUESTS
-        ================================================ */}
-
-        <div className="dineout-details-grid">
-          <article>
-            <Calendar size={20} />
-            <div>
-              <small>Date</small>
-              <strong>
-                {formattedDate}
-              </strong>
-            </div>
-          </article>
-
-          <article>
-            <Clock size={20} />
-            <div>
-              <small>Time</small>
-              <strong>
-                {formattedTime}
-              </strong>
-            </div>
-          </article>
-
-          <article>
-            <MapPin size={20} />
-            <div>
-              <small>Location</small>
-              <strong>
-                {invitation.restaurant_address ||
-                  invitation.restaurant_name}
-              </strong>
-            </div>
-          </article>
-
-          <article>
-            <Users size={20} />
-            <div>
-              <small>Guests</small>
-              <strong>
-                {acceptedGuests} accepted ·{" "}
-                {maximumGuests} maximum
-              </strong>
-              <small>
-                Total including host: {totalDiners}
-              </small>
-            </div>
-          </article>
-        </div>
-
-        {/* ================================================
-            HOST AND TABLE BOOKING
-        ================================================ */}
-
-        {isHost && isRegisteredPartnerSelection && (
-          <section className="dineout-booking-section" style={{marginTop:24}}>
-            <h2>Table booking</h2>
-            <DineOutBookingPanel dineOutId={invitation.id} acceptedGuests={acceptedGuests} />
-            <HostArrivalCheckIn dineOutId={invitation.id} />
+        {(searchedFood || restaurantMenuItems.length > 0) && (
+          <section className="dineout-menu-details" aria-label="Menu details">
+            <h2>Menu</h2>
+            {restaurantMenuItems.length > 0 && (
+              <ul className="dineout-menu-list">
+                {restaurantMenuItems.map((item, index) => {
+                  const menuImage = safeExternalUrl(firstValue(
+                    item.image_url,
+                    item.photo_url,
+                    item.image,
+                  ), true);
+                  return (
+                    <li key={`${item.id || item.name || item.title}-${index}`}>
+                      {menuImage && <img src={menuImage} alt={item.name || item.title} loading="lazy" />}
+                      <div>
+                        <strong>{item.name || item.title || item.item_name}</strong>
+                        {item.description && <p>{item.description}</p>}
+                      </div>
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+            {searchedFood && (
+              <article className="dineout-food-reference" aria-label={`About ${searchedFood}`}>
+                <div className="dineout-food-reference-copy">
+                  <small>SEARCHED DISH</small>
+                  <h3>About {searchedFood}</h3>
+                  {foodDescription && <p>{foodDescription}</p>}
+                  {foodDescriptionSource && (
+                    <a href={foodDescriptionSource} target="_blank" rel="noopener noreferrer">
+                      Source: Wikipedia
+                    </a>
+                  )}
+                  <small className="dineout-food-reference-note">
+                    Reference image only. Contact the restaurant to confirm the dish is available.
+                  </small>
+                </div>
+                {foodImage && (
+                  <img
+                    className="dineout-food-reference-image"
+                    src={foodImage}
+                    alt={`${searchedFood} food reference`}
+                    loading="lazy"
+                  />
+                )}
+              </article>
+            )}
+            {searchedFood && restaurantMenuItems.length === 0 && (
+              <p className="dineout-menu-unavailable">
+                The restaurant has not shared its full menu with FoodKindl yet. Call or visit the website to confirm {searchedFood}.
+              </p>
+            )}
           </section>
         )}
 
-        {/* ================================================
-            RESTAURANT MAP AND NAVIGATION
-        ================================================ */}
-
-        <RestaurantGPSMap invitation={invitation} />
-
-        {/* ================================================
-            PRIVATE GUEST LIST
-        ================================================ */}
+        <div className="dineout-details-grid">
+          <article><Calendar size={20} /><div><small>Date</small><strong>{formattedDate}</strong></div></article>
+          <article><Clock size={20} /><div><small>Time</small><strong>{formattedTime}</strong></div></article>
+          <article className="dineout-location-fact">
+            <MapPin size={20} />
+            <div>
+              <small>Restaurant location</small>
+              <strong>{invitation.restaurant_address || invitation.restaurant_name}</strong>
+              <button
+                type="button"
+                className="dineout-directions-button"
+                onClick={getDirectionsFromCurrentLocation}
+                disabled={gettingDirections}
+              >
+                <Navigation size={15} />
+                {gettingDirections ? "Getting your location…" : "Directions from my current location"}
+              </button>
+              {directionsUrl && (
+                <a className="dineout-directions-link" href={directionsUrl} target="_blank" rel="noopener noreferrer">
+                  Open route in Google Maps
+                </a>
+              )}
+              {directionsError && <span className="dineout-directions-error" role="status">{directionsError}</span>}
+            </div>
+          </article>
+          <article className="dineout-guests-fact">
+            <Users size={20} />
+            <div>
+              <small>Guests</small>
+              <strong>{acceptedGuests} accepted · {maximumGuests} maximum</strong>
+              <span>Total including host: {acceptedGuests + 1}</span>
+              <div className="dineout-accepted-guests">
+                <small>Attending including host</small>
+                {(host || acceptedGuestMembers.length > 0) ? (
+                  <ul>
+                    {host && (
+                      <li key={`host-${host.id || "unknown"}`}>
+                        <Link className="dineout-profile-name" to={`/connect/member/${host.id}`}>
+                          {memberName(host)} (Host)
+                        </Link>
+                      </li>
+                    )}
+                    {acceptedGuestMembers.map((member) => (
+                      <li key={member.id}>
+                        <Link className="dineout-profile-name" to={`/connect/member/${member.id}`}>
+                          {memberName(member)}
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <span>No host or accepted guests are listed.</span>
+                )}
+              </div>
+            </div>
+          </article>
+        </div>
 
         {isPrivate && (
           <section className="dineout-invited-section">
             <div className="dineout-section-heading">
               <div>
-                <small>
-                  PRIVATE GUEST LIST
-                </small>
+                <small>PRIVATE GUEST LIST</small>
                 <h2>Selected guests</h2>
               </div>
-
-              <span>
-                {invitedMembers.length} invited
-              </span>
+              <span>{visibleInvitedMembers.length} invited</span>
             </div>
 
-            <div className="dineout-guest-list">
-              <article className="dineout-guest">
-                <span className="dineout-guest-avatar">
-                  {initials(hostName)}
-                </span>
-
-                <div>
-                  <strong>{hostName}</strong>
-                  <small>
-                    Host · Automatically attending
-                  </small>
-                </div>
-              </article>
-
-              {invitedMembers.map((member) => {
-                const name = memberName(member);
-
-                const memberStatus =
-                  member.response_status ||
-                  member.invitation_status ||
-                  null;
-
-                return (
-                  <article
-                    className="dineout-guest"
-                    key={member.id}
-                  >
-                    <span className="dineout-guest-avatar">
-                      {initials(name)}
-                    </span>
-
+            {visibleInvitedMembers.length > 0 || host ? (
+              <div className="dineout-guest-list">
+                {host && (
+                  <article className="dineout-guest dineout-guest--host" key={`host-${host.id || "unknown"}`}>
+                    <span className="dineout-guest-avatar">{initials(memberName(host))}</span>
                     <div>
-                      <strong>
-                        {name}
-                      </strong>
-
-                      <small>
-                        {memberStatus === "accepted"
-                          ? "Accepted"
-                          : memberStatus === "declined"
-                            ? "Declined"
-                            : "Invited guest"}
-                      </small>
+                      <Link className="dineout-profile-name" to={`/connect/member/${host.id}`}>
+                        {memberName(host)} (Host)
+                      </Link>
+                      <small>Host · Automatically attending</small>
                     </div>
                   </article>
-                );
-              })}
-            </div>
+                )}
+                {visibleInvitedMembers.map(member => {
+                  const name = memberName(member);
+                  const matchingResponse = guestResponses.find(response =>
+                    String(response.guest?.id ?? response.guest_id ?? "") === String(member.id)
+                  );
+                  const status = member.response_status || matchingResponse?.status;
+                  return (
+                    <article className="dineout-guest" key={member.id}>
+                      <span className="dineout-guest-avatar">{initials(name)}</span>
+                      <div>
+                      <Link className="dineout-profile-name" to={`/connect/member/${member.id}`}>
+                        {name}
+                      </Link>
+                        <small>Invited guest</small>
+                        {status && <small className={`dineout-guest-status response-${status}`}>{status}</small>}
+                      </div>
+                    </article>
+                  );
+                })}
+              </div>
+            ) : (
+              <p className="dineout-empty-guests">No selected guests were saved for this invitation.</p>
+            )}
           </section>
         )}
-
-        {/* ================================================
-            DIETARY NOTES
-        ================================================ */}
 
         {invitation.dietary_notes && (
           <div className="dineout-details-note">
-            <small>
-              Dietary preferences
-            </small>
-            <p>
-              {invitation.dietary_notes}
-            </p>
+            <small>Dietary preferences</small>
+            <p>{invitation.dietary_notes}</p>
           </div>
         )}
 
-        {/* ================================================
-            PRIVATE INVITATION RESPONSE
-        ================================================ */}
-
         {isPrivate && !isHost && (
           <section className="dineout-response-panel">
-            <div>
-              <small>
-                YOUR RESPONSE
-              </small>
-
-              <strong
-                className={`response-${
-                  responseStatus || "pending"
-                }`}
-              >
-                {responseStatus
-                  ? responseStatus.charAt(0).toUpperCase() +
-                    responseStatus.slice(1)
-                  : "Pending"}
+            <div className="dineout-response-summary">
+              <small>YOUR RESPONSE</small>
+              <strong className={`response-${currentResponseStatus}`}>
+                {currentResponseStatus.charAt(0).toUpperCase() + currentResponseStatus.slice(1)}
               </strong>
+              <span>Choose whether you’d like to join this Dine Out.</span>
             </div>
 
             <div className="dineout-response-actions">
-              <button
-                type="button"
-                disabled={
-                  responding ||
-                  responseStatus === "accepted"
-                }
-                onClick={() =>
-                  respond("accept")
-                }
-              >
-                <Check size={18} />
-                {responding
-                  ? "Please wait..."
-                  : "Accept"}
+              <button type="button" className="accept" disabled={responding || responseStatus === "accepted"} onClick={() => respond("accept")}>
+                <Check size={18} /> {responding ? "Saving..." : responseStatus === "accepted" ? "Accepted" : "Accept invitation"}
               </button>
-
-              <button
-                type="button"
-                className="decline"
-                disabled={
-                  responding ||
-                  responseStatus === "declined"
-                }
-                onClick={() =>
-                  respond("decline")
-                }
-              >
-                <X size={18} />
-                {responding
-                  ? "Please wait..."
-                  : "Decline"}
+              <button type="button" className="decline" disabled={responding || responseStatus === "declined"} onClick={() => respond("decline")}>
+                <X size={18} /> {responseStatus === "declined" ? "Declined" : "Decline invitation"}
               </button>
             </div>
           </section>
         )}
-
-        {/* ================================================
-            PUBLIC DINE OUT RESPONSE
-        ================================================ */}
 
         {isPublic && !isHost && (
           <section className="dineout-response-panel">
             <div>
-              <small>
-                PUBLIC DINE OUT
-              </small>
+              <small>PUBLIC DINE OUT</small>
 
               <strong
                 className={
@@ -971,11 +676,8 @@ export default function DineOutDetails() {
                   ? "You are joining"
                   : isFull
                     ? "Dine Out is full"
-                    : `${availablePlaces} place${
-                        availablePlaces === 1
-                          ? ""
-                          : "s"
-                      } available`}
+                    : `${maximumGuests - acceptedGuests} place${maximumGuests - acceptedGuests === 1 ? "" : "s"} available`
+                }
               </strong>
             </div>
 
@@ -985,79 +687,43 @@ export default function DineOutDetails() {
                   type="button"
                   className="decline"
                   disabled={responding}
-                  onClick={() =>
-                    respond("decline")
-                  }
+                  onClick={() => respond("decline")}
                 >
                   <X size={18} />
-                  {responding
-                    ? "Please wait..."
-                    : "Leave Dine Out"}
+                  {responding ? "Please wait..." : "Leave Dine Out"}
                 </button>
               ) : (
                 <button
                   type="button"
-                  disabled={
-                    responding ||
-                    isFull
-                  }
-                  onClick={() =>
-                    respond("join")
-                  }
+                  disabled={responding || isFull}
+                  onClick={() => respond("join")}
                 >
                   <Check size={18} />
                   {responding
                     ? "Joining..."
                     : isFull
                       ? "Dine Out is full"
-                      : `Join Dine Out (${acceptedGuests}/${maximumGuests})`}
+                      : `Join Dine Out (${acceptedGuests}/${maximumGuests})`
+                  }
                 </button>
               )}
             </div>
           </section>
         )}
 
-        {/* ================================================
-            HOST INFORMATION
-        ================================================ */}
-
         {isHost && (
           <p className="dineout-response-message">
-            You are hosting this Dine Out.
-            You are automatically counted as attending.
-            The maximum guest count does not include you.
+            You are hosting this Dine Out. The maximum guest count does not include you.
           </p>
         )}
 
-        {/* ================================================
-            RESPONSE MESSAGE
-        ================================================ */}
-
-        {responseMessage && (
-          <p className="dineout-response-message">
-            {responseMessage}
-          </p>
-        )}
-
-        {/* ================================================
-            PAGE ACTIONS
-        ================================================ */}
+        {responseMessage && <p className="dineout-response-message">{responseMessage}</p>}
 
         <div className="dineout-details-actions">
-          <Link
-            to="/dine-out"
-            className="dineout-details-button dineout-details-button--secondary"
-          >
-            Back to Dine Out
-          </Link>
-
-          <Link
-            to="/food-invites"
-            className="dineout-details-button"
-          >
-            My invitations
-          </Link>
+          <Link to="/dine-out" className="dineout-details-button dineout-details-button--secondary">Back to Dine Out</Link>
+          <Link to="/food-invites" className="dineout-details-button">My invitations</Link>
         </div>
+
       </section>
     </main>
   );

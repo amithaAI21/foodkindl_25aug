@@ -161,9 +161,8 @@ const ConnectDashboard = lazy(() =>
 
 );
 
-
-
-
+const Calendar = lazy(() => import("./pages/Calendar"));
+const Notifications = lazy(() => import("./pages/Notifications"));
 
 // ============================================================
 
@@ -318,15 +317,6 @@ const PartnerDashboard = lazy(() =>
   import("./pages/PartnerDashboard")
 
 );
-
-
-
-const Notifications = lazy(() =>
-
-  import("./pages/Notifications")
-
-);
-
 
 
 
@@ -1458,6 +1448,24 @@ export default function App() {
             }
 
           />
+
+          <Route
+  path="/calendar"
+  element={
+    <Protected>
+      <Calendar />
+    </Protected>
+  }
+/>
+
+<Route
+  path="/notifications"
+  element={
+    <Protected>
+      <Notifications />
+    </Protected>
+  }
+/>
 
 
 

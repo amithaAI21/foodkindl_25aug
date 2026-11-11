@@ -1,10 +1,9 @@
-
 // src/pages/DineOut.jsx
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
 
 
-import RestaurantDashboard, { RestaurantSummary } from "../components/RestaurantDashboard";
+import { RestaurantSummary } from "../components/RestaurantDashboard";
 
 import FocusedRestaurantMap from "../components/FocusedRestaurantMap";
 
@@ -52,15 +51,28 @@ import "../styles/DineOutOSM.css";
 
 import "../styles/DineOutPlanPage.css";
 import "../styles/DineOutPremium.css";
+import "../styles/DineOutCuisineAssistant.css";
 import "../styles/FocusedRestaurantMapFix.css";
 
 import api from "../api";
 
 function backendMediaUrl(url) {
   if (!url) return null;
-  if (/^https:\/\//i.test(url)) return url;
+  if (/^https?:\/\//i.test(url)) return url;
   const base = new URL(api.defaults.baseURL || "/api/", window.location.origin);
   return new URL(url, base.origin).toString();
+}
+
+function safeWebsiteUrl(value) {
+  if (typeof value !== "string" || !value.trim()) return "";
+
+  try {
+    const raw = value.trim();
+    const url = new URL(/^https?:\/\//i.test(raw) ? raw : `https://${raw}`);
+    return ["http:", "https:"].includes(url.protocol) ? url.href : "";
+  } catch {
+    return "";
+  }
 }
 
 
@@ -101,6 +113,8 @@ function InviteDateTimePicker({ date, time, onDateChange, onTimeChange }) {
   const hour12 = time ? String(hour24 % 12 || 12) : "";
 
   const period = hour24 >= 12 ? "PM" : "AM";
+
+  
 
   function setClock(nextHour, nextMinute, nextPeriod) {
 
@@ -487,7 +501,12 @@ function getDrivingInstruction(step) {
 }
 
 function RestaurantImage({ restaurant, className = "restaurant-image" }) {
-  const photo = backendMediaUrl(restaurant?.photo_url || restaurant?.image_url);
+  const photo = backendMediaUrl(
+    restaurant?.photo_url ||
+    restaurant?.image_url ||
+    restaurant?.images?.[0]?.image_url ||
+    restaurant?.images?.[0]?.url
+  );
   const [failed, setFailed] = useState(false);
   useEffect(() => setFailed(false), [photo]);
   return (
@@ -510,21 +529,68 @@ function googleField(restaurant, ...keys) {
   return keys.map((key) => restaurant?.[key]).find((value) => value !== undefined && value !== null && value !== "");
 }
 
+const WIKI_FOOD_ALIASES = {
+  "risotti": "Risotto",
+  "risotto": "Risotto",
+  "classic lasagna": "Lasagne",
+  "lasagna": "Lasagne",
+  "lasagne": "Lasagne",
+  "andhra meals": "Andhra cuisine",
+  "malabari dum biriyani": "Biryani",
+  "malabari dum biryani": "Biryani",
+};
+
+function normalizeWikiTitle(value) {
+  return String(value || "")
+    .normalize("NFKD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/\bbiriyani\b/g, "biryani")
+    .replace(/\brisotti\b/g, "risotto")
+    .replace(/\blasagne\b/g, "lasagna")
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim();
+}
+
+function canonicalWikiFoodTitle(food) {
+  const normalized = normalizeWikiTitle(food)
+    .replace(/\b(classic|traditional|authentic|spicy|homemade|food|dish|recipe|style)\b/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+  const alias = WIKI_FOOD_ALIASES[normalized] || WIKI_FOOD_ALIASES[normalizeWikiTitle(food)];
+  if (alias) return alias;
+  return normalized.replace(/\b\w/g, (letter) => letter.toUpperCase());
+}
+
+function wikiTitleMatchesFood(articleTitle, expectedTitle) {
+  const actual = normalizeWikiTitle(articleTitle);
+  const expected = normalizeWikiTitle(expectedTitle);
+  return Boolean(actual && expected && (
+    actual === expected || actual.startsWith(`${expected} `)
+  ));
+}
+
+function twoSentenceWikiSummary(text) {
+  const clean = String(text || "").replace(/\s+/g, " ").trim();
+  if (!clean) return "";
+  const sentences = clean.match(/[^.!?]+[.!?]+|[^.!?]+$/g) || [clean];
+  const firstTwo = sentences.slice(0, 2).join(" ").trim();
+  const words = firstTwo.split(/\s+/);
+  return words.length > 34 ? `${words.slice(0, 34).join(" ")}…` : firstTwo;
+}
+
 function GoogleRestaurantFacts({ restaurant }) {
   const hours = googleField(restaurant, "currentOpeningHours", "regularOpeningHours", "opening_hours");
-  const hoursText = typeof hours === "string"
-    ? hours
-    : (hours?.weekdayDescriptions || []).join(" · ");
+  const hoursText = typeof hours === "string" ? hours : (hours?.weekdayDescriptions || []).join(" · ");
   const phone = googleField(restaurant, "phone", "nationalPhoneNumber", "internationalPhoneNumber");
-  const website = googleField(restaurant, "website", "websiteUri");
-  const websiteUrl = typeof website === "string" && /^https?:\/\//i.test(website) ? website : null;
+  const website = safeWebsiteUrl(googleField(restaurant, "website", "websiteUri", "website_uri", "website_url"));
   const mapsUrl = googleField(restaurant, "google_maps_uri", "googleMapsUri");
   const validMapsUrl = typeof mapsUrl === "string" && /^https?:\/\//i.test(mapsUrl) ? mapsUrl : null;
   return <>
     <dl className="osm-facts">
       {hoursText && <div><dt>Opening hours</dt><dd>{hoursText}</dd></div>}
-      {phone && <div><dt>Phone</dt><dd><a href={`tel:${String(phone).replace(/[^+\d]/g, "")}`}>{phone}</a></dd></div>}
-      {websiteUrl && <div><dt>Website</dt><dd><a href={websiteUrl} target="_blank" rel="noopener noreferrer">Visit website</a></dd></div>}
+      {phone && <div><dt>Phone</dt><dd>{phone}</dd></div>}
+      {website && <div><dt>Website</dt><dd><a href={website} target="_blank" rel="noopener noreferrer">Visit website</a></dd></div>}
       {validMapsUrl && <div><dt>Google Maps</dt><dd><a href={validMapsUrl} target="_blank" rel="noopener noreferrer">View listing</a></dd></div>}
     </dl>
     {restaurant.source === "google" && <small>Listing provided by Google Maps</small>}
@@ -536,7 +602,69 @@ function GoogleRestaurantFacts({ restaurant }) {
   </>;
 }
 
-function RestaurantDetailsModal(props) { return <RestaurantDashboard {...props} />; }
+function RestaurantDetailsSection({ restaurant, onClose, onChoose, onNavigate, searchedFood = "", foodDescription = "", foodDescriptionLoading = false, foodDescriptionSource = "", foodDescriptionImage = "" }) {
+  if (!restaurant) return null;
+  const rawMenu = Array.isArray(restaurant.menu_items) ? restaurant.menu_items : Array.isArray(restaurant.menu) ? restaurant.menu : [];
+  const menuItems = rawMenu.map((item) => typeof item === "string"
+    ? { name: item, price: "", description: "" }
+    : { name: item?.name || item?.title || item?.item_name || "", price: item?.price || item?.price_label || "", description: item?.description || "" }
+  ).filter((item) => item.name);
+  const phone = googleField(restaurant, "phone", "nationalPhoneNumber", "internationalPhoneNumber");
+  const phoneHref = phone ? `tel:${String(phone).replace(/[^+\d]/g, "")}` : null;
+  const website = safeWebsiteUrl(googleField(restaurant, "website", "websiteUri", "website_uri", "website_url"));
+  const address = googleField(restaurant, "address", "formattedAddress", "location_label");
+  const cuisine = googleField(restaurant, "cuisine", "primaryTypeDisplayName", "primaryType");
+  const rating = googleField(restaurant, "rating");
+  const reviews = googleField(restaurant, "userRatingCount", "review_count");
+  const hours = googleField(restaurant, "currentOpeningHours", "regularOpeningHours", "opening_hours");
+  const hoursText = typeof hours === "string" ? hours : (hours?.weekdayDescriptions || []).join(" · ");
+  return (
+    <section id="fk-restaurant-details" className="fk-restaurant-detail" aria-labelledby="fk-restaurant-detail-title" tabIndex="-1">
+        <button className="fk-restaurant-detail-close" type="button" onClick={onClose} aria-label="Close restaurant details"><X size={20} /></button>
+        <div className="fk-restaurant-detail-heading">
+          <RestaurantImage restaurant={restaurant} />
+          <div>
+            <span className="fk-detail-eyebrow">RESTAURANT DETAILS</span>
+            <h2 id="fk-restaurant-detail-title">{restaurant.name}</h2>
+            {rating != null && <p className="fk-detail-rating">★ {rating}{reviews ? ` · ${Number(reviews).toLocaleString("en-IN")} ratings` : ""}</p>}
+            {cuisine && <p className="fk-detail-cuisine">{String(cuisine).replaceAll("_", " ")}</p>}
+          </div>
+        </div>
+        <div className="fk-restaurant-detail-facts">
+          {address && <div><strong>Address</strong><span>{address}</span></div>}
+          {phone && <div><strong>Phone</strong><a href={phoneHref}>{phone}</a></div>}
+          {website && <div><strong>Website</strong><a href={website} target="_blank" rel="noopener noreferrer">Visit website</a></div>}
+          {hoursText && <div><strong>Opening hours</strong><span>{hoursText}</span></div>}
+        </div>
+        <section className="fk-restaurant-menu-panel" aria-labelledby="fk-restaurant-menu-title">
+          <h3 id="fk-restaurant-menu-title">Menu</h3>
+          {searchedFood && <div className="fk-food-description">
+            <strong>About {searchedFood}</strong>
+            <div className="fk-food-reference-row">
+              {foodDescriptionImage && <figure className="fk-food-reference-figure">
+                <img className="fk-food-reference-image" src={foodDescriptionImage} alt={`${searchedFood} food reference from Wikipedia`} loading="lazy" />
+                <figcaption>Wikipedia food reference · not this restaurant’s dish photo</figcaption>
+              </figure>}
+              <div className="fk-food-reference-copy">
+                <p>{foodDescriptionLoading ? "Loading a short Wikipedia description…" : foodDescription || "No matching Wikipedia summary was found for this food."}</p>
+                {foodDescriptionSource && <a className="fk-wiki-source" href={foodDescriptionSource} target="_blank" rel="noopener noreferrer">Source: Wikipedia</a>}
+              </div>
+            </div>
+          </div>}
+          {menuItems.length > 0 ? (
+            <ul className="fk-menu-items">{menuItems.map((item, index) => <li key={`${item.name}-${index}`}><span><strong>{item.name}</strong>{item.description && <small>{item.description}</small>}</span>{item.price && <strong className="fk-menu-price">{item.price}</strong>}</li>)}</ul>
+          ) : <p className="fk-menu-unavailable">This restaurant hasn’t shared menu items with FoodKindl yet.</p>}
+          {searchedFood && phoneHref && <a className="fk-confirm-food-button" href={phoneHref}><Phone size={16} /> Call to confirm {searchedFood}</a>}
+          {searchedFood && !phoneHref && <p className="fk-menu-unavailable">No phone number is listed, so availability can’t be confirmed from this page.</p>}
+        </section>
+        <div className="fk-restaurant-detail-actions">
+          <button type="button" className="primary-button" onClick={() => onChoose(restaurant)}><CalendarDays size={16} /> Plan a Dine Out</button>
+          <button type="button" className="secondary-button" onClick={() => onNavigate(restaurant)}><Map size={16} /> View on map</button>
+          <button type="button" className="secondary-button" onClick={onClose}>Close</button>
+        </div>
+    </section>
+  );
+}
 
 /* ============================================================
 
@@ -570,6 +698,18 @@ export default function DineOut() {
 
   const [cuisine, setCuisine] = useState("All cuisines");
 
+  const [cuisineDescription, setCuisineDescription] = useState("");
+  const [predictedCuisines, setPredictedCuisines] = useState([]);
+  const [selectedPredictedCuisine, setSelectedPredictedCuisine] = useState("");
+  const [predictingCuisine, setPredictingCuisine] = useState(false);
+  const [cuisinePredictionError, setCuisinePredictionError] = useState("");
+  const [foodDescription, setFoodDescription] = useState("");
+  const [searchedFoodQuery, setSearchedFoodQuery] = useState("");
+  const [foodDescriptionImage, setFoodDescriptionImage] = useState("");
+  const [foodDescriptionSource, setFoodDescriptionSource] = useState("");
+  const [foodDescriptionLoading, setFoodDescriptionLoading] = useState(false);
+  const wikiRequestRef = useRef(0);
+
   const [placeType, setPlaceType] = useState("all");
 
   // Restaurant discovery: FoodKindl partners or live Google Places listings.
@@ -599,6 +739,14 @@ export default function DineOut() {
   const [focusRequest, setFocusRequest] = useState(0);
 
   const [detailsRestaurant, setDetailsRestaurant] = useState(null);
+
+  useEffect(() => {
+    if (!detailsRestaurant) return undefined;
+    const frame = window.requestAnimationFrame(() => {
+      document.getElementById("fk-restaurant-details")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [detailsRestaurant]);
 
   const [navigationRestaurant, setNavigationRestaurant] = useState(null);
 
@@ -843,6 +991,115 @@ export default function DineOut() {
 
   }
 
+  async function fetchWikipediaFoodDescription(food) {
+    const query = String(food || "").trim();
+    if (!query) return;
+    const requestId = ++wikiRequestRef.current;
+    const expectedTitle = canonicalWikiFoodTitle(query);
+    setFoodDescription("");
+    setFoodDescriptionImage("");
+    setFoodDescriptionSource("");
+    setFoodDescriptionLoading(true);
+
+    const fetchSummary = async (title) => {
+      const summaryUrl = `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(String(title).replaceAll(" ", "_"))}`;
+      const response = await fetch(summaryUrl, { headers: { Accept: "application/json" } });
+      if (!response.ok) return null;
+      const data = await response.json();
+      if (data.type === "disambiguation" || !wikiTitleMatchesFood(data.title, expectedTitle)) return null;
+      return data;
+    };
+
+    try {
+      // Try the normalized food article first (e.g. “Risotti” → “Risotto”).
+      let summaryData = await fetchSummary(expectedTitle);
+
+      let searchResultImage = "";
+      // If the summary is missing, or has no image, search only for a page
+      // whose title matches the food name. This avoids unrelated images.
+      if (
+        !summaryData ||
+        (!summaryData.thumbnail?.source && !summaryData.originalimage?.source)
+      ) {
+        const searchUrl = `https://en.wikipedia.org/w/rest.php/v1/search/page?q=${encodeURIComponent(expectedTitle)}&limit=10`;
+        const searchResponse = await fetch(searchUrl, { headers: { Accept: "application/json" } });
+        if (searchResponse.ok) {
+          const searchData = await searchResponse.json();
+          const pages = Array.isArray(searchData.pages) ? searchData.pages : [];
+          const matchingPage = pages.find((page) => wikiTitleMatchesFood(page.title, expectedTitle));
+          if (matchingPage?.title) {
+            searchResultImage = matchingPage.thumbnail?.source || matchingPage.thumbnail?.url || "";
+            if (!summaryData) summaryData = await fetchSummary(matchingPage.title);
+          }
+        }
+      }
+
+      if (!summaryData) throw new Error("No matching food article found");
+      const summary = twoSentenceWikiSummary(summaryData.extract);
+      if (!summary || requestId !== wikiRequestRef.current) return;
+      setFoodDescription(summary);
+      setFoodDescriptionImage(summaryData.thumbnail?.source || summaryData.originalimage?.source || searchResultImage);
+      setFoodDescriptionSource(summaryData.content_urls?.desktop?.page || `https://en.wikipedia.org/wiki/${encodeURIComponent(summaryData.title.replaceAll(" ", "_"))}`);
+    } catch {
+      if (requestId !== wikiRequestRef.current) return;
+      setFoodDescription("");
+      setFoodDescriptionImage("");
+      setFoodDescriptionSource("");
+    } finally {
+      if (requestId === wikiRequestRef.current) setFoodDescriptionLoading(false);
+    }
+  }
+
+  async function detectCuisineFromDescription() {
+    const description = cuisineDescription.trim();
+    if (!description || predictingCuisine) return;
+
+    setPredictingCuisine(true);
+    setCuisinePredictionError("");
+    setPredictedCuisines([]);
+    setSelectedPredictedCuisine("");
+
+    try {
+      const response = await api.post(
+        "/dineout/restaurants/predict-cuisine/",
+        { description }
+      );
+
+      const cuisines = Array.isArray(response.data?.cuisines)
+        ? response.data.cuisines
+            .filter((item) => typeof item === "string" && item.trim())
+            .map((item) => item.trim().replace(/\s+cuisine$/i, ""))
+        : [];
+
+      if (!cuisines.length) {
+        setCuisinePredictionError(
+          "I couldn't identify a cuisine. Try mentioning a region or dish."
+        );
+        return;
+      }
+
+      setPredictedCuisines(cuisines);
+      const firstCuisine = cuisines[0].toLowerCase();
+      setCuisine(firstCuisine);
+      setSelectedPredictedCuisine(firstCuisine);
+    } catch (error) {
+      setCuisinePredictionError(
+        error.response?.data?.detail ||
+          "Cuisine detection is temporarily unavailable. Please try again."
+      );
+    } finally {
+      setPredictingCuisine(false);
+    }
+  }
+
+  function selectPredictedCuisine(label) {
+    const cuisineQuery = String(label || "").trim().toLowerCase();
+    if (!cuisineQuery) return;
+
+    setCuisine(cuisineQuery);
+    setSelectedPredictedCuisine(cuisineQuery);
+    setCuisinePredictionError("");
+  }
   /* ----------------------------------------------------------
 
      POPULAR RESTAURANTS
@@ -907,7 +1164,10 @@ export default function DineOut() {
 
         (foodFilter === "veg" && ["yes", "only"].includes(vegetarian));
 
-      const matchesCuisine = cuisine === "All cuisines" || cuisineValues.includes(cuisine);
+      const matchesCuisine =
+        cuisine === "All cuisines" ||
+        cuisineValues.includes(cuisine) ||
+        (restaurant.source === "google" && cuisine !== "All cuisines");
       const matchesOpen = !openNowOnly || openNowStatus(restaurant) === true;
 
       const matchesSearch = !query || `${name} ${cuisineText}`.toLowerCase().includes(query);
@@ -926,7 +1186,7 @@ export default function DineOut() {
       return (Number(a.distance_km) || 0) - (Number(b.distance_km) || 0);
     });
 
-  }, [restaurants, searchedRestaurantQuery, placeType, foodFilter, cuisine, restaurantSource, minimumRating, restaurantSort, openNowOnly]);
+  }, [restaurants, searchedRestaurantQuery, placeType, foodFilter, cuisine, selectedPredictedCuisine, restaurantSource, minimumRating, restaurantSort, openNowOnly]);
 
   useEffect(() => {
 
@@ -1067,6 +1327,27 @@ export default function DineOut() {
 
       setPageError("");
 
+      const selectedCuisineLabel =
+        selectedCuisine && selectedCuisine !== "All cuisines"
+          ? selectedCuisine
+          : "";
+      const cravingDescription = cuisineDescription.trim();
+      const googleCuisineSearch = sourceOverride !== "partner" && Boolean(
+        selectedCuisineLabel || cravingDescription
+      );
+      const combinedSearchText = [
+        cravingDescription,
+        selectedCuisineLabel,
+        queryOverride.trim(),
+      ]
+        .filter(Boolean)
+        .join(" ");
+      const googleSearchText = googleCuisineSearch && combinedSearchText
+        ? (/\brestaurants?\b/i.test(combinedSearchText)
+            ? combinedSearchText
+            : `${combinedSearchText} restaurants`)
+        : queryOverride.trim();
+
       const response = await api.get("/dineout/restaurants/recommendations/", {
 
         signal: controller.signal,
@@ -1082,7 +1363,10 @@ export default function DineOut() {
           } : {}),
           limit: 100,
           source: !locationSelected ? "other" : sourceOverride,
-          search: queryOverride.trim(),
+          search: googleCuisineSearch ? googleSearchText : queryOverride.trim(),
+          ...(sourceOverride === "partner" && selectedCuisineLabel
+            ? { cuisine: selectedCuisine }
+            : {}),
         },
 
       });
@@ -1097,6 +1381,9 @@ export default function DineOut() {
 
       setRestaurants(results);
 
+      const visibleSearchText =
+        [cravingDescription, queryOverride.trim()].filter(Boolean).join(" ") ||
+        selectedCuisineLabel;
       setSearchedRestaurantQuery(queryOverride.trim());
 
       // Keep the selected cuisine when refreshing search results.
@@ -1106,8 +1393,8 @@ export default function DineOut() {
       const mappedCount = Number(response.data?.mapped_places_in_area);
 
       const areaMessage = locationSelected
-        ? `Search radius: ${radiusKm} km. ${queryOverride.trim() ? `Restaurant search: ${queryOverride.trim()}.` : "Showing nearby restaurants."}`
-        : `Google Places name search: ${queryOverride.trim()}. Results are not restricted to a radius.`;
+        ? `Search radius: ${radiusKm} km. ${visibleSearchText ? `Searching for ${visibleSearchText}.` : "Showing nearby restaurants."}`
+        : `Google Places search: ${visibleSearchText}. Results are not restricted to a radius.`;
       if (!locationSelected && results.length && hasValidCoordinates(results[0])) {
         setMapCenter([getLatitude(results[0]), getLongitude(results[0])]);
       }
@@ -1379,13 +1666,19 @@ export default function DineOut() {
   }
 
   async function searchPlaces() {
+    const hasSelectedCuisine = cuisine !== "All cuisines";
+    const nameOrFoodQuery = restaurantQuery.trim() || cuisineDescription.trim();
 
-    if (!locationSelected && !restaurantQuery.trim()) {
-      setPageError("Select a location or enter a restaurant name.");
+    if (
+      !locationSelected &&
+      !nameOrFoodQuery &&
+      !hasSelectedCuisine
+    ) {
+      setPageError("Select a location or describe a food/restaurant to search.");
       return;
     }
-    if (!locationSelected && restaurantQuery.trim().length < 2) {
-      setPageError("Enter at least two characters in the restaurant name.");
+    if (!locationSelected && nameOrFoodQuery && nameOrFoodQuery.length < 2) {
+      setPageError("Enter at least two characters for the food or restaurant search.");
       return;
     }
     // Name-only discovery uses other restaurants; partner discovery requires a selected area.
@@ -1396,11 +1689,23 @@ export default function DineOut() {
 
     setLocationSuggestions([]);
 
+    const foodQuery = cuisineDescription.trim() || restaurantQuery.trim();
+    setSearchedFoodQuery(foodQuery);
+    if (foodQuery) {
+      void fetchWikipediaFoodDescription(foodQuery);
+    } else {
+      wikiRequestRef.current += 1;
+      setFoodDescription("");
+      setFoodDescriptionImage("");
+      setFoodDescriptionSource("");
+      setFoodDescriptionLoading(false);
+    }
+
     setSearchedLocation(locationSelected ? location : "");
 
     setSearchedRestaurantQuery(restaurantQuery);
 
-    await fetchRestaurants(coordinates.latitude, coordinates.longitude, "All cuisines");
+    await fetchRestaurants(coordinates.latitude, coordinates.longitude, cuisine);
 
   }
 
@@ -1678,74 +1983,76 @@ export default function DineOut() {
 
     }
 
-        const latitude = Number(
-
-      getLatitude(selectedRestaurant).toFixed(6)
-
-    );
-
-    const longitude = Number(
-
-      getLongitude(selectedRestaurant).toFixed(6)
-
-    );
+        const latitude = Number(getLatitude(selectedRestaurant).toFixed(6));
+    const longitude = Number(getLongitude(selectedRestaurant).toFixed(6));
 
     if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
-
       showCreateError("The selected restaurant has invalid coordinates.");
-
       return;
-
     }
 
+    // Preserve the food that the host searched for so invitees can see it.
+    const searchedFoodForInvite = String(
+      searchedFoodQuery || cuisineDescription || restaurantQuery || ""
+    ).trim();
+
+    const rawMenuItems = Array.isArray(selectedRestaurant.menu_items)
+      ? selectedRestaurant.menu_items
+      : Array.isArray(selectedRestaurant.menu)
+        ? selectedRestaurant.menu
+        : [];
+
+    const restaurantMenuItems = rawMenuItems
+      .map((item) => {
+        const menuItem = typeof item === "string" ? { name: item } : item || {};
+        const image = menuItem.image_url || menuItem.photo_url || menuItem.image || "";
+        return {
+          name: menuItem.name || menuItem.title || menuItem.item_name || "",
+          description: menuItem.description || "",
+          image_url: image ? backendMediaUrl(image) : "",
+        };
+      })
+      .filter((item) => item.name);
+
     const payload = {
-
       title: meetupTitle.trim(),
-
       description: meetupNotes.trim(),
-
       restaurant_external_id: String(selectedRestaurant.id || ""),
-
-      restaurant_name: selectedRestaurant.name,
-
-      restaurant_address:
-
-        selectedRestaurant.address || selectedRestaurant.location_label || "",
-
+      restaurant_name: selectedRestaurant.name || "",
+      restaurant_address: selectedRestaurant.address || selectedRestaurant.location_label || "",
       restaurant_cuisine: selectedRestaurant.cuisine || "",
-
-      restaurant_phone: selectedRestaurant.phone || "",
-
-      restaurant_website: selectedRestaurant.website || "",
-
+      restaurant_phone: selectedRestaurant.phone || selectedRestaurant.phone_number || "",
+      restaurant_website: safeWebsiteUrl(
+        selectedRestaurant.website ||
+        selectedRestaurant.websiteUri ||
+        selectedRestaurant.website_uri ||
+        selectedRestaurant.website_url
+      ),
+      restaurant_image_url: backendMediaUrl(
+        selectedRestaurant.restaurant_image_url ||
+        selectedRestaurant.photo_url ||
+        selectedRestaurant.image_url ||
+        selectedRestaurant.images?.[0]?.image_url ||
+        selectedRestaurant.images?.[0]?.url
+      ) || "",
+      searched_food: searchedFoodForInvite,
+      food_description: foodDescription || "",
+      food_image_url: foodDescriptionImage || "",
+      food_description_source: foodDescriptionSource || "",
+      restaurant_menu_items: restaurantMenuItems,
       latitude,
-
       longitude,
-
       starts_at: startsAt.toISOString(),
-
       maximum_guests: guestCount,
-
       budget_label: "",
-
       booking_status: bookingStatus,
-
       dietary_notes: dietaryNotes.trim(),
-
       meetup_notes: meetupNotes.trim(),
-
       verified_only: false,
-
       women_only: false,
-
       visibility,
-
-      invited_member_ids:
-
-        visibility === "invited_only" ? selectedMemberIds : [],
-
+      invited_member_ids: visibility === "invited_only" ? selectedMemberIds : [],
       status: "published",
-
     };
 
     try {
@@ -1919,18 +2226,111 @@ export default function DineOut() {
             </div>
             <label className="fk-side-group fk-side-field">
               <span className="fk-side-label">Cuisine</span>
-              <select value={cuisine} onChange={e => setCuisine(e.target.value)}>
+              <select value={cuisine} onChange={e => {
+                setCuisine(e.target.value);
+                setSelectedPredictedCuisine("");
+              }}>
                 <option value="All cuisines">All cuisines</option>
-                {availableCuisines.map(item => <option value={item} key={item}>{cuisineLabel(item)}</option>)}
+                {[...new Set([
+                  ...availableCuisines,
+                  ...predictedCuisines.map((item) => item.toLowerCase()),
+                ])].map(item => <option value={item} key={item}>{cuisineLabel(item)}</option>)}
               </select>
             </label>
+
+            <section className="fk-side-group fk-cuisine-assistant">
+              <label className="fk-side-label" htmlFor="cuisine-description">
+                What food are you craving?
+              </label>
+              <p className="fk-cuisine-help">
+                Enter a cuisine or a specific dish. We’ll identify its cuisine,
+                then search Google Maps for nearby restaurants.
+              </p>
+
+              <textarea
+                id="cuisine-description"
+                className="fk-cuisine-input"
+                value={cuisineDescription}
+                maxLength={1000}
+                rows={3}
+                placeholder="e.g. Classic lasagna, Bengali sweets, or Kerala seafood"
+                onChange={(event) => {
+                  setCuisineDescription(event.target.value);
+                  wikiRequestRef.current += 1;
+                  setFoodDescription("");
+                  setFoodDescriptionImage("");
+                  setFoodDescriptionSource("");
+                  setFoodDescriptionLoading(false);
+                  setCuisinePredictionError("");
+                  setPredictedCuisines([]);
+                  setSelectedPredictedCuisine("");
+                  setCuisine("All cuisines");
+                }}
+              />
+
+              <button
+                type="button"
+                className="fk-cuisine-detect-button"
+                onClick={detectCuisineFromDescription}
+                disabled={predictingCuisine || !cuisineDescription.trim()}
+                aria-busy={predictingCuisine}
+              >
+                {predictingCuisine ? "Understanding your craving…" : "Find cuisine"}
+              </button>
+
+              {predictedCuisines.length > 0 && (
+                <div className="fk-cuisine-results" role="status">
+                  <span>Choose a cuisine to search nearby:</span>
+                  <div className="fk-cuisine-chips">
+                    {predictedCuisines.map((item) => (
+                      <button
+                        type="button"
+                        key={item}
+                        className={
+                          selectedPredictedCuisine === item.toLowerCase()
+                            ? "is-selected"
+                            : ""
+                        }
+                        aria-pressed={
+                          selectedPredictedCuisine === item.toLowerCase()
+                        }
+                        onClick={() => selectPredictedCuisine(item)}
+                      >
+                        {item}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {cuisinePredictionError && (
+                <p className="fk-cuisine-error" role="alert">
+                  {cuisinePredictionError}
+                </p>
+              )}
+            </section>
             <label className="fk-side-group fk-side-field">
               <span className="fk-side-label">Search radius: <strong>{radiusKm} km</strong></span>
-              <input type="range" min="1" max="5" step="1" value={radiusKm} onChange={e => setRadiusKm(Number(e.target.value))} />
+              <div className="fk-radius-presets" aria-label="Choose search radius">
+                {[5, 20].map((km) => (
+                  <button
+                    type="button"
+                    key={km}
+                    className={radiusKm === km ? "is-active" : ""}
+                    aria-pressed={radiusKm === km}
+                    onClick={() => setRadiusKm(km)}
+                  >
+                    {km} km
+                  </button>
+                ))}
+              </div>
+              <input type="range" min="1" max="20" step="1" value={radiusKm} onChange={e => setRadiusKm(Number(e.target.value))} />
             </label>
             <button type="button" className="fk-side-reset" onClick={() => {
               setRestaurantSource("other"); setPlaceType("all"); setOpenNowOnly(false);
-              setMinimumRating(0); setFoodFilter("all"); setCuisine("All cuisines"); setRadiusKm(5);
+              setMinimumRating(0); setFoodFilter("all"); setCuisine("All cuisines");
+              setCuisineDescription(""); setPredictedCuisines([]); setSelectedPredictedCuisine("");
+              setRadiusKm(5);
             }}>↺ Reset filters</button>
             <p className="fk-side-footnote">Radius applies when an area is selected. Some filters require listing data.</p>
           </div>
@@ -2017,6 +2417,14 @@ export default function DineOut() {
               <p className="fk-help-text">Leave blank to discover restaurants in your selected area.</p>
             </div>
           </div>
+          {selectedPredictedCuisine && (
+            <p className="fk-cuisine-selection-message" role="status">
+              ✓ You chose <strong>{cuisineLabel(selectedPredictedCuisine)}</strong> cuisine
+              {cuisineDescription.trim() && <> for <strong>{cuisineDescription.trim()}</strong></>}.
+              {" "}Search within <strong>{radiusKm} km</strong> of {gpsOrigin ? "your current location" : "your selected area"},
+              {" "}then press <strong>Search Restaurants</strong>.
+            </p>
+          )}
           <button className="primary-button fk-search-submit" type="button" onClick={searchPlaces}
             disabled={restaurantLoading} aria-busy={restaurantLoading}>
             <Search size={18}/>{restaurantLoading ? "Searching restaurants..." : "Search Restaurants"}
@@ -2060,6 +2468,13 @@ export default function DineOut() {
           </div>
 
           {searchCoverage && <p className="search-status" role="status">{searchCoverage}</p>}
+          {searchCoverage && cuisineDescription.trim() && (
+            <aside className="fk-dish-explainer" aria-live="polite">
+              <strong>About {cuisineDescription.trim()}</strong>
+              <p>{foodDescriptionLoading ? "Loading a short Wikipedia description…" : foodDescription || "A Wikipedia description will appear here when a matching article is found."}</p>
+              {foodDescriptionSource && <a className="fk-wiki-source" href={foodDescriptionSource} target="_blank" rel="noopener noreferrer">Source: Wikipedia</a>}
+            </aside>
+          )}
 
           {restaurantLoading && (
 
@@ -2175,6 +2590,17 @@ export default function DineOut() {
 
                     Plan a Dine Out
 
+                  </button>
+
+                  <button
+                    type="button"
+                    className="secondary-button fk-view-details-button"
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      openRestaurantDetails(restaurant);
+                    }}
+                  >
+                    View details <ChevronRight size={16} />
                   </button>
 
                   <button
@@ -2604,7 +3030,7 @@ export default function DineOut() {
 
       )}
 
-      <RestaurantDetailsModal
+      <RestaurantDetailsSection
 
         restaurant={detailsRestaurant}
 
@@ -2613,7 +3039,11 @@ export default function DineOut() {
         onChoose={chooseRestaurant}
 
         onNavigate={startRestaurantNavigation}
-
+        searchedFood={searchedFoodQuery}
+        foodDescription={foodDescription}
+        foodDescriptionImage={foodDescriptionImage}
+        foodDescriptionLoading={foodDescriptionLoading}
+        foodDescriptionSource={foodDescriptionSource}
       />
 
       </div>

@@ -4,6 +4,7 @@ from django.db import models
 
 
 class DineOut(models.Model):
+    
     class Status(models.TextChoices):
         DRAFT = "draft", "Draft"
         PUBLISHED = "published", "Published"
@@ -17,6 +18,13 @@ class DineOut(models.Model):
         NOT_BOOKED = "not_booked", "Not booked yet"
         BOOKED = "booked", "Booked"
         WALK_IN = "walk_in", "Walk in"
+        CANCELLED = "cancelled", "Cancelled"
+        
+    booking_status = models.CharField(
+        max_length=20,
+        choices=BookingStatus.choices,
+        default=BookingStatus.NOT_BOOKED,
+    )
 
     host = models.ForeignKey(
         settings.AUTH_USER_MODEL,
@@ -89,10 +97,21 @@ class DineOut(models.Model):
         related_name="dine_out_invitations",
         blank=True,
     )
+    
+    restaurant_image_url = models.URLField(max_length=1000, blank=True)
+    searched_food = models.CharField(max_length=160, blank=True)
+    food_description = models.TextField(blank=True)
+    food_image_url = models.URLField(max_length=1000, blank=True)
+    food_description_source = models.URLField(max_length=1000, blank=True)
+    restaurant_menu_items = models.JSONField(default=list, blank=True)
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-
+    restaurant_image_url = models.URLField(
+    max_length=1000,
+    blank=True,
+    default="",
+)
     class Meta:
         ordering = ["starts_at", "-created_at"]
 
@@ -151,3 +170,4 @@ class DineOutResponse(models.Model):
             f"{self.dine_out} - "
             f"{self.status}"
         )
+        
