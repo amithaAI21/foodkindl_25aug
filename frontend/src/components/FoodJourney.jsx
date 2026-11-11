@@ -130,6 +130,59 @@ function distanceMeters(a, b) {
   return 12742000 * Math.asin(Math.min(1, Math.sqrt(h)));
 }
 
+function bearingDegrees(from, to) {
+  if (!from || !to) return null;
+  const rad = Math.PI / 180;
+  const lat1 = from.lat * rad;
+  const lat2 = to.lat * rad;
+  const dLng = (to.lng - from.lng) * rad;
+  const y = Math.sin(dLng) * Math.cos(lat2);
+  const x =
+    Math.cos(lat1) * Math.sin(lat2) -
+    Math.sin(lat1) * Math.cos(lat2) * Math.cos(dLng);
+  return (Math.atan2(y, x) * 180 / Math.PI + 360) % 360;
+}
+
+function routeBearing(point, path) {
+  if (!point || !Array.isArray(path) || path.length < 2) return null;
+  let nearestIndex = 0;
+  let nearestDistance = Infinity;
+  for (let index = 0; index < path.length - 1; index += 1) {
+    const distance = distanceMeters(point, path[index]);
+    if (distance < nearestDistance) {
+      nearestDistance = distance;
+      nearestIndex = index;
+    }
+  }
+  return bearingDegrees(path[nearestIndex], path[nearestIndex + 1]);
+}
+
+function maneuverTitle(step) {
+  const maneuver = String(step?.maneuver || "").toUpperCase();
+  const names = {
+    TURN_LEFT: "Turn left",
+    TURN_RIGHT: "Turn right",
+    TURN_SHARP_LEFT: "Turn sharp left",
+    TURN_SHARP_RIGHT: "Turn sharp right",
+    TURN_SLIGHT_LEFT: "Keep left",
+    TURN_SLIGHT_RIGHT: "Keep right",
+    STRAIGHT: "Continue straight",
+    UTURN_LEFT: "Make a U-turn",
+    UTURN_RIGHT: "Make a U-turn",
+    ROUNDABOUT_LEFT: "Take the roundabout",
+    ROUNDABOUT_RIGHT: "Take the roundabout",
+    RAMP_LEFT: "Take the ramp on the left",
+    RAMP_RIGHT: "Take the ramp on the right",
+    MERGE: "Merge",
+    FORK_LEFT: "Keep left at the fork",
+    FORK_RIGHT: "Keep right at the fork",
+  };
+  if (names[maneuver]) return names[maneuver];
+
+  const text = String(step?.text || "").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+  return text || "Continue straight";
+}
+
 function distanceFromRouteMeters(point, path) {
   if (!point || !Array.isArray(path) || path.length < 2) return Infinity;
   const earth = 111320;
@@ -166,6 +219,7 @@ function extractDirections(route) {
 
       return {
         text: String(instruction).replace(/<[^>]+>/g, " "),
+        maneuver: step?.navigationInstruction?.maneuver || step?.maneuver || "",
         distance: Number(step.distanceMeters || 0),
         // Routes API step endpoints, when requested in the response field mask.
         endPoint: toPoint(
@@ -198,6 +252,7 @@ function GoogleJourneyMap({
   chosen,
   live,
   navigationPoints,
+  navigationActive,
 }) {
   const container = useRef(null);
   const map = useRef(null);
@@ -221,6 +276,9 @@ function GoogleJourneyMap({
           mapTypeControl: false,
           fullscreenControl: true,
           zoomControl: true,
+          ...(import.meta.env.VITE_GOOGLE_MAP_ID
+            ? { mapId: import.meta.env.VITE_GOOGLE_MAP_ID }
+            : {}),
         });
 
         setReady(true);
@@ -350,7 +408,13 @@ function GoogleJourneyMap({
     const gm = window.google.maps;
     liveOverlays.current.forEach((object) => object.setMap?.(null));
     liveOverlays.current = [];
-    if (!live) return;
+    if (!live) {
+      if (!navigationActive) {
+        map.current.setHeading?.(0);
+        map.current.setTilt?.(0);
+      }
+      return;
+    }
 
     const marker = new gm.Marker({
       map: map.current,
@@ -384,7 +448,22 @@ function GoogleJourneyMap({
     }
 
     map.current.panTo(live);
-  }, [ready, live]);
+    if (navigationActive) {
+      const heading = live.heading != null && Number.isFinite(Number(live.heading))
+        ? Number(live.heading)
+        : routeBearing(live, navigationPoints.length > 1
+          ? navigationPoints
+          : plannedRoutePoints(coordinates));
+      if (heading != null && Number.isFinite(heading)) {
+        // Automatic heading and tilt are supported on Google vector maps.
+        // Add VITE_GOOGLE_MAP_ID (a vector map ID with tilt/rotation enabled)
+        // to activate the Google Maps navigation-style camera.
+        map.current.setHeading?.(heading);
+        map.current.setTilt?.(35);
+      }
+      map.current.setZoom(Math.max(map.current.getZoom() || 0, 17));
+    }
+  }, [ready, live, navigationActive, navigationPoints, coordinates]);
 
   return (
     <div
@@ -471,7 +550,9 @@ export default function FoodJourney({
   const lastRouteOriginRef = useRef(null);
   const lastRerouteAtRef = useRef(0);
   const stepIndexRef = useRef(0);
+  const spokenStepRef = useRef(-1);
   const [spokenInstruction, setSpokenInstruction] = useState("");
+  const [currentNavigationPrompt, setCurrentNavigationPrompt] = useState(null);
 
   const selected = useMemo(
     () =>
@@ -552,6 +633,7 @@ export default function FoodJourney({
       setNavigationPoints([]);
       setSpokenInstruction("");
       stepIndexRef.current = 0;
+      spokenStepRef.current = -1;
 
       try {
         // Routes API: calculate one segment per food stop.
@@ -665,6 +747,7 @@ export default function FoodJourney({
       setRouteInfo(null);
       setNavigationPoints([]);
       setSpokenInstruction("");
+      setCurrentNavigationPrompt(null);
       return;
     }
 
@@ -685,6 +768,8 @@ export default function FoodJourney({
           lat: coords.latitude,
           lng: coords.longitude,
           accuracy: coords.accuracy,
+          heading: coords.heading,
+          speed: coords.speed,
         };
 
         liveRef.current = point;
@@ -712,14 +797,20 @@ export default function FoodJourney({
 
   // Build the first route immediately. While navigating, refresh it after
   // 250 m of movement or when GPS shows the user is 75 m off the route.
-  // A 45-second minimum interval prevents excessive Google Routes requests.
+  // The first route starts even with coarse GPS; a 45-second minimum interval
+  // and accuracy check prevent excessive or unstable Google Routes requests.
   useEffect(() => {
     if (!navigation || !live || !destinationPoint || loadingRoute) return;
-    if (Number(live.accuracy) > 75) return;
 
     const key = `${backendMode}:${selectedKey}`;
     const planChanged = routeKeyRef.current !== key;
     const previousOrigin = lastRouteOriginRef.current;
+    const accuracy = Number(live.accuracy);
+    const needsFirstRoute = !previousOrigin;
+
+    // Start navigation even with coarse GPS. Use a stricter accuracy limit
+    // only for automatic reroutes, where a noisy fix could send the user astray.
+    if (!planChanged && !needsFirstRoute && accuracy > 150) return;
     const movedMeters = previousOrigin
       ? distanceMeters(previousOrigin, live)
       : Infinity;
@@ -728,9 +819,10 @@ export default function FoodJourney({
       : plannedRoutePoints(routeCoordinates);
     const offRouteMeters = distanceFromRouteMeters(live, path);
     const enoughTimePassed = Date.now() - lastRerouteAtRef.current >= 45000;
-    const needsFirstRoute = !previousOrigin || (!routeInfo && !routeError);
-    const shouldRefresh = planChanged || needsFirstRoute ||
-      (enoughTimePassed && (movedMeters >= 250 || offRouteMeters >= 75));
+    const retryFailedRoute = Boolean(routeError && !routeInfo && enoughTimePassed);
+    const shouldRefresh = planChanged || needsFirstRoute || retryFailedRoute ||
+      (enoughTimePassed && accuracy <= 150 &&
+        (movedMeters >= 250 || offRouteMeters >= 75));
 
     if (!shouldRefresh) return;
 
@@ -753,18 +845,37 @@ export default function FoodJourney({
   useEffect(() => {
     return () => requestRef.current?.abort();
   }, []);
-  // Announce the next turn shortly before its endpoint. Ordinary mobile GPS
-  // accuracy can vary, so tolerate fixes up to 75 m while keeping prompts useful.
+  // Keep the on-screen turn prompt tied to the current step and announce each
+  // next step once as the user approaches its maneuver.
   useEffect(() => {
-    if (!navigation || !live || !routeInfo?.directions?.length || Number(live.accuracy) > 75) return;
+    if (!navigation || !live || !routeInfo?.directions?.length || Number(live.accuracy) > 150) {
+      if (!navigation) setCurrentNavigationPrompt(null);
+      return;
+    }
     const steps = routeInfo.directions;
     let i = stepIndexRef.current;
-    while (i < steps.length && !steps[i].endPoint) i += 1;
+    while (i < steps.length && !steps[i]?.endPoint) i += 1;
     if (i >= steps.length) return;
-    if (distanceMeters(live, steps[i].endPoint) <= 80) {
-      const upcoming = steps[i + 1];
-      if (upcoming?.text) setSpokenInstruction(upcoming.text);
-      stepIndexRef.current = i + 1;
+    let meters = distanceMeters(live, steps[i].endPoint);
+    while (meters <= 30 && i < steps.length - 1) {
+      i += 1;
+      while (i < steps.length && !steps[i]?.endPoint) i += 1;
+      if (i >= steps.length) break;
+      meters = distanceMeters(live, steps[i].endPoint);
+    }
+    stepIndexRef.current = Math.min(i, steps.length - 1);
+    const step = steps[stepIndexRef.current];
+    if (!step) return;
+    const nextStep = steps[stepIndexRef.current + 1];
+    const isApproachingManeuver = meters <= 300 && Boolean(nextStep);
+    const displayedStep = isApproachingManeuver ? nextStep : step;
+    const title = maneuverTitle(displayedStep);
+    setCurrentNavigationPrompt({ title, meters: Number.isFinite(meters) ? meters : null });
+
+    // Speak the upcoming step once when it is close enough to act on.
+    if (meters <= 120 && nextStep && stepIndexRef.current !== spokenStepRef.current) {
+      spokenStepRef.current = stepIndexRef.current;
+      setSpokenInstruction(nextStep.text || maneuverTitle(nextStep));
     }
   }, [live, navigation, routeInfo]);
 
@@ -850,7 +961,43 @@ export default function FoodJourney({
             chosen={selected}
             live={navigation ? live : null}
             navigationPoints={navigationPoints}
+            navigationActive={navigation}
           />
+
+          {navigation && (
+            <section
+              aria-live="polite"
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 14,
+                margin: "12px 0",
+                padding: "14px 18px",
+                border: "1px solid #8b452d",
+                borderRadius: 14,
+                color: "#fff",
+                background: "linear-gradient(120deg, #542618, #2b160f)",
+              }}
+            >
+              <span aria-hidden="true" style={{ fontSize: 28, color: "#ff7548" }}>
+                {currentNavigationPrompt?.title?.toLowerCase().includes("left") ? "↰" :
+                  currentNavigationPrompt?.title?.toLowerCase().includes("right") ? "↱" : "↑"}
+              </span>
+              <div>
+                <strong style={{ display: "block", fontSize: 20 }}>
+                  {currentNavigationPrompt?.title ||
+                    (loadingRoute ? "Finding your route…" : "Follow the highlighted route")}
+                </strong>
+                <small style={{ display: "block", opacity: 0.85, marginTop: 3 }}>
+                  {currentNavigationPrompt?.meters != null
+                    ? currentNavigationPrompt.meters < 1000
+                      ? `In about ${Math.max(10, Math.round(currentNavigationPrompt.meters / 10) * 10)} m`
+                      : `In about ${(currentNavigationPrompt.meters / 1000).toFixed(1)} km`
+                    : "Your map follows your current location. Follow road signs and the highlighted route."}
+                </small>
+              </div>
+            </section>
+          )}
 
           <div className="fj-navbar">
             <button
